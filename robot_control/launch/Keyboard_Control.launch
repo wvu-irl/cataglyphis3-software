@@ -1,0 +1,10 @@
+<launch>
+
+	<node name = "keyboard_control_node"
+		pkg = "robot_control"
+		type = "keyboard_control_node" 
+   	    launch-prefix = "gnome-terminal -e"
+		output="screen" 
+		/>
+		
+</launch>
