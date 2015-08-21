@@ -87,6 +87,8 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+add_definitions("-std=gnu++11")
+
 ###########
 ## Build ##
 ###########
@@ -95,6 +97,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
 

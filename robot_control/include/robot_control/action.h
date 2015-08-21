@@ -1,19 +1,14 @@
 #ifndef ACTION_H
 #define ACTION_H
+#include "actuator_queue_interface.h"
 
-enum ACTION_TYPE_T {_stop, _travelWP, _drive, _pivot, _grab, _drop, _open, _search, _approach, _confirmCollect, _reorient, _deposit};
+//enum ACTION_TYPE_T {_stop, _travelWP, _drive, _pivot, _grab, _drop, _open, _search, _approach, _confirmCollect, _reorient, _deposit};
 
-class Action
+class Action : private ActuatorQueueInterface
 {
 public:
-	// Members
-
-	// Methods
-	Action(ACTION_TYPE_T actionType);
-	Action(ACTION_TYPE_T actionType, float param);
-	Action(ACTION_TYPE_T actionType, int param);
-	Action(ACTION_TYPE_T actionType, float param1, float param2);
-	int run();
+	virtual void init();
+	virtual int run();
 };
 
 #endif // ACTION_H

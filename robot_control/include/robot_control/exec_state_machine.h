@@ -15,9 +15,6 @@ public:
 private:
 	// Members
 	std::queue actionQueue_;
-	std::queue driveQueue_;
-	std::queue grabberQueue_;
-	std::queue visionQueue_;
 	// Methods
 	void actionCallback_();
 };
