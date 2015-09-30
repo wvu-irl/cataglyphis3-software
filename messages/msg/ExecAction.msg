@@ -1,0 +1,10 @@
+uint8 nextActionType
+bool newActionFlag
+bool pushToFrontFlag
+bool clearDequeFlag
+bool pause
+float32 float1
+float32 float2
+float32 float3
+int32 int1
+bool bool1

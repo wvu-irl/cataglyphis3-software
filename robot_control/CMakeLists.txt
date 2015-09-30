@@ -102,7 +102,7 @@ include_directories(
 )
 
 ## Declare a cpp library
- add_library(exec_state_machine src/exec_state_machine.cpp)
+ add_library(exec src/exec.cpp)
 
 ## Declare a cpp executable
  add_executable(keyboard_control_node src/keyboard_control_node.cpp)
