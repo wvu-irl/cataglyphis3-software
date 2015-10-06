@@ -5,6 +5,7 @@
 #include "action_type_enum.h"
 #include "action.h"
 #include "action_params.h"
+#include "idle.h"
 #include <messages/ExecAction.h>
 
 #define ACTION_POOL_SIZE 10
@@ -22,7 +23,7 @@ public:
 private:
 	// Members
 	std::deque <Action*> actionDeque_;
-	//Idle pauseIdle;
+    Idle pauseIdle;
 	ACTION_TYPE_T nextActionType_ = _idle;
 	bool newActionFlag_ = false;
 	bool pushToFrontFlag_ = false;

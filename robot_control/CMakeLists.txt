@@ -103,6 +103,7 @@ include_directories(
 
 ## Declare a cpp library
  add_library(exec src/exec.cpp)
+ add_library(idle src/idle.cpp)
 
 ## Declare a cpp executable
  add_executable(keyboard_control_node src/keyboard_control_node.cpp)
