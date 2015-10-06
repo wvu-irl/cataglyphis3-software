@@ -3,7 +3,7 @@
 #include "actuator_deque_interface.h"
 #include "action_params.h"
 
-class Action : private ActuatorDequeInterface
+class Action : public ActuatorDequeInterface
 {
 public:
 	virtual void init() = 0;

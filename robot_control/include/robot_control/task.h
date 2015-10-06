@@ -9,6 +9,9 @@ public:
     virtual void init() = 0;
     virtual int run() = 0;
     ACTION_PARAMS_T params;
+	int driveHalt();
+	int grabberHalt();
+	int visionHalt();
 };
 
 #endif // TASK_H

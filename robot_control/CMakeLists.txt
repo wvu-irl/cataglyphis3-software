@@ -104,6 +104,10 @@ include_directories(
 ## Declare a cpp library
  add_library(exec src/exec.cpp)
  add_library(idle src/idle.cpp)
+ 
+ add_library(drive_halt src/drive_halt.cpp)
+ add_library(grabber_halt src/grabber_halt.cpp)
+ add_library(vision_halt src/vision_halt.cpp)
 
 ## Declare a cpp executable
  add_executable(keyboard_control_node src/keyboard_control_node.cpp)

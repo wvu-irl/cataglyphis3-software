@@ -2,17 +2,27 @@
 
 Exec::Exec()
 {
-    // "allocate" deque memory. but std::deque does't provide an interface for this
+	// "allocate" deque memory
     for(int i=0; i<NUM_ACTIONS; i++)
     {
         actionPoolIndex_[i] = 0;
     }
-    /*for(int j=0; j<ACTION_POOL_SIZE; j++)
+	for(int j=0; j<ACTION_POOL_SIZE; j++)
     {
         actionPool_[_idle][j] = new Idle;
-        actionPool_[_driveGlobal][j] = new DriveGlobal;
-
-    }*/
+		//actionPool_[_driveGlobal][j] = new DriveGlobal;
+		//
+	}
+	for(int k=0; k<NUM_TASKS; k++)
+	{
+		pauseIdle_.taskPoolIndex[k] = 0;
+	}
+	for(int l=0; l<ACTION_POOL_SIZE; l++)
+	{
+		pauseIdle_.taskPool[_driveHalt_][l] = new DriveHalt;
+		pauseIdle_.taskPool[_grabberHalt_][l] = new GrabberHalt;
+		pauseIdle_.taskPool[_visionHalt_][l] = new VisionHalt;
+	}
 
 }
 
@@ -35,12 +45,13 @@ void Exec::run()
         actionPoolIndex_[nextActionType_]++; // Increment the action pool index of the action type just pushed
         if(actionPoolIndex_[nextActionType_]>=ACTION_POOL_SIZE) actionPoolIndex_[nextActionType_] = 0; // If pool index has wrapped around, restart at 0
     }
-    if(pause_) pauseIdle.run(); // If pause switch is true, run pause action
+	if(pause_==true && pausePrev_==false) pauseIdle_.visionEmptyHalt.init(); // Call vision empty halt init to record camera location for halt
+	if(pause_) pauseIdle_.run(); // If pause switch is true, run pause action
     else // Else, run actions from deque
     {
         if(actionDeque_.empty()) // Check if deque is empty
         {
-            pauseIdle.run(); // Perform pause action to halt the robot
+			pauseIdle_.run(); // Perform pause action to halt the robot
             if(newActionFlag_ && !pushToFrontFlag_) actionDeque_.front()->init(); // If a new action has been pushed to the back of the deque, run init() on the new action
         }
         else // Else, deque is not empty and the action at the front() should be run
@@ -57,6 +68,7 @@ void Exec::run()
     clearDequeFlag_ = false;
     newActionFlag_ = false;
     pushToFrontFlag_ = false;
+	pausePrev_ = pause_;
 }
 
 void Exec::actionCallback_(const messages::ExecAction::ConstPtr& msg)

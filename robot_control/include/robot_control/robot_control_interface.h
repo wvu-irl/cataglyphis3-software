@@ -1,15 +1,16 @@
 #ifndef ROBOT_CONTROL_INTERFACE_H
 #define ROBOT_CONTROL_INTERFACE_H
 #include "robot_outputs.h"
+#include "robot_status.h"
 
 class RobotControlInterface
 {
 public:
-    //static RobotStatus robotStatus;
+	static RobotStatus robotStatus;
     static RobotOutputs robotOutputs;
 };
 
-//RobotStatus RobotControlInterface::robotStatus;
+RobotStatus RobotControlInterface::robotStatus;
 RobotOutputs RobotControlInterface::robotOutputs;
 
 #endif // ROBOT_CONTROL_INTERFACE_H

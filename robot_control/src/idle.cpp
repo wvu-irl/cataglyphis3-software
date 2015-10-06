@@ -2,9 +2,15 @@
 
 void Idle::init()
 {
-    driveDeque_.clear();
-    grabberDeque_.clear();
-    visionDeque_.clear();
+	driveDeque.clear();
+	grabberDeque.clear();
+	visionDeque.clear();
+	visionEmptyHalt.init();
+}
 
-    driveDeque_.push_back(); // Need to define action pools somewhere
+int Idle::run()
+{
+	driveEmptyHalt.run();
+	grabberEmptyHalt.run();
+	visionEmptyHalt.run();
 }

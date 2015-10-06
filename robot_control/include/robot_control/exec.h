@@ -23,12 +23,13 @@ public:
 private:
 	// Members
 	std::deque <Action*> actionDeque_;
-    Idle pauseIdle;
+	Idle pauseIdle_;
 	ACTION_TYPE_T nextActionType_ = _idle;
 	bool newActionFlag_ = false;
 	bool pushToFrontFlag_ = false;
 	bool clearDequeFlag_ = false;
 	bool pause_ = false;
+	bool pausePrev_ = false;
 	bool actionDequeEmpty_ = false;
 	int currentActionDone_ = 1;
 	size_t actionDequeSize_ = 0;
