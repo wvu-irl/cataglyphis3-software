@@ -2,6 +2,7 @@
 #define ROBOT_CONTROL_INTERFACE_H
 #include "robot_outputs.h"
 #include "robot_status.h"
+#include <ros/ros.h>
 
 class RobotControlInterface
 {

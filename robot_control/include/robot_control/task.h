@@ -2,6 +2,7 @@
 #define TASK_H
 #include "action_params.h"
 #include "robot_control_interface.h"
+#include <math.h>
 
 class Task : public RobotControlInterface
 {

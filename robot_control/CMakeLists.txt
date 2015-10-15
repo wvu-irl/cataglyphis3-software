@@ -104,6 +104,9 @@ include_directories(
 ## Declare a cpp library
  add_library(exec src/exec.cpp)
  add_library(idle src/idle.cpp)
+ add_library(drive_straight src/drive_straight.cpp)
+ add_library(drive_straight_cl src/drive_straight_cl.cpp)
+ add_library(drive_pivot src/drive_pivot.cpp)
  
  add_library(drive_halt src/drive_halt.cpp)
  add_library(grabber_halt src/grabber_halt.cpp)
