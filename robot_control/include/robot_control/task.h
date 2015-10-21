@@ -3,13 +3,14 @@
 #include "action_params.h"
 #include "robot_control_interface.h"
 #include <math.h>
+#include "bit_utils.h"
 
 class Task : public RobotControlInterface
 {
 public:
     virtual void init() = 0;
     virtual int run() = 0;
-    ACTION_PARAMS_T params;
+	ACTION_PARAMS_T params;
 	int driveHalt();
 	int grabberHalt();
 	int visionHalt();

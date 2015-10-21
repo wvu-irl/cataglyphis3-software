@@ -103,12 +103,17 @@ include_directories(
 
 ## Declare a cpp library
  add_library(exec src/exec.cpp)
+ add_library(action src/action.cpp)
  add_library(idle src/idle.cpp)
+ add_library(drive_global src/drive_global.cpp)
+ add_library(drive_relative src/drive_relative.cpp)
+ 
  add_library(drive_straight src/drive_straight.cpp)
  add_library(drive_straight_cl src/drive_straight_cl.cpp)
  add_library(drive_pivot src/drive_pivot.cpp)
- 
  add_library(drive_halt src/drive_halt.cpp)
+ add_library(grabber_set_slides src/grabber_set_slides.cpp)
+ add_library(grabber_set_drop src/grabber_set_drop.cpp)
  add_library(grabber_halt src/grabber_halt.cpp)
  add_library(vision_halt src/vision_halt.cpp)
 

@@ -12,7 +12,8 @@ public:
 	float distToOrigin = 0.0; // m
 	float yawRate = 0.0; // deg/s
 	// Grabber data
-
+	int grabberSlideStatus = 0;
+	int grabberDropStatus = 0;
 	// Vision data
 	float panAngle = 0.0; // deg
 	float neckPos = 0.0; // deg

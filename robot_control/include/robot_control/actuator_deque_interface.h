@@ -7,6 +7,7 @@
 #include "grabber_halt.h"
 #include "vision_halt.h"
 #define TASK_POOL_SIZE 50
+#define PI 3.14159265359
 
 class ActuatorDequeInterface
 {
