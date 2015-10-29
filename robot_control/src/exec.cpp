@@ -2,6 +2,7 @@
 
 Exec::Exec()
 {
+	pauseIdle_.robotStatus.loopRate = loopRate;
 	// "allocate" deque memory
     for(int i=0; i<NUM_ACTIONS; i++)
     {

@@ -28,4 +28,13 @@ public:
 	static VisionHalt visionHalt;
 };
 
+std::deque <Task*> ActuatorDequeInterface::driveDeque;
+std::deque <Task*> ActuatorDequeInterface::grabberDeque;
+std::deque <Task*> ActuatorDequeInterface::visionDeque;
+//Task* ActuatorDequeInterface::taskPool;
+DriveHalt ActuatorDequeInterface::driveHalt;
+GrabberHalt ActuatorDequeInterface::grabberHalt;
+GrabberIdle ActuatorDequeInterface::grabberIdle;
+VisionHalt ActuatorDequeInterface::visionHalt;
+
 #endif // ACTUATOR_DEQUE_INTERFACE_H

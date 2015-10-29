@@ -108,6 +108,9 @@ include_directories(
  add_library(halt src/halt.cpp)
  add_library(drive_global src/drive_global.cpp)
  add_library(drive_relative src/drive_relative.cpp)
+ add_library(grab src/grab.cpp)
+ add_library(drop src/drop.cpp)
+ add_library(open src/open.cpp)
  
  add_library(drive_straight src/drive_straight.cpp)
  add_library(drive_straight_cl src/drive_straight_cl.cpp)
@@ -121,15 +124,39 @@ include_directories(
 
 ## Declare a cpp executable
  add_executable(keyboard_control_node src/keyboard_control_node.cpp)
+ add_executable(exec_node src/exec_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
  add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
+ add_dependencies(exec_node robot_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(keyboard_control_node
    ${catkin_LIBRARIES}
    libncurses.so
+ )
+ 
+ target_link_libraries(exec_node
+   ${catkin_LIBRARIES}
+   exec
+   action
+   idle
+   halt
+   drive_global
+   drive_relative
+   grab
+   drop
+   open
+   drive_straight
+   drive_straight_cl
+   drive_pivot
+   drive_halt
+   grabber_set_slides
+   grabber_set_drop
+   grabber_halt
+   grabber_idle
+   vision_halt
  )
 
 #############

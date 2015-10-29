@@ -23,6 +23,7 @@ public:
 	ros::NodeHandle nh;
 	ros::Publisher infoPub;
 	ros::Subscriber actionSub;
+	const int loopRate = 20; // Hz
 	// Methods
 	Exec(); // Constructor
 	void run(); // Main run method for exec
