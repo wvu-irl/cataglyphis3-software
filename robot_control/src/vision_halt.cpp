@@ -8,6 +8,8 @@ void VisionHalt::init()
 
 int VisionHalt::run()
 {
+	//robotOutputs.panAngle = panAngle;
+	//robotOutputs.neckPos = neckPos;
 	robotOutputs.visionCmd = hold__;
 	return 1;
 }

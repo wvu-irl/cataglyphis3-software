@@ -4,7 +4,12 @@
 #include "task.h"
 #include "task_type_enum.h"
 #include "drive_halt.h"
+#include "drive_straight.h"
+#include "drive_straight_cl.h"
 #include "grabber_halt.h"
+#include "grabber_set_drop.h"
+#include "grabber_set_slides.h"
+#include "grabber_idle.h"
 #include "vision_halt.h"
 #define TASK_POOL_SIZE 50
 #define PI 3.14159265359
@@ -17,9 +22,10 @@ public:
 	static std::deque <Task*> visionDeque;
 	static unsigned int taskPoolIndex[NUM_TASKS];
 	static Task* taskPool[NUM_TASKS][TASK_POOL_SIZE];
-	static DriveHalt driveEmptyHalt;
-	static GrabberHalt grabberEmptyHalt;
-	static VisionHalt visionEmptyHalt;
+	static DriveHalt driveHalt;
+	static GrabberHalt grabberHalt;
+	static GrabberIdle grabberIdle;
+	static VisionHalt visionHalt;
 };
 
 #endif // ACTUATOR_DEQUE_INTERFACE_H

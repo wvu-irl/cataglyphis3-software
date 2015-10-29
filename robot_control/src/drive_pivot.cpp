@@ -7,8 +7,8 @@ void DrivePivot::init()
 	rMax_ = params.float2;
 	if(deltaHeading_<0.0) pivotSign_ = -1;
 	else pivotSign_ = 1;
-	timeoutValue_ = 30.0 + fabs(deltaHeading_)/10.0;
-	initTime_ = ros::Time::now().toSec();
+	timeoutValue_ = (unsigned int)round((30.0 + fabs(deltaHeading_)/10.0)*robotStatus.loopRate);
+	timeoutCounter_ = 0;
 	rSpeedI_ = 0.0;
 	inThreshold_ = false;
 	thresholdTime_ = 0.0;
@@ -28,11 +28,11 @@ int DrivePivot::run()
 	else if(rSpeedT_<(-rSpeedMax_)) rSpeedT_ = -rSpeedMax_;
 	leftSpeed_ = round(rSpeedT_);
 	rightSpeed_ = round(-rSpeedT_);
-	elapsedTime_ = ros::Time::now().toSec() - initTime_;
+	timeoutCounter_++;
 	if(fabs(deltaHeading_)<=deltaHeadingThreshold_ && inThreshold_==false) {thresholdInitTime_ = ros::Time::now().toSec(); inThreshold_ = true;}
 	if(fabs(deltaHeading_)<=deltaHeadingThreshold_) thresholdTime_ = ros::Time::now().toSec() - thresholdInitTime_;
 	else {thresholdTime_ = 0.0; inThreshold_ = false;}
-	if(thresholdTime_ >= thresholdMinTime_ || elapsedTime_ >= timeoutValue_)
+	if(thresholdTime_ >= thresholdMinTime_ || timeoutCounter_ >= timeoutValue_)
 	{
 		robotOutputs.flMotorSpeed = 0;
 		robotOutputs.mlMotorSpeed = 0;

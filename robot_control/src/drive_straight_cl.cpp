@@ -9,8 +9,8 @@ void DriveStraightCL::init()
 	vMax_ = params.float2;
 	if(desiredDistance_<0.0) driveSign_ = -1;
 	else driveSign_ = 1;
-	timeoutValue_ = 30.0 + 1.0*fabs(desiredDistance_);
-	initTime_ = ros::Time::now().toSec();
+	timeoutValue_ = (unsigned int)round((30.0 + 1.0*fabs(desiredDistance_))*robotStatus.loopRate);
+	timeoutCounter_ = 0;
 	headingErrorSpeedI_ = 0.0;
 	inThreshold_ = false;
 	thresholdTime_ = 0.0;
@@ -40,11 +40,11 @@ int DriveStraightCL::run()
 	else if(headingErrorSpeedT_<(-maxHeadingErrorSpeed_)) headingErrorSpeedT_ = -maxHeadingErrorSpeed_;
 	leftSpeed_ = round(kVOutput_*vDesCoerc_+headingErrorSpeedT_);
 	rightSpeed_ = round(kVOutput_*vDesCoerc_-headingErrorSpeedT_);
-	elapsedTime_ = ros::Time::now().toSec() - initTime_;
+	timeoutCounter_++;
 	if(fabs(remainingDistance_)<=distanceThreshold_ && inThreshold_==false) {thresholdInitTime_ = ros::Time::now().toSec(); inThreshold_ = true;}
 	if(fabs(remainingDistance_)<=distanceThreshold_) thresholdTime_ = ros::Time::now().toSec() - thresholdInitTime_;
 	else {thresholdTime_ = 0.0; inThreshold_ = false;}
-	if(thresholdTime_ >= thresholdMinTime_ || elapsedTime_ >= timeoutValue_)
+	if(thresholdTime_ >= thresholdMinTime_ || timeoutCounter_ >= timeoutValue_)
 	{
 		robotOutputs.flMotorSpeed = 0;
 		robotOutputs.mlMotorSpeed = 0;

@@ -27,9 +27,8 @@ private:
 	int headingErrorSpeedT_;
 	float headingErrorSpeedP_;
 	float headingErrorSpeedI_;
-	double timeoutValue_;
-	double initTime_;
-	double elapsedTime_;
+	unsigned int timeoutValue_;
+	unsigned int timeoutCounter_;
 	double thresholdInitTime_;
 	double thresholdTime_;
 	bool inThreshold_;

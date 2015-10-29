@@ -105,6 +105,7 @@ include_directories(
  add_library(exec src/exec.cpp)
  add_library(action src/action.cpp)
  add_library(idle src/idle.cpp)
+ add_library(halt src/halt.cpp)
  add_library(drive_global src/drive_global.cpp)
  add_library(drive_relative src/drive_relative.cpp)
  
@@ -115,6 +116,7 @@ include_directories(
  add_library(grabber_set_slides src/grabber_set_slides.cpp)
  add_library(grabber_set_drop src/grabber_set_drop.cpp)
  add_library(grabber_halt src/grabber_halt.cpp)
+ add_library(grabber_idle src/grabber_idle.cpp)
  add_library(vision_halt src/vision_halt.cpp)
 
 ## Declare a cpp executable

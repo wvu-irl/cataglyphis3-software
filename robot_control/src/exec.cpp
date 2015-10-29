@@ -10,8 +10,12 @@ Exec::Exec()
 	for(int j=0; j<ACTION_POOL_SIZE; j++)
     {
         actionPool_[_idle][j] = new Idle;
-		//actionPool_[_driveGlobal][j] = new DriveGlobal;
-		//
+		actionPool_[_halt][j] = new Halt;
+		actionPool_[_driveGlobal][j] = new DriveGlobal;
+		actionPool_[_driveRelative][j] = new DriveRelative;
+		actionPool_[_grab][j] = new Grab;
+		actionPool_[_drop][j] = new Drop;
+		actionPool_[_open][j] = new Open;
 	}
 	for(int k=0; k<NUM_TASKS; k++)
 	{
@@ -20,8 +24,14 @@ Exec::Exec()
 	for(int l=0; l<ACTION_POOL_SIZE; l++)
 	{
 		pauseIdle_.taskPool[_driveHalt_][l] = new DriveHalt;
+		pauseIdle_.taskPool[_driveStraight_][l] = new DriveStraight;
+		pauseIdle_.taskPool[_driveStraightCL_][l] = new DriveStraightCL;
 		pauseIdle_.taskPool[_grabberHalt_][l] = new GrabberHalt;
+		pauseIdle_.taskPool[_grabberIdle_][l] = new GrabberIdle;
+		pauseIdle_.taskPool[_grabberSetDrop_][l] = new GrabberSetDrop;
+		pauseIdle_.taskPool[_grabberSetSlides_][l] = new GrabberSetSlides;
 		pauseIdle_.taskPool[_visionHalt_][l] = new VisionHalt;
+		// remaining vision tasks
 	}
 
 }
@@ -45,7 +55,7 @@ void Exec::run()
         actionPoolIndex_[nextActionType_]++; // Increment the action pool index of the action type just pushed
         if(actionPoolIndex_[nextActionType_]>=ACTION_POOL_SIZE) actionPoolIndex_[nextActionType_] = 0; // If pool index has wrapped around, restart at 0
     }
-	if(pause_==true && pausePrev_==false) pauseIdle_.visionEmptyHalt.init(); // Call vision empty halt init to record camera location for halt
+	if(pause_==true && pausePrev_==false) pauseIdle_.visionHalt.init(); // Call vision empty halt init to record camera location for halt
 	if(pause_) pauseIdle_.run(); // If pause switch is true, run pause action
     else // Else, run actions from deque
     {

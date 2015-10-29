@@ -20,9 +20,8 @@ private:
 	int rSpeedT_;
 	float rSpeedP_;
 	float rSpeedI_;
-	double timeoutValue_;
-	double initTime_;
-	double elapsedTime_;
+	unsigned int timeoutValue_;
+	unsigned int timeoutCounter_;
 	double thresholdInitTime_;
 	double thresholdTime_;
 	bool inThreshold_;

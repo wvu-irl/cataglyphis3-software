@@ -6,6 +6,12 @@
 #include "action.h"
 #include "action_params.h"
 #include "idle.h"
+#include "halt.h"
+#include "drive_global.h"
+#include "drive_relative.h"
+#include "drop.h"
+#include "grab.h"
+#include "open.h"
 #include <messages/ExecAction.h>
 
 #define ACTION_POOL_SIZE 10

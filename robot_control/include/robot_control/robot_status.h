@@ -4,6 +4,7 @@
 class RobotStatus
 {
 public:
+	unsigned int loopRate = 20; // Hz. Default to 20 Hz
 	// Drive data
 	float xPos = 0.0; // m
 	float yPos = 0.0; // m

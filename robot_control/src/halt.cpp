@@ -1,6 +1,6 @@
-#include <robot_control/idle.h>
+#include <robot_control/halt.h>
 
-void Idle::init()
+void Halt::init()
 {
 	driveDeque.clear();
 	grabberDeque.clear();
@@ -8,9 +8,9 @@ void Idle::init()
 	visionHalt.init();
 }
 
-int Idle::run()
+int Halt::run()
 {
 	driveHalt.run();
-	grabberIdle.run();
+	grabberHalt.run();
 	visionHalt.run();
 }

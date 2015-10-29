@@ -1,0 +1,16 @@
+#include <robot_control/open.h>
+
+void Open::init()
+{
+	driveDeque.clear();
+	grabberDeque.clear();
+	visionDeque.clear();
+	grabberDeque.front()->params.int1 = GRABBER_OPEN;
+	pushTask(_grabberSetDrop_);
+}
+
+int Open::run()
+{
+	runDeques();
+	return 1; // Other actions do not have to wait on grabber opening to continue. End immediately to save mission time.
+}
