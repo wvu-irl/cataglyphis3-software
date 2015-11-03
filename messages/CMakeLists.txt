@@ -53,6 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
    NavFilterOut.msg
    Servo_command.msg
    Servo_status.msg
+   GrabberFeedback.msg
  )
 
 ## Generate services in the 'srv' folder

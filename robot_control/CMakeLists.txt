@@ -137,6 +137,8 @@ include_directories(
    libncurses.so
  )
  
+ target_link_libraries(drive_global action)
+ 
  target_link_libraries(exec_node
    ${catkin_LIBRARIES}
    exec

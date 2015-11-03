@@ -31,7 +31,8 @@ public:
 std::deque <Task*> ActuatorDequeInterface::driveDeque;
 std::deque <Task*> ActuatorDequeInterface::grabberDeque;
 std::deque <Task*> ActuatorDequeInterface::visionDeque;
-//Task* ActuatorDequeInterface::taskPool;
+unsigned int ActuatorDequeInterface::taskPoolIndex[NUM_TASKS] = {0};
+Task* ActuatorDequeInterface::taskPool[NUM_TASKS][TASK_POOL_SIZE] = {0};
 DriveHalt ActuatorDequeInterface::driveHalt;
 GrabberHalt ActuatorDequeInterface::grabberHalt;
 GrabberIdle ActuatorDequeInterface::grabberIdle;
