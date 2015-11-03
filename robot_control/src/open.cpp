@@ -5,8 +5,8 @@ void Open::init()
 	driveDeque.clear();
 	grabberDeque.clear();
 	visionDeque.clear();
-	grabberDeque.front()->params.int1 = GRABBER_OPEN;
-	pushTask(_grabberSetDrop_);
+	pushTask(_grabberSetSlides_);
+	grabberDeque.back()->params.int1 = GRABBER_OPEN;
 }
 
 int Open::run()

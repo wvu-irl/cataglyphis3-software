@@ -36,6 +36,7 @@ int main(int argc, char** argv)
         robotSim.runGrabber(actuatorCmd.slide_pos_cmd, actuatorCmd.drop_pos_cmd, actuatorCmd.grabber_stop_cmd, actuatorCmd.grabber_stop_cmd);
         navMsgOut.x_position = robotSim.xPos;
         navMsgOut.y_position = robotSim.yPos;
+        navMsgOut.yaw_rate = angV;
         navMsgOut.heading = robotSim.heading;
         navMsgOut.human_heading = fmod(robotSim.heading, 360.0);
         grabberMsgOut.sliderPosAvg = robotSim.slidePos;

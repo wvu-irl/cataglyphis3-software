@@ -6,11 +6,11 @@ void Drop::init()
 	grabberDeque.clear();
 	visionDeque.clear();
 	pushTask(_grabberSetDrop_);
-	grabberDeque.front()->params.int1 = GRABBER_DROPPED;
+	grabberDeque.back()->params.int1 = GRABBER_DROPPED;
 	pushTask(_grabberSetSlides_);
-	grabberDeque.front()->params.int1 = GRABBER_OPEN;
+	grabberDeque.back()->params.int1 = GRABBER_OPEN;
 	pushTask(_grabberSetDrop_);
-	grabberDeque.front()->params.int1 = GRABBER_RAISED;
+	grabberDeque.back()->params.int1 = GRABBER_RAISED;
 }
 
 int Drop::run()

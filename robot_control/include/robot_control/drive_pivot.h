@@ -29,7 +29,7 @@ private:
 	const float kpR_ = 1.0; // deg/(s*deg)
 	const float kiR_ = 0.25;
 	const float kROutput_ = 450/45.0; // 45% of max speed at 45 deg/s
-	const float rSpeedMax_ = 500;
+	const int rSpeedMax_ = 500;
 	const float deltaHeadingThreshold_ = 2.0; // deg
 	const double thresholdMinTime_ = 0.25; // s
 	const float middleWheelReduction_ = 0.65;

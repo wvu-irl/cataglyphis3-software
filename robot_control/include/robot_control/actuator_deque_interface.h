@@ -5,6 +5,7 @@
 #include "task_type_enum.h"
 #include "drive_halt.h"
 #include "drive_straight.h"
+#include "drive_pivot.h"
 #include "drive_straight_cl.h"
 #include "grabber_halt.h"
 #include "grabber_set_drop.h"

@@ -6,5 +6,7 @@ bool pause
 float32 float1
 float32 float2
 float32 float3
+float32 float4
+float32 float5
 int32 int1
 bool bool1

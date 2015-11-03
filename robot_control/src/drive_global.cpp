@@ -8,14 +8,20 @@ void DriveGlobal::init()
 	rMax_ = params.float4;
 	desiredEndHeading_ = params.float5;
 	endHeading_ = params.bool1;
+	ROS_DEBUG("before task deque clears");
 	driveDeque.clear();
 	grabberDeque.clear();
 	visionDeque.clear();
 	calculatePath_();
+	ROS_DEBUG("before push task");
 	pushTask(_pivot_);
+	ROS_DEBUG("after push task");
+	ROS_DEBUG("drive deque back: %p",driveDeque.back());
 	driveDeque.back()->params.float1 = angleToTurn_;
 	driveDeque.back()->params.float2 = rMax_;
+	ROS_DEBUG("before next push task");
 	pushTask(_driveStraight_);
+	ROS_DEBUG("after next push task");
 	driveDeque.back()->params.float1 = distanceToDrive_;
 	driveDeque.back()->params.float2 = vMax_;
 	if(endHeading_)
@@ -28,6 +34,7 @@ void DriveGlobal::init()
 
 int DriveGlobal::run()
 {
+	ROS_DEBUG("before runDeques");
 	return runDeques();
 }
 

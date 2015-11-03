@@ -15,6 +15,8 @@ public:
 	// Grabber data
 	int grabberSlideStatus = 0;
 	int grabberDropStatus = 0;
+	int grabberSlidePos = 0;
+	int grabberDropPos = 0;
 	// Vision data
 	float panAngle = 0.0; // deg
 	float neckPos = 0.0; // deg

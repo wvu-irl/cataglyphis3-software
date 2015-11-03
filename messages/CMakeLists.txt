@@ -48,7 +48,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    ActuatorOut.msg
-   ExecStateMachineInfo.msg
+   ExecInfo.msg
    ExecAction.msg
    NavFilterOut.msg
    Servo_command.msg

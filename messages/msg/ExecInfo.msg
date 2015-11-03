@@ -1,0 +1,10 @@
+uint32 actionDequeSize
+int32[100] actionDeque
+float32[100] actionFloat1
+float32[100] actionFloat2
+float32[100] actionFloat3
+float32[100] actionFloat4
+float32[100] actionFloat5
+int32[100] actionInt1
+bool[100] actionBool1
+bool pause

@@ -1,8 +1,10 @@
 #ifndef ACTION_PARAMS_H
 #define ACTION_PARAMS_H
+#include "action_type_enum.h"
 
 struct ACTION_PARAMS_T
 {
+	ACTION_TYPE_T actionType;
 	float float1;
 	float float2;
 	float float3;
