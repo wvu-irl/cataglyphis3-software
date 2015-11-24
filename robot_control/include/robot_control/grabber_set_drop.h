@@ -9,6 +9,7 @@ public:
 	int run();
 private:
 	int dropPos_;
+	const int dropTol_ = 10;
 	Leading_Edge_Latch dropStatusLEL_;
 };
 

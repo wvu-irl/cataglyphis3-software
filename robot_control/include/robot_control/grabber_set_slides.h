@@ -9,6 +9,7 @@ public:
 	int run();
 private:
 	int slidePos_;
+	const int slideTol_ = 10;
 	Leading_Edge_Latch slideStatusLEL_;
 };
 

@@ -12,7 +12,7 @@
 #include "grabber_set_slides.h"
 #include "grabber_idle.h"
 #include "vision_halt.h"
-#define TASK_POOL_SIZE 50
+#define TASK_POOL_SIZE 100
 #define PI 3.14159265359
 
 class ActuatorDequeInterface

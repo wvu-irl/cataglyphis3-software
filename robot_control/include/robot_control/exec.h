@@ -18,7 +18,7 @@
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
 
-#define ACTION_POOL_SIZE 10
+#define ACTION_POOL_SIZE 20
 
 class Exec : public RobotControlInterface
 {

@@ -27,7 +27,7 @@ Exec::Exec()
 	{
 		pauseIdle_.taskPoolIndex[k] = 0;
 	}
-	for(int l=0; l<ACTION_POOL_SIZE; l++)
+	for(int l=0; l<TASK_POOL_SIZE; l++)
 	{
 		pauseIdle_.taskPool[_driveHalt_][l] = new DriveHalt;
 		pauseIdle_.taskPool[_driveStraight_][l] = new DriveStraight;
@@ -45,7 +45,6 @@ Exec::Exec()
 
 void Exec::run()
 {
-	//MAY REMOVE THIS actionDequeSize_ = actionDeque_.size(); // Record deque size
     if(clearDequeFlag_) actionDeque_.clear(); // Clear deque
     if(newActionFlag_) // New action to be added to deque
     {
@@ -56,15 +55,11 @@ void Exec::run()
         }
         else // Push new action to back of deque
         {
-			ROS_DEBUG("before push_back");
             actionDeque_.push_back(actionPool_[nextActionType_][actionPoolIndex_[nextActionType_]]); // Push new action pointer of specified type to back of deque
-			ROS_DEBUG("after push_back");
             actionDeque_.back()->params = params_; // Assign params into action object just pushed
-			ROS_DEBUG("after params assignment");
         }
         actionPoolIndex_[nextActionType_]++; // Increment the action pool index of the action type just pushed
         if(actionPoolIndex_[nextActionType_]>=ACTION_POOL_SIZE) actionPoolIndex_[nextActionType_] = 0; // If pool index has wrapped around, restart at 0
-		ROS_DEBUG("after actionPoolIndex increment");
     }
 	if(pause_==true && pausePrev_==false) pauseIdle_.visionHalt.init(); // Call vision empty halt init to record camera location for halt
 	if(pause_) pauseIdle_.run(); // If pause switch is true, run pause action
@@ -72,15 +67,13 @@ void Exec::run()
     {
         if(actionDeque_.empty()) // Check if deque is empty
         {
-			ROS_DEBUG("actionDeque empty");
 			pauseIdle_.run(); // Perform pause action to halt the robot
 			//ROS_DEBUG("after deque empty pauseIdle.run");
 			//if(newActionFlag_ && !pushToFrontFlag_) actionDeque_.front()->init();  // If a new action has been pushed to the back of the deque, run init() on the new action
         }
         else // Else, deque is not empty and the action at the front() should be run
         {
-			ROS_DEBUG("deque size : %u",actionDeque_.size());
-			if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) {ROS_DEBUG("before change to not empty front init"); actionDeque_.front()->init(); ROS_DEBUG("after change to not empty front init");} // If new action was pushed to the front or deque was empty and became not empty, need to run init() for new action
+			if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) actionDeque_.front()->init(); // If new action was pushed to the front or deque was empty and became not empty, need to run init() for new action
             if(currentActionDone_) // If the action at the front of the deque is complete, pop this action off and init() the next action in the deque
             {
                 actionDeque_.pop_front();
