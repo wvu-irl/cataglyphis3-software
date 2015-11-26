@@ -1,0 +1,5 @@
+uint16 easyThresh
+uint16 medThresh
+uint16 hardThresh
+---
+Waypoint[] waypointArray

@@ -49,14 +49,14 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    Keys_Pressed.msg
+   Waypoint.msg
  )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+ add_service_files(
+   FILES
+   WaypointsOfInterest.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -122,14 +122,19 @@ include_directories(
  add_library(grabber_idle src/grabber_idle.cpp)
  add_library(vision_halt src/vision_halt.cpp)
 
+ add_library(map_manager src/map_manager.cpp)
+ add_library(mission_planning src/mission_planning.cpp)
+
 ## Declare a cpp executable
  add_executable(keyboard_control_node src/keyboard_control_node.cpp)
  add_executable(exec_node src/exec_node.cpp)
+ add_executable(map_manager_node src/map_manager_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
  add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
  add_dependencies(exec_node robot_control_generate_messages_cpp)
+ add_dependencies(map_manager_node robot_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(keyboard_control_node
@@ -159,6 +164,11 @@ include_directories(
    grabber_halt
    grabber_idle
    vision_halt
+ )
+ 
+ target_link_libraries(map_manager_node
+   ${catkin_LIBRARIES}
+   map_manager
  )
 
 #############
