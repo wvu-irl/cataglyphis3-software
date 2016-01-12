@@ -27,8 +27,10 @@ public:
 	std::vector<int> value;
 	int valueSum;
 	std::vector<int> valueNormalized;
+	int valueNormalizedSum;
 	int valueNormalizedFloor;
 	int randomValue;
+	int largestNormalizedValue;
 	std::vector<int> notVisited;
 	int notVisitedSum;
 	arma::Mat<int> pheromone;
@@ -43,10 +45,10 @@ public:
 	const int pheromoneGain = 500;
 	const int distanceGain = 500;
 	const int terrainGain = 700;
-	const int pheroDepoGain = 500;
-	const int pheroDecayValue = 100;
+	const int pheroDepoGain = 800;
+	const int pheroDecayValue = 10;
 	const int initialPheromone = 500;
-	const int maxAntNum = 1000;
+	const int maxAntNum = 100;
 	int antNum;
 	int i;
 	int j;
