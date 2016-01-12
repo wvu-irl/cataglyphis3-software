@@ -1,0 +1,9 @@
+<launch>
+
+	<node name = "mission_planning_node"
+		pkg = "robot_control"
+		type = "mission_planning_node" 
+		output="screen" 
+		/>
+		
+</launch>

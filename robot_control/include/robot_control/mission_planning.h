@@ -3,7 +3,9 @@
 #include <ros/ros.h>
 #include <robot_control/Waypoint.h>
 #include <robot_control/WaypointsOfInterest.h>
+#include "robot_status.h"
 #include <messages/ExecAction.h>
+#include <messages/NavFilterOut.h>
 #include <vector>
 #include <armadillo>
 #include <math.h>
@@ -20,6 +22,8 @@ public:
 	robot_control::WaypointsOfInterest woiSrv;
 	ros::Publisher execActionPub;
 	messages::ExecAction execActionMsg;
+	ros::Subscriber navSub;
+	const int loopRate = 20; // Hz
 	std::vector<int> value;
 	int valueSum;
 	std::vector<int> valueNormalized;
@@ -48,12 +52,16 @@ public:
 	int j;
 	int bestJ;
 	robot_control::Waypoint currentLocation;
-	int numInterestingWaypoints;
+	int numWaypointsToPlan;
+	std::vector<robot_control::Waypoint> waypointsToPlan;
 	std::vector<robot_control::Waypoint> waypointsToTravel;
 	int bestPheromone;
+	RobotStatus robotStatus;
 private:
-	void planNewPath_();
+	void planRegionPath_();
+	void planCoveragePath_();
 	void antColony_();
+	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 };
 
 #endif // MISSION_PLANNING_H

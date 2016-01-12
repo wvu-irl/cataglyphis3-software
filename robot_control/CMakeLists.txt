@@ -123,18 +123,21 @@ include_directories(
  add_library(vision_halt src/vision_halt.cpp)
 
  add_library(map_manager src/map_manager.cpp)
+ 
  add_library(mission_planning src/mission_planning.cpp)
 
 ## Declare a cpp executable
  add_executable(keyboard_control_node src/keyboard_control_node.cpp)
  add_executable(exec_node src/exec_node.cpp)
  add_executable(map_manager_node src/map_manager_node.cpp)
+ add_executable(mission_planning_node src/mission_planning_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
  add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
  add_dependencies(exec_node robot_control_generate_messages_cpp)
  add_dependencies(map_manager_node robot_control_generate_messages_cpp)
+ add_dependencies(mission_planning_node robot_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(keyboard_control_node
@@ -169,6 +172,11 @@ include_directories(
  target_link_libraries(map_manager_node
    ${catkin_LIBRARIES}
    map_manager
+ )
+ 
+ target_link_libraries(mission_planning_node
+   ${catkin_LIBRARIES}
+   mission_planning
  )
 
 #############
