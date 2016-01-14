@@ -41,7 +41,17 @@
            <widget class="QComboBox" name="fieldSelector">
             <item>
              <property name="text">
+              <string> </string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Institute Park</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>MRB-Library Field</string>
              </property>
             </item>
            </widget>

@@ -133,7 +133,9 @@ public:
         actionPlaceholder2->setText(QApplication::translate("Cataglyphis_Gui", "Placeholder2", 0));
         fieldSelector->clear();
         fieldSelector->insertItems(0, QStringList()
+         << QString()
          << QApplication::translate("Cataglyphis_Gui", "Institute Park", 0)
+         << QApplication::translate("Cataglyphis_Gui", "MRB-Library Field", 0)
         );
         tabWidget->setTabText(tabWidget->indexOf(fieldViewTab), QApplication::translate("Cataglyphis_Gui", "Field View", 0));
         tabWidget->setTabText(tabWidget->indexOf(dataViewTab), QApplication::translate("Cataglyphis_Gui", "Data View", 0));

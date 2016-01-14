@@ -15,6 +15,9 @@ public:
     explicit Cataglyphis_Gui(QWidget *parent = 0);
     ~Cataglyphis_Gui();
 
+private slots:
+    void on_fieldSelector_currentIndexChanged(int index);
+
 private:
     Ui::Cataglyphis_Gui *ui;
 };

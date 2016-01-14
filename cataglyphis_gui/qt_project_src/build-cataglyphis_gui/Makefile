@@ -541,7 +541,8 @@ check: first
 compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
-qrc_resources.cpp: ../cataglyphis_gui/resources.qrc
+qrc_resources.cpp: ../cataglyphis_gui/resources.qrc \
+		../cataglyphis_gui/resources/institute_park.jpg
 	/opt/Qt5.5.1/5.5/gcc_64/bin/rcc -name resources ../cataglyphis_gui/resources.qrc -o qrc_resources.cpp
 
 compiler_moc_header_make_all: moc_cataglyphis_gui.cpp
@@ -948,7 +949,9 @@ cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cat
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayout.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o cataglyphis_gui.o ../cataglyphis_gui/cataglyphis_gui.cpp
 
 qrc_resources.o: qrc_resources.cpp 
