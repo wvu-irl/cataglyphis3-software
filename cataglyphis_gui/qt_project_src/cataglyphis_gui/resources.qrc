@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/field_pictures">
         <file>resources/institute_park.jpg</file>
+        <file>resources/pattern_test.jpg</file>
     </qresource>
 </RCC>

@@ -542,7 +542,8 @@ compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: ../cataglyphis_gui/resources.qrc \
-		../cataglyphis_gui/resources/institute_park.jpg
+		../cataglyphis_gui/resources/institute_park.jpg \
+		../cataglyphis_gui/resources/pattern_test.jpg
 	/opt/Qt5.5.1/5.5/gcc_64/bin/rcc -name resources ../cataglyphis_gui/resources.qrc -o qrc_resources.cpp
 
 compiler_moc_header_make_all: moc_cataglyphis_gui.cpp
@@ -653,6 +654,17 @@ moc_cataglyphis_gui.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QMainWindow \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpainter.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
 		../cataglyphis_gui/cataglyphis_gui.h
 	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso/.cataglyphis3_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/cataglyphis_gui.h -o moc_cataglyphis_gui.cpp
 
@@ -780,6 +792,17 @@ main.o: ../cataglyphis_gui/main.cpp ../cataglyphis_gui/cataglyphis_gui.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpainter.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
@@ -895,6 +918,17 @@ cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cat
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpainter.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
 		ui_cataglyphis_gui.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
@@ -921,16 +955,7 @@ cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cat
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsView \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsview.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpainter.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextoption.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qscrollarea.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
@@ -949,9 +974,7 @@ cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cat
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayout.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o cataglyphis_gui.o ../cataglyphis_gui/cataglyphis_gui.cpp
 
 qrc_resources.o: qrc_resources.cpp 

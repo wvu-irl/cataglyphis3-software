@@ -2,6 +2,8 @@
 #define CATAGLYPHIS_GUI_H
 
 #include <QMainWindow>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsView>
 
 namespace Ui {
 class Cataglyphis_Gui;
@@ -20,6 +22,11 @@ private slots:
 
 private:
     Ui::Cataglyphis_Gui *ui;
+    QGraphicsScene* scene;
+    //QGraphicsView* view;
+    QGraphicsPixmapItem* item;
+    QImage* field_pic[4];
+    QGraphicsRectItem* cataglyphisRect;
 };
 
 #endif // CATAGLYPHIS_GUI_H
