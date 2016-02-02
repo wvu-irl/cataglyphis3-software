@@ -3,6 +3,7 @@
 	<node name = "mission_planning_node"
 		pkg = "robot_control"
 		type = "mission_planning_node" 
+		launch-prefix="gdb "
 		output="screen" 
 		/>
 		

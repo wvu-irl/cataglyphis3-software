@@ -6,6 +6,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "mission_planning_node");
 	MissionPlanning missionPlanning;
 	ros::Rate loopRate(missionPlanning.loopRate);
+	ros::Duration(2).sleep();
 	ros::spinOnce();
 	missionPlanning.run();
 	ros::spinOnce();

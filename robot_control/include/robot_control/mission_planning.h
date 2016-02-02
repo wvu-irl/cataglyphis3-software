@@ -4,6 +4,7 @@
 #include <robot_control/Waypoint.h>
 #include <robot_control/WaypointsOfInterest.h>
 #include "robot_status.h"
+#include "action_type_enum.h"
 #include <messages/ExecAction.h>
 #include <messages/NavFilterOut.h>
 #include <vector>
@@ -24,7 +25,10 @@ public:
 	messages::ExecAction execActionMsg;
 	ros::Subscriber navSub;
 	const int loopRate = 20; // Hz
+	const double waypointPublishRate = 20; // Hz
+	ros::Rate* publishRate;
 	std::vector<int> value;
+	int computedValue;
 	int valueSum;
 	std::vector<int> valueNormalized;
 	int valueNormalizedSum;
@@ -55,6 +59,7 @@ public:
 	int bestJ;
 	robot_control::Waypoint currentLocation;
 	int numWaypointsToPlan;
+	int numWaypointsToTravel;
 	std::vector<robot_control::Waypoint> waypointsToPlan;
 	std::vector<robot_control::Waypoint> waypointsToTravel;
 	int bestPheromone;

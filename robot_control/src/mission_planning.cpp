@@ -5,6 +5,7 @@ MissionPlanning::MissionPlanning()
 	woiClient = nh.serviceClient<robot_control::WaypointsOfInterest>("/control/mapmanager/waypointsofinterest");
 	execActionPub = nh.advertise<messages::ExecAction>("control/exec/actionin", 1000);
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
+	publishRate = new ros::Rate(waypointPublishRate);
 	woiSrv.request.easyThresh = 0;
 	woiSrv.request.medThresh = 0;
 	woiSrv.request.hardThresh = 0;
@@ -30,8 +31,9 @@ void MissionPlanning::planRegionPath_()
 	else includeHard = 1;
 	if(woiClient.call(woiSrv)) ROS_DEBUG("woi service call successful");
 	else ROS_ERROR("woi service call unsuccessful");
-	numWaypointsToPlan = woiSrv.response.waypointArray.size();
-	waypointsToPlan.resize(numWaypointsToPlan);
+	numWaypointsToPlan = woiSrv.response.waypointArray.size() + 1;
+	numWaypointsToTravel = numWaypointsToPlan - 1;
+	waypointsToPlan.resize(numWaypointsToTravel);
 	ROS_DEBUG("before waypointArray copy");
 	std::copy(woiSrv.response.waypointArray.begin(), woiSrv.response.waypointArray.end(), waypointsToPlan.begin());
 	ROS_DEBUG("after waypointArray copy");
@@ -41,8 +43,9 @@ void MissionPlanning::planRegionPath_()
 	ROS_DEBUG("before antColony_()");
 	antColony_();
 	ROS_DEBUG("after antColony_()");
-	for(int i=0; i<numWaypointsToPlan; i++)
+	for(int i=0; i<numWaypointsToTravel; i++)
 	{
+		execActionMsg.nextActionType = _driveGlobal;
 		execActionMsg.newActionFlag = 1;
 		execActionMsg.float1 = waypointsToTravel.at(i).x;
 		execActionMsg.float2 = waypointsToTravel.at(i).y;
@@ -50,6 +53,8 @@ void MissionPlanning::planRegionPath_()
 		execActionMsg.float4 = 45.0;
 		execActionMsg.bool1 = false;
 		execActionPub.publish(execActionMsg);
+		ros::spinOnce();
+		publishRate->sleep();
 	}
 }
 
@@ -78,7 +83,7 @@ void MissionPlanning::antColony_()
 	antNum = 0;
 	for(antNum; antNum<maxAntNum; antNum++)
 	{
-		ROS_INFO("antNum = %i",antNum);
+		//ROS_INFO("antNum = %i",antNum);
 		i = numWaypointsToPlan - 1;
 		j = 0;
 		notVisited.clear();
@@ -92,36 +97,41 @@ void MissionPlanning::antColony_()
 			valueNormalizedFloor = 0;
 			for(j; j<numWaypointsToPlan; j++)
 			{
-				ROS_DEBUG("before value computation, j=%i",j);
-				ROS_WARN("sizeof(int) = %u",sizeof(int));
-				//ROS_DEBUG("waypointsToPlan.at(j).easyProb = %i",waypointsToPlan.at(j).easyProb);
-				//ROS_DEBUG("waypointsToPlan.at(j).medProb = %i",waypointsToPlan.at(j).medProb);
-				//ROS_DEBUG("waypointsToPlan.at(j).hardProb = %i",waypointsToPlan.at(j).hardProb);
+				/*ROS_DEBUG("before value computation, j=%i",j);
 				ROS_DEBUG("pheromone(i,j) = %i",pheromone(i,j));
+				ROS_DEBUG("waypointsToPlan.at(j).easyProb = %i",waypointsToPlan.at(j).easyProb);
+				ROS_DEBUG("easyProbGain*easyProb = %i",includeEasy*easyProbGain*waypointsToPlan.at(j).easyProb);
+				ROS_DEBUG("waypointsToPlan.at(j).medProb = %i",waypointsToPlan.at(j).medProb);
+				ROS_DEBUG("medProbGain*medProb = %i",includeMed*medProbGain*waypointsToPlan.at(j).medProb);
+				ROS_DEBUG("waypointsToPlan.at(j).hardProb = %i",waypointsToPlan.at(j).hardProb);
+				ROS_DEBUG("hardProbGain*hardProb = %i",includeHard*hardProbGain*waypointsToPlan.at(j).hardProb);
 				ROS_DEBUG("pheromoneGain*pheromone(i,j) = %i",pheromoneGain*pheromone(i,j));
-				//ROS_DEBUG("distance(i,j) = %i",distance(i,j));
-				//ROS_DEBUG("terrainHazard(i,j) = %i",terrainHazard(i,j));
-				//ROS_DEBUG("notVisited[j] = %i",notVisited.at(j));
-				value.at(j) = notVisited.at(j)*(includeEasy*easyProbGain*waypointsToPlan.at(j).easyProb +
-												includeMed*medProbGain*waypointsToPlan.at(j).medProb +
-												includeHard*hardProbGain*waypointsToPlan.at(j).hardProb +
-												pheromoneGain*pheromone(i,j) -
-												distanceGain*distance(i,j) -
-												terrainGain*terrainHazard(i,j)) /
-												(includeEasy*easyProbGain + includeMed*medProbGain + includeHard*hardProbGain + pheromoneGain);
+				ROS_DEBUG("distance(i,j) = %i",distance(i,j));
+				ROS_DEBUG("distanceGain*distance(i,j) = %i",distanceGain*distance(i,j));
+				ROS_DEBUG("terrainHazard(i,j) = %i",terrainHazard(i,j));
+				ROS_DEBUG("terrainGain*terrainHazard(i,j) = %i",terrainGain*terrainHazard(i,j));
+				ROS_DEBUG("notVisited[j] = %i",notVisited.at(j));*/
+				computedValue =	(includeEasy*easyProbGain*waypointsToPlan.at(j).easyProb +
+								includeMed*medProbGain*waypointsToPlan.at(j).medProb +
+								includeHard*hardProbGain*waypointsToPlan.at(j).hardProb +
+								pheromoneGain*pheromone(i,j) -
+								distanceGain*distance(i,j) -
+								terrainGain*terrainHazard(i,j)) /
+								(includeEasy*easyProbGain + includeMed*medProbGain + includeHard*hardProbGain + pheromoneGain);
 				//ROS_DEBUG("after value computation, before coersion. value[j] = %i",value.at(j));
-				if(value.at(j) < 0) value.at(j) = 1;
-				ROS_DEBUG("after value computation. value[j] = %i",value.at(j));
+				if(computedValue <= 0 && notVisited.at(j)==1) value.at(j) = 1;
+				else value.at(j) = notVisited.at(j)*computedValue;
+				//ROS_DEBUG("after value computation. value[j] = %i",value.at(j));
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueSum += value.at(k);
-			ROS_DEBUG("valueSum = %i",valueSum);
+			//ROS_DEBUG("valueSum = %i",valueSum);
 			for(int k=0; k<numWaypointsToPlan; k++)
 			{
 				valueNormalized.at(k) = (1000*value.at(k))/valueSum;
 				if(value.at(k)!=0 && valueNormalized.at(k)==0) valueNormalized.at(k) = 1; // Basement for normalized values. Probability distribution is discrete, not continuous, so there needs to be a basement (0.1%) that even the smallest probabilities get rounded up to so they are included in the distribution and not lost due to discrete rounding down
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueNormalizedSum += valueNormalized.at(k);
-			ROS_DEBUG("valueNormalizedSum = %i",valueNormalizedSum);
+			//ROS_DEBUG("valueNormalizedSum = %i",valueNormalizedSum);
 			randomValue = rand() % 1000;
 			if(randomValue>=valueNormalizedSum)
 			{
@@ -135,20 +145,21 @@ void MissionPlanning::antColony_()
 			{
 				for(int k=0; k<numWaypointsToPlan; k++)
 				{
-					ROS_DEBUG("k = %i",k);
+					/*ROS_DEBUG("k = %i",k);
 					ROS_DEBUG("value[k] = %i",value.at(k));
 					ROS_DEBUG("valueNormalized[k] = %i",valueNormalized.at(k));
 					ROS_DEBUG("valueNormalizedFloor = %i",valueNormalizedFloor);
 					ROS_DEBUG("randomValue = %i",randomValue);
-					ROS_DEBUG("valueNormalizedCeiling = %i\n",valueNormalizedFloor + valueNormalized.at(k));
+					ROS_DEBUG("valueNormalizedCeiling = %i\n",valueNormalizedFloor + valueNormalized.at(k));*/
 					if(randomValue >= valueNormalizedFloor && randomValue < (valueNormalizedFloor + valueNormalized.at(k)) && valueNormalized.at(k)!=0) {bestJ = k; break;}
 					else valueNormalizedFloor += valueNormalized.at(k);
 				}
 			}
 			ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
-			pheromone(i,bestJ) += pheroDepoGain/distance(i,bestJ);
-			pheromone(bestJ,i) += pheroDepoGain/distance(bestJ,i);
-			ROS_DEBUG("after pheromone increment");
+			ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %i\n", pheroDepoGain/distance(i,bestJ));
+			pheromone(i,bestJ) += (pheroDepoGain/distance(i,bestJ) + pheroDecayValue);
+			pheromone(bestJ,i) += (pheroDepoGain/distance(bestJ,i) + pheroDecayValue);
+			//ROS_DEBUG("after pheromone increment");
 			notVisited.at(bestJ) = 0;
 			i = bestJ;
 			j = 0;
@@ -163,25 +174,30 @@ void MissionPlanning::antColony_()
 				if(pheromone(m,n)<0) pheromone(m,n) = 0;
 			}
 		}
-		ROS_INFO("pheromone matrix, loop:");
-		pheromone.print();
+		//ROS_INFO("pheromone matrix, loop:");
+		//pheromone.print();
 		// Add some other condition for cutting off algorithm early if clear optimum is being reached
 	}
 	ROS_INFO("pheromone matrix, end:");
 	pheromone.print();
-	waypointsToTravel.resize(numWaypointsToPlan);
+	waypointsToTravel.resize(numWaypointsToTravel);
 	i = numWaypointsToPlan - 1;
-	bestPheromone = 0;
 	notVisited.clear();
 	notVisited.resize(numWaypointsToPlan,1);
 	notVisited.back() = 0; // Do not want to include current location in possible set of waypoints to visit
 	notVisitedSum = numWaypointsToPlan;
-	for(int o=0; o<numWaypointsToPlan; o++)
+	for(int o=0; o<numWaypointsToTravel; o++)
 	{
+		bestPheromone = 0;
 		j=0;
 		for(j; j<numWaypointsToPlan; j++)
 		{
-			if((notVisited.at(j)*pheromone(i,j))>bestPheromone) {bestPheromone = pheromone(i,j); bestJ = j; ROS_DEBUG("bestPheromone found");}
+			/*ROS_DEBUG("i = %i", i);
+			ROS_DEBUG("j = %i", j);
+			ROS_DEBUG("notVisited.at(j) = %i", notVisited.at(j));
+			ROS_DEBUG("pheromone(i,j) = %i", pheromone(i,j));
+			ROS_DEBUG("bestPheromone = %i", bestPheromone);*/
+			if((notVisited.at(j)*pheromone(i,j))>bestPheromone) {bestPheromone = pheromone(i,j); bestJ = j; ROS_DEBUG("bestPheromone found, bestJ = %i", bestJ);}
 		}
 		waypointsToTravel.at(o) = waypointsToPlan.at(bestJ);
 		notVisited.at(bestJ) = 0;
