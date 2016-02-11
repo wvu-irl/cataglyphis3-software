@@ -53,8 +53,8 @@ void MissionPlanning::planRegionPath_()
 		execActionMsg.float4 = 45.0;
 		execActionMsg.bool1 = false;
 		execActionPub.publish(execActionMsg);
-		ros::spinOnce();
 		publishRate->sleep();
+		ros::spinOnce();
 	}
 }
 
@@ -72,10 +72,10 @@ void MissionPlanning::antColony_()
 	{
 		for(int n=0; n<numWaypointsToPlan; n++)
 		{
-			ROS_DEBUG("before distance matrix calc: m=%i n=%i",m,n);
+			//ROS_DEBUG("before distance matrix calc: m=%i n=%i",m,n);
 			distance(m,n) = hypot(waypointsToPlan.at(m).x - waypointsToPlan.at(n).x,
 								  waypointsToPlan.at(m).y - waypointsToPlan.at(n).y);
-			ROS_DEBUG("after distance matrix calc");
+			//ROS_DEBUG("after distance matrix calc");
 			terrainHazard.fill(0); // Temporary until actual terrain hazard calculation implemented
 			// terrainHazard(m,n) = something;
 		}
@@ -155,8 +155,8 @@ void MissionPlanning::antColony_()
 					else valueNormalizedFloor += valueNormalized.at(k);
 				}
 			}
-			ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
-			ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %i\n", pheroDepoGain/distance(i,bestJ));
+			//ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
+			//ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %i\n", pheroDepoGain/distance(i,bestJ));
 			pheromone(i,bestJ) += (pheroDepoGain/distance(i,bestJ) + pheroDecayValue);
 			pheromone(bestJ,i) += (pheroDepoGain/distance(bestJ,i) + pheroDecayValue);
 			//ROS_DEBUG("after pheromone increment");

@@ -3,21 +3,25 @@
 #include <messages/ActuatorOut.h>
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
+#include <messages/SimControl.h>
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
+void simControlCallback(const messages::SimControl::ConstPtr& msg);
 
 messages::ActuatorOut actuatorCmd;
+RobotSim robotSim(0.0, 0.0, 0.0,20);
 
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "simulation_node");
     ros::NodeHandle nh;
     ros::Subscriber actuatorSub = nh.subscribe<messages::ActuatorOut>("control/actuatorout/all",1,actuatorCallback);
+    ros::Subscriber simConSub = nh.subscribe<messages::SimControl>("simulation/simcontrol/simcontrol",1,simControlCallback);
     ros::Publisher navPub = nh.advertise<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1);
     ros::Publisher grabberPub = nh.advertise<messages::GrabberFeedback>("roboteq/grabberin/grabberin",1);
     messages::NavFilterOut navMsgOut;
     messages::GrabberFeedback grabberMsgOut;
-    RobotSim robotSim(0.0, 0.0, 0.0,20);
+
     double linV; // m/s
     double angV; // deg/s
     const double linVGain = 1.2/1000.0/6.0; // m/s per speed cmd
@@ -54,4 +58,16 @@ int main(int argc, char** argv)
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg)
 {
     actuatorCmd = *msg;
+}
+
+void simControlCallback(const messages::SimControl::ConstPtr& msg)
+{
+    if(msg->teleport)
+    {
+        robotSim.teleport(msg->teleX, msg->teleY, msg->teleHeading);
+    }
+    if(msg->setSimSpeed)
+    {
+        if(msg->simSpeed>0.0) robotSim.dt = robotSim.normalSpeedDT*msg->simSpeed;
+    }
 }

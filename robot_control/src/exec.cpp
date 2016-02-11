@@ -108,6 +108,7 @@ void Exec::actionCallback_(const messages::ExecAction::ConstPtr& msg)
 	params_.float5 = msg->float5;
     params_.int1 = msg->int1;
     params_.bool1 = msg->bool1;
+	ROS_INFO("ACTION CALLBACK, float1 = %f, float2 = %f",params_.float1,params_.float2);
 }
 
 void Exec::navCallback_(const messages::NavFilterOut::ConstPtr& msg)

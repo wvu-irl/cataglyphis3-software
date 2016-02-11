@@ -54,6 +54,7 @@ find_package(catkin REQUIRED COMPONENTS
    Servo_command.msg
    Servo_status.msg
    GrabberFeedback.msg
+   SimControl.msg
  )
 
 ## Generate services in the 'srv' folder
