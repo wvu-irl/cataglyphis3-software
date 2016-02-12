@@ -15,8 +15,16 @@ void MissionPlanning::run()
 	if(1/*something intelligent*/) planRegionPath_();
 }
 
+void chooseRegion_()
+{
+    // Request info about regions
+    // Loop through list and choose best region not yet visited
+    // Call execActionClient service to drive to center of the chosen region
+}
+
 void MissionPlanning::planRegionPath_()
 {
+    // *** Change this function to focus on path planning using ant colony within a region ***
 	// Decision on how to set thresholds, based on which type of samples are being searched for. Constant for now
 	woiSrv.request.easyThresh = 200;
 	woiSrv.request.medThresh = 200;

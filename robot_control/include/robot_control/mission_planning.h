@@ -2,7 +2,9 @@
 #define MISSION_PLANNING_H
 #include <ros/ros.h>
 #include <robot_control/Waypoint.h>
-#include <robot_control/WaypointsOfInterest.h>
+#include <robot_control/WaypointsOfInterest.h> // Remove
+#include <robot_control/RegionsOfInterest.h>
+#include <robot_control/WaypointsOfRegion.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
 #include <messages/ExecAction.h>
@@ -63,6 +65,7 @@ public:
 	int bestPheromone;
 	RobotStatus robotStatus;
 private:
+	void chooseRegion_();
 	void planRegionPath_();
 	void planCoveragePath_();
 	void antColony_();
