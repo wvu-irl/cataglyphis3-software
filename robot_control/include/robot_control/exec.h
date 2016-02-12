@@ -27,7 +27,7 @@ public:
 	ros::NodeHandle nh;
 	ros::Publisher infoPub;
 	ros::Publisher actuatorPub;
-	ros::Subscriber actionSub;
+	ros::ServiceServer actionServ;
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;
 	const int loopRate = 20; // Hz
@@ -53,7 +53,7 @@ private:
 	messages::ActuatorOut actuatorMsgOut_;
 	messages::ExecInfo execInfoMsgOut_;
 	// Methods
-	void actionCallback_(const messages::ExecAction::ConstPtr& msg);
+	bool actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res);
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg);
 	void packActuatorMsgOut_();

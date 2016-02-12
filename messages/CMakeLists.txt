@@ -49,7 +49,6 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    ActuatorOut.msg
    ExecInfo.msg
-   ExecAction.msg
    NavFilterOut.msg
    Servo_command.msg
    Servo_status.msg
@@ -58,11 +57,10 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+ add_service_files(
+   FILES
+   ExecAction.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(

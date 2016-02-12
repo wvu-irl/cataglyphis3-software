@@ -3,7 +3,7 @@
 Exec::Exec()
 {
 	robotStatus.loopRate = loopRate;
-	actionSub = nh.subscribe<messages::ExecAction>("control/exec/actionin", 1000, &Exec::actionCallback_, this);
+    actionServ = nh.advertiseService("control/exec/actionin", &Exec::actionCallback_, this);
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
@@ -93,22 +93,23 @@ void Exec::run()
 	infoPub.publish(execInfoMsgOut_);
 }
 
-void Exec::actionCallback_(const messages::ExecAction::ConstPtr& msg)
+bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res)
 {
-    nextActionType_ = static_cast<ACTION_TYPE_T>(msg->nextActionType);
-	newActionFlag_ = msg->newActionFlag;
-    pushToFrontFlag_ = msg->pushToFrontFlag;
-    clearDequeFlag_ = msg->clearDequeFlag;
-    pause_ = msg->pause;
+    nextActionType_ = static_cast<ACTION_TYPE_T>(req.nextActionType);
+    newActionFlag_ = req.newActionFlag;
+    pushToFrontFlag_ = req.pushToFrontFlag;
+    clearDequeFlag_ = req.clearDequeFlag;
+    pause_ = req.pause;
 	params_.actionType = nextActionType_;
-    params_.float1 = msg->float1;
-    params_.float2 = msg->float2;
-    params_.float3 = msg->float3;
-	params_.float4 = msg->float4;
-	params_.float5 = msg->float5;
-    params_.int1 = msg->int1;
-    params_.bool1 = msg->bool1;
+    params_.float1 = req.float1;
+    params_.float2 = req.float2;
+    params_.float3 = req.float3;
+    params_.float4 = req.float4;
+    params_.float5 = req.float5;
+    params_.int1 = req.int1;
+    params_.bool1 = req.bool1;
 	ROS_INFO("ACTION CALLBACK, float1 = %f, float2 = %f",params_.float1,params_.float2);
+    return true;
 }
 
 void Exec::navCallback_(const messages::NavFilterOut::ConstPtr& msg)

@@ -3,9 +3,8 @@
 MissionPlanning::MissionPlanning()
 {
 	woiClient = nh.serviceClient<robot_control::WaypointsOfInterest>("/control/mapmanager/waypointsofinterest");
-	execActionPub = nh.advertise<messages::ExecAction>("control/exec/actionin", 1000);
+    execActionClient = nh.serviceClient<messages::ExecAction>("control/exec/actionin");
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
-	publishRate = new ros::Rate(waypointPublishRate);
 	woiSrv.request.easyThresh = 0;
 	woiSrv.request.medThresh = 0;
 	woiSrv.request.hardThresh = 0;
@@ -45,15 +44,15 @@ void MissionPlanning::planRegionPath_()
 	ROS_DEBUG("after antColony_()");
 	for(int i=0; i<numWaypointsToTravel; i++)
 	{
-		execActionMsg.nextActionType = _driveGlobal;
-		execActionMsg.newActionFlag = 1;
-		execActionMsg.float1 = waypointsToTravel.at(i).x;
-		execActionMsg.float2 = waypointsToTravel.at(i).y;
-		execActionMsg.float3 = 1.5;
-		execActionMsg.float4 = 45.0;
-		execActionMsg.bool1 = false;
-		execActionPub.publish(execActionMsg);
-		publishRate->sleep();
+        execActionSrv.request.nextActionType = _driveGlobal;
+        execActionSrv.request.newActionFlag = 1;
+        execActionSrv.request.float1 = waypointsToTravel.at(i).x;
+        execActionSrv.request.float2 = waypointsToTravel.at(i).y;
+        execActionSrv.request.float3 = 1.5;
+        execActionSrv.request.float4 = 45.0;
+        execActionSrv.request.bool1 = false;
+        if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+        else ROS_ERROR("exec action service call unsuccessful");
 		ros::spinOnce();
 	}
 }

@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <messages/ActuatorOut.h>
-#include <messages/ExecStateMachineInfo.h>
+#include <messages/ExecInfo.h>
 #include <robot_control/Keys_Pressed.h>
 #include <messages/Servo_command.h>
 //#include "robot_actions_class.h"
@@ -11,7 +11,7 @@
 #include <ncurses.h>
 
 messages::ActuatorOut actuator_msg;
-messages::ExecStateMachineInfo exec_msg;
+messages::ExecInfo exec_msg;
 robot_control::Keys_Pressed keys_msg;
 messages::Servo_command servo_msg;
 

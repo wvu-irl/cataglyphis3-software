@@ -21,12 +21,10 @@ public:
 	ros::NodeHandle nh;
 	ros::ServiceClient woiClient;
 	robot_control::WaypointsOfInterest woiSrv;
-	ros::Publisher execActionPub;
-	messages::ExecAction execActionMsg;
+	ros::ServiceClient execActionClient;
+	messages::ExecAction execActionSrv;
 	ros::Subscriber navSub;
 	const int loopRate = 20; // Hz
-	const double waypointPublishRate = 20; // Hz
-	ros::Rate* publishRate;
 	std::vector<int> value;
 	int computedValue;
 	int valueSum;
