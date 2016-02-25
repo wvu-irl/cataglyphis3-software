@@ -1,6 +1,7 @@
 #include <robot_control/map_manager.h>
 
 MapManager::MapManager()
+    : satMap({"sampleProb","hazard"})
 {
 	woiServ = nh.advertiseService("/control/mapmanager/waypointsofinterest", &MapManager::WOI, this);
 	// *** Temporary! Only for Testing ***
@@ -76,7 +77,25 @@ MapManager::MapManager()
 	waypointsOfInterestVector.push_back(waypoint);
 	ROS_INFO("wapointsOfInterestVector Size = %u",waypointsOfInterestVector.size());
 	// ***********************************
-
+    satMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/satmap",1);
+    satMap.setFrameId("satMap");
+    satMap.setGeometry(grid_map::Length(300.0, 200.0), 1.0, grid_map::Position(12.0, 65.0));
+    satMap.add("sampleProb", 458);
+    satMap.add("hazard", 998);
+    /*for(grid_map::GridMapIterator it(satMap); !it.isPastEnd(); ++it)
+    {
+        satMap.at("sampleProb", *it) = 322.9;
+        satMap.at("hazard", *it) = 190.1;
+    }*/
+    satMap.atPosition("sampleProb", grid_map::Position(90.1, 7.0)) = 500.2;
+    ROS_INFO("prob at (80,80) = %f", satMap.atPosition("sampleProb", grid_map::Position(80.0, 80.0)));
+    ROS_INFO("prob at (90,7.2) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.0, 7.2)));
+    ROS_INFO("prob at (90.1,7.0) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.1, 7.0)));
+    ROS_INFO("prob at (90.5,7.0) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.5, 7.0)));
+    ROS_INFO("prob at (90.5,6.8) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.5, 6.8)));
+    grid_map::GridMapRosConverter::toMessage(satMap,satMapMsg);
+    ros::Duration(1.0).sleep();
+    satMapPub.publish(satMapMsg);
 }
 
 bool MapManager::WOI(robot_control::WaypointsOfInterest::Request &req, robot_control::WaypointsOfInterest::Response &res)

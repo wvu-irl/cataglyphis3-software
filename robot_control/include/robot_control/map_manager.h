@@ -3,6 +3,8 @@
 #include <ros/ros.h>
 #include <robot_control/Waypoint.h>
 #include <robot_control/WaypointsOfInterest.h>
+#include <grid_map/grid_map.hpp>
+#include <grid_map_msgs/GridMap.h>
 #include <vector>
 
 class MapManager
@@ -16,6 +18,9 @@ public:
 	ros::ServiceServer woiServ;
 	std::vector <robot_control::Waypoint> waypointsOfInterestVector;
 	robot_control::Waypoint waypoint;
+	grid_map::GridMap satMap;
+	ros::Publisher satMapPub;
+	grid_map_msgs::GridMap satMapMsg;
 };
 
 #endif // MAP_MANAGER_H

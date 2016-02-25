@@ -10,6 +10,10 @@ find_package(catkin REQUIRED COMPONENTS
   messages
   roscpp
   rospy
+  grid_map
+  grid_map_msgs
+  geometry_msgs
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -101,6 +105,7 @@ add_definitions("-std=gnu++11")
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a cpp library
@@ -174,6 +179,7 @@ include_directories(
  target_link_libraries(map_manager_node
    ${catkin_LIBRARIES}
    map_manager
+   #grid_map
  )
  
  target_link_libraries(mission_planning_node
