@@ -211,6 +211,16 @@ void MissionPlanning::antColony_()
 		i = bestJ;
 		ROS_DEBUG("waypointsToTravel[%i]: x = %f  y = %f", o, waypointsToTravel.at(o).x, waypointsToTravel.at(o).y);
 	}
+
+
+
+
+
+
+
+
+
+
 }
 
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
