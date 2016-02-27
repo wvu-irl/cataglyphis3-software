@@ -78,7 +78,7 @@ MapManager::MapManager()
 	ROS_INFO("wapointsOfInterestVector Size = %u",waypointsOfInterestVector.size());
 	// ***********************************
     satMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/satmap",1);
-    satMap.setFrameId("satMap");
+    satMap.setFrameId("map");
     satMap.setGeometry(grid_map::Length(300.0, 200.0), 1.0, grid_map::Position(12.0, 65.0));
     satMap.add("sampleProb", 458);
     satMap.add("hazard", 998);
@@ -87,7 +87,7 @@ MapManager::MapManager()
         satMap.at("sampleProb", *it) = 322.9;
         satMap.at("hazard", *it) = 190.1;
     }*/
-    satMap.atPosition("sampleProb", grid_map::Position(90.1, 7.0)) = 500.2;
+    satMap.atPosition("sampleProb", grid_map::Position(50.1, 7.0)) = 500.2;
     ROS_INFO("prob at (80,80) = %f", satMap.atPosition("sampleProb", grid_map::Position(80.0, 80.0)));
     ROS_INFO("prob at (90,7.2) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.0, 7.2)));
     ROS_INFO("prob at (90.1,7.0) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.1, 7.0)));

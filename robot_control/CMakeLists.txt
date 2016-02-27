@@ -179,7 +179,7 @@ include_directories(
  target_link_libraries(map_manager_node
    ${catkin_LIBRARIES}
    map_manager
-   #grid_map
+   ${grid_map_LIBRARIES}
  )
  
  target_link_libraries(mission_planning_node
