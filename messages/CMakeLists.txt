@@ -54,12 +54,15 @@ find_package(catkin REQUIRED COMPONENTS
    Servo_status.msg
    GrabberFeedback.msg
    SimControl.msg
+   CVSampleProps.msg
+   CVSamplesFound.msg
  )
 
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
    ExecAction.srv
+   CVSearchCmd.srv
  )
 
 ## Generate actions in the 'action' folder
