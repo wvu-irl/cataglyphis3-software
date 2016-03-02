@@ -134,16 +134,21 @@ include_directories(
 # add_dependencies(lidar ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(lidar_node src/lidar_node.cpp)
+add_executable(velodyne_filtering_node src/velodyne_filtering_node.cpp)
+add_executable(collision_detection_node src/collision_detection_node.cpp)
 
 ## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(lidar_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(velodyne_filtering_node lidar_generate_messages_cpp)
+add_dependencies(collision_detection_node lidar_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(lidar_node
-#   ${catkin_LIBRARIES}
-# )
+ target_link_libraries(velodyne_filtering_node 
+ 	${catkin_LIBRARIES}
+ )
+
+  target_link_libraries(collision_detection_node 
+ 	${catkin_LIBRARIES}
+ )
 
 #############
 ## Install ##
