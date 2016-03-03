@@ -62,6 +62,7 @@ find_package(catkin REQUIRED COMPONENTS
    WaypointsOfInterest.srv
    RegionsOfInterest.srv
    WaypointsOfRegion.srv
+   IntermediateWaypoints.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -132,12 +133,15 @@ include_directories(
  add_library(map_manager src/map_manager.cpp)
  
  add_library(mission_planning src/mission_planning.cpp)
+ 
+ add_library(safe_pathing src/safe_pathing.cpp)
 
 ## Declare a cpp executable
  #add_executable(keyboard_control_node src/keyboard_control_node.cpp)
  add_executable(exec_node src/exec_node.cpp)
  add_executable(map_manager_node src/map_manager_node.cpp)
  add_executable(mission_planning_node src/mission_planning_node.cpp)
+ add_executable(safe_pathing_node src/safe_pathing_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -145,6 +149,7 @@ include_directories(
  add_dependencies(exec_node robot_control_generate_messages_cpp)
  add_dependencies(map_manager_node robot_control_generate_messages_cpp)
  add_dependencies(mission_planning_node robot_control_generate_messages_cpp)
+ add_dependencies(safe_pathing_node robot_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
  #target_link_libraries(keyboard_control_node
@@ -185,6 +190,11 @@ include_directories(
  target_link_libraries(mission_planning_node
    ${catkin_LIBRARIES}
    mission_planning
+ )
+ 
+ target_link_libraries(safe_pathing_node
+   ${catkin_LIBRARIES}
+   safe_pathing
  )
 
 #############

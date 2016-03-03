@@ -1,0 +1,6 @@
+Waypoint start
+Waypoint finish
+bool collision
+float32 collisionDistance
+---
+Waypoint[] waypointArray

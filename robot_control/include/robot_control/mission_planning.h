@@ -5,6 +5,7 @@
 #include <robot_control/WaypointsOfInterest.h> // Remove
 #include <robot_control/RegionsOfInterest.h>
 #include <robot_control/WaypointsOfRegion.h>
+#include <robot_control/IntermediateWaypoints.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
 #include <messages/ExecAction.h>
@@ -26,6 +27,8 @@ public:
 	ros::ServiceClient execActionClient;
 	messages::ExecAction execActionSrv;
 	ros::Subscriber navSub;
+	ros::ServiceClient intermediateWaypointsClient;
+	robot_control::IntermediateWaypoints intermediateWaypointsSrv;
 	const int loopRate = 20; // Hz
 	std::vector<int> value;
 	int computedValue;
@@ -64,11 +67,36 @@ public:
 	std::vector<robot_control::Waypoint> waypointsToTravel;
 	int bestPheromone;
 	RobotStatus robotStatus;
+	bool collisionDetected;
+	bool commandedAvoidObstacle;
+	bool possessingSample;
+	bool commandedReturnHome;
+	bool confirmedApproach;
+	bool commandedApproach;
+	bool interestingSampleNearby;
+	bool commandedExamine;
+	bool inIncompleteROI;
+	bool commandedPlanRegionPath;
+	bool completedROI;
+	bool completedDeposit;
+	bool commandedChooseRegion;
+	bool initComplete;
+	bool commandedInit;
+	const float homeX = 5.0; // m
+	const float homeY = 0.0; // m
 private:
-	void chooseRegion_();
+	void avoidObstacle_();
+	void returnHome_();
+	void approach_();
+	void examine_();
 	void planRegionPath_();
-	void planCoveragePath_();
+	void chooseRegion_();
+	void init_();
+	void sendDriveGlobal_();
 	void antColony_();
+	void planSafePath_();
+	void clearAndResizeWTT_();
+	void callIntermediateWaypoints_();
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 };
 
