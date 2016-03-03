@@ -13,8 +13,8 @@ MissionPlanning::MissionPlanning()
     commandedAvoidObstacle = false;
     possessingSample = false;
     commandedReturnHome = false;
-    confirmedApproach = false;
-    commandedApproach = false;
+    confirmedAcquire = false;
+    commandedAcquire = false;
     interestingSampleNearby = false;
     commandedExamine = false;
     inIncompleteROI = false;
@@ -28,7 +28,6 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
-    possessingSample = true;
     if(collisionDetected)
     {
         if(!commandedAvoidObstacle) {avoidObstacle_(); return;}
@@ -36,12 +35,12 @@ void MissionPlanning::run()
 
     if(possessingSample)
     {
-        if(!commandedReturnHome) {returnHome_(); return;}
+        if(!commandedReturnHome) {returnHome_(); deposit_(); return;}
     }
 
-    if(confirmedApproach)
+    if(confirmedAcquire)
     {
-        if(!commandedApproach) {approach_(); return;}
+        if(!commandedAcquire) {acquire_(); return;}
     }
 
     if(interestingSampleNearby)
@@ -69,7 +68,8 @@ void MissionPlanning::run()
 
 void MissionPlanning::avoidObstacle_()
 {
-
+    commandedAvoidObstacle = true;
+    //sendDriveRel_(/*avoidMsg*/);
 }
 
 void MissionPlanning::returnHome_()
@@ -79,10 +79,16 @@ void MissionPlanning::returnHome_()
     clearAndResizeWTT_();
     waypointsToTravel.at(0).x = homeX;
     waypointsToTravel.at(0).y = homeY;
+    callIntermediateWaypoints_();
     sendDriveGlobal_();
 }
 
-void MissionPlanning::approach_()
+void MissionPlanning::deposit_()
+{
+
+}
+
+void MissionPlanning::acquire_()
 {
 
 }
@@ -120,6 +126,7 @@ void MissionPlanning::planRegionPath_()
 	ROS_DEBUG("before antColony_()");
 	antColony_();
 	ROS_DEBUG("after antColony_()");
+    callIntermediateWaypoints_();
     sendDriveGlobal_();
 }
 
@@ -137,19 +144,41 @@ void MissionPlanning::init_()
 
 void MissionPlanning::sendDriveGlobal_()
 {
-    callIntermediateWaypoints_();
     for(int i=0; i<numWaypointsToTravel; i++)
     {
         execActionSrv.request.nextActionType = _driveGlobal;
         execActionSrv.request.newActionFlag = 1;
+        execActionSrv.request.pushToFrontFlag = false;
+        execActionSrv.request.clearDequeFlag = false;
+        execActionSrv.request.pause = false;
         execActionSrv.request.float1 = waypointsToTravel.at(i).x;
         execActionSrv.request.float2 = waypointsToTravel.at(i).y;
         execActionSrv.request.float3 = 1.5;
         execActionSrv.request.float4 = 45.0;
+        execActionSrv.request.float5 = 0.0;
+        execActionSrv.request.int1 = 0;
         execActionSrv.request.bool1 = false;
         if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
         else ROS_ERROR("exec action service call unsuccessful");
     }
+}
+
+void MissionPlanning::sendDriveRel_(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
+{
+    execActionSrv.request.nextActionType = _driveRelative;
+    execActionSrv.request.newActionFlag = 1;
+    execActionSrv.request.pushToFrontFlag = frontOfDeque;
+    execActionSrv.request.clearDequeFlag = false;
+    execActionSrv.request.pause = false;
+    execActionSrv.request.float1 = deltaDistance;
+    execActionSrv.request.float2 = deltaHeading;
+    execActionSrv.request.float3 = 1.5;
+    execActionSrv.request.float4 = 45.0;
+    execActionSrv.request.float5 = endHeading;
+    execActionSrv.request.int1 = 0;
+    execActionSrv.request.bool1 = endHeadingFlag;
+    if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+    else ROS_ERROR("exec action service call unsuccessful");
 }
 
 void MissionPlanning::antColony_()

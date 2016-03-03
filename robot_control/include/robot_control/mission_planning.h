@@ -74,8 +74,8 @@ public:
 	bool commandedAvoidObstacle;
 	bool possessingSample;
 	bool commandedReturnHome;
-	bool confirmedApproach;
-	bool commandedApproach;
+	bool confirmedAcquire;
+	bool commandedAcquire;
 	bool interestingSampleNearby;
 	bool commandedExamine;
 	bool inIncompleteROI;
@@ -90,12 +90,14 @@ public:
 private:
 	void avoidObstacle_();
 	void returnHome_();
-	void approach_();
+	void deposit_();
+	void acquire_();
 	void examine_();
 	void planRegionPath_();
 	void chooseRegion_();
 	void init_();
 	void sendDriveGlobal_();
+	void sendDriveRel_(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void antColony_();
 	void planSafePath_();
 	void clearAndResizeWTT_();
