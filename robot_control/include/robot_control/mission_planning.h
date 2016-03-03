@@ -63,6 +63,9 @@ public:
 	robot_control::Waypoint currentLocation;
 	int numWaypointsToPlan;
 	int numWaypointsToTravel;
+	int initNumWaypointsToTravel;
+	int totalIntermWaypoints;
+	std::vector<robot_control::Waypoint>::iterator intermWaypointsIt;
 	std::vector<robot_control::Waypoint> waypointsToPlan;
 	std::vector<robot_control::Waypoint> waypointsToTravel;
 	int bestPheromone;

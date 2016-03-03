@@ -1,13 +1,13 @@
 #include <ros/ros.h>
 #include <iostream>
-
-using namespace std;
+#include <robot_control/safe_pathing.h>
 
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "safe_pathing_node");
 	ros::NodeHandle nh;
 	ros::Rate loop_rate(50);
+	SafePathing safePathing;
 
 	ROS_INFO("safe_pathing_node running...");
 

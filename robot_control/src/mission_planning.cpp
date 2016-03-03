@@ -28,6 +28,7 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
+    possessingSample = true;
     if(collisionDetected)
     {
         if(!commandedAvoidObstacle) {avoidObstacle_(); return;}
@@ -73,6 +74,7 @@ void MissionPlanning::avoidObstacle_()
 
 void MissionPlanning::returnHome_()
 {
+    commandedReturnHome = true;
     numWaypointsToTravel = 1;
     clearAndResizeWTT_();
     waypointsToTravel.at(0).x = homeX;
@@ -135,6 +137,7 @@ void MissionPlanning::init_()
 
 void MissionPlanning::sendDriveGlobal_()
 {
+    callIntermediateWaypoints_();
     for(int i=0; i<numWaypointsToTravel; i++)
     {
         execActionSrv.request.nextActionType = _driveGlobal;
@@ -305,8 +308,32 @@ inline void MissionPlanning::clearAndResizeWTT_()
 
 void MissionPlanning::callIntermediateWaypoints_()
 {
-    intermediateWaypointsSrv.request.start.x = robotStatus.xPos;
-    intermediateWaypointsSrv.request.start.y = robotStatus.yPos;
+    initNumWaypointsToTravel = numWaypointsToTravel;
+    totalIntermWaypoints = 0;
+    for(int i = 0; i < initNumWaypointsToTravel; i++)
+    {
+        intermWaypointsIt = waypointsToTravel.begin() + i + totalIntermWaypoints;
+        if(i == 0)
+        {
+            intermediateWaypointsSrv.request.start.x = robotStatus.xPos;
+            intermediateWaypointsSrv.request.start.y = robotStatus.yPos;
+        }
+        else
+        {
+            intermediateWaypointsSrv.request.start.x = (*(intermWaypointsIt - 1)).x;
+            intermediateWaypointsSrv.request.start.y = (*(intermWaypointsIt - 1)).y;
+        }
+        intermediateWaypointsSrv.request.finish.x = (*intermWaypointsIt).x;
+        intermediateWaypointsSrv.request.finish.y = (*intermWaypointsIt).y;
+        if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful");
+        else ROS_ERROR("intermediateWaypoints service call unsuccessful");
+        if(intermediateWaypointsSrv.response.waypointArray.size() > 0)
+        {
+            waypointsToTravel.insert(intermWaypointsIt,intermediateWaypointsSrv.response.waypointArray.begin(),intermediateWaypointsSrv.response.waypointArray.end());
+            totalIntermWaypoints += intermediateWaypointsSrv.response.waypointArray.size();
+            numWaypointsToTravel += intermediateWaypointsSrv.response.waypointArray.size();
+        }
+    }
 }
 
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
