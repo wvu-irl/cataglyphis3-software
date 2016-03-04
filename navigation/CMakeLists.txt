@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lidar)
+project(navigation)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -8,9 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_runtime
   messages
-  pcl_conversions 
-  pcl_ros
-  velodyne_driver
   roscpp
   rospy
   std_msgs
@@ -50,10 +47,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  CollisionOut.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -70,9 +68,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -106,7 +105,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES lidar
-  CATKIN_DEPENDS message_generation message_runtime messages pcl_conversions pcl_ros velodyne_driver roscpp rospy std_msgs
+  CATKIN_DEPENDS message_generation message_runtime messages roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -118,13 +117,16 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+	include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(lidar
-#   src/${PROJECT_NAME}/lidar.cpp
-# )
+# add_library(encoders_class src/encoders_class.cpp)
+# target_link_libraries(encoders_class ${catkin_LIBRARIES})
+
+# add_library(imu_class src/imu_class.cpp)
+# target_link_libraries(imu_class ${catkin_LIBRARIES} armadillo lapack blas)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -132,21 +134,10 @@ include_directories(
 # add_dependencies(lidar ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(velodyne_filtering_node src/velodyne_filtering_node.cpp)
-add_executable(collision_detection_node src/collision_detection_node.cpp)
 
 ## Add cmake target dependencies of the executable
-add_dependencies(velodyne_filtering_node lidar_generate_messages_cpp)
-add_dependencies(collision_detection_node lidar_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(velodyne_filtering_node 
- 	${catkin_LIBRARIES}
- )
-
-  target_link_libraries(collision_detection_node 
- 	${catkin_LIBRARIES}
- )
 
 #############
 ## Install ##
