@@ -54,6 +54,12 @@ find_package(catkin REQUIRED COMPONENTS
    Servo_status.msg
    GrabberFeedback.msg
    SimControl.msg
+   
+   #added for Comm port, remove
+   nb1_to_i7_msg.msg
+   nb2_3_to_i7_msg.msg
+   i7_to_nb1_msg.msg
+   encoder_data.msg
  )
 
 ## Generate services in the 'srv' folder

@@ -1,0 +1,15 @@
+<launch>
+	<param name = "node_type"
+		type = "str"
+		value = "grabber_roboteq" />
+	<param name = "MODEMDEVICE"
+		type = "str"
+		value = "/dev/ttyS4" />
+	<param name = "BAUDRATE"
+		type = "int"
+		value = "115200" />
+	<node name="grabber_node" 
+		pkg="hw_interface" 
+		type="grabber_node"
+		output = "screen" />
+</launch>

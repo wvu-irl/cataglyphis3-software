@@ -1,0 +1,9 @@
+uint8 counter
+uint16 clock
+uint16 motor_1_encoder_count
+uint16 motor_2_encoder_count
+uint16 motor_3_encoder_count
+float32 battery_volts
+float32 motor1_amps
+float32 motor2_amps
+float32 motor3_amps
