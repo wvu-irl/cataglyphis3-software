@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   messages
   roscpp
   rospy
-  grid_map
+  grid_map_ros
   grid_map_msgs
   geometry_msgs
   sensor_msgs
@@ -184,7 +184,7 @@ include_directories(
  target_link_libraries(map_manager_node
    ${catkin_LIBRARIES}
    map_manager
-   ${grid_map_LIBRARIES}
+   ${grid_map_ros_LIBRARIES}
  )
  
  target_link_libraries(mission_planning_node

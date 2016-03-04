@@ -3,7 +3,7 @@
 #include <ros/ros.h>
 #include <robot_control/Waypoint.h>
 #include <robot_control/WaypointsOfInterest.h>
-#include <grid_map/grid_map.hpp>
+#include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <vector>
 
