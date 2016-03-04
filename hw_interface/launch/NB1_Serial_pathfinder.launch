@@ -1,0 +1,17 @@
+<launch>
+	<param name = "node_type"
+		type = "str"
+		value = "i7_nb1_serial" />
+	<param name = "write_rate"
+		type = "int"
+		value = "5" />
+	<param name = "MODEMDEVICE"
+		type = "str"
+		value = "/dev/ttyS3" />
+	<param name = "BAUDRATE"
+		type = "int"
+		value = "115200" />
+	<node name = "i7_nb1_serial"
+		pkg = "hw_interface"
+		type = "Comm_Node" />
+</launch>

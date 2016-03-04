@@ -83,7 +83,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES hw_interface
+  LIBRARIES Serial_Port_class drive_packet grabber_packet
   CATKIN_DEPENDS message_generation message_runtime messages roscpp rospy
 #  DEPENDS system_lib
 )
@@ -96,26 +96,93 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  include
+  include/hw_interface
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(hw_interface
-#   src/${PROJECT_NAME}/hw_interface.cpp
-# )
+ add_library(Comm_class	src/Comm_class.cpp)
+ add_library(Serial_Port_class src/Serial_Port_class.cpp)
+ add_library(UDP_Sender_Port_class src/UDP_Sender_Port_class.cpp)
+ add_library(UDP_Sender_Port_class_fault_test src/UDP_Sender_Port_class_fault_test.cpp)
+ add_library(UDP_Receiver_Port_class src/UDP_Receiver_Port_class.cpp)
+ add_library(nb1_to_i7_packet src/nb1_to_i7_packet.cpp)
+ add_library(i7_to_nb1_packet src/i7_to_nb1_packet.cpp)
+ add_library(nb2_3_to_i7_packet src/nb2_3_to_i7_packet.cpp)
+ add_library(drive_packet src/drive_packet.cpp)
+ add_library(grabber_packet src/grabber_packet.cpp)
+ 
+ add_library(RoboteqDevice src/RoboteqDevice.cpp)
+ add_library(roboteq_class src/roboteq_class.cpp)
+ 
+# add_library(Serial_HSM_Act_class src/Serial_HSM_Act_class.cpp)
+# add_library(UDP_HSM_Act_class src/UDP_HSM_Act_class.cpp) 
 
 ## Declare a cpp executable
-# add_executable(hw_interface_node src/hw_interface_node.cpp)
+ add_executable(Comm_Node src/communications_node.cpp)
+ 
+ add_executable(speed_node src/speed_node.cpp)
+ add_executable(grabber_node src/grabber_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(hw_interface_node hw_interface_generate_messages_cpp)
+ add_dependencies(Comm_Node hw_interface_generate_messages_cpp)
+# add_dependencies(Comm_Node hsm_generate_messages_cpp)
+ add_dependencies(Comm_Node ${catkin_EXPORTED_TARGETS})
+ add_dependencies(nb1_to_i7_packet ${catkin_EXPORTED_TARGETS})
+ add_dependencies(nb1_to_i7_packet messages_generate_messages_cpp)
+ add_dependencies(i7_to_nb1_packet ${catkin_EXPORTED_TARGETS})
+ add_dependencies(i7_to_nb1_packet messages_generate_messages_cpp)
+ add_dependencies(drive_packet ${catkin_EXPORTED_TARGETS})
+ add_dependencies(drive_packet messages_generate_messages_cpp)
+# add_dependencies(drive_packet roboteq_interface_generate_messages_cpp)
+ add_dependencies(grabber_packet ${catkin_EXPORTED_TARGETS})
+ add_dependencies(grabber_packet messages_generate_messages_cpp)
+# add_dependencies(grabber_packet roboteq_interface_generate_messages_cpp)
+ add_dependencies(nb2_3_to_i7_packet ${catkin_EXPORTED_TARGETS})
+ add_dependencies(nb2_3_to_i7_packet messages_generate_messages_cpp)
+ 
+ add_dependencies(Serial_Port_class messages_generate_messages_cpp)
+# add_dependencies(Serial_Port_class hsm_generate_messages_cpp)
+
+ add_dependencies(UDP_Receiver_Port_class messages_generate_messages_cpp)
+# add_dependencies(UDP_Receiver_Port_class hsm_generate_messages_cpp)
+
+ add_dependencies(speed_node ${catkin_EXPORTED_TARGETS})
+ add_dependencies(grabber_node ${catkin_EXPORTED_TARGETS})
+ add_dependencies(roboteq_class ${catkin_EXPORTED_TARGETS})
+ add_dependencies(speed_node messages_generate_messages_cpp)
+ add_dependencies(grabber_node messages_generate_messages_cpp)
+ add_dependencies(roboteq_class messages_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(hw_interface_node
-#   ${catkin_LIBRARIES}
-# )
+ target_link_libraries(Serial_Port_class ${catkin_LIBRARIES})
+ target_link_libraries(Comm_Node ${catkin_LIBRARIES}
+ 							Comm_class
+ 							Serial_Port_class
+ 							UDP_Sender_Port_class
+ 							UDP_Sender_Port_class_fault_test
+ 							UDP_Receiver_Port_class
+ 							nb1_to_i7_packet
+ 							nb2_3_to_i7_packet
+ 							i7_to_nb1_packet
+ 							#Serial_HSM_Act_class
+ 							#UDP_HSM_Act_class
+							)
+							
+  target_link_libraries(speed_node
+   ${catkin_LIBRARIES}
+   roboteq_class
+ )
+  target_link_libraries(grabber_node
+   ${catkin_LIBRARIES}
+   roboteq_class
+ )
+ target_link_libraries(roboteq_class 
+   ${catkin_LIBRARIES}
+   Serial_Port_class
+   drive_packet
+   grabber_packet)
 
 #############
 ## Install ##

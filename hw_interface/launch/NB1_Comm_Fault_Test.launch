@@ -1,0 +1,7 @@
+<launch>
+	<group name = "NB1_comm">
+		<include file = "$(find hw_interface)/launch/NB1_Serial.launch" />
+		<include file = "$(find hw_interface)/launch/NB1_UDP_Sender_Fault_Test.launch" />
+		<include file = "$(find hw_interface)/launch/NB1_UDP_Receiver.launch" />
+	</group>
+</launch>

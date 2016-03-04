@@ -1,0 +1,23 @@
+<launch>
+	<param name = "node_type"
+		type = "str"
+		value = "nb2_i7_udp_receiver" />
+	<param name = "write_rate"
+		type = "int"
+		value = "100" />
+	<param name = "ADDR_LOCAL"
+		type = "str"
+		value = "10.20.15.1" />
+	<param name = "ADDR_OTHER"
+		type = "str"
+		value = "10.20.15.3" />
+	<param name = "PORT_LOCAL"
+		type = "int"
+		value = "9005" />
+	<param name = "PORT_OTHER"
+		type = "int"
+		value = "9006" />
+	<node name = "nb2_i7_udp_receiver"
+		pkg = "hw_interface"
+		type = "Comm_Node" />
+</launch>

@@ -1,0 +1,9 @@
+float32 x_position
+float32 y_position
+float32 heading
+float32 north_angle
+uint16 waypoint_index
+uint8 waypoint_list_type
+uint8 samples_collected
+uint8 init_complete
+uint8 using_serial

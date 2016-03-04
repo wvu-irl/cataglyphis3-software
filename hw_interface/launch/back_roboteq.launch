@@ -1,0 +1,19 @@
+<launch>
+	<param name = "node_type"
+		type = "str"
+		value = "back_roboteq" />
+	<param name = "num_channels"
+		type = "int"
+		value = "2" />
+	<param name = "MODEMDEVICE"
+		type = "str"
+		value = "/dev/ttyS4" />
+	<param name = "BAUDRATE"
+		type = "int"
+		value = "115200" />
+	<node name="back_speed_node" 
+		pkg="hw_interface" 
+		type="speed_node"
+		output="screen"
+		respawn="true" />
+</launch>

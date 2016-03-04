@@ -1,0 +1,5 @@
+<launch>
+	<include file = "$(find hw_interface)/launch/NB1_Serial.launch" />
+	<include file = "$(find hw_interface)/launch/NB1_UDP_Sender.launch" />
+	<include file = "$(find hw_interface)/launch/NB1_UDP_Receiver.launch" />
+</launch>

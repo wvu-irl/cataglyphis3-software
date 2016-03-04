@@ -1,0 +1,14 @@
+<launch>
+  <include file="$(find roboteq_interface)/launch/roboteq_interface.launch"
+  		output="screen"
+  		launch-prefix="gnome-terminal -e" />
+  <node name="homing_test"
+  		pkg="roboteq_interface"
+  		type="homing_test" />
+  <include file="$(find computer_vision)/launch/gscam_high.launch" />
+  <node name="det_homing_node"
+  		pkg="computer_vision"
+  		type="det_homing_node"
+  		output="screen"
+  		launch-prefix="gnome-terminal -e"  />
+</launch>
