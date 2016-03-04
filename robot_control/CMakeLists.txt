@@ -137,7 +137,7 @@ include_directories(
  add_library(safe_pathing src/safe_pathing.cpp)
 
 ## Declare a cpp executable
- #add_executable(keyboard_control_node src/keyboard_control_node.cpp)
+ add_executable(keyboard_control_node src/keyboard_control_node.cpp)
  add_executable(exec_node src/exec_node.cpp)
  add_executable(map_manager_node src/map_manager_node.cpp)
  add_executable(mission_planning_node src/mission_planning_node.cpp)
@@ -145,17 +145,17 @@ include_directories(
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
- #add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
+ add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
  add_dependencies(exec_node robot_control_generate_messages_cpp)
  add_dependencies(map_manager_node robot_control_generate_messages_cpp)
  add_dependencies(mission_planning_node robot_control_generate_messages_cpp)
  add_dependencies(safe_pathing_node robot_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- #target_link_libraries(keyboard_control_node
- #  ${catkin_LIBRARIES}
- #  libncurses.so
- #)
+ target_link_libraries(keyboard_control_node
+   ${catkin_LIBRARIES}
+   libncurses.so
+ )
  
  target_link_libraries(drive_global action)
  

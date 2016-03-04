@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 #include <messages/ActuatorOut.h>
-#include <messages/ExecInfo.h>
-#include <robot_control/Keys_Pressed.h>
-#include <messages/Servo_command.h>
+//#include <messages/ExecInfo.h>
+//#include <robot_control/Keys_Pressed.h>
+//#include <messages/Servo_command.h>
 //#include "robot_actions_class.h"
 #define fully_open 1000
 #define fully_closed -900
@@ -11,9 +11,9 @@
 #include <ncurses.h>
 
 messages::ActuatorOut actuator_msg;
-messages::ExecInfo exec_msg;
-robot_control::Keys_Pressed keys_msg;
-messages::Servo_command servo_msg;
+//messages::ExecInfo exec_msg;
+//robot_control::Keys_Pressed keys_msg;
+//messages::Servo_command servo_msg;
 
 int main(int argc, char **argv)
 {
@@ -26,10 +26,11 @@ int main(int argc, char **argv)
 	ros::Rate loopRate(50); //set loop rate to 50Hz
 	
 	ros::Publisher actuator_pub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
+/*
 	ros::Publisher keys_pub = nh.advertise<robot_control::Keys_Pressed>("control/keys_pressed",1);
 	ros::Publisher servo_cam_pub = nh.advertise<messages::Servo_command>("camera_pan_servo_command",1);
 	ros::Publisher exec_info_pub = nh.advertise<messages::ExecStateMachineInfo>("control/statemachineinfo/statemachineinfo",1);
-	
+	*/
 	int ch; 
 	#define initTimeouts 25
 	int numTimeOuts = initTimeouts;
@@ -138,15 +139,15 @@ int main(int argc, char **argv)
 				case 32: //spacebar: take picture
 				    numTimeOuts = 0;
 				    clear();printw("Picture Time!");
-				    keys_msg.spacebar = true;
+				    //keys_msg.spacebar = true;
 				    break;
 				    
 		    //stop flag
 		        case 120: //x toggle stop flag
 		            numTimeOuts = 0;
 				    clear();
-				    exec_msg.stop_flag = exec_msg.stop_flag == 0 ? 1 : 0;
-				    printw("Stop Flag %s", exec_msg.stop_flag ? "ON" : "OFF");
+				    //exec_msg.stop_flag = exec_msg.stop_flag == 0 ? 1 : 0;
+				    //printw("Stop Flag %s", exec_msg.stop_flag ? "ON" : "OFF");
 				    break;
 				    
             //capture common exit keys
@@ -156,7 +157,7 @@ int main(int argc, char **argv)
     				printw("Shutting Down");
     				right[0] = 0; right[1] = 0; right[2] = 0;
     		        left[0] = 0; left[1] = 0; left[2] = 0;
-    		        keys_msg.spacebar = false;
+    		        //keys_msg.spacebar = false;
    				    done = true;
    				    break;
    				    
@@ -181,7 +182,7 @@ int main(int argc, char **argv)
 				    } 
     		        right[0] = 0; right[1] = 0; right[2] = 0;
     		        left[0] = 0; left[1] = 0; left[2] = 0;
-    		        keys_msg.spacebar = false;
+    		        //keys_msg.spacebar = false;
 				    break;
 				    
 		    //unknown key press
@@ -190,7 +191,7 @@ int main(int argc, char **argv)
 				    clear();printw("The pressed key is unknown %i", ch);
     		        right[0] = 0; right[1] = 0; right[2] = 0;
     		        left[0] = 0; left[1] = 0; left[2] = 0;
-    		        keys_msg.spacebar = false;
+    	//	        keys_msg.spacebar = false;
     		        break;
 		    }
             
@@ -214,12 +215,12 @@ int main(int argc, char **argv)
 	        actuator_msg.slide_pos_cmd = grabberSlidePos;
 	        actuator_msg.drop_pos_cmd = grabberDropPos;
 	        
-	        servo_msg.camera_pan_angle_cmd = servoAngleCmd;
+	        //servo_msg.camera_pan_angle_cmd = servoAngleCmd;
 	        
 	        actuator_pub.publish(actuator_msg);
-    	        keys_pub.publish(keys_msg);
-    	   servo_cam_pub.publish(servo_msg);
-           exec_info_pub.publish(exec_msg);
+    	  //      keys_pub.publish(keys_msg);
+    	  // servo_cam_pub.publish(servo_msg);
+         //  exec_info_pub.publish(exec_msg);
 	        
 		    ros::spinOnce();
 		    loopRate.sleep();
