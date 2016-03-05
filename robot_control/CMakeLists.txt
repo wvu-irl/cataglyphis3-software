@@ -63,6 +63,7 @@ find_package(catkin REQUIRED COMPONENTS
    RegionsOfInterest.srv
    WaypointsOfRegion.srv
    IntermediateWaypoints.srv
+   ModifyROI.srv
  )
 
 ## Generate actions in the 'action' folder

@@ -28,7 +28,7 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
-    if(collisionDetected)
+    /*if(collisionDetected)
     {
         if(!commandedAvoidObstacle) {avoidObstacle_(); return;}
     }
@@ -51,17 +51,17 @@ void MissionPlanning::run()
     if(inIncompleteROI)
     {
         if(!commandedPlanRegionPath) {planRegionPath_(); return;}
-    }
+    }*/
 
     if(completedROI || completedDeposit)
     {
         if(!commandedChooseRegion) {chooseRegion_(); return;}
     }
 
-    if(!initComplete)
+    /*if(!initComplete)
     {
         if(!commandedInit) {init_(); return;}
-    }
+    }*/
 
     return;
 }
@@ -132,14 +132,48 @@ void MissionPlanning::planRegionPath_()
 
 void MissionPlanning::chooseRegion_()
 {
+    commandedChooseRegion = true;
     // Request info about regions
+    if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
+    else ROS_ERROR("regionsOfInterest service call successful");
+
     // Loop through list and choose best region not yet visited
-    // Call execActionClient service to drive to center of the chosen region
+    bestROIValue = 0;
+    bestROINum = 0;
+    for(int i=0; i < regionsOfInterestSrv.response.waypointArray.size(); i++)
+    {
+        roiValue = (easyProbGain*regionsOfInterestSrv.response.waypointArray.at(i).easyProb +
+                    medProbGain*regionsOfInterestSrv.response.waypointArray.at(i).medProb +
+                    hardProbGain*regionsOfInterestSrv.response.waypointArray.at(i).hardProb +
+                    distanceGain*hypot(regionsOfInterestSrv.response.waypointArray.at(i).x - robotStatus.xPos,
+                                       regionsOfInterestSrv.response.waypointArray.at(i).y - robotStatus.yPos)/* -
+                    terrainGain*terrainHazard(i,j)*/) /
+                    (easyProbGain + medProbGain + hardProbGain);
+        if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
+    }
+
+    // Call service to drive to center of the chosen region
+    numWaypointsToTravel = 1;
+    clearAndResizeWTT_();
+    waypointsToTravel.at(0) = regionsOfInterestSrv.response.waypointArray.at(bestROINum);
+    sendDriveGlobal_();
 }
 
 void MissionPlanning::init_()
 {
 
+}
+
+void MissionPlanning::evalCommandedFlags_()
+{
+    // something for commandedAvoidObstacle
+    // something for commandedReturnHome
+    // something for commandedAcquire
+    // something for commmandedExamine
+    // something for commandedPlanRegionPath
+    // something for commandDeposit
+
+    // something for commandedInit
 }
 
 void MissionPlanning::sendDriveGlobal_()

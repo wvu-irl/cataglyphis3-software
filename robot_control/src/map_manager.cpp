@@ -3,8 +3,9 @@
 MapManager::MapManager()
     : satMap({"sampleProb","hazard"})
 {
+    modROIServ = nh.advertiseService("/control/mapmanager/modifyroi", &MapManager::modROI, this);
+    // *** Temporary! Only for Testing ***
 	woiServ = nh.advertiseService("/control/mapmanager/waypointsofinterest", &MapManager::WOI, this);
-	// *** Temporary! Only for Testing ***
 	waypoint.x = 87.6;
 	waypoint.y = 11.2;
 	waypoint.easyProb = 500;
@@ -76,6 +77,42 @@ MapManager::MapManager()
 	waypoint.terrainHazard = 100;
 	waypointsOfInterestVector.push_back(waypoint);
 	ROS_INFO("wapointsOfInterestVector Size = %u",waypointsOfInterestVector.size());
+
+    roiServ = nh.advertiseService("/control/mapmanager/regionsofinterest", &MapManager::ROI, this);
+    // Temporary ROIs
+    waypoint.x = 8.0;
+    waypoint.y = 5.0;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = -8.0;
+    waypoint.y = 5.0;
+    waypoint.easyProb = 500;
+    waypoint.medProb = 500;
+    waypoint.hardProb = 500;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = -8.0;
+    waypoint.y = -5.0;
+    waypoint.easyProb = 400;
+    waypoint.medProb = 400;
+    waypoint.hardProb = 400;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 8.0;
+    waypoint.y = -5.0;
+    waypoint.easyProb = 300;
+    waypoint.medProb = 300;
+    waypoint.hardProb = 300;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+
 	// ***********************************
     satMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/satmap",1);
     satMap.setFrameId("map");
@@ -103,4 +140,23 @@ bool MapManager::WOI(robot_control::WaypointsOfInterest::Request &req, robot_con
 	res.waypointArray = waypointsOfInterestVector;
 	ROS_INFO("sent WOI");
 	return true;
+}
+
+bool MapManager::ROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res)
+{
+    res.waypointArray = regionsOfInterest;
+    ROS_INFO("sent ROI");
+    return true;
+}
+
+bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res)
+{
+    if(req.visitedROI) regionsOfInterest.at(req.numVisitedROI).visited = true;
+    if(req.addNewROI)
+    {
+        regionsOfInterest.push_back(req.newROI);
+        // something with diameter of new ROI
+    }
+    ROS_INFO("modified ROI");
+    return true;
 }

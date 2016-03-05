@@ -29,6 +29,8 @@ public:
 	ros::Subscriber navSub;
 	ros::ServiceClient intermediateWaypointsClient;
 	robot_control::IntermediateWaypoints intermediateWaypointsSrv;
+	ros::ServiceClient reqROIClient;
+	robot_control::RegionsOfInterest regionsOfInterestSrv;
 	const int loopRate = 20; // Hz
 	std::vector<int> value;
 	int computedValue;
@@ -60,6 +62,9 @@ public:
 	int i;
 	int j;
 	int bestJ;
+	int bestROINum;
+	int roiValue;
+	int bestROIValue;
 	robot_control::Waypoint currentLocation;
 	int numWaypointsToPlan;
 	int numWaypointsToTravel;
@@ -96,6 +101,7 @@ private:
 	void planRegionPath_();
 	void chooseRegion_();
 	void init_();
+	void evalCommandedFlags_();
 	void sendDriveGlobal_();
 	void sendDriveRel_(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void antColony_();

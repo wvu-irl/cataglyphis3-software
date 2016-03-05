@@ -1,0 +1,6 @@
+bool visitedROI
+uint32 numVisitedROI
+bool addNewROI
+Waypoint newROI
+float32 diameterNewROI
+---
