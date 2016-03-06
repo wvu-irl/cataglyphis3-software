@@ -1,0 +1,1398 @@
+' WVU SRRC Challenge - Drive Wheels Firmware
+' Alexander T. Hypes
+' Version 26 - 3/3/16
+' Status: 	Verified
+
+	' Packet format:
+			' [1:3]		Az4 	header				(uint8)x3
+			' [4]		tic		ticker				(uint8)   (packet counter)
+			' [5:6]		clock 	clock				(uint16)  (time since boot in sec, rolls over at ~18 hrs)
+			' [7:8]		enc1 	encoder1 			(uint16)  (each byte xor 255) little endian
+			' [9:10]	enc2 	encoder2			(uint16)
+			' [11:12]	enc3 	encoder3			(uint16)
+			' [13]   	bvolt	battery_volts		(uint8)   (battery voltage*5)
+			' [14]   	amp1	motor1 amps			(uint8)   (motor amps*12 + 128)
+			' [15]   	amp2	motor2 amps			(uint8)
+			' [16]   	amp3	motor3 amps			(uint8)
+			' [17-20]	crc32 	crc32 check 		(uint8)x4 (crc32 of 1:16)
+			' [21]		crc32i	inv crc32 byte		(uint8)	  (markers for crc32 bits to invert)
+
+	' << init >>
+	wait(500)								' pause before script execution
+	dim pathfinder as boolean
+	
+	' << config settings >>
+	pathfinder =       false				' substitutes enc1 >> enc3 and amp1 >> amp3 (also slightly different packet delay)
+	wait_val =            15				' ms between packets (target) (~46 Hz) (packets will never send faster than this)
+	wait_val_pf =         16				' ms between packets (pathfinder ~47Hz)
+	spwr =                58				' max power percentage (58 for right, 61 for left)
+	pprev = 	         128
+	crc_poly =    0xEDB88320 				' crc32 polynomial (note stored as int32: actually a uint32)
+		
+	' << var init >>
+	enc1 = 		  0
+	enc2 = 		  0
+	enc3 = 		  0
+	clk = 		  0
+	ticker = 	  0
+	amp1 = 		  0
+	amp2 = 		  0
+	amp3 = 		  0
+	bvolt = 	  0
+			
+	setconfig(_ECHOF, 1)					' disable serial echo
+
+	' BUGIFX: bound power values
+	if (spwr<50) then spwr=50 
+	if (spwr>90) then spwr=90
+
+	' output voltage (pwr)
+	setconfig(_MXPF, 1, spwr) 				' set max fwd power levels
+	setconfig(_MXPF, 2, spwr)
+	setconfig(_MXPF, 3, spwr)
+	setconfig(_MXPR, 1, spwr) 				' set max rev power levels
+	setconfig(_MXPR, 2, spwr)
+	setconfig(_MXPR, 3, spwr)
+	
+	setconfig(_EMOD, 1, 18)					' encoder for chan 1
+	setconfig(_EMOD, 2, 34)					' encoder for chan 2
+
+	setconfig(_EPPR, 1, pprev)				' encoder pulses per rev number
+	setconfig(_EPPR, 2, pprev)
+		
+	setconfig(_EHL, 1, 2000000000)			' set encoder high limits
+	setconfig(_EHL, 2, 2000000000)
+
+	setconfig(_EHLA, 1, 0)					' set encoder high limit action (do nothing)
+	setconfig(_EHLA, 2, 0)
+	
+	setconfig(_ELL, 1, -2000000000)			' set encoder low limits
+	setconfig(_ELL, 2, -2000000000)
+	
+	setconfig(_ELLA, 1, 0)					' set encoder low limit action (do nothing)
+	setconfig(_ELLA, 2, 0)
+
+	if pathfinder=false						' chan 3 encoder setup
+		setconfig(_EMOD, 3, 66)		
+		setconfig(_EPPR, 3, pprev)
+		setconfig(_EHL,  3,  2000000000)
+		setconfig(_EHLA, 3, 0)
+		setconfig(_ELL,  3, -2000000000)
+		setconfig(_ELLA, 3, 0)
+	else
+		wait_val = wait_val_pf				' use pathfinder value instead
+	end if
+	
+	settimercount(0, wait_val) 				' setup packet timer
+	settimerstate(0, 0) 					' make sure timer is running
+	
+	' << main loop >>
+	while 1
+		if (gettimercount(0) < 1) then				' timer has run out?
+			
+			gosub readdata							' read internal data
+			
+			gosub datamod 							' mod data to correct byte size values
+			
+			gosub bcheck 							' bounds check those values
+
+			gosub serialize_i 						' serialize
+
+			gosub bytefix							' prevent null char output for least significant byte
+
+			gosub crc32							    ' calculate crc32
+			
+			'gosub crc32_noop						' blank crc32 (noop)
+			
+			gosub crc32_ichk						' check/calc bytes to invert for crc32
+			
+			gosub packetprinter						' print 20-byte packet over serial
+			
+			settimercount(0, wait_val) 				' reset packet timer
+			settimerstate(0, 0) 					' make sure timer is running			
+		else
+			wait(1)
+		end if	
+	end while
+
+
+	' << crc32 inversion check/calc >> 
+	crc32_ichk:
+		byte21 = 128
+		if byte17=0 then byte21=byte21+1
+		if byte18=0 then byte21=byte21+2
+		if byte19=0 then byte21=byte21+4
+		if byte20=0 then byte21=byte21+8
+		
+		if byte17=0 then byte17=255
+		if byte18=0 then byte18=255
+		if byte19=0 then byte19=255
+		if byte20=0 then byte20=255
+
+	return
+	
+
+	' << read sensor data >> 
+	readdata:
+		enc1 = getvalue(_C, 1)			  		' get encoder values
+		enc2 = getvalue(_C, 2)
+		amp1 = (getvalue(_A, 1)*12/10 + 128)	' read measured amp draws
+		amp2 = (getvalue(_A, 2)*12/10 + 128)
+		if pathfinder=false	
+			enc3 = getvalue(_C, 3)				' <<3chan>>
+			amp3 = (getvalue(_A, 3)*12/10 + 128)
+		else
+			enc3 = enc1							' <<2chan>>
+			amp3 = amp1
+		end if
+		bvolt = getvalue(_V, 2)*5/10 			' get battery voltage (*5)
+		clk      = getvalue(_TM, 1)				' time since boot (s)
+		ticker = (ticker + 1)					' packet counter
+	return
+	
+	
+	' << crc32 calculation >> 
+	crc32:
+		' http://www.mathworks.com/matlabcentral/fileexchange/49518-crc-32-computation-algorithm/content/crc32.m
+		crc_val  = 0xFFFFFFFF		' starting value of crc32
+		
+		val = byte4					' [4]		ticker 		(uint8)
+		gosub crc32_bitbang
+		val = byte5					' [5:6]		clock 		(uint16)
+		gosub crc32_bitbang
+		val = byte6
+		gosub crc32_bitbang
+		val = byte7					' [7:8]		enc1 		(uint16)
+		gosub crc32_bitbang
+		val = byte8
+		gosub crc32_bitbang
+		val = byte9					' [9:10]	enc2 		(uint16)
+		gosub crc32_bitbang
+		val = byte10
+		gosub crc32_bitbang
+		val = byte11				' [11:12]	enc3 		(uint16)
+		gosub crc32_bitbang
+		val = byte12
+		gosub crc32_bitbang
+		val = byte13				' [13]		bvolts		(uint8)
+		gosub crc32_bitbang
+		val = byte14				' [14]		amp1		(uint8)
+		gosub crc32_bitbang
+		val = byte15				' [15]		amp2		(uint8)
+		gosub crc32_bitbang
+		val = byte16				' [16]		amp3		(uint8)
+		gosub crc32_bitbang
+		
+		' final complement of crc32
+		crc_val = crc_val xor 0xFFFFFFFF 	' 24 	crc = bitcmp(crc);
+		
+		' serialize crc32 into 4 bytes
+		byte17  =   ( crc_val        and 0b11111111)
+		byte18  =   ((crc_val >>  8) and 0b11111111)
+		byte19  =   ((crc_val >> 16) and 0b11111111)
+		byte20  =   ((crc_val >> 24) and 0b11111111)
+	return		
+
+	' << dummy crc32 func for speed testing
+	crc32_noop:
+		byte17  =   0x0
+		byte18  =   0x1
+		byte19  =   0x2
+		byte20  =   0x3
+	return	
+	
+	' << crc32 bitwise magic >> 
+	crc32_bitbang:
+		' http://www.mathworks.com/matlabcentral/fileexchange/49518-crc-32-computation-algorithm/content/crc32.m
+		crc_val = (crc_val xor val)						' 13 crc = bitxor(crc,uint32(data_(i)));
+		gosub crc32_base								' 14 for j = 1:8
+		gosub crc32_base
+		gosub crc32_base
+		gosub crc32_base
+		gosub crc32_base
+		gosub crc32_base
+		gosub crc32_base
+		gosub crc32_base								' 22 end
+	return
+
+	' << crc32 base operation (per bit) >>
+	crc32_base:
+		mask = ((crc_val and 0x00000001) xor 0xFFFFFFFF) 	' 15 	mask = bitcmp(bitand(crc,uint32(1)));
+		if (mask = 0xFFFFFFFF)								' 16	if mask == intmax('uint32')
+			mask = 0										' 17		mask = 0;
+		else												' 18	else
+			'mask = mask + 1								' 19		mask = mask+1;
+			m_one = 0x00000001
+			gosub bit_add 										' bitwise addition (!as uint32!) m_one to mask
+		end if												' 20	end
+		crc_val = ((crc_val >> 1) xor (crc_poly and mask))	' 21	crc = bitxor(bitshift(crc,-1),bitand(poly,mask));
+	return
+	
+	' << bitwise addition (as uint32) >>
+	bit_add:
+		' http://www.geeksforgeeks.org/add-two-numbers-without-using-arithmetic-operators/
+		' bitwise addition of mask and m_one
+		while (m_one <> 0)
+			carry = (mask and m_one)
+			mask = (mask xor m_one)
+			m_one = (carry << 1)
+		end while
+    return	
+
+	
+	' << mod data to correct byte size values >>
+	datamod: 
+		byte8  = enc1  mod 61566						' encoder values are int32 (+2147483647 to -2147483648)
+		byte10 = enc2  mod 61566   						' 61566 is the largest 2-byte value to mod with an int32
+		byte12 = enc3  mod 61566						' which will produce a max rollover error of 2
+		byte6  = clk   mod 61566
+		byte13 = bvolt mod   256
+		byte14 = amp1  mod   256						' bound hsm data to single-byte values
+		byte15 = amp2  mod   256
+		byte16 = amp3  mod   256
+	return
+	
+	' << bounds check data values >> 
+	bcheck:
+		' keep encs/clock between 0 and 64000 (mod can be negative)
+		if byte8  < 0 then byte8  = byte8  + 61566		' encs
+		if byte10 < 0 then byte10 = byte10 + 61566
+		if byte12 < 0 then byte12 = byte12 + 61566
+		if byte6  < 0 then byte6  = byte6  + 61566		' clock
+
+		' keep bvolts/amps between 0 and 254
+		if byte13<0   then byte13=0
+		if byte14<0   then byte14=0
+		if byte15<0   then byte15=0
+		if byte16<0   then byte16=0
+		if byte13>254 then byte13=254
+		if byte14>254 then byte14=254
+		if byte15>254 then byte15=254
+		if byte16>254 then byte16=254
+		
+		' packet counter roll over
+		if ticker > 254 then ticker = 0
+	return
+	
+	' << serialize + invert 2 byte values (~uint16) >> 
+	serialize_i:
+		byte4  =          ((ticker and 0b11111111) xor 0b11111111)	' packet counter
+		byte5  =           ((byte6 and 0b11111111) xor 0b11111111)	' clock
+		byte6  =    (((byte6 >> 8) and 0b11111111) xor 0b11111111)
+		byte7  =           ((byte8 and 0b11111111) xor 0b11111111)	' encoder 1
+		byte8  =    (((byte8 >> 8) and 0b11111111) xor 0b11111111)
+		byte9  =          ((byte10 and 0b11111111) xor 0b11111111)	' encoder 2
+		byte10 =   (((byte10 >> 8) and 0b11111111) xor 0b11111111)		
+		byte11 =          ((byte12 and 0b11111111) xor 0b11111111)	' encoder 3
+		byte12 =   (((byte12 >> 8) and 0b11111111) xor 0b11111111)
+		byte13  =		(byte13  xor 0b11111111)						' bvolts
+		byte14  =		(byte14  xor 0b11111111)						' amp1
+		byte15  =		(byte15  xor 0b11111111)						' amp2
+		byte16  =		(byte16  xor 0b11111111)						' amp3
+	return		
+	
+	' << serialize 2 byte values (~uint16) >> 
+	serialize:
+		byte4  =         (ticker  and 0b11111111)	' packet counter
+		byte5  =          (byte6  and 0b11111111)	' clock
+		byte6  =   ((byte6  >> 8) and 0b11111111)
+		byte7  =          (byte8  and 0b11111111)	' encoder 1
+		byte8  =   ((byte8  >> 8) and 0b11111111)
+		byte9  =          (byte10 and 0b11111111)   ' encoder 2
+		byte10 =   ((byte10 >> 8) and 0b11111111) 	
+		byte11 =          (byte12 and 0b11111111)   ' encoder 3
+		byte12 =   ((byte12 >> 8) and 0b11111111)
+	return	
+
+	' << prevent null char for least significant byte of uint16s >> 
+	bytefix:
+		' bump an inverted 0 to 1 (real value 255 to 254)
+		' clock/encs
+		if  byte5=0 then  byte5=1
+		if  byte7=0 then  byte7=1
+		if  byte9=0 then  byte9=1
+		if byte11=0 then byte11=1
+		' bvolts/amps
+		if byte13=0 then byte13=1
+		if byte14=0 then byte14=1
+		if byte15=0 then byte15=1
+		if byte16=0 then byte16=1
+	return
+	
+	' << output packet over serial >>
+	packetprinter: 
+		print("Az4") 			' [1:3]		header		(uint8)x3
+		
+		val = byte4				' [4]		ticker 		(uint8)
+		gosub twiddlebit
+		val = byte5				' [5:6]		clock 		(uint16)
+		gosub twiddlebit
+		val = byte6
+		gosub twiddlebit
+		val = byte7				' [7:8]		enc1 		(uint16)
+		gosub twiddlebit
+		val = byte8
+		gosub twiddlebit
+		val = byte9				' [9:10]	enc2 		(uint16)
+		gosub twiddlebit
+		val = byte10
+		gosub twiddlebit
+		val = byte11			' [11:12]	enc3 		(uint16)
+		gosub twiddlebit
+		val = byte12
+		gosub twiddlebit
+		val = byte13			' [13]		bvolts		(uint8)
+		gosub twiddlebit
+		val = byte14			' [14]		amp1		(uint8)
+		gosub twiddlebit
+		val = byte15			' [15]		amp2		(uint8)
+		gosub twiddlebit
+		val = byte16			' [16]		amp3		(uint8)
+		gosub twiddlebit	
+		val = byte17			' [17:20]	crc32		(uint32)
+		gosub twiddlebit
+		val = byte18
+		gosub twiddlebit	
+		val = byte19
+		gosub twiddlebit	
+		val = byte20
+		gosub twiddlebit
+		val = byte21			' [21]		crc32_i		(uint8)
+		gosub twiddlebit
+	return
+
+	' << print val as uint8 char via serial >>
+	twiddlebit:												' convert to binary for minimum/consistent runtime
+		if (val and 0b00000001)>0 then bit1=1 else bit1=0	' LSB
+		if (val and 0b00000010)>0 then bit2=1 else bit2=0
+		if (val and 0b00000100)>0 then bit3=1 else bit3=0	' Speedfix: changed division to comparison
+		if (val and 0b00001000)>0 then bit4=1 else bit4=0
+		if (val and 0b00010000)>0 then bit5=1 else bit5=0
+		if (val and 0b00100000)>0 then bit6=1 else bit6=0
+		if (val and 0b01000000)>0 then bit7=1 else bit7=0
+		if (val and 0b10000000)>0 then bit8=1 else bit8=0 	' MSB
+		
+		if bit8 then										' begin /binary/ tree
+			if bit7 then
+				if bit6 then
+					if bit5 then
+						if bit4 then						'byte value
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xFF") 		'255
+									else
+										print("\xFE") 		'254
+									end if
+								else
+									if bit1 then
+										print("\xFD") 		'253
+									else
+										print("\xFC") 		'252
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xFB") 		'251
+									else
+										print("\xFA") 		'250
+									end if
+								else
+									if bit1 then
+										print("\xF9") 		'249
+									else
+										print("\xF8") 		'248
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xF7") 		'247
+									else
+										print("\xF6") 		'246
+									end if
+								else
+									if bit1 then
+										print("\xF5") 		'245
+									else
+										print("\xF4") 		'244
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xF3") 		'243
+									else
+										print("\xF2") 		'242
+									end if
+								else
+									if bit1 then
+										print("\xF1") 		'241
+									else
+										print("\xF0") 		'240
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xEF") 		'239
+									else
+										print("\xEE") 		'238
+									end if
+								else
+									if bit1 then
+										print("\xED") 		'237
+									else
+										print("\xEC") 		'236
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xEB") 		'235
+									else
+										print("\xEA") 		'234
+									end if
+								else
+									if bit1 then
+										print("\xE9") 		'232
+									else
+										print("\xE8") 		'231
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xE7") 		'230
+									else
+										print("\xE6") 		'229
+									end if
+								else
+									if bit1 then
+										print("\xE5") 		'228
+									else
+										print("\xE4") 		'227
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xE3") 		'226
+									else
+										print("\xE2") 		'225
+									end if
+								else
+									if bit1 then
+										print("\xE1") 		'224
+									else
+										print("\xE0") 		'223
+									end if
+								end if
+							end if
+						end if
+					end if
+				else
+					if bit5 then
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xDF") 		'222
+									else
+										print("\xDE") 		'221
+									end if
+								else
+									if bit1 then
+										print("\xDD") 		'220
+									else
+										print("\xDC") 		'219
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xDB") 		'218
+									else
+										print("\xDA") 		'217
+									end if
+								else
+									if bit1 then
+										print("\xD9") 		'216
+									else
+										print("\xD8") 		'215
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xD7") 		'214
+									else
+										print("\xD6") 		'213
+									end if
+								else
+									if bit1 then
+										print("\xD5") 		'212
+									else
+										print("\xD4") 		'211
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xD3") 		'210
+									else
+										print("\xD2") 		'209
+									end if
+								else
+									if bit1 then
+										print("\xD1") 		'208
+									else
+										print("\xD0") 		'207
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xCF") 		'206
+									else
+										print("\xCE") 		'205
+									end if
+								else
+									if bit1 then
+										print("\xCD") 		'204
+									else
+										print("\xCC") 		'203
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xCB") 		'202
+									else
+										print("\xCA") 		'201
+									end if
+								else
+									if bit1 then
+										print("\xC9") 		'200
+									else
+										print("\xC8") 		'199
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xC7") 		'198
+									else
+										print("\xC6") 		'197
+									end if
+								else
+									if bit1 then
+										print("\xC5") 		'196
+									else
+										print("\xC4") 		'195
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xC3") 		'194
+									else
+										print("\xC2") 		'193
+									end if
+								else
+									if bit1 then
+										print("\xC1") 		'192
+									else
+										print("\xC0") 		'191
+									end if
+								end if
+							end if
+						end if
+					end if
+				end if
+			else
+				if bit6 then
+					if bit5 then
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xBF") 		'190
+									else
+										print("\xBE") 		'189
+									end if
+								else
+									if bit1 then
+										print("\xBD") 		'188
+									else
+										print("\xBC") 		'187
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xBB") 		'186
+									else
+										print("\xBA") 		'185
+									end if
+								else
+									if bit1 then
+										print("\xB9") 		'184
+									else
+										print("\xB8") 		'183
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xB7") 		'182
+									else
+										print("\xB6") 		'181
+									end if
+								else
+									if bit1 then
+										print("\xB5") 		'180
+									else
+										print("\xB4") 		'179
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xB3") 		'178
+									else
+										print("\xB2") 		'177
+									end if
+								else
+									if bit1 then
+										print("\xB1") 		'176
+									else
+										print("\xB0") 		'175
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xAF") 		'174
+									else
+										print("\xAE") 		'173
+									end if
+								else
+									if bit1 then
+										print("\xAD") 		'172
+									else
+										print("\xAC") 		'171
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xAB") 		'170
+									else
+										print("\xAA") 		'169
+									end if
+								else
+									if bit1 then
+										print("\xA9") 		'168
+									else
+										print("\xA8") 		'167
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\xA7") 		'166
+									else
+										print("\xA6") 		'165
+									end if
+								else
+									if bit1 then
+										print("\xA5") 		'164
+									else
+										print("\xA4") 		'163
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\xA3") 		'162
+									else
+										print("\xA2") 		'161
+									end if
+								else
+									if bit1 then
+										print("\xA1") 		'160
+									else
+										print("\xA0") 		'159
+									end if
+								end if
+							end if
+						end if
+					end if
+				else
+					if bit5 then
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x9F") 		'158
+									else
+										print("\x9E") 		'157
+									end if
+								else
+									if bit1 then
+										print("\x9D") 		'156
+									else
+										print("\x9C") 		'155
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x9B") 		'154
+									else
+										print("\x9A") 		'153
+									end if
+								else
+									if bit1 then
+										print("\x99") 		'152
+									else
+										print("\x98") 		'151
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x97") 		'150
+									else
+										print("\x96") 		'149
+									end if
+								else
+									if bit1 then
+										print("\x95") 		'148
+									else
+										print("\x94") 		'147
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x93") 		'146
+									else
+										print("\x92") 		'145
+									end if
+								else
+									if bit1 then
+										print("\x91") 		'144
+									else
+										print("\x90") 		'143
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x8F") 		'142
+									else
+										print("\x8E") 		'141
+									end if
+								else
+									if bit1 then
+										print("\x8D") 		'140
+									else
+										print("\x8C") 		'139
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x8B") 		'138
+									else
+										print("\x8A") 		'137
+									end if
+								else
+									if bit1 then
+										print("\x89") 		'136
+									else
+										print("\x88") 		'135
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x87") 		'134
+									else
+										print("\x86") 		'133
+									end if
+								else
+									if bit1 then
+										print("\x85") 		'132
+									else
+										print("\x84") 		'131
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x83") 		'130
+									else
+										print("\x82") 		'129
+									end if
+								else
+									if bit1 then
+										print("\x81") 		'128
+									else
+										print("\x80") 		'128
+									end if
+								end if
+							end if
+						end if
+					end if
+				end if
+			end if
+		else
+			if bit7 then
+				if bit6 then
+					if bit5 then
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x7F") 		'127
+									else
+										print("\x7E") 		'126
+									end if
+								else
+									if bit1 then
+										print("\x7D") 		'125
+									else
+										print("\x7C") 		'124
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x7B") 		'123
+									else
+										print("\x7A") 		'122
+									end if
+								else
+									if bit1 then
+										print("\x79") 		'121
+									else
+										print("\x78") 		'120
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x77") 		'119
+									else
+										print("\x76") 		'118
+									end if
+								else
+									if bit1 then
+										print("\x75") 		'117
+									else
+										print("\x74") 		'116
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x73") 		'115
+									else
+										print("\x72") 		'114
+									end if
+								else
+									if bit1 then
+										print("\x71") 		'113
+									else
+										print("\x70") 		'112
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x6F") 		'111
+									else
+										print("\x6E") 		'110
+									end if
+								else
+									if bit1 then
+										print("\x6D") 		'109
+									else
+										print("\x6C") 		'108
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x6B") 		'107
+									else
+										print("\x6A") 		'106
+									end if
+								else
+									if bit1 then
+										print("\x69") 		'105
+									else
+										print("\x68") 		'104
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x67") 		'103
+									else
+										print("\x66") 		'102
+									end if
+								else
+									if bit1 then
+										print("\x65") 		'101
+									else
+										print("\x64") 		'100
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x63") 		' 99
+									else
+										print("\x62") 		' 98
+									end if
+								else
+									if bit1 then
+										print("\x61") 		' 97
+									else
+										print("\x60") 		' 96
+									end if
+								end if
+							end if
+						end if
+					end if
+				else
+					if bit5 then
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x5F") 		' 95
+									else
+										print("\x5E") 		' 94
+									end if
+								else
+									if bit1 then
+										print("\x5D") 		' 93
+									else
+										print("\x5C") 		' 92
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x5B") 		' 91
+									else
+										print("\x5A") 		' 90
+									end if
+								else
+									if bit1 then
+										print("\x59") 		' 89
+									else
+										print("\x58") 		' 88
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x57") 		' 87
+									else
+										print("\x56") 		' 86
+									end if
+								else
+									if bit1 then
+										print("\x55") 		' 85
+									else
+										print("\x54") 		' 84
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x53") 		' 83
+									else
+										print("\x52") 		' 82
+									end if
+								else
+									if bit1 then
+										print("\x51") 		' 81
+									else
+										print("\x50") 		' 80
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x4F") 		' 79
+									else
+										print("\x4E") 		' 78
+									end if
+								else
+									if bit1 then
+										print("\x4D") 		' 77
+									else
+										print("\x4C") 		' 76
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x4B") 		' 75
+									else
+										print("\x4A") 		' 74
+									end if
+								else
+									if bit1 then
+										print("\x49") 		' 73
+									else
+										print("\x48") 		' 72
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x47") 		' 71
+									else
+										print("\x46") 		' 70
+									end if
+								else
+									if bit1 then
+										print("\x45") 		' 69
+									else
+										print("\x44") 		' 68
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x43") 		' 67
+									else
+										print("\x42") 		' 66
+									end if
+								else
+									if bit1 then
+										print("\x41") 		' 65
+									else
+										print("\x40") 		' 64
+									end if
+								end if
+							end if
+						end if
+					end if
+				end if
+			else
+				if bit6 then
+					if bit5 then
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x3F") 		' 63
+									else
+										print("\x3E") 		' 62
+									end if
+								else
+									if bit1 then
+										print("\x3D") 		' 61
+									else
+										print("\x3C") 		' 60
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x3B") 		' 59
+									else
+										print("\x3A") 		' 58
+									end if
+								else
+									if bit1 then
+										print("\x39") 		' 57
+									else
+										print("\x38") 		' 56
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x37") 		' 55
+									else
+										print("\x36") 		' 54
+									end if
+								else
+									if bit1 then
+										print("\x35") 		' 53
+									else
+										print("\x34") 		' 52
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x33") 		' 51
+									else
+										print("\x32") 		' 50
+									end if
+								else
+									if bit1 then
+										print("\x31") 		' 49
+									else
+										print("\x30") 		' 48
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x2F") 		' 47
+									else
+										print("\x2E") 		' 46
+									end if
+								else
+									if bit1 then
+										print("\x2D") 		' 45
+									else
+										print("\x2C") 		' 44
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x2B") 		' 43
+									else
+										print("\x2A") 		' 42
+									end if
+								else
+									if bit1 then
+										print("\x29") 		' 41
+									else
+										print("\x28") 		' 40
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x27") 		' 39
+									else
+										print("\x26") 		' 38
+									end if
+								else
+									if bit1 then
+										print("\x25") 		' 37
+									else
+										print("\x24") 		' 36
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x23") 		' 35
+									else
+										print("\x22") 		' 34
+									end if
+								else
+									if bit1 then
+										print("\x21") 		' 33
+									else
+										print("\x20") 		' 32
+									end if
+								end if
+							end if
+						end if
+					end if
+				else
+					if bit5 then
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x1F") 		' 31
+									else
+										print("\x1E") 		' 30
+									end if
+								else
+									if bit1 then
+										print("\x1D") 		' 29
+									else
+										print("\x1C") 		' 28
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x1B") 		' 27
+									else
+										print("\x1A") 		' 26
+									end if
+								else
+									if bit1 then
+										print("\x19") 		' 25
+									else
+										print("\x18") 		' 24
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x17") 		' 23
+									else
+										print("\x16") 		' 22
+									end if
+								else
+									if bit1 then
+										print("\x15") 		' 21
+									else
+										print("\x14") 		' 20
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x13") 		' 19
+									else
+										print("\x12") 		' 18
+									end if
+								else
+									if bit1 then
+										print("\x11") 		' 17
+									else
+										print("\x10") 		' 16
+									end if
+								end if
+							end if
+						end if
+					else
+						if bit4 then
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x0F") 		' 15
+									else
+										print("\x0E") 		' 14
+									end if
+								else
+									if bit1 then
+										print("\x0D") 		' 13
+									else
+										print("\x0C") 		' 12
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x0B") 		' 11
+									else
+										print("\x0A") 		' 10
+									end if
+								else
+									if bit1 then
+										print("\x09") 		'  9
+									else
+										print("\x08") 		'  8
+									end if
+								end if
+							end if
+						else
+							if bit3 then
+								if bit2 then
+									if bit1 then
+										print("\x07") 		'  7
+									else
+										print("\x06") 		'  6
+									end if
+								else
+									if bit1 then
+										print("\x05") 		'  5
+									else
+										print("\x04") 		'  4
+									end if
+								end if
+							else
+								if bit2 then
+									if bit1 then
+										print("\x03") 		'  3
+									else
+										print("\x02") 		'  2
+									end if
+								else
+									if bit1 then
+										print("\x01") 		'  1
+									else
+										'print("\x00") 		'  0
+										print("\x01") 		'  null char is broken, print 1 instead
+									end if
+								end if
+							end if
+						end if
+					end if
+				end if
+			end if
+		end if
+	return
+		
