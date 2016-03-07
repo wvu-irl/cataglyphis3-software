@@ -7,4 +7,6 @@ float32[100] actionFloat4
 float32[100] actionFloat5
 int32[100] actionInt1
 bool[100] actionBool1
+uint8[100] actionProcType
+uint32[100] actionSerialNum
 bool pause

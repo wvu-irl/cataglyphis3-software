@@ -1,6 +1,7 @@
 #ifndef ACTION_PARAMS_H
 #define ACTION_PARAMS_H
 #include "action_type_enum.h"
+#include "mission_planning_process_share.h"
 
 struct ACTION_PARAMS_T
 {
@@ -12,6 +13,8 @@ struct ACTION_PARAMS_T
 	float float5;
 	int int1;
 	bool bool1;
+        PROC_TYPES_T procType;
+        unsigned int serialNum;
 };
 
 #endif // ACTION_PARAMS_H

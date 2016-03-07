@@ -134,6 +134,7 @@ include_directories(
  add_library(map_manager src/map_manager.cpp)
  
  add_library(mission_planning src/mission_planning.cpp)
+ add_library(choose_region src/choose_region.cpp)
  
  add_library(safe_pathing src/safe_pathing.cpp)
 
@@ -191,6 +192,7 @@ include_directories(
  target_link_libraries(mission_planning_node
    ${catkin_LIBRARIES}
    mission_planning
+   choose_region
  )
  
  target_link_libraries(safe_pathing_node

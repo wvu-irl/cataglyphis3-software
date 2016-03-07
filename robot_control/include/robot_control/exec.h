@@ -15,6 +15,7 @@
 #include <messages/ExecAction.h>
 #include <messages/ActuatorOut.h>
 #include <messages/ExecInfo.h>
+#include <messages/ExecDequeEmpty.h>
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
 
@@ -27,6 +28,7 @@ public:
 	ros::NodeHandle nh;
 	ros::Publisher infoPub;
 	ros::Publisher actuatorPub;
+        ros::Publisher dequeEmptyPub;
 	ros::ServiceServer actionServ;
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;
@@ -52,6 +54,7 @@ private:
 	ACTION_PARAMS_T params_;
 	messages::ActuatorOut actuatorMsgOut_;
 	messages::ExecInfo execInfoMsgOut_;
+        messages::ExecDequeEmpty execDequeEmptyMsgOut_;
 	// Methods
 	bool actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res);
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);

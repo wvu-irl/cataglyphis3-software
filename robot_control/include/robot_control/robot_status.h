@@ -20,6 +20,8 @@ public:
 	// Vision data
 	float panAngle = 0.0; // deg
 	float neckPos = 0.0; // deg
+        // NetBurner data
+        bool pauseSwitch = false;
 };
 
 #endif // ROBOT_STATUS_H

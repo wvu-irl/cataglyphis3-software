@@ -10,7 +10,7 @@ class Task : public RobotControlInterface
 public:
     virtual void init() = 0;
     virtual int run() = 0;
-	ACTION_PARAMS_T params;
+    ACTION_PARAMS_T params;
 };
 
 #endif // TASK_H
