@@ -14,7 +14,7 @@
 			' [14]   	amp1	motor1 amps			(uint8)   (motor amps*12 + 128)
 			' [15]   	amp2	motor2 amps			(uint8)
 			' [16]   	amp3	motor3 amps			(uint8)
-			' [17-20]	crc32 	crc32 check 		(uint8)x4 (crc32 of 1:16)
+			' [17-20]	crc32 	crc32 check 		(uint8)x4 (crc32 of [1:16])
 			' [21]		crc32i	inv crc32 byte		(uint8)	  (markers for crc32 bits to invert)
 
 	' << init >>
