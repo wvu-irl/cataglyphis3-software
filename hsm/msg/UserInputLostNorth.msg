@@ -1,0 +1,2 @@
+float32 north_angle
+float32 north_angle_unc

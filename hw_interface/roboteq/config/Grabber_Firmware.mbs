@@ -1,204 +1,253 @@
-' WVU SRRC Challenge - Drive Wheels Firmware
+' WVU SRRC Challenge - Capture Device Firmware
 ' Alexander T. Hypes
-' Version 26 - 3/3/16
-' Status: 	Verified
-
-	' Packet format:
-			' [1:3]		Az4 	header				(uint8)x3
-			' [4]		tic		ticker				(uint8)   (packet counter)
-			' [5:6]		clock 	clock				(uint16)  (time since boot in sec, rolls over at ~18 hrs)
-			' [7:8]		enc1 	encoder1 			(uint16)  (each byte xor 255) little endian
-			' [9:10]	enc2 	encoder2			(uint16)
-			' [11:12]	enc3 	encoder3			(uint16)
-			' [13]   	bvolt	battery_volts		(uint8)   (battery voltage*5)
-			' [14]   	amp1	motor1 amps			(uint8)   (motor amps*12 + 128)
-			' [15]   	amp2	motor2 amps			(uint8)
-			' [16]   	amp3	motor3 amps			(uint8)
-			' [17-20]	crc32 	crc32 check 		(uint8)x4 (crc32 of [1:16])
-			' [21]		crc32i	inv crc32 byte		(uint8)	  (markers for crc32 bits to invert)
-
-	' << init >>
-	wait(500)								' pause before script execution
-	dim pathfinder as boolean
+' Lisa Kogan
+' Version 23 - 3/7/16
+' Status: Verified
 	
-	' << config settings >>
-	pathfinder =       false				' substitutes enc1 >> enc3 and amp1 >> amp3 (also slightly different packet delay)
-	wait_val =            15				' ms between packets (target) (~46 Hz) (packets will never send faster than this)
-	wait_val_pf =         16				' ms between packets (pathfinder ~47Hz)
-	spwr =                58				' max power percentage (58 for right, 61 for left)
-	pprev = 	         128
-	crc_poly =    0xEDB88320 				' crc32 polynomial (note stored as int32: actually a uint32)
-		
-	' << var init >>
-	enc1 = 		  0
-	enc2 = 		  0
-	enc3 = 		  0
-	clk = 		  0
-	ticker = 	  0
+	' Serial Communication Commands:
+		' Var 1 - Slider movement completion		(0: go / incomplete 	1: stop / complete)
+		' Var 2 - Slider desired position			(closed: -1000, open: +1000)
+		' Var 3 - Raise/lower movement completion	(0: go / incomplete 	1: stop / complete)
+		' Var 4 - Raise/lower desired position		(up: 	 -1000, down: +1000)
+	
+	' Packet Output Format:
+			' [1:3]		Az5 		header														(uint8)x3
+			' [4]		mux 		mux'd byte for scomp/rcomp/errstatus/ticker 				(uint8)
+										' bit[8] 		= scomp		(MSB)
+										' bit[7] 		= rcomp
+										' bit[6] 		= errstatus
+										' bit[5:1] 		= ticker 	(LSB+4)  (0-31 counter)
+										
+			' [5:6]		clock		clock					(uint16) (time since boot in sec, rolls over at ~18 hrs)
+			' [7]		spos_avg 	((spos_avg)/8 + 1)		(uint8)
+			' [8]   	bvolt		battery_volts			(uint8)   (battery voltage*5)
+			' [9]   	amp1		motor1 amps				(uint8)   (motor amps*12 + 128)
+			' [10]   	amp2		motor2 amps				(uint8)
+			' [11]   	amp3		motor3 amps				(uint8)
+			' [12]		pos3 		((pos3)/8 + 1)			(uint8)
+			' [13-16]	crc32 		crc32 check 			(uint8)x4 (crc32 of [1:12])
+			' [17]		crc32i		inv crc32 byte			(uint8)	  (markers for crc32 bits to invert)			
+	
+	' << script configuration settings >>
+	wait(500)						' pause before script execution
+	wait_val =        16			' target time between packets (ms) (never send faster than this)
+	wamp =			  70			' working amp limit (*10)
+	wvolt =		     140 			' working voltage (*10)
+	amp_thres =		  70			' percentage of wamp to be considered /stalled/ (*100)
+	maxpwr = 		1000 			' movement command cap
+
+	ana_tol =		  20			' move completion tolerance
+	kmov =			 120  			' proportional gain for overall slider movement control (*10)
+	amov =			  50			' proportional gain for differential slider control based on amp draw (*10)
+	kdiff =			  80 			' proportional gain for differential slider control based on position (*10)
+	kup =			  80  			' proportional gain for overall raise/lower movement control (*10)
+	
+	stimeout =	   10000			' slider timeout (ms)
+	rtimeout =	   10000			' raise/lower timeout (ms)
+	stalltime =	    2000			' stall time before stopping and sending errorstatus (ms)
+	afactorw =        15			' accelleration factor
+	crc_poly = 0xEDB88320 		' crc32 polynomial (note stored as int32: actually a uint32)
+	
+	' << misc init >> 
 	amp1 = 		  0
 	amp2 = 		  0
 	amp3 = 		  0
-	bvolt = 	  0
-			
-	setconfig(_ECHOF, 1)					' disable serial echo
+	
+	' zero movement commands		
+	pwr1 = 0
+	pwr2 = 0
+	pwr3 = 0	
+	
+	' normalize max voltage out
+	bvolt = getvalue(_V, 2) 		' get battery voltage (*10)
+	if bvolt < 0 then			
+		bvolt = 420					' 42V if value is corrupted
+	elseif bvolt > 420 then 
+		bvolt = 420
+	end if
+	
+	spwr = wvolt * 100 / bvolt 		' calc power percentage (*10)
+	if (spwr<50)  then spwr=50 		' bound power values
+	if (spwr>100) then spwr=100
 
-	' BUGIFX: bound power values
-	if (spwr<50) then spwr=50 
-	if (spwr>90) then spwr=90
-
+	
+	i = 0 							' print throttle counter
+	j = 0 							' acceleration factor throttle counter
+	ticker = 0 						' packet counter
+	errstatus = 0 					' error status code
+	afactor = afactorw				' init afactor counter
+	
+	pos1 = getvalue(_FEEDBK,1) 		' get current slider positions
+	pos2 = getvalue(_FEEDBK,2)
+	pos3 = getvalue(_FEEDBK,3)
+	gosub sanitize_s				' Bugfix: sanitize feedback/amp measurements
+	gosub sanitize_r				' Bugfix: sanitize feedback/amp measurements
+	' << push controller settings >> 
+	setconfig(_ECHOF, 1)			' disable serial echo
+	
+	' motor setup
+	setconfig(_MMOD, 1, 0) 			' switch to open loop
+	setconfig(_MMOD, 2, 0)
+	setconfig(_MMOD, 3, 0)	
+	setcommand(_GO, 1, 0) 			' issue zero speed command
+	setcommand(_GO, 2, 0)
+	setcommand(_GO, 3, 0)	
+	setconfig(_ALIM, 1, wamp) 		' set amp limits
+	setconfig(_ALIM, 2, wamp)
+	setconfig(_ALIM, 3, wamp)
+	
 	' output voltage (pwr)
-	setconfig(_MXPF, 1, spwr) 				' set max fwd power levels
+	setconfig(_MXPF, 1, spwr) 		' set max fwd power levels
 	setconfig(_MXPF, 2, spwr)
 	setconfig(_MXPF, 3, spwr)
-	setconfig(_MXPR, 1, spwr) 				' set max rev power levels
+	setconfig(_MXPR, 1, spwr) 		' set max rev power levels
 	setconfig(_MXPR, 2, spwr)
 	setconfig(_MXPR, 3, spwr)
 	
-	setconfig(_EMOD, 1, 18)					' encoder for chan 1
-	setconfig(_EMOD, 2, 34)					' encoder for chan 2
-
-	setconfig(_EPPR, 1, pprev)				' encoder pulses per rev number
-	setconfig(_EPPR, 2, pprev)
-		
-	setconfig(_EHL, 1, 2000000000)			' set encoder high limits
-	setconfig(_EHL, 2, 2000000000)
-
-	setconfig(_EHLA, 1, 0)					' set encoder high limit action (do nothing)
-	setconfig(_EHLA, 2, 0)
+	' variable init
+	setcommand(_VAR, 1, 1) 			' init move completions true
+	setcommand(_VAR, 3, 1)
+	setcommand(_VAR, 2, 0) 			' init commanded positions to zero
+	setcommand(_VAR, 4, 0)
 	
-	setconfig(_ELL, 1, -2000000000)			' set encoder low limits
-	setconfig(_ELL, 2, -2000000000)
+	' configure analog inputs
+	setconfig(_AINA, 1,  0) 		' disable
+	setconfig(_AINA, 2, 66) 		' feedback for motor 1
+	setconfig(_AINA, 3, 34) 		' feedback for motor 2
+	setconfig(_AINA, 4, 18)			' feedback for motor 3
+	setconfig(_AINA, 5,  0) 		' disable
+	setconfig(_AINA, 6,  0) 		' disable
+	setconfig(_AINA, 7,  0) 		' disable
+	setconfig(_AINA, 8,  0) 		' disable
 	
-	setconfig(_ELLA, 1, 0)					' set encoder low limit action (do nothing)
-	setconfig(_ELLA, 2, 0)
-
-	if pathfinder=false						' chan 3 encoder setup
-		setconfig(_EMOD, 3, 66)		
-		setconfig(_EPPR, 3, pprev)
-		setconfig(_EHL,  3,  2000000000)
-		setconfig(_EHLA, 3, 0)
-		setconfig(_ELL,  3, -2000000000)
-		setconfig(_ELLA, 3, 0)
-	else
-		wait_val = wait_val_pf				' use pathfinder value instead
-	end if
+	setconfig(_DFC, 1, -1000)		' chan 1 default cmd value
+	setconfig(_DFC, 2, -1000)		' chan 2 default cmd value
+	setconfig(_DFC, 3, -1000)		' chan 3 default cmd value	
 	
-	settimercount(0, wait_val) 				' setup packet timer
-	settimerstate(0, 0) 					' make sure timer is running
+	' setup hw timers
+	settimercount(0, wait_val) 		' setup packet timer	
+	settimercount(1, stimeout)  	' setup slider timer
+	settimercount(2, rtimeout) 		' setup raise/lower timer
+	settimercount(3, stalltime) 	' setup slider timer	
+	settimerstate(0, 0) 			' make sure packet timer is running
 	
 	' << main loop >>
 	while 1
-		if (gettimercount(0) < 1) then				' timer has run out?
+		' read serial variables
+		scomp = getvalue(_VAR,1) 			' get slider completion value
+		scmd  = getvalue(_VAR,2) 			' get desired slider position
+		rcomp = getvalue(_VAR,3) 			' get raise/lower completion value
+		rcmd  = getvalue(_VAR,4) 			' get desired raise/lower position
 			
-			gosub readdata							' read internal data
-			
-			gosub datamod 							' mod data to correct byte size values
-			
-			gosub bcheck 							' bounds check those values
+		gosub sanitize 						' sanitize input vars to safe values
 
-			gosub serialize_i 						' serialize
+		gosub smove							' calc slider move pwr
+		
+		gosub rmove							' calc raise/lower pwr
+		
+		gosub scheck						' slider completion check
+		
+		gosub rcheck						' raise/lower completion check
 
-			gosub bytefix							' prevent null char output for least significant byte
+		' drive motors
+		setcommand(_GO, 1, -pwr1) 			' negative due to grabber closing outward
+		setcommand(_GO, 2, -pwr2) 			' (the grabber moves away from robot to close)
+		setcommand(_GO, 3,  pwr3)	
+	
+		' print throttling
+		if (gettimercount(0) < 1) then		' timer has run out?
 
-			gosub crc32							    ' calculate crc32
+			bvolt = getvalue(_V, 2)*5/10 	' get battery voltage (*5)
+			if bvolt < 0 then
+				bvolt = 0
+			elseif bvolt > 254
+				bvolt = 254
+			end if
+
+			clk_sec  = getvalue(_TM, 1)		' BUGFIX: v1.5 firmware does _TM differently
+			clk_min  = getvalue(_TM, 2)		' time since boot (min)
+			clk_hr   = getvalue(_TM, 3)		' time since boot (hrs)
+			clk = clk_sec + clk_min*60 + clk_hr*3600
 			
-			'gosub crc32_noop						' blank crc32 (noop)
+			amp1p = (amp1*12/10 + 128)		' read measured amp draws
+			amp2p = (amp2*12/10 + 128)
+			amp3p = (amp3*12/10 + 128)
 			
-			gosub crc32_ichk						' check/calc bytes to invert for crc32
+			gosub serialize_i				' serialize clock + build bytes
 			
-			gosub packetprinter						' print 20-byte packet over serial
+			gosub crc32						' calculate crc32
 			
-			settimercount(0, wait_val) 				' reset packet timer
-			settimerstate(0, 0) 					' make sure timer is running			
+			'gosub crc32_noop				' blank crc32 (noop)
+			
+			gosub crc32_ichk				' check/calc bytes to invert for crc32
+			
+			gosub packetprinter				' write packet to serial
+			
+			settimercount(0, wait_val) 		' reset packet timer
+			settimerstate(0, 0) 			' make sure timer is running
 		else
 			wait(1)
 		end if	
+			
 	end while
-
+	
 
 	' << crc32 inversion check/calc >> 
 	crc32_ichk:
-		byte21 = 128
-		if byte17=0 then byte21=byte21+1
-		if byte18=0 then byte21=byte21+2
-		if byte19=0 then byte21=byte21+4
-		if byte20=0 then byte21=byte21+8
+		byte17 = 128
+		if byte13=0 then byte17=byte17+1
+		if byte14=0 then byte17=byte17+2
+		if byte15=0 then byte17=byte17+4
+		if byte16=0 then byte17=byte17+8
 		
-		if byte17=0 then byte17=255
-		if byte18=0 then byte18=255
-		if byte19=0 then byte19=255
-		if byte20=0 then byte20=255
+		if byte13=0 then byte13=255
+		if byte14=0 then byte14=255
+		if byte15=0 then byte15=255
+		if byte16=0 then byte16=255
 
 	return
-	
-
-	' << read sensor data >> 
-	readdata:
-		enc1 = getvalue(_C, 1)			  		' get encoder values
-		enc2 = getvalue(_C, 2)
-		amp1 = (getvalue(_A, 1)*12/10 + 128)	' read measured amp draws
-		amp2 = (getvalue(_A, 2)*12/10 + 128)
-		if pathfinder=false	
-			enc3 = getvalue(_C, 3)				' <<3chan>>
-			amp3 = (getvalue(_A, 3)*12/10 + 128)
-		else
-			enc3 = enc1							' <<2chan>>
-			amp3 = amp1
-		end if
-		bvolt = getvalue(_V, 2)*5/10 			' get battery voltage (*5)
-		clk      = getvalue(_TM, 1)				' time since boot (s)
-		ticker = (ticker + 1)					' packet counter
-	return
-	
+		
 	
 	' << crc32 calculation >> 
 	crc32:
 		' http://www.mathworks.com/matlabcentral/fileexchange/49518-crc-32-computation-algorithm/content/crc32.m
 		crc_val  = 0xFFFFFFFF		' starting value of crc32
 		
-		val = byte4					' [4]		ticker 		(uint8)
+		val = byte4					' [4]		mux 		(uint8)
 		gosub crc32_bitbang
 		val = byte5					' [5:6]		clock 		(uint16)
 		gosub crc32_bitbang
 		val = byte6
 		gosub crc32_bitbang
-		val = byte7					' [7:8]		enc1 		(uint16)
+		val = byte7					' [7]		spos_avg 	(uint8)
 		gosub crc32_bitbang
-		val = byte8
+		val = byte8					' [8]		bvolts		(uint8)
 		gosub crc32_bitbang
-		val = byte9					' [9:10]	enc2 		(uint16)
+		val = byte9					' [9]		amp1		(uint8)
 		gosub crc32_bitbang
-		val = byte10
+		val = byte10				' [10]		amp2		(uint8)
 		gosub crc32_bitbang
-		val = byte11				' [11:12]	enc3 		(uint16)
+		val = byte11				' [11]		amp3		(uint8)
 		gosub crc32_bitbang
-		val = byte12
-		gosub crc32_bitbang
-		val = byte13				' [13]		bvolts		(uint8)
-		gosub crc32_bitbang
-		val = byte14				' [14]		amp1		(uint8)
-		gosub crc32_bitbang
-		val = byte15				' [15]		amp2		(uint8)
-		gosub crc32_bitbang
-		val = byte16				' [16]		amp3		(uint8)
-		gosub crc32_bitbang
+		val = byte12				' [12]		pos3		(uint8)
+		gosub crc32_bitbang		
 		
 		' final complement of crc32
 		crc_val = crc_val xor 0xFFFFFFFF 	' 24 	crc = bitcmp(crc);
 		
 		' serialize crc32 into 4 bytes
-		byte17  =   ( crc_val        and 0b11111111)
-		byte18  =   ((crc_val >>  8) and 0b11111111)
-		byte19  =   ((crc_val >> 16) and 0b11111111)
-		byte20  =   ((crc_val >> 24) and 0b11111111)
+		byte13  =   ( crc_val        and 0b11111111)
+		byte14  =   ((crc_val >>  8) and 0b11111111)
+		byte15  =   ((crc_val >> 16) and 0b11111111)
+		byte16  =   ((crc_val >> 24) and 0b11111111)
 	return		
 
 	' << dummy crc32 func for speed testing
 	crc32_noop:
-		byte17  =   0x0
-		byte18  =   0x1
-		byte19  =   0x2
-		byte20  =   0x3
+		byte13  =   0x0
+		byte14  =   0x1
+		byte15  =   0x2
+		byte16  =   0x3
 	return	
 	
 	' << crc32 bitwise magic >> 
@@ -238,130 +287,305 @@
 			m_one = (carry << 1)
 		end while
     return	
-
-	
-	' << mod data to correct byte size values >>
-	datamod: 
-		byte8  = enc1  mod 61566						' encoder values are int32 (+2147483647 to -2147483648)
-		byte10 = enc2  mod 61566   						' 61566 is the largest 2-byte value to mod with an int32
-		byte12 = enc3  mod 61566						' which will produce a max rollover error of 2
-		byte6  = clk   mod 61566
-		byte13 = bvolt mod   256
-		byte14 = amp1  mod   256						' bound hsm data to single-byte values
-		byte15 = amp2  mod   256
-		byte16 = amp3  mod   256
-	return
-	
-	' << bounds check data values >> 
-	bcheck:
-		' keep encs/clock between 0 and 64000 (mod can be negative)
-		if byte8  < 0 then byte8  = byte8  + 61566		' encs
-		if byte10 < 0 then byte10 = byte10 + 61566
-		if byte12 < 0 then byte12 = byte12 + 61566
-		if byte6  < 0 then byte6  = byte6  + 61566		' clock
-
-		' keep bvolts/amps between 0 and 254
-		if byte13<0   then byte13=0
-		if byte14<0   then byte14=0
-		if byte15<0   then byte15=0
-		if byte16<0   then byte16=0
-		if byte13>254 then byte13=254
-		if byte14>254 then byte14=254
-		if byte15>254 then byte15=254
-		if byte16>254 then byte16=254
 		
-		' packet counter roll over
-		if ticker > 254 then ticker = 0
+	' << sanitize serial input var values >>
+	sanitize:
+		if scomp < 0 then scomp = 0							' keep scomp (Var 1) between 0 and 1
+		if scomp > 1 then scomp = 1
+
+		if scmd < -1000 then scmd = -1000					' keep scmd  (Var 2) between -1000 and +1000
+		if scmd >  1000 then scmd =  1000		
+		
+		if rcomp < 0 then rcomp = 0							' keep rcomp (Var 3) between 0 and 1
+		if rcomp > 1 then rcomp = 1		
+
+		if rcmd < -1000 then rcmd = -1000					' keep rcmd  (Var 4) between -1000 and +1000
+		if rcmd >  1000 then rcmd =  1000		
+			
+	return
+
+	' << slider movement command calculation >>
+	smove:
+		if (scomp = 0) then    								' move not complete?
+			settimerstate(1, 0) 							' make sure movement timer is running
+			pos1 = getvalue(_FEEDBK,1) 						' get current slider positions
+			pos2 = getvalue(_FEEDBK,2)
+	
+			amp1 = getvalue(_A, 1) 							' read measured amp draws
+			amp2 = getvalue(_A, 2)
+			gosub sanitize_s								' Bugfix: sanitize feedback/amp measurements
+			
+			errstatus = 0 									' clear failed grab message for new movements
+						
+			' << stall / failure detection >>
+			if (abs(amp1) > (wamp * amp_thres/100)) or (abs(amp2) > (wamp * amp_thres/100)) then
+															' is one channel is above wamp * amp_thres?
+				settimerstate(3, 0) 						' make sure stall timer is running
+				
+				if (gettimercount(3) < 1) then				' timer has run out?
+				
+					'grab failed (change status)
+					settimercount(1, stimeout)  			' reset slider timer
+					settimerstate(1, 1) 					' stop slider timer
+					
+					settimercount(3, stalltime) 			' reset stall timer
+					settimerstate(3, 1) 					' stop stall timer						
+								
+					setcommand(_VAR,1,1) 					' change move flag to complete (stop sliders)
+					errstatus = 1 							' mark grab as failed/stalled grab
+					
+				else										' do nothing, could just be a spike
+				
+					'print(gettimercount(3), " \n")			' print timer while its running
+				end if
+			else
+				settimercount(3, stalltime) 				' Bugfix: reset stall timer
+				settimerstate(3, 1)							' stop stall timer
+			end if		
+			
+			' << not stalled / command calculation >>
+			pwr1 = (scmd - pos1) * kmov/10 					' calc raw pwr values
+			pwr2 = (scmd - pos2) * kmov/10
+			
+			gosub power_calc_s								' cap pwr values
+
+			' acceleration factor throttling code
+			j = j + 1										' increment acceleration throttling counter
+			if j>4 then										' every fourth loop
+				if afactor < 2 then							
+					afactor = 1								' dont' go below 1
+				else
+					afactor = afactor - 1					' reduce by one
+				end if
+				j=0											' reset acceleration throttling counter
+			end if		
+
+			if ((pos1-pos2) * pwr1) > 0 then step1=1 else step1=0 		' step /function/ var
+			if ((pos2-pos1) * pwr2) > 0 then step2=1 else step2=0
+			
+			pwr1 = pwr1 - step1*((pos1-pos2)*kdiff - (amp2*amov))/10 	' calculate base move command
+			pwr2 = pwr2 - step2*((pos2-pos1)*kdiff - (amp1*amov))/10
+			
+			pwr1 = pwr1*(100-100*afactor/afactorw)/100 		' scale pwr values over time
+			pwr2 = pwr2*(100-100*afactor/afactorw)/100
+		else
+			pwr1 = 0										' Bugfix: kill movement / pause detection
+			pwr2 = 0
+			amp1 = 0
+			amp2 = 0
+		end if
+	return
+
+	' << sanitize slider measurements >>
+	sanitize_s:
+		if pos1 < -1000 then pos1 = -1000					' keep pos1 feedback between -1000 and +1000
+		if pos1 >  1000 then pos1 =  1000			
+	
+		if pos2 < -1000 then pos2 = -1000					' keep pos2 feedback between -1000 and +1000
+		if pos2 >  1000 then pos2 =  1000			
+		
+		if amp1 < -100 then amp1 = -100						' keep amp1 between +-10 amps
+		if amp1 >  100 then amp1 =  100			
+		
+		if amp2 < -100 then amp2 = -100						' keep amp2 between +-10 amps
+		if amp2 >  100 then amp2 =  100			
 	return
 	
-	' << serialize + invert 2 byte values (~uint16) >> 
+	' << raise/lower movement command calculation >>
+	rmove:
+		if (rcomp = 0) then									' move not complete?
+			settimerstate(2, 0) 							' make sure timer 2	is running
+			
+			pos3 = getvalue(_FEEDBK,3)						' get current raise/lower positions
+			amp3 = getvalue(_A, 3)
+			
+			gosub sanitize_r								' Bugfix: sanitize feedback measurement
+			
+			pwr3 = (rcmd-pos3)*kup/10 						' calc raw pwr value
+			
+			gosub power_calc_ud 							' normalize pwr values
+		else
+			pwr3 = 0										' Bugfix: kill movement / pause detection
+			amp3 = 0
+		end if
+	return
+
+	' << raise/lower completion check >>
+	rcheck:
+		if (abs(pos3 - rcmd) < ana_tol) or (gettimercount(2) < 1) then ' are we there yet or is time up?
+
+			settimercount(2, rtimeout) 						' reset r/l movement timer
+			settimerstate(2, 1) 							' stop  r/l movement timer
+			
+			rcomp = 1										' mark move complete
+			setcommand(_VAR, 3, rcomp)						' write Var 3 to serial
+			
+			pwr3 = 0										' set movement cmd to 0
+		end if
+	return
+	
+	' << slider completion check >>
+	scheck:
+		if ((abs(pos1 - scmd) < ana_tol) and (abs(pos2 - scmd) < ana_tol)) or (gettimercount(1) < 1) then
+															' are both sliders close or is time up?
+															
+			settimercount(1, stimeout) 						' reset slider movement timer
+			settimerstate(1, 1)								' stop  slider movement timer
+			settimercount(3, stalltime)						' reset slider stall timer
+			settimerstate(3, 1) 							' stop 	slider stall timer
+			
+			scomp = 1										' mark move complete
+			setcommand(_VAR, 1, scomp) 						' write Var 1 to serial
+			
+			afactor = afactorw								' reset acceleration factor
+			j=0												' reset throttle counter
+			
+			pwr1 = 0										' set moveement cmds to 0
+			pwr2 = 0			
+		end if
+	return
+		
+	' << slider power limits >> 
+	power_calc_s:											' keep pwr1 and pwr2 within -1000 and +1000
+		if pwr1 < -maxpwr then
+			pwr1 = -maxpwr
+		elseif pwr1 > maxpwr then 
+			pwr1 = maxpwr
+		end if			
+		
+		if pwr2 < -maxpwr then
+			pwr2 = -maxpwr
+		elseif pwr2 > maxpwr then 
+			pwr2 = maxpwr
+		end if	
+	return
+	
+	' << raise/lower power limits >>
+	power_calc_ud:											' keep pwr3 within -1000 and +1000
+		if pwr3 < -maxpwr then
+			pwr3 = -maxpwr
+		elseif pwr3 > maxpwr then 
+			pwr3 = maxpwr
+		end if			
+	return
+	
+	' << sanitize raise/lower measurements >>
+	sanitize_r:
+		if pos3 < -1000 then								' keep pos3 feedback between -1000 and +1000
+			pos3 = -1000
+		elseif pos3 > 1000 then
+			pos3 = 1000
+		end if
+	return	
+		
+	' << serialize + invert 2 byte values (~uint16) into 1 byte chunks >> 
 	serialize_i:
-		byte4  =          ((ticker and 0b11111111) xor 0b11111111)	' packet counter
-		byte5  =           ((byte6 and 0b11111111) xor 0b11111111)	' clock
-		byte6  =    (((byte6 >> 8) and 0b11111111) xor 0b11111111)
-		byte7  =           ((byte8 and 0b11111111) xor 0b11111111)	' encoder 1
-		byte8  =    (((byte8 >> 8) and 0b11111111) xor 0b11111111)
-		byte9  =          ((byte10 and 0b11111111) xor 0b11111111)	' encoder 2
-		byte10 =   (((byte10 >> 8) and 0b11111111) xor 0b11111111)		
-		byte11 =          ((byte12 and 0b11111111) xor 0b11111111)	' encoder 3
-		byte12 =   (((byte12 >> 8) and 0b11111111) xor 0b11111111)
-		byte13  =		(byte13  xor 0b11111111)						' bvolts
-		byte14  =		(byte14  xor 0b11111111)						' amp1
-		byte15  =		(byte15  xor 0b11111111)						' amp2
-		byte16  =		(byte16  xor 0b11111111)						' amp3
+		ticker = (ticker + 1) mod 32											' increment packet counter
+		val1 = (scomp*128 + rcomp*64 + errstatus*32 + ticker)					' mux scomp/rcomp/errstatus/ticker
+		val2 = ((pos1 + pos2 + 2000)/16)										' update packet slider position avg
+		
+		val3 = bvolt  mod   256								' bound data to byte values
+		val4 = amp1p  mod   256	
+		val5 = amp2p  mod   256
+		val6 = amp3p  mod   256
+		val7 = (pos3+1000)/8								' update packet raise/lower position
+
+		if val3 < 0 then									' bvolts
+			val3 = 0
+		elseif val3 > 254
+			val3 = 254
+		end if
+		
+		if val4 < 0 then									' amp1
+			val4 = 0
+		elseif val4 > 254
+			val4 = 254
+		end if
+		
+		if val5 < 0 then									' amp2
+			val5 = 0
+		elseif val5 > 254
+			val5 = 254
+		end if	
+		
+		if val6 < 0 then									' amp3
+			val6 = 0
+		elseif val6 > 254
+			val6 = 254
+		end if	
+		
+		' mux byte (scomp/rcomp/errstatus/ticker)
+		byte4  = 		 ((val1 and 0b11111111) xor 0b11111111)							' mask, invert
+		' clock
+		byte5  =          ((clk and 0b11111111) xor 0b11111111)
+		byte6  =   (((clk >> 8) and 0b11111111) xor 0b11111111) ' shift, mask, invert		
+		' pos avg
+		byte7  = 		 ((val2 and 0b11111111) xor 0b11111111)	
+		
+		' bvolts
+		byte8  =		 (val3  xor 0b11111111)
+		' amp1
+		byte9  =		 (val4  xor 0b11111111)
+		' amp
+		byte10  =		 (val5  xor 0b11111111)
+		' amp3
+		byte11  =		 (val6  xor 0b11111111)
+		' pos3
+		byte12  =		 (val7  xor 0b11111111)	
+		
+		' bvolts
+		if byte8=0 then byte8=1
+		' amp1
+		if byte9=0 then byte9=1
+		' amp
+		if byte10=0 then byte10=1
+		' amp3
+		if byte11=0 then byte11=1			
 	return		
 	
-	' << serialize 2 byte values (~uint16) >> 
-	serialize:
-		byte4  =         (ticker  and 0b11111111)	' packet counter
-		byte5  =          (byte6  and 0b11111111)	' clock
-		byte6  =   ((byte6  >> 8) and 0b11111111)
-		byte7  =          (byte8  and 0b11111111)	' encoder 1
-		byte8  =   ((byte8  >> 8) and 0b11111111)
-		byte9  =          (byte10 and 0b11111111)   ' encoder 2
-		byte10 =   ((byte10 >> 8) and 0b11111111) 	
-		byte11 =          (byte12 and 0b11111111)   ' encoder 3
-		byte12 =   ((byte12 >> 8) and 0b11111111)
-	return	
-
-	' << prevent null char for least significant byte of uint16s >> 
-	bytefix:
-		' bump an inverted 0 to 1 (real value 255 to 254)
-		' clock/encs
-		if  byte5=0 then  byte5=1
-		if  byte7=0 then  byte7=1
-		if  byte9=0 then  byte9=1
-		if byte11=0 then byte11=1
-		' bvolts/amps
-		if byte13=0 then byte13=1
-		if byte14=0 then byte14=1
-		if byte15=0 then byte15=1
-		if byte16=0 then byte16=1
-	return
-	
 	' << output packet over serial >>
-	packetprinter: 
-		print("Az4") 			' [1:3]		header		(uint8)x3
+	packetprinter:	
+		' print packet
+		print("Az5") 			' [1:3]		header				(uint8)x3
 		
-		val = byte4				' [4]		ticker 		(uint8)
+		val = byte4				' [4]		mux byte			(uint8)
 		gosub twiddlebit
-		val = byte5				' [5:6]		clock 		(uint16)
+
+		val = byte5				' [5:6]		clock 				(uint16)
 		gosub twiddlebit
 		val = byte6
 		gosub twiddlebit
-		val = byte7				' [7:8]		enc1 		(uint16)
-		gosub twiddlebit
-		val = byte8
-		gosub twiddlebit
-		val = byte9				' [9:10]	enc2 		(uint16)
-		gosub twiddlebit
-		val = byte10
-		gosub twiddlebit
-		val = byte11			' [11:12]	enc3 		(uint16)
-		gosub twiddlebit
-		val = byte12
-		gosub twiddlebit
-		val = byte13			' [13]		bvolts		(uint8)
-		gosub twiddlebit
-		val = byte14			' [14]		amp1		(uint8)
-		gosub twiddlebit
-		val = byte15			' [15]		amp2		(uint8)
-		gosub twiddlebit
-		val = byte16			' [16]		amp3		(uint8)
-		gosub twiddlebit	
-		val = byte17			' [17:20]	crc32		(uint32)
-		gosub twiddlebit
-		val = byte18
-		gosub twiddlebit	
-		val = byte19
-		gosub twiddlebit	
-		val = byte20
-		gosub twiddlebit
-		val = byte21			' [21]		crc32_i		(uint8)
-		gosub twiddlebit
-	return
 
-	' << print val as uint8 char via serial >>
+		val = byte7				' [7]		spos_avg/8 			(uint8)
+		gosub twiddlebit		
+
+		val = byte8				' [8]		bvolts				(uint8)
+		gosub twiddlebit
+		
+		val = byte9				' [9]		amp1				(uint8)
+		gosub twiddlebit	
+		val = byte10			' [10]		amp2				(uint8)
+		gosub twiddlebit
+		val = byte11			' [11]		amp3				(uint8)
+		gosub twiddlebit	
+		val = byte12			' [12]		pos3/8				(uint8)
+		gosub twiddlebit	
+		
+		val = byte13			' [13:16]	crc32		(uint32)
+		gosub twiddlebit
+		val = byte14
+		gosub twiddlebit	
+		val = byte15
+		gosub twiddlebit	
+		val = byte16
+		gosub twiddlebit
+		val = byte17			' [17]		crc32_i		(uint8)
+		gosub twiddlebit	
+		
+		'print("\n")
+	return		
+	
+		' << print val as uint8 char via serial >>
 	twiddlebit:												' convert to binary for minimum/consistent runtime
 		if (val and 0b00000001)>0 then bit1=1 else bit1=0	' LSB
 		if (val and 0b00000010)>0 then bit2=1 else bit2=0

@@ -1,0 +1,15 @@
+float32 x_position
+float32 x_position_unc
+float32 y_position
+float32 y_position_unc
+float32 heading
+float32 heading_unc
+float32 north_angle
+float32 north_angle_unc
+uint8 waypoint_list_type
+uint8 waypoint_index
+uint8 precached_acquired
+uint8 samples_collected_count
+uint8 possessing_sample
+int16 slide_pos_out
+uint8 next_state

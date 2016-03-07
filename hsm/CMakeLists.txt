@@ -1,19 +1,14 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(robot_control)
+project(hsm)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  message_runtime
-  messages
   roscpp
   rospy
-  grid_map_ros
-  grid_map_msgs
-  geometry_msgs
-  sensor_msgs
+  std_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -50,21 +45,26 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   Keys_Pressed.msg
-   Waypoint.msg
+add_message_files(
+	FILES
+	HSM_Detection.msg
+	HSM_Action.msg
+	MasterStatus.msg
+	UserInputInitStartup.msg
+	UserInputReboot.msg
+	UserInputLostLocation.msg
+	UserInputLostNorth.msg
+	UserInputLostNextState.msg
+	UserInputLostWaypointIndex.msg
+	UserInputLostSampleProps.msg
  )
 
 ## Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   WaypointsOfInterest.srv
-   RegionsOfInterest.srv
-   WaypointsOfRegion.srv
-   IntermediateWaypoints.srv
-   ModifyROI.srv
- )
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -76,7 +76,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   std_msgs
  )
 
 ###################################
@@ -90,117 +90,92 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES robot_control
-  CATKIN_DEPENDS message_generation message_runtime messages roscpp rospy
+  LIBRARIES HSM_Detector user_input_mp_act_class user_input_exec_act_class user_input_nav_act_class HSM_Heartbeat
+  CATKIN_DEPENDS roscpp rospy message_generation
 #  DEPENDS system_lib
 )
-
-add_definitions("-std=gnu++11")
 
 ###########
 ## Build ##
 ###########
 
+add_definitions("-std=gnu++11")
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  include
+  include/hsm
+  ~/cataglyphis_ws/src/robot_control/include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a cpp library
- add_library(exec src/exec.cpp)
- add_library(action src/action.cpp)
- add_library(idle src/idle.cpp)
- add_library(halt src/halt.cpp)
- add_library(drive_global src/drive_global.cpp)
- add_library(drive_relative src/drive_relative.cpp)
- add_library(grab src/grab.cpp)
- add_library(drop src/drop.cpp)
- add_library(open src/open.cpp)
- 
- add_library(drive_straight src/drive_straight.cpp)
- add_library(drive_straight_cl src/drive_straight_cl.cpp)
- add_library(drive_pivot src/drive_pivot.cpp)
- add_library(drive_halt src/drive_halt.cpp)
- add_library(grabber_set_slides src/grabber_set_slides.cpp)
- add_library(grabber_set_drop src/grabber_set_drop.cpp)
- add_library(grabber_halt src/grabber_halt.cpp)
- add_library(grabber_idle src/grabber_idle.cpp)
- add_library(vision_halt src/vision_halt.cpp)
-
- add_library(map_manager src/map_manager.cpp)
- 
- add_library(mission_planning src/mission_planning.cpp)
- add_library(choose_region src/choose_region.cpp)
- add_library(pause src/pause.cpp)
- 
- add_library(safe_pathing src/safe_pathing.cpp)
+ #add_library(HSM_Detector src/HSM_Detector.cpp)
+ #add_library(Comm_Monitor_class src/Comm_Monitor_class.cpp)
+ #add_library(Escape_Monitor_class src/Escape_Monitor_class.cpp)
+ #add_library(Counter src/Counter.cpp)
+ #add_library(Timer src/Timer.cpp)
+ #add_library(user_input_mp_act_class src/user_input_mp_act_class.cpp)
+ #add_library(user_input_exec_act_class src/user_input_exec_act_class.cpp)
+ add_library(user_input_nav_act_class src/user_input_nav_act_class.cpp)
+ #add_library(HSM_Heartbeat src/HSM_Heartbeat.cpp)
+ #add_library(HSM_Heartbeat_Monitor_class src/HSM_Heartbeat_Monitor_class.cpp)
 
 ## Declare a cpp executable
- add_executable(keyboard_control_node src/keyboard_control_node.cpp)
- add_executable(exec_node src/exec_node.cpp)
- add_executable(map_manager_node src/map_manager_node.cpp)
- add_executable(mission_planning_node src/mission_planning_node.cpp)
- add_executable(safe_pathing_node src/safe_pathing_node.cpp)
+ #add_executable(TEST_DRIVER_HSM_Detector src/TEST_DRIVER_HSM_Detector.cpp src/HSM_Detector.cpp)
+ #add_executable(TEST_DRIVER_Counter src/TEST_DRIVER_Counter.cpp src/Counter.cpp)
+ #add_executable(TEST_DRIVER_Timer src/TEST_DRIVER_Timer.cpp src/Timer.cpp)
+ #add_executable(HSM_Master_Executive src/HSM_Master_Executive_node.cpp)
+ add_executable(user_input_node src/user_input_node.cpp)
+ #add_executable(info_node src/info_node.cpp)
+ #add_executable(HSM_NB1_Executive src/HSM_NB1_Executive_node.cpp src/HSM_NB1_Monitor_class src/Counter)
+ #add_executable(HSM_HB_Executive src/HSM_HB_Executive_node.cpp src/HSM_Heartbeat_Monitor_class src/Counter)
+ 
+ #add_executable(HSM_TEST_node_1 src/HSM_TEST_node_1.cpp src/HSM_Heartbeat.cpp src/HSM_Detector.cpp src/Counter.cpp)
+ #add_executable(HSM_TEST_node_2 src/HSM_TEST_node_2.cpp src/HSM_Heartbeat.cpp src/HSM_Detector.cpp src/Counter.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
- add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
- add_dependencies(exec_node robot_control_generate_messages_cpp)
- add_dependencies(map_manager_node robot_control_generate_messages_cpp)
- add_dependencies(mission_planning_node robot_control_generate_messages_cpp)
- add_dependencies(safe_pathing_node robot_control_generate_messages_cpp)
+ #add_dependencies(hsm_node hsm_generate_messages_cpp)
+ #add_dependencies(TEST_DRIVER_HSM_Detector  hsm_generate_messages_cpp)
+ #add_dependencies(TEST_DRIVER_HSM_Detector ${catkin_EXPORTED_TARGETS})
+ #add_dependencies(HSM_Master_Executive ${catkin_EXPORTED_TARGETS})
+ #add_dependencies(HSM_Master_Executive hsm_generate_messages_cpp)
+ add_dependencies(user_input_node ${catkin_EXPORTED_TARGETS})
+ add_dependencies(user_input_node hsm_generate_messages_cpp robot_control_generate_messages_cpp navigation_generate_messages_cpp)
+ #add_dependencies(HSM_NB1_Executive ${catkin_EXPORTED_TARGETS})
+ #add_dependencies(HSM_NB1_Executive HSM_Monitor_class hsm_generate_messages_cpp)
+ #add_dependencies(HSM_HB_Executive HSM_Heartbeat_Monitor_class hsm_generate_messages_cpp)
+ #add_dependencies(HSM_Detector hsm_generate_messages_cpp)
+ #add_dependencies(HSM_TEST_node_1 hsm_generate_messages_cpp)
+ #add_dependencies(Comm_Monitor_class hsm_generate_messages_cpp)
+ #add_dependencies(Escape_Monitor_class hsm_generate_messages_cpp)
+ #add_dependencies(HSM_Heartbeat hsm_generate_messages_cpp)
+ #add_dependencies(HSM_Heartbeat_Monitor_class hsm_generate_messages_cpp)
+ #add_dependencies(info_node comm_generate_messages_cpp robot_control_generate_messages_cpp roboteq_interface_generate_messages_cpp navigation_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(keyboard_control_node
-   ${catkin_LIBRARIES}
-   libncurses.so
- )
+ #target_link_libraries(TEST_DRIVER_HSM_Detector ${catkin_LIBRARIES})
+ #target_link_libraries(TEST_DRIVER_Counter ${catkin_LIBRARIES})
+ #target_link_libraries(TEST_DRIVER_Timer ${catkin_LIBRARIES})
+ #target_link_libraries(HSM_Master_Executive ${catkin_LIBRARIES}
+ #											Comm_Monitor_class
+ #											Escape_Monitor_class
+ #											Counter
+ #											Timer
+ #											HSM_Heartbeat_Monitor_class)
+ #											
+ target_link_libraries(user_input_node ${catkin_LIBRARIES})
  
- target_link_libraries(drive_global action)
+ #target_link_libraries(info_node ${catkin_LIBRARIES})
  
- target_link_libraries(exec_node
-   ${catkin_LIBRARIES}
-   exec
-   action
-   idle
-   halt
-   drive_global
-   drive_relative
-   grab
-   drop
-   open
-   drive_straight
-   drive_straight_cl
-   drive_pivot
-   drive_halt
-   grabber_set_slides
-   grabber_set_drop
-   grabber_halt
-   grabber_idle
-   vision_halt
- )
- 
- target_link_libraries(map_manager_node
-   ${catkin_LIBRARIES}
-   map_manager
-   ${grid_map_ros_LIBRARIES}
- )
- 
- target_link_libraries(mission_planning_node
-   ${catkin_LIBRARIES}
-   mission_planning
-   choose_region
-   pause
- )
- 
- target_link_libraries(safe_pathing_node
-   ${catkin_LIBRARIES}
-   safe_pathing
- )
+ #target_link_libraries(HSM_Heartbeat HSM_Detector Timer Counter)
+ #target_link_libraries(HSM_NB1_Executive ${catkin_LIBRARIES})
+ #target_link_libraries(HSM_HB_Executive ${catkin_LIBRARIES})
+
+ #target_link_libraries(HSM_TEST_node_1 ${catkin_LIBRARIES})
+ #target_link_libraries(HSM_TEST_node_2 ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -217,7 +192,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS robot_control robot_control_node
+# install(TARGETS hsm hsm_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -242,7 +217,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_robot_control.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_hsm.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

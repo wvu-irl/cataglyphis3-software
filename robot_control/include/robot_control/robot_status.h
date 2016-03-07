@@ -21,7 +21,7 @@ public:
 	float panAngle = 0.0; // deg
 	float neckPos = 0.0; // deg
         // NetBurner data
-        bool pauseSwitch = false;
+    bool pauseSwitch = true;
 };
 
 #endif // ROBOT_STATUS_H

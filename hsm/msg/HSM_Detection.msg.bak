@@ -1,0 +1,3 @@
+string detector_type
+string error_type
+int8 error_reset
