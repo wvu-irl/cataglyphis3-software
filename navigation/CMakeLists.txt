@@ -109,6 +109,8 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+add_definitions("-std=gnu++11")
+
 ###########
 ## Build ##
 ###########
@@ -128,12 +130,27 @@ target_link_libraries(encoders_class ${catkin_LIBRARIES})
 add_library(imu_class src/imu_class.cpp)
 target_link_libraries(imu_class ${catkin_LIBRARIES} armadillo lapack blas)
 
+add_library(filter_class src/filter_class.cpp)
+target_link_libraries(filter_class ${catkin_LIBRARIES} armadillo lapack blas)
+
+add_library(navigation_filter src/navigation_filter.cpp)
+target_link_libraries(navigation_filter ${catkin_LIBRARIES} encoders_class imu_class filter_class)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(lidar ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
+add_executable(navigation_filter_node_updated src/navigation_filter_node_updated.cpp)
+add_dependencies(navigation_filter_node_updated navigation_generate_messages_cpp)
+ target_link_libraries(navigation_filter_node_updated
+   ${catkin_LIBRARIES}
+   encoders_class
+   imu_class
+   filter_class
+   navigation_filter
+ )
 
 ## Add cmake target dependencies of the executable
 
