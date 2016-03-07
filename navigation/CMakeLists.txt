@@ -122,11 +122,11 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(encoders_class src/encoders_class.cpp)
-# target_link_libraries(encoders_class ${catkin_LIBRARIES})
+add_library(encoders_class src/encoders_class.cpp)
+target_link_libraries(encoders_class ${catkin_LIBRARIES})
 
-# add_library(imu_class src/imu_class.cpp)
-# target_link_libraries(imu_class ${catkin_LIBRARIES} armadillo lapack blas)
+add_library(imu_class src/imu_class.cpp)
+target_link_libraries(imu_class ${catkin_LIBRARIES} armadillo lapack blas)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
