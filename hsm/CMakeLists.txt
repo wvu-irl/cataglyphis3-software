@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  messages
 )
 
 ## System dependencies are found with CMake's conventions
@@ -91,7 +92,7 @@ add_message_files(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES HSM_Detector user_input_mp_act_class user_input_exec_act_class user_input_nav_act_class HSM_Heartbeat
-  CATKIN_DEPENDS roscpp rospy message_generation
+  CATKIN_DEPENDS roscpp rospy message_generation messages
 #  DEPENDS system_lib
 )
 
