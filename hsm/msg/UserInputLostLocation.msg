@@ -1,0 +1,6 @@
+float32 x_position
+float32 x_position_unc
+float32 y_position
+float32 y_position_unc
+float32 heading
+float32 heading_unc

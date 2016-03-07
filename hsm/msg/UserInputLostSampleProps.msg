@@ -1,0 +1,4 @@
+uint8 precached_acquired
+uint8 samples_collected_count
+uint8 possessing_sample
+int16 slide_pos_out

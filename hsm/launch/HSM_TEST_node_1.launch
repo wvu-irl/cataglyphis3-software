@@ -1,0 +1,7 @@
+<launch>
+	<node name="vision_state_machine_node_v2" 
+		pkg="hsm" 
+		type="HSM_TEST_node_1"
+		output="screen"
+		respawn="true" />
+</launch>
