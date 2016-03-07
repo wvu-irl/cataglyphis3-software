@@ -6,7 +6,7 @@
 #include <hsm/UserInputLostNextState.h>
 #include <hsm/UserInputLostWaypointIndex.h>
 #include <hsm/UserInputLostSampleProps.h>
-#include <navigation/NavFilterOut.h>
+#include <messages/NavFilterOut.h>
 //#include <robot_control/MissionPlanningInfo.h>
 //#include <robot_control/ExecStateMachineInfo.h>
 #include <iostream>
@@ -100,7 +100,7 @@ public:
 	void runLost();
 	void initBiasRemoval();
 	void printCurrentStatus();
-	void navCallback(const navigation::NavFilterOut::ConstPtr& msg);
+	void navCallback(const messages::NavFilterOut::ConstPtr& msg);
 	//void planningCallback(const robot_control::MissionPlanningInfo::ConstPtr& msg);
 	//void execCallback(const robot_control::ExecStateMachineInfo::ConstPtr& msg);
 };
@@ -143,7 +143,7 @@ User_Input::User_Input()
 	lost_next_state_pub = nh.advertise<hsm::UserInputLostNextState>("hsm/userinput/nextstate",1);
 	lost_waypoint_index_pub = nh.advertise<hsm::UserInputLostWaypointIndex>("hsm/userinput/waypointindex",1);
 	lost_sample_props_pub = nh.advertise<hsm::UserInputLostSampleProps>("hsm/userinput/sampleprops",1);
-	nav_sub = nh.subscribe<navigation::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1,&User_Input::navCallback,this);
+	nav_sub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1,&User_Input::navCallback,this);
 	//planning_sub = nh.subscribe<robot_control::MissionPlanningInfo>("control/missionplanninginfo/missionplanninginfo",1,&User_Input::planningCallback,this);
 	//exec_sub = nh.subscribe<robot_control::ExecStateMachineInfo>("control/statemachineinfo/statemachineinfo",1,&User_Input::execCallback,this);
 }
@@ -382,7 +382,7 @@ void User_Input::printCurrentStatus()
 	cout << "r3 offset = " << r3_offset_in << endl << endl;
 }
 
-void User_Input::navCallback(const navigation::NavFilterOut::ConstPtr& msg)
+void User_Input::navCallback(const messages::NavFilterOut::ConstPtr& msg)
 {
 	p1_offset_in = msg->p1_offset;
 	q1_offset_in = msg->q1_offset;
