@@ -5,7 +5,7 @@
 #include <messages/NavFilterOut.h>
 #include <messages/ExecDequeEmpty.h>
 #include "choose_region.h"
-
+#include "pause.h"
 
 class MissionPlanning : public MissionPlanningProcessShare
 {
@@ -19,6 +19,7 @@ public:
         ros::Subscriber execDequeEmptySub;
 	const int loopRate = 20; // Hz
         ChooseRegion chooseRegion;
+        Pause pause;
 	std::vector<int> value;
 	int computedValue;
 	int valueSum;
@@ -71,6 +72,7 @@ public:
 	bool commandedChooseRegion;
 	bool initComplete;
 	bool commandedInit;
+	bool pauseStarted;
 	const float homeX = 5.0; // m
 	const float homeY = 0.0; // m
 private:
@@ -84,7 +86,7 @@ private:
         void init_();// ***
         void evalConditions_();
         void runProcesses_();
-
+        void runPause_();
 	void antColony_();
 
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);

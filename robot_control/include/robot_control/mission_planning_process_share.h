@@ -14,8 +14,8 @@
 #include <armadillo>
 #include <math.h>
 
-#define NUM_PROC_TYPES 8
-enum PROC_TYPES_T {avoid__, returnHome__, deposit__, acquire__, examine__, planRegionPath__, chooseRegion__, init__};
+#define NUM_PROC_TYPES 9
+enum PROC_TYPES_T {avoid__, returnHome__, deposit__, acquire__, examine__, planRegionPath__, chooseRegion__, init__, pause__};
 
 class MissionPlanningProcessShare
 {

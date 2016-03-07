@@ -28,6 +28,7 @@ MissionPlanning::MissionPlanning()
     initComplete = false;
     commandedInit = false;
     execDequeEmpty = false;
+    pauseStarted = false;
     chooseRegion.reg(chooseRegion__); // Replace with loop over array of ptrs to objs. Also consider polymorphic constructor
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -41,7 +42,9 @@ void MissionPlanning::run()
     //ROS_DEBUG("before evalConditions");
     evalConditions_();
     //ROS_DEBUG("after evalConditions");
-    if(procsToExecute.at(chooseRegion__)) chooseRegion.run(); // Change to array to make use of inherrited method
+    if(robotStatus.pauseSwitch) runPause_();
+    else runProcesses_();
+    
 }
 
 void MissionPlanning::avoidObstacle_()
@@ -110,7 +113,7 @@ void MissionPlanning::planRegionPath_()
 
 void MissionPlanning::chooseRegion_()
 {
-
+    
 }
 
 void MissionPlanning::init_()
@@ -134,7 +137,15 @@ void MissionPlanning::evalConditions_()
 
 void MissionPlanning::runProcesses_()
 {
+    if(pauseStarted == true) pause.sendUnPause();
+    pauseStarted = false;
+    if(procsToExecute.at(chooseRegion__)) chooseRegion.run(); // Change to array to make use of inherrited method
+}
 
+void MissionPlanning::runPause_()
+{
+    if(pauseStarted == false) pause.sendPause();
+    pauseStarted = true;
 }
 
 void MissionPlanning::antColony_()
