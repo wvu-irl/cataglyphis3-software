@@ -1,20 +1,13 @@
 #ifndef MISSION_PLANNING_H
 #define MISSION_PLANNING_H
 #include <ros/ros.h>
-#include <robot_control/Waypoint.h>
-#include <robot_control/WaypointsOfInterest.h> // Remove
-#include <robot_control/RegionsOfInterest.h>
-#include <robot_control/WaypointsOfRegion.h>
-#include <robot_control/IntermediateWaypoints.h>
-#include "robot_status.h"
-#include "action_type_enum.h"
-#include <messages/ExecAction.h>
+#include "mission_planning_process_share.h"
 #include <messages/NavFilterOut.h>
-#include <vector>
-#include <armadillo>
-#include <math.h>
+#include <messages/ExecDequeEmpty.h>
+#include "choose_region.h"
 
-class MissionPlanning
+
+class MissionPlanning : public MissionPlanningProcessShare
 {
 public:
 	// Methods
@@ -22,16 +15,10 @@ public:
 	void run();
 	// Members
 	ros::NodeHandle nh;
-	ros::ServiceClient woiClient;
-	robot_control::WaypointsOfInterest woiSrv;
-	ros::ServiceClient execActionClient;
-	messages::ExecAction execActionSrv;
 	ros::Subscriber navSub;
-	ros::ServiceClient intermediateWaypointsClient;
-	robot_control::IntermediateWaypoints intermediateWaypointsSrv;
-	ros::ServiceClient reqROIClient;
-	robot_control::RegionsOfInterest regionsOfInterestSrv;
+        ros::Subscriber execDequeEmptySub;
 	const int loopRate = 20; // Hz
+        ChooseRegion chooseRegion;
 	std::vector<int> value;
 	int computedValue;
 	int valueSum;
@@ -62,19 +49,13 @@ public:
 	int i;
 	int j;
 	int bestJ;
-	int bestROINum;
-	int roiValue;
-	int bestROIValue;
+
 	robot_control::Waypoint currentLocation;
 	int numWaypointsToPlan;
-	int numWaypointsToTravel;
-	int initNumWaypointsToTravel;
-	int totalIntermWaypoints;
-	std::vector<robot_control::Waypoint>::iterator intermWaypointsIt;
+
+
 	std::vector<robot_control::Waypoint> waypointsToPlan;
-	std::vector<robot_control::Waypoint> waypointsToTravel;
 	int bestPheromone;
-	RobotStatus robotStatus;
 	bool collisionDetected;
 	bool commandedAvoidObstacle;
 	bool possessingSample;
@@ -93,22 +74,21 @@ public:
 	const float homeX = 5.0; // m
 	const float homeY = 0.0; // m
 private:
-	void avoidObstacle_();
-	void returnHome_();
-	void deposit_();
-	void acquire_();
-	void examine_();
-	void planRegionPath_();
-	void chooseRegion_();
-	void init_();
-	void evalCommandedFlags_();
-	void sendDriveGlobal_();
-	void sendDriveRel_(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
+        void avoidObstacle_(); // ***
+        void returnHome_();// ***
+        void deposit_();// ***
+        void acquire_();// ***
+        void examine_();// ***
+        void planRegionPath_();// ***
+        void chooseRegion_();// ***
+        void init_();// ***
+        void evalConditions_();
+        void runProcesses_();
+
 	void antColony_();
-	void planSafePath_();
-	void clearAndResizeWTT_();
-	void callIntermediateWaypoints_();
+
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
+        void execDequeEmptyCallback_(const messages::ExecDequeEmpty::ConstPtr& msg);
 };
 
 #endif // MISSION_PLANNING_H

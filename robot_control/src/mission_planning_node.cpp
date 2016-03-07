@@ -8,13 +8,13 @@ int main(int argc, char **argv)
 	ros::Rate loopRate(missionPlanning.loopRate);
 	ros::Duration(2).sleep();
 	ros::spinOnce();
-	missionPlanning.run();
-	ros::spinOnce();
-	/*while(ros::ok())
+    //missionPlanning.run();
+    //ros::spinOnce();
+    while(ros::ok())
 	{
 		missionPlanning.run();
 		ros::spinOnce();
 		loopRate.sleep();
-	}*/
+    }
 	return 0;
 }

@@ -7,7 +7,7 @@
 class RobotControlInterface
 {
 public:
-	static RobotStatus robotStatus;
+    static RobotStatus robotStatus;
     static RobotOutputs robotOutputs;
 };
 

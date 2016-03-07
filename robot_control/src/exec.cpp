@@ -8,6 +8,7 @@ Exec::Exec()
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
+    dequeEmptyPub = nh.advertise<messages::ExecDequeEmpty>("control/exec/dequeempty",1);
 	// "allocate" deque memory
     for(int i=0; i<NUM_ACTIONS; i++)
     {
@@ -76,8 +77,11 @@ void Exec::run()
 			if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) actionDeque_.front()->init(); // If new action was pushed to the front or deque was empty and became not empty, need to run init() for new action
             if(currentActionDone_) // If the action at the front of the deque is complete, pop this action off and init() the next action in the deque
             {
+                execDequeEmptyMsgOut_.procType = static_cast<uint8_t>(actionDeque_.front()->params.procType);
+                execDequeEmptyMsgOut_.serialNum = actionDeque_.front()->params.serialNum;
                 actionDeque_.pop_front();
 				if(actionDeque_.empty()==0) actionDeque_.front()->init();
+                else dequeEmptyPub.publish(execDequeEmptyMsgOut_);
             }
 			if(actionDeque_.empty()==0) currentActionDone_ = actionDeque_.front()->run();
 			else currentActionDone_ = 0;
@@ -108,6 +112,8 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.float5 = req.float5;
     params_.int1 = req.int1;
     params_.bool1 = req.bool1;
+    params_.procType = static_cast<PROC_TYPES_T>(req.procType);
+    params_.serialNum = req.serialNum;
 	ROS_INFO("ACTION CALLBACK, float1 = %f, float2 = %f",params_.float1,params_.float2);
     return true;
 }
@@ -156,6 +162,8 @@ void Exec::packInfoMsgOut_()
 		execInfoMsgOut_.actionFloat5[i] = 0;
 		execInfoMsgOut_.actionInt1[i] = 0;
 		execInfoMsgOut_.actionBool1[i] = 0;
+        execInfoMsgOut_.actionProcType[i] = 0;
+        execInfoMsgOut_.actionSerialNum[i] = 0;
 	}
 	for(unsigned int i=0; i<execInfoMsgOut_.actionDequeSize; i++)
 	{
@@ -167,5 +175,7 @@ void Exec::packInfoMsgOut_()
 		execInfoMsgOut_.actionFloat5[i] = actionDeque_.at(i)->params.float5;
 		execInfoMsgOut_.actionInt1[i] = actionDeque_.at(i)->params.int1;
 		execInfoMsgOut_.actionBool1[i] = actionDeque_.at(i)->params.bool1;
+        execInfoMsgOut_.actionProcType[i] = static_cast<uint8_t>(actionDeque_.at(i)->params.procType);
+        execInfoMsgOut_.actionSerialNum[i] = actionDeque_.at(i)->params.serialNum;
 	}
 }

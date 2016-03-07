@@ -10,4 +10,6 @@ float32 float4
 float32 float5
 int32 int1
 bool bool1
+uint8 procType
+uint32 serialNum
 ---

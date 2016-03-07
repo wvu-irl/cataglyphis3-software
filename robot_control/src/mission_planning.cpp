@@ -5,7 +5,10 @@ MissionPlanning::MissionPlanning()
 	woiClient = nh.serviceClient<robot_control::WaypointsOfInterest>("/control/mapmanager/waypointsofinterest");
     execActionClient = nh.serviceClient<messages::ExecAction>("control/exec/actionin");
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
+    execDequeEmptySub = nh.subscribe<messages::ExecDequeEmpty>("control/exec/dequeempty", 1, &MissionPlanning::execDequeEmptyCallback_, this);
     intermediateWaypointsClient = nh.serviceClient<robot_control::IntermediateWaypoints>("/control/safepathing/intermediatewaypoints");
+    reqROIClient = nh.serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
+    modROIClient = nh.serviceClient<robot_control::ModifyROI>("/control/mapmanager/modifyroi");
 	woiSrv.request.easyThresh = 0;
 	woiSrv.request.medThresh = 0;
 	woiSrv.request.hardThresh = 0;
@@ -24,46 +27,21 @@ MissionPlanning::MissionPlanning()
     commandedChooseRegion = false;
     initComplete = false;
     commandedInit = false;
+    execDequeEmpty = false;
+    chooseRegion.reg(chooseRegion__); // Replace with loop over array of ptrs to objs. Also consider polymorphic constructor
+    for(int i=0; i<NUM_PROC_TYPES; i++)
+    {
+        procsToExecute.push_back(false);
+        procsBeingExecuted.push_back(false);
+    }
 }
 
 void MissionPlanning::run()
 {
-    /*if(collisionDetected)
-    {
-        if(!commandedAvoidObstacle) {avoidObstacle_(); return;}
-    }
-
-    if(possessingSample)
-    {
-        if(!commandedReturnHome) {returnHome_(); deposit_(); return;}
-    }
-
-    if(confirmedAcquire)
-    {
-        if(!commandedAcquire) {acquire_(); return;}
-    }
-
-    if(interestingSampleNearby)
-    {
-        if(!commandedExamine) {examine_(); return;}
-    }
-
-    if(inIncompleteROI)
-    {
-        if(!commandedPlanRegionPath) {planRegionPath_(); return;}
-    }*/
-
-    if(completedROI || completedDeposit)
-    {
-        if(!commandedChooseRegion) {chooseRegion_(); return;}
-    }
-
-    /*if(!initComplete)
-    {
-        if(!commandedInit) {init_(); return;}
-    }*/
-
-    return;
+    //ROS_DEBUG("before evalConditions");
+    evalConditions_();
+    //ROS_DEBUG("after evalConditions");
+    if(procsToExecute.at(chooseRegion__)) chooseRegion.run(); // Change to array to make use of inherrited method
 }
 
 void MissionPlanning::avoidObstacle_()
@@ -74,13 +52,13 @@ void MissionPlanning::avoidObstacle_()
 
 void MissionPlanning::returnHome_()
 {
-    commandedReturnHome = true;
+/*    commandedReturnHome = true;
     numWaypointsToTravel = 1;
     clearAndResizeWTT_();
     waypointsToTravel.at(0).x = homeX;
     waypointsToTravel.at(0).y = homeY;
     callIntermediateWaypoints_();
-    sendDriveGlobal_();
+    sendDriveGlobal_();*/
 }
 
 void MissionPlanning::deposit_()
@@ -100,7 +78,7 @@ void MissionPlanning::examine_()
 
 void MissionPlanning::planRegionPath_()
 {
-    // *** Change this function to focus on path planning using ant colony within a region ***
+/*    // *** Change this function to focus on path planning using ant colony within a region ***
 	// Decision on how to set thresholds, based on which type of samples are being searched for. Constant for now
 	woiSrv.request.easyThresh = 200;
 	woiSrv.request.medThresh = 200;
@@ -127,36 +105,12 @@ void MissionPlanning::planRegionPath_()
 	antColony_();
 	ROS_DEBUG("after antColony_()");
     callIntermediateWaypoints_();
-    sendDriveGlobal_();
+    sendDriveGlobal_();*/
 }
 
 void MissionPlanning::chooseRegion_()
 {
-    commandedChooseRegion = true;
-    // Request info about regions
-    if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
-    else ROS_ERROR("regionsOfInterest service call successful");
 
-    // Loop through list and choose best region not yet visited
-    bestROIValue = 0;
-    bestROINum = 0;
-    for(int i=0; i < regionsOfInterestSrv.response.waypointArray.size(); i++)
-    {
-        roiValue = (easyProbGain*regionsOfInterestSrv.response.waypointArray.at(i).easyProb +
-                    medProbGain*regionsOfInterestSrv.response.waypointArray.at(i).medProb +
-                    hardProbGain*regionsOfInterestSrv.response.waypointArray.at(i).hardProb +
-                    distanceGain*hypot(regionsOfInterestSrv.response.waypointArray.at(i).x - robotStatus.xPos,
-                                       regionsOfInterestSrv.response.waypointArray.at(i).y - robotStatus.yPos)/* -
-                    terrainGain*terrainHazard(i,j)*/) /
-                    (easyProbGain + medProbGain + hardProbGain);
-        if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
-    }
-
-    // Call service to drive to center of the chosen region
-    numWaypointsToTravel = 1;
-    clearAndResizeWTT_();
-    waypointsToTravel.at(0) = regionsOfInterestSrv.response.waypointArray.at(bestROINum);
-    sendDriveGlobal_();
 }
 
 void MissionPlanning::init_()
@@ -164,55 +118,23 @@ void MissionPlanning::init_()
 
 }
 
-void MissionPlanning::evalCommandedFlags_()
+void MissionPlanning::evalConditions_()
 {
+    for(int i; i<NUM_PROC_TYPES; i++) procsToExecute.at(i) = false;
+    // something for pause
     // something for commandedAvoidObstacle
     // something for commandedReturnHome
+    // something for commandDeposit
     // something for commandedAcquire
     // something for commmandedExamine
     // something for commandedPlanRegionPath
-    // something for commandDeposit
-
+    procsToExecute.at(chooseRegion__) = true;
     // something for commandedInit
 }
 
-void MissionPlanning::sendDriveGlobal_()
+void MissionPlanning::runProcesses_()
 {
-    for(int i=0; i<numWaypointsToTravel; i++)
-    {
-        execActionSrv.request.nextActionType = _driveGlobal;
-        execActionSrv.request.newActionFlag = 1;
-        execActionSrv.request.pushToFrontFlag = false;
-        execActionSrv.request.clearDequeFlag = false;
-        execActionSrv.request.pause = false;
-        execActionSrv.request.float1 = waypointsToTravel.at(i).x;
-        execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-        execActionSrv.request.float3 = 1.5;
-        execActionSrv.request.float4 = 45.0;
-        execActionSrv.request.float5 = 0.0;
-        execActionSrv.request.int1 = 0;
-        execActionSrv.request.bool1 = false;
-        if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
-        else ROS_ERROR("exec action service call unsuccessful");
-    }
-}
 
-void MissionPlanning::sendDriveRel_(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
-{
-    execActionSrv.request.nextActionType = _driveRelative;
-    execActionSrv.request.newActionFlag = 1;
-    execActionSrv.request.pushToFrontFlag = frontOfDeque;
-    execActionSrv.request.clearDequeFlag = false;
-    execActionSrv.request.pause = false;
-    execActionSrv.request.float1 = deltaDistance;
-    execActionSrv.request.float2 = deltaHeading;
-    execActionSrv.request.float3 = 1.5;
-    execActionSrv.request.float4 = 45.0;
-    execActionSrv.request.float5 = endHeading;
-    execActionSrv.request.int1 = 0;
-    execActionSrv.request.bool1 = endHeadingFlag;
-    if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
-    else ROS_ERROR("exec action service call unsuccessful");
 }
 
 void MissionPlanning::antColony_()
@@ -337,7 +259,7 @@ void MissionPlanning::antColony_()
 	}
 	ROS_INFO("pheromone matrix, end:");
 	pheromone.print();
-    clearAndResizeWTT_();
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!clearAndResizeWTT_(); !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	i = numWaypointsToPlan - 1;
 	notVisited.clear();
 	notVisited.resize(numWaypointsToPlan,1);
@@ -363,46 +285,17 @@ void MissionPlanning::antColony_()
 	}
 }
 
-inline void MissionPlanning::clearAndResizeWTT_()
-{
-    waypointsToTravel.clear();
-    waypointsToTravel.resize(numWaypointsToTravel);
-}
-
-void MissionPlanning::callIntermediateWaypoints_()
-{
-    initNumWaypointsToTravel = numWaypointsToTravel;
-    totalIntermWaypoints = 0;
-    for(int i = 0; i < initNumWaypointsToTravel; i++)
-    {
-        intermWaypointsIt = waypointsToTravel.begin() + i + totalIntermWaypoints;
-        if(i == 0)
-        {
-            intermediateWaypointsSrv.request.start.x = robotStatus.xPos;
-            intermediateWaypointsSrv.request.start.y = robotStatus.yPos;
-        }
-        else
-        {
-            intermediateWaypointsSrv.request.start.x = (*(intermWaypointsIt - 1)).x;
-            intermediateWaypointsSrv.request.start.y = (*(intermWaypointsIt - 1)).y;
-        }
-        intermediateWaypointsSrv.request.finish.x = (*intermWaypointsIt).x;
-        intermediateWaypointsSrv.request.finish.y = (*intermWaypointsIt).y;
-        if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful");
-        else ROS_ERROR("intermediateWaypoints service call unsuccessful");
-        if(intermediateWaypointsSrv.response.waypointArray.size() > 0)
-        {
-            waypointsToTravel.insert(intermWaypointsIt,intermediateWaypointsSrv.response.waypointArray.begin(),intermediateWaypointsSrv.response.waypointArray.end());
-            totalIntermWaypoints += intermediateWaypointsSrv.response.waypointArray.size();
-            numWaypointsToTravel += intermediateWaypointsSrv.response.waypointArray.size();
-        }
-    }
-}
-
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
 {
 	robotStatus.xPos = msg->x_position;
 	robotStatus.yPos = msg->y_position;
 	robotStatus.heading = msg->heading;
 	robotStatus.bearing = msg->bearing;
+}
+
+void MissionPlanning::execDequeEmptyCallback_(const messages::ExecDequeEmpty::ConstPtr &msg)
+{
+    execDequeEmpty = true;
+    execLastProcType = static_cast<PROC_TYPES_T>(msg->procType);
+    execLastSerialNum = msg->serialNum;
 }
