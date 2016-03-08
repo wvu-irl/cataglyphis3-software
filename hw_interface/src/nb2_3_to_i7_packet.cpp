@@ -51,12 +51,12 @@ void NB2_3_To_I7::unpackMsg()
     msg.rate_p          	= pkt.rate_p*0.02/65536.0;
     msg.rate_q          	= pkt.rate_q*0.02/65536.0;
     msg.rate_r          	= pkt.rate_r*0.02/65536.0;
-    msg.xda                 = pkt.xda;
+    /*msg.xda                 = pkt.xda;
     msg.yda                 = pkt.yda;
     msg.zda                 = pkt.zda;
     msg.xdv                 = pkt.xdv;
     msg.ydv                 = pkt.ydv;
-    msg.zdv                 = pkt.zdv;
+    msg.zdv                 = pkt.zdv;*/
     msg.num_imus			= pkt.num_imus;
     msg.pause_switch		= pkt.pause_switch;
     msg.main_loop_counter	= pkt.main_loop_counter;

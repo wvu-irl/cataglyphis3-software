@@ -19,5 +19,6 @@
 		value = "9004" />
 	<node name = "nb1_i7_udp_receiver"
 		pkg = "hw_interface"
-		type = "Comm_Node" />
+		type = "Comm_Node"
+		output="screen" />
 </launch>

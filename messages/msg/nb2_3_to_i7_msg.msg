@@ -6,13 +6,7 @@ float32 acc_z
 float32 rate_p
 float32 rate_q
 float32 rate_r
-float32 xda
-float32 yda
-float32 zda
-float32 xdv
-float32 ydv
-float32 zdv
 uint8 num_imus
 uint8 pause_switch
-uint16 main_loop_counter
+uint8 main_loop_counter
 float64 i7_clock

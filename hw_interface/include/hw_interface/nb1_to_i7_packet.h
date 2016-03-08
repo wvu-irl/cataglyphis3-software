@@ -27,12 +27,12 @@ public:
 		int32_t rate_p;
 		int32_t rate_q;
 		int32_t rate_r;
-        int32_t xda;
+        /*int32_t xda;
         int32_t yda;
         int32_t zda;
         int32_t xdv;
         int32_t ydv;
-        int32_t zdv;
+        int32_t zdv;*/
         uint8_t num_imus;
 		uint8_t pause_switch;
 		uint8_t main_loop_counter;

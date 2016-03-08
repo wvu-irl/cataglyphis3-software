@@ -1,0 +1,7 @@
+#!/bin/bash
+source /opt/ros/indigo/setup.bash
+source ~/cataglyphis_ws/devel/setup.bash
+
+cd ~/cataglyphis_ws
+
+catkin_make messages_generate_messages simulation_generate_messages computer_vision_generate_messages hsm_generate_messages navigation_generate_messages robot_control_generate_messages hw_interface_generate_messages lidar_generate_messages
