@@ -10,6 +10,7 @@
 #include <pcl/filters/filter.h>
 #include <vector>
 #include <cmath>
+#include <sstream>
 #include <stdlib.h>
 #include <pcl/io/openni_grabber.h>
 #include <pcl/visualization/cloud_viewer.h>
@@ -34,7 +35,7 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
-#include <pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
+#include <pcl-1.7/pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
 #include <armadillo>
 
 using namespace std;
@@ -53,10 +54,12 @@ private:
 
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
 	{
+		pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+		*cloud = input_cloud;
+		ROS_INFO("Running callback function... %i",cloud->points.size());
 		if(counter > 10)
 		{
-			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-			*cloud = input_cloud;
+			
 			pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 		    pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 		    pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZ>);
@@ -84,6 +87,11 @@ private:
 	    	pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg;
 	    	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZ> ());
 
+std::stringstream ss1;
+		   ss1 << "raw_cloud.pcd";
+		   pcl::io::savePCDFile( ss1.str(), *cloud);
+
+			
 		    // PASS THROUGH FILTER
 		    pcl::PassThrough<pcl::PointXYZ> pass;
 			pass.setInputCloud(cloud);
@@ -97,6 +105,10 @@ private:
 		    pass.setFilterLimits(-1.5,threshold_tree_height);
 		    pass.filter(*cloud);
 		    cout << "Regional cloud " << " has " << cloud->points.size() << " points." << endl;
+
+std::stringstream ss2;
+		   ss2 << "middle_1.pcd";
+		   pcl::io::savePCDFile( ss2.str(), *cloud);
 
 		    // CREATE THE FILTERING OBJECT
 		    pcl::ApproximateProgressiveMorphologicalFilter<pcl::PointXYZ> pmf;
@@ -113,6 +125,10 @@ private:
 		    extract.setInputCloud (cloud);
 		    extract.setIndices (ground);
 		    extract.filter (*ground_filtered);
+
+std::stringstream ss3;
+		   ss3 << "ground.pcd";
+		   pcl::io::savePCDFile( ss3.str(), *ground_filtered);
 
 		    // EXTRACT NON-GROUND RETURNS
 		    extract.setNegative (true);
@@ -149,39 +165,49 @@ private:
 
 			// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
 			// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
-			pass.setInputCloud(cloud);
+			pass.setInputCloud(object_filtered);
 		    pass.setFilterFieldName("z");
 		    pass.setFilterLimits(-1.5,3); 
-		    pass.filter(*cloud);
-		    pass.setInputCloud(cloud);
+		    pass.filter(*object_filtered);
+		    pass.setInputCloud(object_filtered);
 		    pass.setFilterFieldName("x");
 		    pass.setFilterLimits(-home_detection_range,home_detection_range);
-		    pass.filter(*cloud);
-		    pass.setInputCloud(cloud);
+		    pass.filter(*object_filtered);
+		    pass.setInputCloud(object_filtered);
 		    pass.setFilterFieldName("y");
 		    pass.setFilterLimits(-home_detection_range,home_detection_range); 
-		    pass.filter(*cloud);
+		    pass.filter(*object_filtered);
 		    cout << "PassThrough done." << endl;
+			
+		   std::stringstream ss;
+		   ss << "file.pcd";
+		   pcl::io::savePCDFile( ss.str(), *object_filtered);
 
 		    // CREATING THE KDTREE OBJECT OFR THE SEARCH METHOD OF THE EXTRACTION
 		    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>); //for clustering
 		    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
-		    tree->setInputCloud (cloud);
+		    tree->setInputCloud (object_filtered);
+
+		    cout << "0" << endl;
 
 		    std::vector<pcl::PointIndices> cluster_indices;
 		    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
 		    ec.setClusterTolerance (0.4); // 
 		    ec.setMinClusterSize (30);
-		    ec.setMaxClusterSize (200);
+		    ec.setMaxClusterSize (1000);
 		    ec.setSearchMethod (tree);
-		    ec.setInputCloud (cloud);
+		    ec.setInputCloud (object_filtered);
 		    ec.extract (cluster_indices);
+
+		    cout << "1" << endl;
 
 		    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> points_cluster;
 		    for (int ii=0;ii<cluster_indices.size ();ii++)
 		    {
 		        points_cluster.push_back(cloud_middle);
 		    }
+		    
+ 		    cout << "2" << endl;
 
 		    int j = 0;
 		    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
@@ -203,6 +229,9 @@ private:
 	     //    };
 		    // vector<cylinder> cylinders;
 		    // cylinders.clear();
+
+		    cout << "3" << endl;
+
 		    for (int i=0; i<points_cluster.size(); i++)
 		    {
 		        ne.setSearchMethod (tree2);

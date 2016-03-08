@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
+find_package(PCL 1.3 REQUIRED COMPONENTS common io)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -111,6 +113,7 @@ catkin_package(
 )
 
 add_definitions("-std=gnu++11")
+add_definitions(${PCL_DEFINITIONS})
 
 ###########
 ## Build ##
@@ -122,6 +125,10 @@ add_definitions("-std=gnu++11")
 include_directories(
   ${PCL_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+)
+
+link_directories(
+	${PCL_LIBRARY_DIRS}
 )
 
 ## Declare a C++ library
@@ -146,6 +153,8 @@ add_dependencies(collision_detection_node lidar_generate_messages_cpp)
  target_link_libraries(velodyne_filtering_node 
  	${catkin_LIBRARIES}
  	${PCL_LIBRARIES}
+	${PCL_COMMON_LIBRARIES}
+	${PCL_IO_LIBRARIES}
  )
 
   target_link_libraries(collision_detection_node 
