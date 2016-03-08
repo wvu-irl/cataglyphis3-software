@@ -20,6 +20,11 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 	if (user_input_nav_act.bias_removal_forklift!=1)
 	{
 		first_pass = true;
+		ROS_INFO("user_input_nav_act.bias_removal_forklift!=1");
+	}
+	else
+	{
+		ROS_INFO("user_input_nav_act.bias_removal_forklift==1");
 	}
 	if (first_pass == true)
 	{
