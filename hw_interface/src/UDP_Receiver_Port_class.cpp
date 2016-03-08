@@ -67,6 +67,7 @@ bool UDP_Receiver_Port::port_read()
 			printf("Received checksum: %2X\n", read_buffer[recv_len-1]);
 			printf("rbuf_size %2i\n", rbuf_size);
 			printf("BAD PACKET\n");
+			return_val = false;
 			//det.HSM_notify("BAD PACKET");
 		}
 		else
