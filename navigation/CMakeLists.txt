@@ -143,9 +143,9 @@ target_link_libraries(navigation_filter ${catkin_LIBRARIES} encoders_class imu_c
 # add_dependencies(lidar ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(navigation_filter_node_updated src/navigation_filter_node_updated.cpp)
-add_dependencies(navigation_filter_node_updated navigation_generate_messages_cpp)
- target_link_libraries(navigation_filter_node_updated
+add_executable(navigation_filter_node src/navigation_filter_node.cpp)
+add_dependencies(navigation_filter_node navigation_generate_messages_cpp)
+ target_link_libraries(navigation_filter_node
    ${catkin_LIBRARIES}
    encoders_class
    imu_class
