@@ -9,22 +9,20 @@ int main(int argc, char **argv)
 	ros::Rate loop_rate(50);
 
 	NavigationFilter navigationfilter;
-
-	enum state_t {_waiting, _forklift_drive, _run};
-	static state_t state = _waiting;
+	navigationfilter.state = navigationfilter.state_waiting;
 
 	while(ros::ok())
 	{
 		navigationfilter.update_time(); //updates dt and current_time
-		switch(state)
+		switch(navigationfilter.state)
 		{
-			case _waiting:
+			case 0: //_waiting
 				navigationfilter.waiting();
 				break;
-			case _forklift_drive:
+			case 1: //_forklift_drive
 				navigationfilter.forklift_drive();
 				break;
-			case _run:
+			case 2: //_run
 				navigationfilter.run();
 				break;
 		}

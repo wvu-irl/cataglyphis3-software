@@ -52,7 +52,10 @@ public:
 	int nav_status_output = 0;
 
 	enum state_t {_waiting, _forklift_drive, _run};
-	state_t state = _waiting;
+	const state_t state_waiting = _waiting;
+	const state_t state_forklift_drive = _forklift_drive;
+	const state_t state_run = _run;
+	state_t state = state_waiting;
 private:
 	void getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg);
 };
