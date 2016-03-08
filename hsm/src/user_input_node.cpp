@@ -13,7 +13,7 @@
 
 #define PI 3.14159
 
-using namespace std;
+//using namespace std;
 
 class User_Input
 {
@@ -121,12 +121,12 @@ int main(int argc, char** argv)
 		if(user_input.input_type==1) user_input.runInitStartup(); // Run initial setup
 		else if(user_input.input_type==2) user_input.runReboot(); // Run reboot
 		else if(user_input.input_type==3) user_input.runLost(); // Run robot lost
-		else cout << "Input type selection not valid. Please try again. Choose 1 for initial startup, 2 for reboot, or 3 for robot lost." << endl; // Undefined input type
+                else std::cout << "Input type selection not valid. Please try again. Choose 1 for initial startup, 2 for reboot, or 3 for robot lost." << std::endl; // Undefined input type
 		
 		user_input.printCurrentStatus();
 		
-		cout << endl << "Perform user input again (0) or end program (1)?" << endl;
-		cin >> user_input.end_program; cout << endl;
+                std::cout << std::endl << "Perform user input again (0) or end program (1)?" << std::endl;
+                std::cin >> user_input.end_program; std::cout << std::endl;
 		if(user_input.end_program) break;
 	}
 
@@ -150,24 +150,24 @@ User_Input::User_Input()
 
 void User_Input::begin()
 {
-	cout << "Is this initial startup (1), a reboot, (2), or is the robot lost (3)?" << endl;
-	cin >> input_type; cout << endl;
+        std::cout << "Is this initial startup (1), a reboot, (2), or is the robot lost (3)?" << std::endl;
+        std::cin >> input_type; std::cout << std::endl;
 }
 
 void User_Input::runInitStartup()
 {
-	cout << "Skip initialization? (0 or 1)" << endl;
-	cin >> skip_init; cout << endl;
+        std::cout << "Skip initialization? (0 or 1)" << std::endl;
+        std::cin >> skip_init; std::cout << std::endl;
 	if(skip_init==0)
 	{
-		cout << "What is the initial north angle in degrees?" << endl;
-		cin >> north_angle_init; cout << endl; cout << endl;
-		cout << "Is it a sunny day? (0 or 1)" << endl;
-		cin >> sunny_day; cout << endl;
-		cout << "Perform text detection? (0 or 1)" << endl;
-		cin >> text_detection; cout << endl;
-		cout << "Perform bias removal on forklift/reboot? (0 or 1)" << endl;
-		cin >> bias_removal_forklift; cout << endl;
+                std::cout << "What is the initial north angle in degrees?" << std::endl;
+                std::cin >> north_angle_init; std::cout << std::endl; std::cout << std::endl;
+                std::cout << "Is it a sunny day? (0 or 1)" << std::endl;
+                std::cin >> sunny_day; std::cout << std::endl;
+                std::cout << "Perform text detection? (0 or 1)" << std::endl;
+                std::cin >> text_detection; std::cout << std::endl;
+                std::cout << "Perform bias removal on forklift/reboot? (0 or 1)" << std::endl;
+                std::cin >> bias_removal_forklift; std::cout << std::endl;
 	}
 	init_msg_out.skip_init = skip_init;
 	init_msg_out.north_angle_init = north_angle_init;
@@ -179,8 +179,8 @@ void User_Input::runInitStartup()
 		initBiasRemoval();
 		while(ros::ok())
 		{
-			cout << "Do you want to keep these offsets and end initialization (0), or run bias removal again (1)?" << endl;
-			cin >> rerun_bias_removal; cout << endl;
+                        std::cout << "Do you want to keep these offsets and end initialization (0), or run bias removal again (1)?" << std::endl;
+                        std::cin >> rerun_bias_removal; std::cout << std::endl;
 			if(rerun_bias_removal==0) break;
 			else initBiasRemoval();
 		}
@@ -188,7 +188,7 @@ void User_Input::runInitStartup()
 	else {init_msg_out.bias_removal = 0; init_pub.publish(init_msg_out);}
 	init_msg_out.begin_dead_reckoning = 1;
 	init_pub.publish(init_msg_out);
-	cout << "Initialization ended." << endl << endl;
+        std::cout << "Initialization ended." << std::endl << std::endl;
 }
 void User_Input::initBiasRemoval()
 {
@@ -205,15 +205,15 @@ void User_Input::initBiasRemoval()
 		else timeout = false;
 		if(nav_status_in!=0 || timeout) break;
 	}
-	cout << "p1 offset = " << p1_offset_in << endl;
-	cout << "q1 offset = " << q1_offset_in << endl;
-	cout << "r1 offset = " << r1_offset_in << endl;
-	cout << "p2 offset = " << p2_offset_in << endl;
-	cout << "q2 offset = " << q2_offset_in << endl;
-	cout << "r2 offset = " << r2_offset_in << endl;
-	cout << "p3 offset = " << p3_offset_in << endl;
-	cout << "q3 offset = " << q3_offset_in << endl;
-	cout << "r3 offset = " << r3_offset_in << endl << endl;
+        std::cout << "p1 offset = " << p1_offset_in << std::endl;
+        std::cout << "q1 offset = " << q1_offset_in << std::endl;
+        std::cout << "r1 offset = " << r1_offset_in << std::endl;
+        std::cout << "p2 offset = " << p2_offset_in << std::endl;
+        std::cout << "q2 offset = " << q2_offset_in << std::endl;
+        std::cout << "r2 offset = " << r2_offset_in << std::endl;
+        std::cout << "p3 offset = " << p3_offset_in << std::endl;
+        std::cout << "q3 offset = " << q3_offset_in << std::endl;
+        std::cout << "r3 offset = " << r3_offset_in << std::endl << std::endl;
 	init_msg_out.bias_removal = 0;
 	init_pub.publish(init_msg_out);
 }
@@ -221,34 +221,34 @@ void User_Input::initBiasRemoval()
 void User_Input::runReboot()
 {
 	runInitStartup();
-	cout << "What is the distance to the homing beacon in meters?" << endl;
-	cin >> distance; cout << endl;
-	cout << "What is the distance uncertainty in meters?" << endl;
-	cin >> distance_unc; cout << endl;
-	cout << "What is the bearing in degrees?" << endl;
-	cin >> bearing; cout << endl;
-	cout << "What is the bearing uncertainty in degrees?" << endl;
-	cin >> bearing_unc; cout << endl;
-	cout << "What is the heading in degrees?" << endl;
-	cin >> heading; cout << endl;
-	cout << "What is the heading uncertainty in degrees?" << endl;
-	cin >> heading_unc; cout << endl;
-	cout << "What is the north angle in degrees?" << endl;
-	cin >> north_angle; cout << endl;
-	cout << "What is the north angle uncertainty in degrees?" << endl;
-	cin >> north_angle_unc; cout << endl;
-	cout << "What should the next mission planning state be? (2 = calc_leave_home, 5 = calc_return_home, 8 = precached_search, 10 = sample_predef_search)" << endl;
-	cin >> next_state; cout << endl;
-	cout << "Which waypoint index should search start at?" << endl;
-	cin >> waypoint_index; cout << endl;
-	cout << "Precached acquired? (0 or 1)" << endl;
-	cin >> precached_acquired; cout << endl;
-	cout << "Samples collected count?" << endl;
-	cin >> samples_collected_count; cout << endl;
-	cout << "Is the robot possessing a sample? (0 or 1)" << endl;
-	cin >> possessing_sample; cout << endl;
-	cout << "What position should the grabber slides be set to? (1000 = open, -900 = closed)" << endl;
-	cin >> slide_pos_out; cout << endl;
+        std::cout << "What is the distance to the homing beacon in meters?" << std::endl;
+        std::cin >> distance; std::cout << std::endl;
+        std::cout << "What is the distance uncertainty in meters?" << std::endl;
+        std::cin >> distance_unc; std::cout << std::endl;
+        std::cout << "What is the bearing in degrees?" << std::endl;
+        std::cin >> bearing; std::cout << std::endl;
+        std::cout << "What is the bearing uncertainty in degrees?" << std::endl;
+        std::cin >> bearing_unc; std::cout << std::endl;
+        std::cout << "What is the heading in degrees?" << std::endl;
+        std::cin >> heading; std::cout << std::endl;
+        std::cout << "What is the heading uncertainty in degrees?" << std::endl;
+        std::cin >> heading_unc; std::cout << std::endl;
+        std::cout << "What is the north angle in degrees?" << std::endl;
+        std::cin >> north_angle; std::cout << std::endl;
+        std::cout << "What is the north angle uncertainty in degrees?" << std::endl;
+        std::cin >> north_angle_unc; std::cout << std::endl;
+        std::cout << "What should the next mission planning state be? (2 = calc_leave_home, 5 = calc_return_home, 8 = precached_search, 10 = sample_predef_search)" << std::endl;
+        std::cin >> next_state; std::cout << std::endl;
+        std::cout << "Which waypoint index should search start at?" << std::endl;
+        std::cin >> waypoint_index; std::cout << std::endl;
+        std::cout << "Precached acquired? (0 or 1)" << std::endl;
+        std::cin >> precached_acquired; std::cout << std::endl;
+        std::cout << "Samples collected count?" << std::endl;
+        std::cin >> samples_collected_count; std::cout << std::endl;
+        std::cout << "Is the robot possessing a sample? (0 or 1)" << std::endl;
+        std::cin >> possessing_sample; std::cout << std::endl;
+        std::cout << "What position should the grabber slides be set to? (1000 = open, -900 = closed)" << std::endl;
+        std::cin >> slide_pos_out; std::cout << std::endl;
 	
 	reboot_msg_out.x_position = distance*cos(bearing*PI/180.0);
 	reboot_msg_out.y_position = distance*sin(bearing*PI/180.0);
@@ -277,22 +277,22 @@ void User_Input::runLost()
 	int input_next_state = 0;
 	int input_waypoint_index = 0;
 	int input_sample_props_acquired = 0;
-	cout << "Do you want to input robot location? (0 or 1)" << endl;
-	cin >> input_location; cout << endl;
+        std::cout << "Do you want to input robot location? (0 or 1)" << std::endl;
+        std::cin >> input_location; std::cout << std::endl;
 	if(input_location)
 	{
-		cout << "What is the distance to the homing beacon in meters?" << endl;
-		cin >> distance; cout << endl;
-		cout << "What is the distance uncertainty in meters?" << endl;
-		cin >> distance_unc; cout << endl;
-		cout << "What is the bearing in degrees?" << endl;
-		cin >> bearing; cout << endl;
-		cout << "What is the bearing uncertainty in degrees?" << endl;
-		cin >> bearing_unc; cout << endl;
-		cout << "What is the heading in degrees?" << endl;
-		cin >> heading; cout << endl;
-		cout << "What is the heading uncertainty in degrees?" << endl;
-		cin >> heading_unc; cout << endl;
+                std::cout << "What is the distance to the homing beacon in meters?" << std::endl;
+                std::cin >> distance; std::cout << std::endl;
+                std::cout << "What is the distance uncertainty in meters?" << std::endl;
+                std::cin >> distance_unc; std::cout << std::endl;
+                std::cout << "What is the bearing in degrees?" << std::endl;
+                std::cin >> bearing; std::cout << std::endl;
+                std::cout << "What is the bearing uncertainty in degrees?" << std::endl;
+                std::cin >> bearing_unc; std::cout << std::endl;
+                std::cout << "What is the heading in degrees?" << std::endl;
+                std::cin >> heading; std::cout << std::endl;
+                std::cout << "What is the heading uncertainty in degrees?" << std::endl;
+                std::cin >> heading_unc; std::cout << std::endl;
 		lost_location_msg_out.x_position = distance*cos(bearing*PI/180.0);
 		lost_location_msg_out.y_position = distance*sin(bearing*PI/180.0);
 		arc_unc = (distance+distance_unc)*bearing_unc*PI/180.0;
@@ -302,48 +302,48 @@ void User_Input::runLost()
 		lost_location_msg_out.heading_unc = heading_unc;
 		lost_location_pub.publish(lost_location_msg_out);
 	}
-	cout << "Do you want to input the north angle? (0 or 1)" << endl;
-	cin >> input_north; cout << endl;
+        std::cout << "Do you want to input the north angle? (0 or 1)" << std::endl;
+        std::cin >> input_north; std::cout << std::endl;
 	if(input_north)
 	{
-		cout << "What is the north angle in degrees?" << endl;
-		cin >> north_angle; cout << endl;
-		cout << "What is the north angle uncertainty in degrees?" << endl;
-		cin >> north_angle_unc; cout << endl;
+                std::cout << "What is the north angle in degrees?" << std::endl;
+                std::cin >> north_angle; std::cout << std::endl;
+                std::cout << "What is the north angle uncertainty in degrees?" << std::endl;
+                std::cin >> north_angle_unc; std::cout << std::endl;
 		lost_north_msg_out.north_angle = north_angle;
 		lost_north_msg_out.north_angle_unc = north_angle_unc;
 		lost_north_pub.publish(lost_north_msg_out);
 	}
-	cout << "Do you want to input the next mission planning state? (0 or 1)" << endl;
-	cin >> input_next_state; cout << endl;
+        std::cout << "Do you want to input the next mission planning state? (0 or 1)" << std::endl;
+        std::cin >> input_next_state; std::cout << std::endl;
 	if(input_next_state)
 	{
-		cout << "What should the next mission planning state be? (2 = calc_leave_home, 5 = calc_return_home, 8 = precached_search, 10 = sample_predef_search)" << endl;
-		cin >> next_state; cout << endl;
+                std::cout << "What should the next mission planning state be? (2 = calc_leave_home, 5 = calc_return_home, 8 = precached_search, 10 = sample_predef_search)" << std::endl;
+                std::cin >> next_state; std::cout << std::endl;
 		lost_next_state_msg_out.next_state = next_state;
 		lost_next_state_pub.publish(lost_next_state_msg_out);
 	}
-	cout << "Do you want to input the waypoint index? (0 or 1)" << endl;
-	cin >> input_waypoint_index; cout << endl;
+        std::cout << "Do you want to input the waypoint index? (0 or 1)" << std::endl;
+        std::cin >> input_waypoint_index; std::cout << std::endl;
 	if(input_waypoint_index)
 	{
-		cout << "Which waypoint index should search start at?" << endl;
-		cin >> waypoint_index; cout << endl;
+                std::cout << "Which waypoint index should search start at?" << std::endl;
+                std::cin >> waypoint_index; std::cout << std::endl;
 		lost_waypoint_index_msg_out.waypoint_index = waypoint_index;
 		lost_waypoint_index_pub.publish(lost_waypoint_index_msg_out);
 	}
-	cout << "Do you want to set sample properties (precached acquired, samples collected count, and possessing sample)? (0 or 1)" << endl;
-	cin >> input_sample_props_acquired; cout << endl;
+        std::cout << "Do you want to set sample properties (precached acquired, samples collected count, and possessing sample)? (0 or 1)" << std::endl;
+        std::cin >> input_sample_props_acquired; std::cout << std::endl;
 	if(input_sample_props_acquired)
 	{
-		cout << "Precached acquired? (0 or 1)" << endl;
-		cin >> precached_acquired; cout << endl;
-		cout << "Samples collected count?" << endl;
-		cin >> samples_collected_count; cout << endl;
-		cout << "Is the robot possessing a sample? (0 or 1)" << endl;
-		cin >> possessing_sample; cout << endl;
-		cout << "What position should the grabber slides be set to? (1000 = open, -900 = closed)" << endl;
-	cin >> slide_pos_out; cout << endl;
+                std::cout << "Precached acquired? (0 or 1)" << std::endl;
+                std::cin >> precached_acquired; std::cout << std::endl;
+                std::cout << "Samples collected count?" << std::endl;
+                std::cin >> samples_collected_count; std::cout << std::endl;
+                std::cout << "Is the robot possessing a sample? (0 or 1)" << std::endl;
+                std::cin >> possessing_sample; std::cout << std::endl;
+                std::cout << "What position should the grabber slides be set to? (1000 = open, -900 = closed)" << std::endl;
+        std::cin >> slide_pos_out; std::cout << std::endl;
 		lost_sample_props_msg_out.precached_acquired = precached_acquired;
 		lost_sample_props_msg_out.samples_collected_count = samples_collected_count;
 		lost_sample_props_msg_out.possessing_sample = possessing_sample;
@@ -358,28 +358,28 @@ void User_Input::printCurrentStatus()
 {
 	ros::spinOnce();
 	ros::Duration(1).sleep();
-	cout << endl << "-----------CURRENT STATUS-----------" << endl;
-	cout << "x position = " << x_position_in << endl;
-	cout << "y position = " << y_position_in << endl;
-	cout << "distance = " << distance_in << endl;
-	cout << "bearing = " << bearing_in << endl;
-	cout << "heading = " << heading_in << endl;
-	cout << "north angle = " << north_angle_in << endl;
-	cout << "next mission planning state = " << next_state_in << endl;
-	cout << "precached waypoint index = " << precached_waypoint_index_in << endl;
-	cout << "sample waypoint index = " << sample_waypoint_index_in << endl;
-	cout << "precached acquired = " << precached_acquired_in << endl;
-	cout << "samples collected count = " << samples_collected_count_in << endl;
-	cout << "possessing sample = " << possessing_sample_in << endl;
-	cout << "p1 offset = " << p1_offset_in << endl;
-	cout << "q1 offset = " << q1_offset_in << endl;
-	cout << "r1 offset = " << r1_offset_in << endl;
-	cout << "p2 offset = " << p2_offset_in << endl;
-	cout << "q2 offset = " << q2_offset_in << endl;
-	cout << "r2 offset = " << r2_offset_in << endl;
-	cout << "p3 offset = " << p3_offset_in << endl;
-	cout << "q3 offset = " << q3_offset_in << endl;
-	cout << "r3 offset = " << r3_offset_in << endl << endl;
+        std::cout << std::endl << "-----------CURRENT STATUS-----------" << std::endl;
+        std::cout << "x position = " << x_position_in << std::endl;
+        std::cout << "y position = " << y_position_in << std::endl;
+        std::cout << "distance = " << distance_in << std::endl;
+        std::cout << "bearing = " << bearing_in << std::endl;
+        std::cout << "heading = " << heading_in << std::endl;
+        std::cout << "north angle = " << north_angle_in << std::endl;
+        std::cout << "next mission planning state = " << next_state_in << std::endl;
+        std::cout << "precached waypoint index = " << precached_waypoint_index_in << std::endl;
+        std::cout << "sample waypoint index = " << sample_waypoint_index_in << std::endl;
+        std::cout << "precached acquired = " << precached_acquired_in << std::endl;
+        std::cout << "samples collected count = " << samples_collected_count_in << std::endl;
+        std::cout << "possessing sample = " << possessing_sample_in << std::endl;
+        std::cout << "p1 offset = " << p1_offset_in << std::endl;
+        std::cout << "q1 offset = " << q1_offset_in << std::endl;
+        std::cout << "r1 offset = " << r1_offset_in << std::endl;
+        std::cout << "p2 offset = " << p2_offset_in << std::endl;
+        std::cout << "q2 offset = " << q2_offset_in << std::endl;
+        std::cout << "r2 offset = " << r2_offset_in << std::endl;
+        std::cout << "p3 offset = " << p3_offset_in << std::endl;
+        std::cout << "q3 offset = " << q3_offset_in << std::endl;
+        std::cout << "r3 offset = " << r3_offset_in << std::endl << std::endl;
 }
 
 void User_Input::navCallback(const messages::NavFilterOut::ConstPtr& msg)
