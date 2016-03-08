@@ -4,6 +4,7 @@
 #include "mission_planning_process_share.h"
 #include <messages/NavFilterOut.h>
 #include <messages/ExecDequeEmpty.h>
+#include <messages/nb1_to_i7_msg.h>
 #include "choose_region.h"
 #include "pause.h"
 
@@ -16,10 +17,12 @@ public:
 	// Members
 	ros::NodeHandle nh;
 	ros::Subscriber navSub;
-        ros::Subscriber execDequeEmptySub;
+    ros::Subscriber execDequeEmptySub;
+    ros::Subscriber nb1Sub;
+    messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
-        ChooseRegion chooseRegion;
-        Pause pause;
+    ChooseRegion chooseRegion;
+    Pause pause;
 	std::vector<int> value;
 	int computedValue;
 	int valueSum;
@@ -90,7 +93,8 @@ private:
 	void antColony_();
 
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
-        void execDequeEmptyCallback_(const messages::ExecDequeEmpty::ConstPtr& msg);
+    void execDequeEmptyCallback_(const messages::ExecDequeEmpty::ConstPtr& msg);
+    void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
 };
 
 #endif // MISSION_PLANNING_H

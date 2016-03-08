@@ -1,4 +1,5 @@
-bool visitedROI
+bool setVisitedROI
+bool visitedROIState
 uint32 numVisitedROI
 bool addNewROI
 Waypoint newROI

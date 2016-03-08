@@ -151,7 +151,7 @@ bool MapManager::ROI(robot_control::RegionsOfInterest::Request &req, robot_contr
 
 bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res)
 {
-    if(req.visitedROI) regionsOfInterest.at(req.numVisitedROI).visited = true;
+    if(req.setVisitedROI) regionsOfInterest.at(req.numVisitedROI).visited = req.visitedROIState;
     if(req.addNewROI)
     {
         regionsOfInterest.push_back(req.newROI);

@@ -9,6 +9,7 @@ MissionPlanning::MissionPlanning()
     intermediateWaypointsClient = nh.serviceClient<robot_control::IntermediateWaypoints>("/control/safepathing/intermediatewaypoints");
     reqROIClient = nh.serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
     modROIClient = nh.serviceClient<robot_control::ModifyROI>("/control/mapmanager/modifyroi");
+    nb1Sub = nh.subscribe<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in", 1, &MissionPlanning::nb1Callback_, this);
 	woiSrv.request.easyThresh = 0;
 	woiSrv.request.medThresh = 0;
 	woiSrv.request.hardThresh = 0;
@@ -29,6 +30,7 @@ MissionPlanning::MissionPlanning()
     commandedInit = false;
     execDequeEmpty = false;
     pauseStarted = false;
+    robotStatus.pauseSwitch = true;
     chooseRegion.reg(chooseRegion__); // Replace with loop over array of ptrs to objs. Also consider polymorphic constructor
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -309,4 +311,10 @@ void MissionPlanning::execDequeEmptyCallback_(const messages::ExecDequeEmpty::Co
     execDequeEmpty = true;
     execLastProcType = static_cast<PROC_TYPES_T>(msg->procType);
     execLastSerialNum = msg->serialNum;
+}
+
+void MissionPlanning::nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg)
+{
+    if(msg->pause_switch==0) robotStatus.pauseSwitch = false;
+    else robotStatus.pauseSwitch = true;
 }

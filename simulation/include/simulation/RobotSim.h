@@ -1,6 +1,7 @@
 #ifndef ROBOT_SIM_H
 #define ROBOT_SIM_H
 #include <math.h>
+#include <stdint.h>
 
 #define RAD2DEG 180.0/3.14159
 #define DEG2RAD 3.14159/180.0
@@ -20,6 +21,8 @@ public:
 	int dropPosCmdPrev;
 	int slideStop;
 	int dropStop;
+	// Netburner
+	uint8_t nb1PauseSwitch = 255;
 	// Sim
 	const double normalSpeedDT = 0.05;  // Default of 20 Hz, resulting in 1x speed
 	double dt = normalSpeedDT;

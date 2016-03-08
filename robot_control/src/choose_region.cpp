@@ -39,7 +39,25 @@ bool ChooseRegion::runProc()
             sendDriveGlobal();
             state = _exec_;
         }
-        else state = _finish_;
+        else
+        {
+            for(int i=0; i<regionsOfInterestSrv.response.waypointArray.size(); i++)
+            {
+                modROISrv.request.setVisitedROI = true;
+                modROISrv.request.visitedROIState = false;
+                modROISrv.request.numVisitedROI = i;
+                modROISrv.request.addNewROI = false;
+                if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
+                else ROS_ERROR("modify ROI service call unsuccessful");
+            }
+            numWaypointsToTravel = 1;
+            clearAndResizeWTT();
+            waypointsToTravel.at(0).x = 8.0;
+            waypointsToTravel.at(0).y = 0.0;
+            callIntermediateWaypoints();
+            sendDriveGlobal();
+            state = _init_;
+        }
         break;
     case _exec_:
         if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
@@ -50,7 +68,8 @@ bool ChooseRegion::runProc()
         break;
     case _finish_:
         // ************************ THIS NEEDS TO GO SOMEWHERE ELSE LATER
-        modROISrv.request.visitedROI = true;
+        modROISrv.request.setVisitedROI = true;
+        modROISrv.request.visitedROIState = true;
         modROISrv.request.numVisitedROI = bestROINum;
         modROISrv.request.addNewROI = false;
         if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
