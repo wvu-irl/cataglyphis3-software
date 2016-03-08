@@ -110,6 +110,8 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+add_definitions("-std=gnu++11")
+
 ###########
 ## Build ##
 ###########
@@ -118,6 +120,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  ${PCL_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -142,6 +145,7 @@ add_dependencies(collision_detection_node lidar_generate_messages_cpp)
 ## Specify libraries to link a library or executable target against
  target_link_libraries(velodyne_filtering_node 
  	${catkin_LIBRARIES}
+ 	${PCL_LIBRARIES}
  )
 
   target_link_libraries(collision_detection_node 
