@@ -14,9 +14,9 @@ public:
 	// Methods
 	NavigationFilter();
 	void update_time();
-	void waiting();
-	void forklift_drive();
-	void run();
+	void waiting(User_Input_Nav_Act user_input_nav_act);
+	void forklift_drive(User_Input_Nav_Act user_input_nav_act);
+	void run(User_Input_Nav_Act user_input_nav_act);
 	// Members
 	ros::NodeHandle nh;
 
@@ -32,7 +32,6 @@ public:
 	Filter filter2;
 	Filter filter3;
 	Filter init_filter;
-	//User_Input_Nav_Act user_input_nav_act;
 
 	double current_time;
 	double dt = 0;
@@ -51,6 +50,7 @@ public:
 	double drop_off_dist = 10000;
 	int nav_status_output = 0;
 
+	//this will not be the way to communicate the states, this is temporary
 	enum state_t {_waiting, _forklift_drive, _run};
 	const state_t state_waiting = _waiting;
 	const state_t state_forklift_drive = _forklift_drive;

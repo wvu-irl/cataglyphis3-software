@@ -151,6 +151,7 @@ add_dependencies(navigation_filter_node_updated navigation_generate_messages_cpp
    imu_class
    filter_class
    navigation_filter
+   user_input_nav_act_class
  )
 
 ## Add cmake target dependencies of the executable

@@ -12,21 +12,23 @@ int main(int argc, char **argv)
 	NavigationFilter navigationfilter;
 	navigationfilter.state = navigationfilter.state_waiting;
 
-	//User_Input_Nav_Act user_input_nav_act(&filter.x, &filter.P_x, &filter.y, &filter.P_y, &filter.psi, &filter.P_psi, &filter.north_angle, &filter.P_north_angle, &filter1.x, &filter1.P_x, &filter1.y, &filter1.P_y, &filter1.psi, &filter1.P_psi, &filter1.north_angle, &filter1.P_north_angle, &filter2.x, &filter2.P_x, &filter2.y, &filter2.P_y, &filter2.psi, &filter2.P_psi, &filter2.north_angle, &filter2.P_north_angle, &filter3.x, &filter3.P_x, &filter3.y, &filter3.P_y, &filter3.psi, &filter3.P_psi, &filter3.north_angle, &filter3.P_north_angle);
+	User_Input_Nav_Act user_input_nav_act(&navigationfilter.filter.x, &navigationfilter.filter.P_x, &navigationfilter.filter.y, &navigationfilter.filter.P_y, &navigationfilter.filter.psi, &navigationfilter.filter.P_psi, &navigationfilter.filter.north_angle, &navigationfilter.filter.P_north_angle, &navigationfilter.filter1.x, &navigationfilter.filter1.P_x, &navigationfilter.filter1.y, &navigationfilter.filter1.P_y, &navigationfilter.filter1.psi, &navigationfilter.filter1.P_psi, &navigationfilter.filter1.north_angle, &navigationfilter.filter1.P_north_angle, &navigationfilter.filter2.x, &navigationfilter.filter2.P_x, &navigationfilter.filter2.y, &navigationfilter.filter2.P_y, &navigationfilter.filter2.psi, &navigationfilter.filter2.P_psi, &navigationfilter.filter2.north_angle, &navigationfilter.filter2.P_north_angle, &navigationfilter.filter3.x, &navigationfilter.filter3.P_x, &navigationfilter.filter3.y, &navigationfilter.filter3.P_y, &navigationfilter.filter3.psi, &navigationfilter.filter3.P_psi, &navigationfilter.filter3.north_angle, &navigationfilter.filter3.P_north_angle);
 
 	while(ros::ok())
 	{
+		ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*");
+		ROS_INFO("State = %i",navigationfilter.state);
 		navigationfilter.update_time(); //updates dt and current_time
 		switch(navigationfilter.state)
 		{
 			case 0: //_waiting
-				navigationfilter.waiting();
+				navigationfilter.waiting(user_input_nav_act);
 				break;
 			case 1: //_forklift_drive
-				navigationfilter.forklift_drive();
+				navigationfilter.forklift_drive(user_input_nav_act);
 				break;
 			case 2: //_run
-				navigationfilter.run();
+				navigationfilter.run(user_input_nav_act);
 				break;
 		}
 		ros::spinOnce();
