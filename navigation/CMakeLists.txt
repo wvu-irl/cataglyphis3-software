@@ -120,6 +120,7 @@ add_definitions("-std=gnu++11")
 # include_directories(include)
 include_directories(
 	include
+	~/cataglyphis_ws/src/hsm/include
   ${catkin_INCLUDE_DIRS}
 )
 

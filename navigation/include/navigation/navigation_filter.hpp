@@ -6,7 +6,7 @@
 #include <navigation/filter_class.hpp>
 #include <messages/ExecInfo.h>
 #include <messages/NavFilterOut.h>
-//#include <hsm/user_input_nav_act_class.h>
+#include <hsm/user_input_nav_act_class.h>
 
 class NavigationFilter
 {
