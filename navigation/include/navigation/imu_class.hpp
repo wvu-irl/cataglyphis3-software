@@ -1,6 +1,6 @@
 #include <ros/ros.h>
-#include <comm/nb1_to_i7_msg.h>
-#include <comm/nb2_3_to_i7_msg.h>
+#include <messages/nb1_to_i7_msg.h>
+#include <messages/nb2_3_to_i7_msg.h>
 #include <armadillo>
 
 #ifndef IMU_CLASS_HPP
@@ -15,7 +15,7 @@ private:
 	ros::NodeHandle node;
 	
 	//netburner1 imu callback function
-	void getIMU1Callback(const comm::nb1_to_i7_msg::ConstPtr &msg)
+	void getIMU1Callback(const messages::nb1_to_i7_msg::ConstPtr &msg)
 	{
 		this->p1 = msg->rate_p*3.1419527/180; //radians
 		this->q1 = msg->rate_q*3.1419527/180; //radians
@@ -30,7 +30,7 @@ private:
 	}
 
 	//netburner2 imu callback function	
-	void getIMU2Callback(const comm::nb2_3_to_i7_msg::ConstPtr &msg)
+	void getIMU2Callback(const messages::nb2_3_to_i7_msg::ConstPtr &msg)
 	{
 		this->p2 = msg->rate_p*3.1419527/180; //radians
 		this->q2 = msg->rate_q*3.1419527/180; //radians
@@ -45,7 +45,7 @@ private:
 	}
 
 	//netburner3 imu callback function
-	void getIMU3Callback(const comm::nb2_3_to_i7_msg::ConstPtr &msg)
+	void getIMU3Callback(const messages::nb2_3_to_i7_msg::ConstPtr &msg)
 	{
 		this->p3 = msg->rate_p*3.1419527/180; //radians
 		this->q3 = msg->rate_q*3.1419527/180; //radians

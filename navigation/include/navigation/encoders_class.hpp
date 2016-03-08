@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <roboteq_interface/encoder_data.h>
+#include <messages/encoder_data.h>
 
 #ifndef ENCODERS_CLASS_HPP
 #define ENCODERS_CLASS_HPP
@@ -14,7 +14,7 @@ private:
 	ros::Subscriber subscriber_encoder_right;
 	ros::NodeHandle node;
 
-	void getEncoderFrontCallback(const roboteq_interface::encoder_data::ConstPtr &msg)
+	void getEncoderFrontCallback(const messages::encoder_data::ConstPtr &msg)
 	{
 		this->fl_prev = this->fl;
 		this->fr_prev = this->fr;
@@ -26,7 +26,7 @@ private:
 		//this->fr_diff = (this->fr_diff<1000)*this->fr_diff; //check for spike
 		this->counter_front=this->counter_front+1;
 	}
-	void getEncoderBackCallback(const roboteq_interface::encoder_data::ConstPtr &msg)
+	void getEncoderBackCallback(const messages::encoder_data::ConstPtr &msg)
 	{
 		this->bl_prev = this->bl;
 		this->br_prev = this->br;
@@ -38,7 +38,7 @@ private:
 		//this->br_diff = (this->br_diff<1000)*this->br_diff; //check for spike
 		this->counter_back=this->counter_back+1;
 	}
-	void getEncoderMiddleCallback(const roboteq_interface::encoder_data::ConstPtr &msg)
+	void getEncoderMiddleCallback(const messages::encoder_data::ConstPtr &msg)
 	{
 		this->ml_prev = this->ml;
 		this->mr_prev = this->mr;
@@ -50,7 +50,7 @@ private:
 		//this->mr_diff = (this->mr_diff<1000)*this->mr_diff; //check for spike
 		this->counter_middle=this->counter_middle+1;
 	}
-	void getEncoderLeftCallback(const roboteq_interface::encoder_data::ConstPtr &msg)
+	void getEncoderLeftCallback(const messages::encoder_data::ConstPtr &msg)
 	{
 		this->fl_prev = this->fl;
 		this->ml_prev = this->ml;
@@ -66,7 +66,7 @@ private:
 		//this->bl_diff = (this->bl_diff<1000)*this->bl_diff; //check for spike
 		this->counter_left=this->counter_left+1;
 	}
-	void getEncoderRightCallback(const roboteq_interface::encoder_data::ConstPtr &msg)
+	void getEncoderRightCallback(const messages::encoder_data::ConstPtr &msg)
 	{
 		this->fr_prev = this->fr;
 		this->mr_prev = this->mr;
