@@ -17,6 +17,7 @@ private:
 	//netburner1 imu callback function
 	void getIMU1Callback(const messages::nb1_to_i7_msg::ConstPtr &msg)
 	{
+		ROS_INFO("imu_callback 1 \n");
 		this->p1 = msg->rate_p*3.1419527/180; //radians
 		this->q1 = msg->rate_q*3.1419527/180; //radians
 		this->r1 = msg->rate_r*3.1419527/180; //radians

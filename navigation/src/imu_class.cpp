@@ -43,7 +43,7 @@ IMU::IMU()
 	prev_time1 = 0;
 	dt1 = 0;
 	new_imu1 = 0;
-	subscriber_imu1 = node.subscribe("comm/nb1in/nb1in", 1, &IMU::getIMU1Callback,this);
+	subscriber_imu1 = node.subscribe("hw_interface/nb1in/nb1in", 1, &IMU::getIMU1Callback,this);
 
 	//nb2
 	p2=0;
@@ -73,7 +73,7 @@ IMU::IMU()
 	prev_time2 = 0;
 	dt2 = 0;
 	new_imu2 = 0;
-	subscriber_imu2 = node.subscribe("comm/nb2in/nb2in", 1, &IMU::getIMU2Callback,this);
+	subscriber_imu2 = node.subscribe("hw_interface/nb2in/nb2in", 1, &IMU::getIMU2Callback,this);
 
 	//nb3
 	p3=0;
@@ -103,7 +103,7 @@ IMU::IMU()
 	prev_time3 = 0;
 	dt3 = 0;
 	new_imu3 = 0;
-	subscriber_imu3 = node.subscribe("comm/nb3in/nb3in", 1, &IMU::getIMU3Callback,this);
+	subscriber_imu3 = node.subscribe("hw_interface/nb3in/nb3in", 1, &IMU::getIMU3Callback,this);
 }
 
 void IMU::collect_gyro1_data()

@@ -3,6 +3,10 @@
 NavigationFilter::NavigationFilter()
 {
 	sub_exec = nh.subscribe("/topicname", 1, &NavigationFilter::getExecInfoCallback, this);
+	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+	filter.set_imu_offset(0,0);
+	encoders.set_wheel_radius(0.2286/2);
+	encoders.set_counts_per_revolution(4476.16*1.062);
 	pause_switch = false;
 	stopFlag = false;
 	turnFlag = false;
@@ -122,6 +126,7 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 	{
 		nav_status_output = 0;
 	}
+	ROS_INFO("collected_gyro_data = %f \n", collected_gyro_data);
 	imu.set_prev_counters();
 	if(user_input_nav_act.begin_dead_reckoning==1) 
 	{
@@ -237,10 +242,10 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 	if(pause_switch==false) 
 	{
 		state = _run; 
-		filter.initialize_states(0,0,3.14159265,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter1.initialize_states(0,0,3.14159265,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter2.initialize_states(0,0,3.14159265,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter3.initialize_states(0,0,3.14159265,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filter1.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filter2.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filter3.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
 		filter.set_imu_offset(0,0); //x_offset, y_offset
 		if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
 		{
