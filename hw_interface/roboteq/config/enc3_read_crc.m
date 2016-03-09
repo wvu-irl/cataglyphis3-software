@@ -18,44 +18,60 @@ function [enc1, enc2, enc3, clk, ticker, bvolts, amp1, amp2, amp3, crc, crc_, pa
         if header == 'A' % search for A
             header2 = fread(fid,1); % if A is found, look for Z
             if header2 == 'z'
-                j=0; % found header AZ, break loop
+                j=0; % found header Az, break loop
                 fread(fid,1); % dump ident number
                 break % prob unnecessary
             end
         end
     end
 
-    while q && (fid.BytesAvailable < 18)
+    while q && (fid.BytesAvailable < 20)
         pause(.0000001)
     end
 
-    if fid.BytesAvailable >= 18
+    if fid.BytesAvailable >= 20
         packet_rec=uint8(0); % init vars
-        for k=1:18
+        for k=1:20
             packet_rec(k) = fread(fid,1, 'uint8');
         end
-        ticker = double(bitxor(packet_rec(1), 255));
-        clk  = double(bitxor(packet_rec(3), 255))*2^8+double(bitxor(packet_rec(2), 255));
-        enc1 = double(bitxor(packet_rec(5), 255))*2^8+double(bitxor(packet_rec(4), 255));
-        enc2 = double(bitxor(packet_rec(7), 255))*2^8+double(bitxor(packet_rec(6), 255));
-        enc3 = double(bitxor(packet_rec(9), 255))*2^8+double(bitxor(packet_rec(8), 255));
         
-        bvolts = double(bitxor(packet_rec(10), 255))/5;
-        amp1 = (double(bitxor(packet_rec(11), 255))-128)/12;
-        amp2 = (double(bitxor(packet_rec(12), 255))-128)/12;
-        amp3 = (double(bitxor(packet_rec(13), 255))-128)/12;
+        % calculate checksum (before data uninversion)
+        if bitand(packet_rec(20),1); packet_rec(16)=0; end
+        if bitand(packet_rec(20),2); packet_rec(17)=0; end
+        if bitand(packet_rec(20),4); packet_rec(18)=0; end
+        if bitand(packet_rec(20),8); packet_rec(19)=0; end
         
+        crc_  = crc32(packet_rec(1:15));
+        crc = double(packet_rec(19))*2^24 +double(packet_rec(18))*2^16 + double(packet_rec(17))*2^8 + double(packet_rec(16));        
         
-        if bitand(packet_rec(18),1) packet_rec(14)=0; end
-        if bitand(packet_rec(18),2) packet_rec(15)=0; end
-        if bitand(packet_rec(18),4) packet_rec(16)=0; end
-        if bitand(packet_rec(18),8) packet_rec(17)=0; end
+        % uninvert bytes as needed
+        if bitand(packet_rec(14), 1); packet_rec(1) =0; end
+        if bitand(packet_rec(14), 2); packet_rec(2) =0; end
+        if bitand(packet_rec(14), 4); packet_rec(3) =0; end
+        if bitand(packet_rec(14), 8); packet_rec(4) =0; end
+        if bitand(packet_rec(14),16); packet_rec(5) =0; end
+        if bitand(packet_rec(14),32); packet_rec(6) =0; end
+        if bitand(packet_rec(14),64); packet_rec(7) =0; end            
         
-        crc_  = crc32(packet_rec(1:13));
-%        csum_ = mod(sum(double(packet_rec(1:13))),256);
-        crc = double(packet_rec(17))*2^24 +double(packet_rec(16))*2^16 + double(packet_rec(15))*2^8 + double(packet_rec(14));
-%        csum = double(packet_rec(14));
-      
+        if bitand(packet_rec(15), 1); packet_rec(8) =0; end
+        if bitand(packet_rec(15), 2); packet_rec(9) =0; end
+        if bitand(packet_rec(15), 4); packet_rec(10)=0; end
+        if bitand(packet_rec(15), 8); packet_rec(11)=0; end
+        if bitand(packet_rec(15),16); packet_rec(12)=0; end
+        if bitand(packet_rec(15),32); packet_rec(13)=0; end
+        
+        % decode data
+        ticker = double(packet_rec(1));
+        clk  = double(packet_rec(3))*2^8+double(packet_rec(2));
+        enc1 = double(packet_rec(5))*2^8+double(packet_rec(4));
+        enc2 = double(packet_rec(7))*2^8+double(packet_rec(6));
+        enc3 = double(packet_rec(9))*2^8+double(packet_rec(8));
+        
+        bvolts = double(packet_rec(10))/5;
+        amp1 = (double(packet_rec(11))-128)/12;
+        amp2 = (double(packet_rec(12))-128)/12;
+        amp3 = (double(packet_rec(13))-128)/12;
+              
         fprintf('enc1: %5.1i \tenc2: %5.1i \tenc3: %5.1i \tctr: %3.1i \tclk: %3.1i \tbvolt: %3.1f \tamp1: %3.1f \tamp2: %3.1f \tamp3: %3.1f \tcrc_: %3.0i \tcrc: %3.0i', enc1, enc2, enc3, ticker, clk, bvolts, amp1, amp2, amp3, crc_, crc)
         if (crc ~= crc_)
             fprintf('\t\t!>>bad')

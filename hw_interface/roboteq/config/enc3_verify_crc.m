@@ -6,7 +6,7 @@ if exist('trans', 'var') delete(trans); end
 clear all; clc; close all
 
 % init parameters
-p1='COM6';  % send port
+p1='COM4';  % send port
 buff=1200;    % buffer size
 
 

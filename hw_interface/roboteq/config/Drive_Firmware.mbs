@@ -1,21 +1,23 @@
 ' WVU SRRC Challenge - Drive Wheels Firmware
 ' Alexander T. Hypes
-' Version 26 - 3/3/16
-' Status: 	Verified
+' Version 27 - 3/3/16
+' Status: Unverified
 
 	' Packet format:
 			' [1:3]		Az4 	header				(uint8)x3
 			' [4]		tic		ticker				(uint8)   (packet counter)
 			' [5:6]		clock 	clock				(uint16)  (time since boot in sec, rolls over at ~18 hrs)
-			' [7:8]		enc1 	encoder1 			(uint16)  (each byte xor 255) little endian
+			' [7:8]		enc1 	encoder1 			(uint16)  little endian
 			' [9:10]	enc2 	encoder2			(uint16)
 			' [11:12]	enc3 	encoder3			(uint16)
 			' [13]   	bvolt	battery_volts		(uint8)   (battery voltage*5)
 			' [14]   	amp1	motor1 amps			(uint8)   (motor amps*12 + 128)
 			' [15]   	amp2	motor2 amps			(uint8)
 			' [16]   	amp3	motor3 amps			(uint8)
-			' [17-20]	crc32 	crc32 check 		(uint8)x4 (crc32 of [1:16])
-			' [21]		crc32i	inv crc32 byte		(uint8)	  (markers for crc32 bits to invert)
+			' [17]		imark1	imarkers[4:10]		(uint8)	  (inversion markers for bytes [4:10])
+			' [18]		imark2	imarkers[11:16]		(uint8)	  (inversion markers for bytes [11:16])
+			' [19-22]	crc32 	crc32 check 		(uint8)x4 (crc32 of 1:16)
+			' [23]		imark_c	inv crc32 byte		(uint8)	  (inversion markers for crc32 bytes)
 
 	' << init >>
 	wait(500)								' pause before script execution
@@ -96,9 +98,9 @@
 			
 			gosub bcheck 							' bounds check those values
 
-			gosub serialize_i 						' serialize
+			gosub serialize 						' serialize 2-byte chunks
 
-			gosub bytefix							' prevent null char output for least significant byte
+			gosub data_ichk							' build inversion bytes for data
 
 			gosub crc32							    ' calculate crc32
 			
@@ -118,16 +120,16 @@
 
 	' << crc32 inversion check/calc >> 
 	crc32_ichk:
-		byte21 = 128
-		if byte17=0 then byte21=byte21+1
-		if byte18=0 then byte21=byte21+2
-		if byte19=0 then byte21=byte21+4
-		if byte20=0 then byte21=byte21+8
+		byte23 = 128
+		if byte19=0 then byte23=byte23+1
+		if byte20=0 then byte23=byte23+2
+		if byte21=0 then byte23=byte23+4
+		if byte22=0 then byte23=byte23+8
 		
-		if byte17=0 then byte17=255
-		if byte18=0 then byte18=255
 		if byte19=0 then byte19=255
 		if byte20=0 then byte20=255
+		if byte21=0 then byte21=255
+		if byte22=0 then byte22=255
 
 	return
 	
@@ -182,23 +184,27 @@
 		gosub crc32_bitbang
 		val = byte16				' [16]		amp3		(uint8)
 		gosub crc32_bitbang
+		val = byte17				' [17]		imark1		(uint8)
+		gosub crc32_bitbang
+		val = byte18				' [18]		imark2		(uint8)
+		gosub crc32_bitbang		
 		
 		' final complement of crc32
 		crc_val = crc_val xor 0xFFFFFFFF 	' 24 	crc = bitcmp(crc);
 		
 		' serialize crc32 into 4 bytes
-		byte17  =   ( crc_val        and 0b11111111)
-		byte18  =   ((crc_val >>  8) and 0b11111111)
-		byte19  =   ((crc_val >> 16) and 0b11111111)
-		byte20  =   ((crc_val >> 24) and 0b11111111)
+		byte19  =   ( crc_val        and 0xFF)
+		byte20  =   ((crc_val >>  8) and 0xFF)
+		byte21  =   ((crc_val >> 16) and 0xFF)
+		byte22  =   ((crc_val >> 24) and 0xFF)
 	return		
 
 	' << dummy crc32 func for speed testing
 	crc32_noop:
-		byte17  =   0x0
-		byte18  =   0x1
-		byte19  =   0x2
-		byte20  =   0x3
+		byte19  =   0x0
+		byte20  =   0x1
+		byte21  =   0x2
+		byte22  =   0x3
 	return	
 	
 	' << crc32 bitwise magic >> 
@@ -242,10 +248,10 @@
 	
 	' << mod data to correct byte size values >>
 	datamod: 
-		byte8  = enc1  mod 61566						' encoder values are int32 (+2147483647 to -2147483648)
-		byte10 = enc2  mod 61566   						' 61566 is the largest 2-byte value to mod with an int32
-		byte12 = enc3  mod 61566						' which will produce a max rollover error of 2
-		byte6  = clk   mod 61566
+		byte8  = enc1  mod 65536						' encoder values are int32 (+2147483647 to -2147483648)
+		byte10 = enc2  mod 65536   						' mod into 2-byte values (65536)
+		byte12 = enc3  mod 65536
+		byte6  = clk   mod 65536
 		byte13 = bvolt mod   256
 		byte14 = amp1  mod   256						' bound hsm data to single-byte values
 		byte15 = amp2  mod   256
@@ -255,68 +261,76 @@
 	' << bounds check data values >> 
 	bcheck:
 		' keep encs/clock between 0 and 64000 (mod can be negative)
-		if byte8  < 0 then byte8  = byte8  + 61566		' encs
-		if byte10 < 0 then byte10 = byte10 + 61566
-		if byte12 < 0 then byte12 = byte12 + 61566
-		if byte6  < 0 then byte6  = byte6  + 61566		' clock
+		if byte8  < 0 then byte8  = byte8  + 65536		' encs
+		if byte10 < 0 then byte10 = byte10 + 65536
+		if byte12 < 0 then byte12 = byte12 + 65536
+		if byte6  < 0 then byte6  = byte6  + 65536		' clock
 
 		' keep bvolts/amps between 0 and 254
 		if byte13<0   then byte13=0
 		if byte14<0   then byte14=0
 		if byte15<0   then byte15=0
 		if byte16<0   then byte16=0
-		if byte13>254 then byte13=254
-		if byte14>254 then byte14=254
-		if byte15>254 then byte15=254
-		if byte16>254 then byte16=254
+		if byte13>255 then byte13=255
+		if byte14>255 then byte14=255
+		if byte15>255 then byte15=255
+		if byte16>255 then byte16=255
 		
 		' packet counter roll over
-		if ticker > 254 then ticker = 0
+		if ticker > 255 then ticker = 0
 	return
 	
-	' << serialize + invert 2 byte values (~uint16) >> 
-	serialize_i:
-		byte4  =          ((ticker and 0b11111111) xor 0b11111111)	' packet counter
-		byte5  =           ((byte6 and 0b11111111) xor 0b11111111)	' clock
-		byte6  =    (((byte6 >> 8) and 0b11111111) xor 0b11111111)
-		byte7  =           ((byte8 and 0b11111111) xor 0b11111111)	' encoder 1
-		byte8  =    (((byte8 >> 8) and 0b11111111) xor 0b11111111)
-		byte9  =          ((byte10 and 0b11111111) xor 0b11111111)	' encoder 2
-		byte10 =   (((byte10 >> 8) and 0b11111111) xor 0b11111111)		
-		byte11 =          ((byte12 and 0b11111111) xor 0b11111111)	' encoder 3
-		byte12 =   (((byte12 >> 8) and 0b11111111) xor 0b11111111)
-		byte13  =		(byte13  xor 0b11111111)						' bvolts
-		byte14  =		(byte14  xor 0b11111111)						' amp1
-		byte15  =		(byte15  xor 0b11111111)						' amp2
-		byte16  =		(byte16  xor 0b11111111)						' amp3
-	return		
 	
 	' << serialize 2 byte values (~uint16) >> 
 	serialize:
-		byte4  =         (ticker  and 0b11111111)	' packet counter
-		byte5  =          (byte6  and 0b11111111)	' clock
-		byte6  =   ((byte6  >> 8) and 0b11111111)
-		byte7  =          (byte8  and 0b11111111)	' encoder 1
-		byte8  =   ((byte8  >> 8) and 0b11111111)
-		byte9  =          (byte10 and 0b11111111)   ' encoder 2
-		byte10 =   ((byte10 >> 8) and 0b11111111) 	
-		byte11 =          (byte12 and 0b11111111)   ' encoder 3
-		byte12 =   ((byte12 >> 8) and 0b11111111)
+		byte4  =         (ticker  and 0xFF)	' packet counter
+		byte5  =          (byte6  and 0xFF)	' clock
+		byte6  =   ((byte6  >> 8) and 0xFF)
+		byte7  =          (byte8  and 0xFF)	' encoder 1
+		byte8  =   ((byte8  >> 8) and 0xFF)
+		byte9  =          (byte10 and 0xFF) ' encoder 2
+		byte10 =   ((byte10 >> 8) and 0xFF) 	
+		byte11 =          (byte12 and 0xFF) ' encoder 3
+		byte12 =   ((byte12 >> 8) and 0xFF)
+		byte13  =		 (byte13  and 0xFF)	' bvolts
+		byte14  =		 (byte14  and 0xFF)	' amp1
+		byte15  =		 (byte15  and 0xFF)	' amp2
+		byte16  =		 (byte16  and 0xFF)	' amp3		
 	return	
 
-	' << prevent null char for least significant byte of uint16s >> 
-	bytefix:
-		' bump an inverted 0 to 1 (real value 255 to 254)
-		' clock/encs
-		if  byte5=0 then  byte5=1
-		if  byte7=0 then  byte7=1
-		if  byte9=0 then  byte9=1
-		if byte11=0 then byte11=1
-		' bvolts/amps
-		if byte13=0 then byte13=1
-		if byte14=0 then byte14=1
-		if byte15=0 then byte15=1
-		if byte16=0 then byte16=1
+	' << build inversion bytes for data >> 
+	data_ichk:
+		byte17 = 128
+		if byte4 =  0 then byte17 = byte17 +  1
+		if byte5 =  0 then byte17 = byte17 +  2
+		if byte6 =  0 then byte17 = byte17 +  4
+		if byte7 =  0 then byte17 = byte17 +  8
+		if byte8 =  0 then byte17 = byte17 + 16
+		if byte9 =  0 then byte17 = byte17 + 32
+		if byte10 = 0 then byte17 = byte17 + 64
+		
+		if byte4 =  0 then byte4 =  255
+		if byte5 =  0 then byte5 =  255
+		if byte6 =  0 then byte6 =  255
+		if byte7 =  0 then byte7 =  255
+		if byte8 =  0 then byte8 =  255
+		if byte9 =  0 then byte9 =  255
+		if byte10 = 0 then byte10 = 255	
+		
+		byte18 = 128
+		if byte11 = 0 then byte18 = byte18 +  1
+		if byte12 = 0 then byte18 = byte18 +  2
+		if byte13 = 0 then byte18 = byte18 +  4
+		if byte14 = 0 then byte18 = byte18 +  8
+		if byte15 = 0 then byte18 = byte18 + 16
+		if byte16 = 0 then byte18 = byte18 + 32
+		
+		if byte11 = 0 then byte11 = 255
+		if byte12 = 0 then byte12 = 255
+		if byte13 = 0 then byte13 = 255
+		if byte14 = 0 then byte14 = 255
+		if byte15 = 0 then byte15 = 255
+		if byte16 = 0 then byte16 = 255	
 	return
 	
 	' << output packet over serial >>
@@ -349,15 +363,19 @@
 		gosub twiddlebit
 		val = byte16			' [16]		amp3		(uint8)
 		gosub twiddlebit	
-		val = byte17			' [17:20]	crc32		(uint32)
+		val = byte17			' [17]		imark1		(uint8)
 		gosub twiddlebit
-		val = byte18
-		gosub twiddlebit	
-		val = byte19
-		gosub twiddlebit	
+		val = byte18			' [18]		imark2		(uint8)
+		gosub twiddlebit
+		val = byte19			' [19:22]	crc32		(uint32)
+		gosub twiddlebit
 		val = byte20
+		gosub twiddlebit	
+		val = byte21
+		gosub twiddlebit	
+		val = byte22
 		gosub twiddlebit
-		val = byte21			' [21]		crc32_i		(uint8)
+		val = byte23			' [23]		crc32_i		(uint8)
 		gosub twiddlebit
 	return
 
