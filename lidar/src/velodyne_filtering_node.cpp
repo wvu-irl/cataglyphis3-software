@@ -54,13 +54,14 @@ private:
 
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
 	{
-		pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-		*cloud = input_cloud;
-		ROS_INFO("Running callback function... %i",cloud->points.size());
 		if(counter > 10)
 		{
+		    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	            *cloud = input_cloud;
+	        ROS_INFO("*-*-*-*-*-*-*-*-*");
+		    ROS_INFO("Running callback function with %i points.",cloud->points.size());
 			
-			pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+		    pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 		    pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 		    pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZ>);
 		    pcl::PointCloud<pcl::PointXYZ>::Ptr grid_cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -87,9 +88,9 @@ private:
 	    	pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg;
 	    	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZ> ());
 
-std::stringstream ss1;
-		   ss1 << "raw_cloud.pcd";
-		   pcl::io::savePCDFile( ss1.str(), *cloud);
+			// std::stringstream ss1;
+			// ss1 << "raw_cloud.pcd";
+			// pcl::io::savePCDFile( ss1.str(), *cloud);
 
 			
 		    // PASS THROUGH FILTER
@@ -104,11 +105,12 @@ std::stringstream ss1;
 		    pass.setFilterFieldName("z");
 		    pass.setFilterLimits(-1.5,threshold_tree_height);
 		    pass.filter(*cloud);
-		    cout << "Regional cloud " << " has " << cloud->points.size() << " points." << endl;
+		    ROS_INFO("Regional cloud has %i points", cloud->points.size());
 
-std::stringstream ss2;
-		   ss2 << "middle_1.pcd";
-		   pcl::io::savePCDFile( ss2.str(), *cloud);
+
+			// std::stringstream ss2;
+			// ss2 << "middle_1.pcd";
+			// pcl::io::savePCDFile( ss2.str(), *cloud);
 
 		    // CREATE THE FILTERING OBJECT
 		    pcl::ApproximateProgressiveMorphologicalFilter<pcl::PointXYZ> pmf;
@@ -126,9 +128,9 @@ std::stringstream ss2;
 		    extract.setIndices (ground);
 		    extract.filter (*ground_filtered);
 
-std::stringstream ss3;
-		   ss3 << "ground.pcd";
-		   pcl::io::savePCDFile( ss3.str(), *ground_filtered);
+			// std::stringstream ss3;
+			// ss3 << "ground.pcd";
+			// pcl::io::savePCDFile( ss3.str(), *ground_filtered);
 
 		    // EXTRACT NON-GROUND RETURNS
 		    extract.setNegative (true);
@@ -177,7 +179,7 @@ std::stringstream ss3;
 		    pass.setFilterFieldName("y");
 		    pass.setFilterLimits(-home_detection_range,home_detection_range); 
 		    pass.filter(*object_filtered);
-		    cout << "PassThrough done." << endl;
+		    ROS_INFO("PassThrough done.");
 			
 		   std::stringstream ss;
 		   ss << "file.pcd";
@@ -188,7 +190,7 @@ std::stringstream ss3;
 		    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
 		    tree->setInputCloud (object_filtered);
 
-		    cout << "0" << endl;
+		    //cout << "0" << endl;
 
 		    std::vector<pcl::PointIndices> cluster_indices;
 		    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
@@ -199,7 +201,7 @@ std::stringstream ss3;
 		    ec.setInputCloud (object_filtered);
 		    ec.extract (cluster_indices);
 
-		    cout << "1" << endl;
+		    //cout << "1" << endl;
 
 		    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> points_cluster;
 		    for (int ii=0;ii<cluster_indices.size ();ii++)
@@ -207,7 +209,7 @@ std::stringstream ss3;
 		        points_cluster.push_back(cloud_middle);
 		    }
 		    
- 		    cout << "2" << endl;
+ 		    //cout << "2" << endl;
 
 		    int j = 0;
 		    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
@@ -222,16 +224,17 @@ std::stringstream ss3;
 		        j++;
 		    }
 
-	     //    struct cylinder
-	     //    {
-	     //    	arma::mat points;
-	     //    	arma::vec parameters;
-	     //    };
-		    // vector<cylinder> cylinders;
-		    // cylinders.clear();
+			// struct cylinder
+			// {
+			// 	arma::mat points;
+			// 	arma::vec parameters;
+			// };
+			// vector<cylinder> cylinders;
+			// cylinders.clear();
 
-		    cout << "3" << endl;
+		    //cout << "3" << endl;
 
+		    //loop through clusters
 		    for (int i=0; i<points_cluster.size(); i++)
 		    {
 		        ne.setSearchMethod (tree2);
@@ -239,7 +242,7 @@ std::stringstream ss3;
 		        ne.setKSearch (10);
 		        ne.compute (*cloud_normals);
 
-		        cout << "cluster " << i << " has " << cloud_normals->points.size() << " points." << endl;
+		        ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
 
 		        // CREATE THE SEGMENTATION OBJECT FOR CYLINDER SEGMENTATION AND SET ALL THE PARAMETERS
 		        seg.setOptimizeCoefficients (true);
@@ -264,15 +267,15 @@ std::stringstream ss3;
 		        // cylinder current_cylinder;
 		        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.8)
 		        {
-		            cout << "cluster " << i << " has fit the cylinder model!!!" << endl;
-		            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-		                                           << coefficients_cylinder->values[1] << " "
-		                                           << coefficients_cylinder->values[2] << " "
-		                                           << coefficients_cylinder->values[3] << " "
-		                                           << coefficients_cylinder->values[4] << " "
-		                                           << coefficients_cylinder->values[5] << " "
-		                                           << coefficients_cylinder->values[6] << endl;
-		            cout << "Probability is " << seg.getProbability () << endl;
+		            ROS_INFO("cluster %i has fit the cylinder model with probability %f", i, seg.getProbability());
+		            // cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+		            //                                << coefficients_cylinder->values[1] << " "
+		            //                                << coefficients_cylinder->values[2] << " "
+		            //                                << coefficients_cylinder->values[3] << " "
+		            //                                << coefficients_cylinder->values[4] << " "
+		            //                                << coefficients_cylinder->values[5] << " "
+		            //                                << coefficients_cylinder->values[6] << endl;
+		            //cout << "Probability is " << seg.getProbability () << endl;
 
 			    	// current_cylinder.parameters[0] = coefficients_cylinder->values[0];
 			    	// current_cylinder.parameters[1] = coefficients_cylinder->values[1];

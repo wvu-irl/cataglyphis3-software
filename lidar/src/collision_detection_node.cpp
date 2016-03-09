@@ -73,7 +73,7 @@ float corridor_length = 5.5; // Length of the virtual corridor, THE CLOSEST DECT
 float x_shift = 0.0;
 float y_shirt = 0.0;
 float lidar_height = 1.0; // height of the lidar sensor
-float safe_envelope_angle = DEG2RAD*20; //safe envelope angle size
+float safe_envelope_angle = DEG2RAD*15; //safe envelope angle size
 int point_trigger_threshold = 5; // how many points that will trigger the avoid alarm
 
 //subscribe to state machine info
@@ -95,7 +95,7 @@ private:
 	// 	}
 	// }
 public:
-	int check_for_collisions;
+	int check_for_collisions = 1;
 	// RobotControlSubscriber()
 	// {
 	// 	// sub_sm = node.subscribe("/control/execinfo/execinfo", 1, &RobotControlSubscriber::getExecCallback, this);
@@ -127,80 +127,94 @@ private:
 			pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::PointIndicesPtr ground (new pcl::PointIndices);
 
-			pcl::PassThrough<pcl::PointXYZ> pass;
-			pass.setInputCloud(cloud);
-			pass.setFilterFieldName("x");
-			pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
-			pass.filter(*cloud);
-			pass.setInputCloud(cloud);
-			pass.setFilterFieldName("y");
-			pass.setFilterLimits(y_shirt + 0.35,y_shirt + corridor_length);
-			pass.filter(*cloud);
-			cout << "Virtual corridor " << " has " << cloud->points.size() << " points." << endl;
-
+			// pcl::PassThrough<pcl::PointXYZ> pass;
+			// pass.setInputCloud(cloud);
+			// pass.setFilterFieldName("x");
+			// pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
+			// pass.filter(*cloud);
+			// pass.setInputCloud(cloud);
+			// pass.setFilterFieldName("y");
+			// pass.setFilterLimits(y_shirt + 0.35,y_shirt + corridor_length);
+			// pass.filter(*cloud);
+			// ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
 
 			
-			//use rough ground removal, method A: rough 
-			// A: start
-			pcl::ApproximateProgressiveMorphologicalFilter<pcl::PointXYZ> pmf;
-			pmf.setInputCloud (cloud);
-			pmf.setMaxWindowSize (20);
-			pmf.setSlope (1.0f);
-			pmf.setInitialDistance (0.3f);
-			pmf.setMaxDistance (0.7f);
-			pmf.extract (ground->indices);
-			// CREATE THE FILTERING OBJECT
-			pcl::ExtractIndices<pcl::PointXYZ> extract;
-			extract.setInputCloud (cloud);
-			// EXTRACT GROUND RETURNS
-			extract.setIndices (ground);
-			extract.filter (*ground_filtered);
-			// EXTRACT NON-GROUND RETURNS
-			extract.setNegative (true);
-			extract.filter (*object_filtered);
-			// A: end
+			// // //use rough ground removal, method A: rough 
+			// // // A: start
+			// // pcl::ApproximateProgressiveMorphologicalFilter<pcl::PointXYZ> pmf;
+			// // pmf.setInputCloud (cloud);
+			// // pmf.setMaxWindowSize (20);
+			// // pmf.setSlope (1.0f);
+			// // pmf.setInitialDistance (0.3f);
+			// // pmf.setMaxDistance (0.7f);
+			// // pmf.extract (ground->indices);
+			// // // CREATE THE FILTERING OBJECT
+			// // pcl::ExtractIndices<pcl::PointXYZ> extract;
+			// // extract.setInputCloud (cloud);
+			// // // EXTRACT GROUND RETURNS
+			// // extract.setIndices (ground);
+			// // extract.filter (*ground_filtered);
+			// // // EXTRACT NON-GROUND RETURNS
+			// // extract.setNegative (true);
+			// // extract.filter (*object_filtered);
+			// // // A: end
 			
 
-			// B: start method B: find
-			pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
-			pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-			// Create the segmentation object
-			pcl::SACSegmentation<pcl::PointXYZ> seg;
-			// Optional
-			seg.setOptimizeCoefficients (true);
-			// Mandatory
-			seg.setModelType (pcl::SACMODEL_PLANE);
-			seg.setMethodType (pcl::SAC_RANSAC);
-			seg.setMaxIterations (1000);
-			seg.setDistanceThreshold (0.15); //Ground detection threshold parameter
-			seg.setInputCloud (cloud);
-			seg.segment (*inliers, *coefficients);
-			//pcl::ExtractIndices<pcl::PointXYZ> extract;
-			extract.setInputCloud (cloud);
-			extract.setIndices (inliers);
-			extract.setNegative (false);
-			extract.filter (*ground_filtered);
-			extract.setNegative (true);
-			extract.filter (*object_filtered);
+			// // // B: start method B: find
+			// // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
+			// // pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+			// // // Create the segmentation object
+			// // pcl::SACSegmentation<pcl::PointXYZ> seg;
+			// // // Optional
+			// // seg.setOptimizeCoefficients (true);
+			// // // Mandatory
+			// // seg.setModelType (pcl::SACMODEL_PLANE);
+			// // seg.setMethodType (pcl::SAC_RANSAC);
+			// // seg.setMaxIterations (1000);
+			// // seg.setDistanceThreshold (0.15); //Ground detection threshold parameter
+			// // seg.setInputCloud (cloud);
+			// // seg.segment (*inliers, *coefficients);
+			// // //pcl::ExtractIndices<pcl::PointXYZ> extract;
+			// // extract.setInputCloud (cloud);
+			// // extract.setIndices (inliers);
+			// // extract.setNegative (false);
+			// // extract.filter (*ground_filtered);
+			// // extract.setNegative (true);
+			// // extract.filter (*object_filtered);
 			// B: end
 
 			//check for collision
+			int collision_point_counter = 0;
 			// FIRST LAYER: SAFE ENVELOPE
-			for (int i=0; i<object_filtered->points.size(); i++)
+			for (int i=0; i<cloud->points.size(); i++)
 			{
-				// CHECK IF THE POINT IS OUTSIDE OF THE SAFE ENVELOPE
-				if((abs(lidar_height - object_filtered->points[i].z)/object_filtered->points[i].y) > tan(safe_envelope_angle))
+				//cout << "x,y,z =" << cloud->points[i].x << ", " << cloud->points[i].y << ", " << cloud->points[i].z << endl;
+				//CHECK IF POINT IN CORRIDOR
+				if(cloud->points[i].x > 0 && cloud->points[i].y < 1 && cloud->points[i].y > -1 && cloud->points[i].x<2)
 				{
-					// NEED TO AVOID
-					cout << "ALARM TRIGGERED BY SAFE ENVELOPE LAYER" << endl;
-				} 
+					// CHECK IF THE POINT IS OUTSIDE OF THE SAFE ENVELOPE
+					if((abs(lidar_height - cloud->points[i].z)/cloud->points[i].x) > tan(safe_envelope_angle))
+					{
+						// NEED TO AVOID
+						collision_point_counter++;
+					} 
+				}
 			}
 
-			if (object_filtered->points.size() > point_trigger_threshold)
+			if(collision_point_counter>10)
 			{
-				cout << "ALARM TRIGGERED BY RANSAC PLANE FITTING" << endl;
-				//
+				ROS_INFO("ALARM TRIGGERED BY SAFE ENVELOPE LAYER");
 			}
+			else
+			{
+				ROS_INFO("Safe for envelope layers");
+			}
+
+			// if (object_filtered->points.size() > point_trigger_threshold)
+			// {
+			// 	ROS_INFO("ALARM TRIGGERED BY RANSAC PLANE FITTING");
+			// 	//
+			// }
 
 		}
 		else
@@ -221,11 +235,11 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "collision_detection_node");
 	ROS_INFO("collision_detection_node running...");
 	ros::NodeHandle nh;
-	ros::Rate loop_rate(50);
+	ros::Rate loop_rate(10);
 	ros::Publisher pub_col = nh.advertise<lidar::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout",1);
 
 	//subscribers
-	//Registration my_restration;
+	Registration my_registration;
 
 	//output messages
 	lidar::CollisionOut msg_CollisionOut;
