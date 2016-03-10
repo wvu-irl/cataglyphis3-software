@@ -3,13 +3,20 @@
 NavigationFilter::NavigationFilter()
 {
 	sub_exec = nh.subscribe("/topicname", 1, &NavigationFilter::getExecInfoCallback, this);
+	pause_switch = false;
+	stopFlag = false;
+	turnFlag = false;
+
+	sub_lidar = nh.subscribe("lidar/lidarfilteringout/lidarfilteringout", 1, &NavigationFilter::getLidarFilterOutCallback, this);
+	homing_x=0;
+	homing_y=0;
+	homing_heading=0;
+	homing_found=false;
+
 	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 	filter.set_imu_offset(0,0);
 	encoders.set_wheel_radius(0.2286/2);
 	encoders.set_counts_per_revolution(4476.16*1.062);
-	pause_switch = false;
-	stopFlag = false;
-	turnFlag = false;
 	current_time = ros::Time::now().toSec();
 }
 
@@ -573,4 +580,12 @@ void NavigationFilter::getExecInfoCallback(const messages::ExecInfo::ConstPtr &m
 	this->pause_switch = msg->pause;
 	this->turnFlag = 0;
 	this->stopFlag = 0;
+}
+
+void NavigationFilter::getLidarFilterOutCallback(const messages::LidarFilterOut::ConstPtr &msg)
+{
+	this->homing_x = msg->homing_x;
+	this->homing_y = msg->homing_y;
+	this->homing_heading = msg->homing_heading;
+	this->homing_found = msg->homing_found;
 }
