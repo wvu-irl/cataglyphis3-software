@@ -1,2 +1,4 @@
-uint8 collision
+bool collision
+bool collision_on_right
+bool collision_on_left
 float32 distance_to_collision

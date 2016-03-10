@@ -185,6 +185,8 @@ private:
 
 			//check for collision
 			int collision_point_counter = 0;
+			int collision_left_counter = 0;
+			int collision_right_counter = 0;
 			// FIRST LAYER: SAFE ENVELOPE
 			for (int i=0; i<cloud->points.size(); i++)
 			{
@@ -197,25 +199,39 @@ private:
 					{
 						// NEED TO AVOID
 						collision_point_counter++;
+						if(cloud->points[i].y<0)
+						{
+							collision_left_counter++;
+						}
+						else
+						{
+							collision_right_counter++;
+						}
 					} 
 				}
 			}
 
 			if(collision_point_counter>10)
 			{
-				ROS_INFO("ALARM TRIGGERED BY SAFE ENVELOPE LAYER");
+				collision=true;
+				if(collision_left_counter > collision_right_counter)
+				{
+					ROS_INFO("LARGEST COLLISION ON RIGHT");
+					collision_on_right = true;
+					collision_on_left = false;
+				}
+				else
+				{
+					ROS_INFO("LARGEST COLLISION ON LEFT");
+					collision_on_right = false;
+					collision_on_left = true;					
+				}
 			}
 			else
 			{
-				ROS_INFO("Safe for envelope layers");
+				ROS_INFO("No Collision...");
+				collision=false;
 			}
-
-			// if (object_filtered->points.size() > point_trigger_threshold)
-			// {
-			// 	ROS_INFO("ALARM TRIGGERED BY RANSAC PLANE FITTING");
-			// 	//
-			// }
-
 		}
 		else
 		{
@@ -223,6 +239,9 @@ private:
 		}
 	}
 public:
+	bool collision = false;
+	bool collision_on_right = false;
+	bool collision_on_left = false;
 	Registration()
 	{
 		sub_laser = nn.subscribe("/velodyne_points", 1, &Registration::registrationCallback, this);
@@ -246,9 +265,12 @@ int main(int argc, char **argv)
 
 	while(ros::ok())
 	{
+		ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*");
 		//populate message
-		msg_CollisionOut.collision = 0; //put result here
-		msg_CollisionOut.distance_to_collision = 0; //put result here
+		msg_CollisionOut.collision = my_registration.collision; 
+		msg_CollisionOut.collision_on_right = my_registration.collision_on_right; 
+		msg_CollisionOut.collision_on_left = my_registration.collision_on_left; 
+		msg_CollisionOut.distance_to_collision = 2; 
 
 		//publish message
 		pub_col.publish(msg_CollisionOut);
