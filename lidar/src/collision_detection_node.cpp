@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <iostream>
-#include <lidar/CollisionOut.h>
+#include <messages/CollisionOut.h>
 #include <iostream>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
@@ -61,7 +61,7 @@
 #include <pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
 #include <armadillo>
 
-using namespace std;
+//using namespace std;
 //using namespace pcl;
 
 const float PI = 3.14159265;
@@ -255,13 +255,13 @@ int main(int argc, char **argv)
 	ROS_INFO("collision_detection_node running...");
 	ros::NodeHandle nh;
 	ros::Rate loop_rate(10);
-	ros::Publisher pub_col = nh.advertise<lidar::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout",1);
+	ros::Publisher pub_col = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout",1);
 
 	//subscribers
 	Registration my_registration;
 
 	//output messages
-	lidar::CollisionOut msg_CollisionOut;
+	messages::CollisionOut msg_CollisionOut;
 
 	while(ros::ok())
 	{
