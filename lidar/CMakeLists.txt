@@ -112,7 +112,7 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-add_definitions("-std=gnu++11")
+#add_definitions("-std=gnu++11")
 add_definitions(${PCL_DEFINITIONS})
 
 ###########
@@ -155,6 +155,9 @@ add_dependencies(collision_detection_node lidar_generate_messages_cpp)
  	${PCL_LIBRARIES}
 	${PCL_COMMON_LIBRARIES}
 	${PCL_IO_LIBRARIES}
+	armadillo
+	lapack
+	blas
  )
 
   target_link_libraries(collision_detection_node 
