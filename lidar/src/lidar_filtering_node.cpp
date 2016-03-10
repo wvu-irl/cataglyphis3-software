@@ -535,10 +535,10 @@ public:
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "velodyne_filtering_node");
+	ros::init(argc, argv, "lidar_filtering_node");
 	ros::NodeHandle nh;
 
-	ROS_INFO("velodyne_filtering_node running...");
+	ROS_INFO("lidar_filtering_node running...");
 
 	Registration registration; 
 	ros::spin();

@@ -142,15 +142,15 @@ link_directories(
 # add_dependencies(lidar ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(velodyne_filtering_node src/velodyne_filtering_node.cpp)
+add_executable(lidar_filtering_node src/lidar_filtering_node.cpp)
 add_executable(collision_detection_node src/collision_detection_node.cpp)
 
 ## Add cmake target dependencies of the executable
-add_dependencies(velodyne_filtering_node lidar_generate_messages_cpp)
+add_dependencies(lidar_filtering_node lidar_generate_messages_cpp)
 add_dependencies(collision_detection_node lidar_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(velodyne_filtering_node 
+ target_link_libraries(lidar_filtering_node 
  	${catkin_LIBRARIES}
  	${PCL_LIBRARIES}
 	${PCL_COMMON_LIBRARIES}
