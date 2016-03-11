@@ -79,17 +79,17 @@ public:
 	const float homeX = 5.0; // m
 	const float homeY = 0.0; // m
 private:
-        void avoidObstacle_(); // ***
-        void returnHome_();// ***
-        void deposit_();// ***
-        void acquire_();// ***
-        void examine_();// ***
-        void planRegionPath_();// ***
-        void chooseRegion_();// ***
-        void init_();// ***
-        void evalConditions_();
-        void runProcesses_();
-        void runPause_();
+	void avoidObstacle_(); // ***
+	void returnHome_();// ***
+	void deposit_();// ***
+	void acquire_();// ***
+	void examine_();// ***
+	void planRegionPath_();// ***
+	void chooseRegion_();// ***
+	void init_();// ***
+	void evalConditions_();
+	void runProcesses_();
+	void runPause_();
 	void antColony_();
 
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
