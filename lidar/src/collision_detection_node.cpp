@@ -213,35 +213,31 @@ private:
 
 			if(collision_point_counter>10)
 			{
-				collision=true;
 				if(collision_left_counter > collision_right_counter)
 				{
+					collision=1;
 					ROS_INFO("LARGEST COLLISION ON RIGHT");
-					collision_on_right = true;
-					collision_on_left = false;
 				}
 				else
 				{
-					ROS_INFO("LARGEST COLLISION ON LEFT");
-					collision_on_right = false;
-					collision_on_left = true;					
+					collision=2;
+					ROS_INFO("LARGEST COLLISION ON LEFT");				
 				}
 			}
 			else
 			{
+				collision=0;
 				ROS_INFO("No Collision...");
-				collision=false;
 			}
 		}
 		else
 		{
 			//don't check for collision
+			collision=0;
 		}
 	}
 public:
-	bool collision = false;
-	bool collision_on_right = false;
-	bool collision_on_left = false;
+	int collision = 0;
 	Registration()
 	{
 		sub_laser = nn.subscribe("/velodyne_points", 1, &Registration::registrationCallback, this);
@@ -268,9 +264,7 @@ int main(int argc, char **argv)
 		ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*");
 		//populate message
 		msg_CollisionOut.collision = my_registration.collision; 
-		msg_CollisionOut.collision_on_right = my_registration.collision_on_right; 
-		msg_CollisionOut.collision_on_left = my_registration.collision_on_left; 
-		msg_CollisionOut.distance_to_collision = 2; 
+		msg_CollisionOut.distance_to_collision = 4; 
 
 		//publish message
 		pub_col.publish(msg_CollisionOut);

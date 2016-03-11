@@ -10,7 +10,7 @@ class SafePathing
 public:
 	// Methods
 	SafePathing(); // Constructor
-	bool FastMarchingMethod(robot_control::IntermediateWaypoints::Request &req, robot_control::IntermediateWaypoints::Response &res);
+	bool FindPath(robot_control::IntermediateWaypoints::Request &req, robot_control::IntermediateWaypoints::Response &res);
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer ppServ;

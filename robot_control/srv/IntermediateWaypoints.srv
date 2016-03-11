@@ -3,7 +3,7 @@ Waypoint finish
 float64 current_x
 float64 current_y
 float64 current_heading
-bool collision
+uint8 collision
 float32 collisionDistance
 ---
 Waypoint[] waypointArray
