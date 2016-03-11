@@ -34,15 +34,6 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 		intermediateWaypoints.push_back(waypoint);	
 	}
 
-	//destination waypoint
-	waypoint.x = req.finish.x;
-	waypoint.y = req.finish.y;
-	waypoint.easyProb = 0.0;
-	waypoint.medProb = 0.0;
-	waypoint.hardProb = 0.0;
-	waypoint.terrainHazard = 0.0;
-	intermediateWaypoints.push_back(waypoint);
-
 	res.waypointArray = intermediateWaypoints;
 	return true;
 }
