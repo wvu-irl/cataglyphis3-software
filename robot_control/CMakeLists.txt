@@ -136,6 +136,7 @@ include_directories(
  add_library(mission_planning src/mission_planning.cpp)
  add_library(choose_region src/choose_region.cpp)
  add_library(pause src/pause.cpp)
+ add_library(avoid src/avoid.cpp)
  
  add_library(safe_pathing src/safe_pathing.cpp)
 
@@ -195,6 +196,7 @@ include_directories(
    mission_planning
    choose_region
    pause
+   avoid
  )
  
  target_link_libraries(safe_pathing_node

@@ -10,10 +10,12 @@ MissionPlanning::MissionPlanning()
     reqROIClient = nh.serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
     modROIClient = nh.serviceClient<robot_control::ModifyROI>("/control/mapmanager/modifyroi");
     nb1Sub = nh.subscribe<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in", 1, &MissionPlanning::nb1Callback_, this);
+    collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
+    execInfoSub = nh.subscribe<messages::ExecInfo>("control/exec/info", 1, &MissionPlanning::execInfoCallback_, this);
 	woiSrv.request.easyThresh = 0;
 	woiSrv.request.medThresh = 0;
 	woiSrv.request.hardThresh = 0;
-    collisionDetected = false;
+    collisionInterruptTrigger = false;
     commandedAvoidObstacle = false;
     possessingSample = false;
     commandedReturnHome = false;
@@ -35,6 +37,7 @@ MissionPlanning::MissionPlanning()
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
         procsToExecute.push_back(false);
+        procsToInterrupt.push_back(false);
         procsBeingExecuted.push_back(false);
     }
 }
@@ -125,16 +128,20 @@ void MissionPlanning::init_()
 
 void MissionPlanning::evalConditions_()
 {
-    for(int i; i<NUM_PROC_TYPES; i++) procsToExecute.at(i) = false;
-    // something for pause
-    // something for commandedAvoidObstacle
-    // something for commandedReturnHome
-    // something for commandDeposit
-    // something for commandedAcquire
-    // something for commmandedExamine
-    // something for commandedPlanRegionPath
-    procsToExecute.at(chooseRegion__) = true;
-    // something for commandedInit
+    for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
+    //collisionInterruptTrigger =
+    if(collisionMsg.collision!=0 || procsBeingExecuted.at(avoid__)) procsToExecute.at(avoid__) = true;
+    else
+    {
+        // something for commandedAvoidObstacle
+        // something for commandedReturnHome
+        // something for commandDeposit
+        // something for commandedAcquire
+        // something for commmandedExamine
+        // something for commandedPlanRegionPath
+        procsToExecute.at(chooseRegion__) = true;
+        // something for commandedInit
+    }
 }
 
 void MissionPlanning::runProcesses_()
@@ -317,4 +324,14 @@ void MissionPlanning::nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg)
 {
     if(msg->pause_switch==0) robotStatus.pauseSwitch = false;
     else robotStatus.pauseSwitch = true;
+}
+
+void MissionPlanning::collisionCallback_(const messages::CollisionOut::ConstPtr &msg)
+{
+    collisionMsg = *msg;
+}
+
+void MissionPlanning::execInfoCallback_(const messages::ExecInfo::ConstPtr &msg)
+{
+    execInfoMsg = *msg;
 }

@@ -5,6 +5,7 @@ bool ChooseRegion::runProc()
     switch(state)
     {
     case _init_:
+		procsBeingExecuted.at(procType) = true;
         execDequeEmpty = false;
         // Request info about regions
         if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
@@ -29,17 +30,17 @@ bool ChooseRegion::runProc()
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
             roiVisitedSum += regionsOfInterestSrv.response.waypointArray.at(i).visited;
         }
-        if(roiVisitedSum < regionsOfInterestSrv.response.waypointArray.size()) // Temp!!!!!
+		if(roiVisitedSum < regionsOfInterestSrv.response.waypointArray.size()) // Temp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         {
             // Call service to drive to center of the chosen region
             numWaypointsToTravel = 1;
             clearAndResizeWTT();
             waypointsToTravel.at(0) = regionsOfInterestSrv.response.waypointArray.at(bestROINum);
             callIntermediateWaypoints();
-            sendDriveGlobal();
+			sendDriveGlobal(false);
             state = _exec_;
         }
-        else
+		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         {
             for(int i=0; i<regionsOfInterestSrv.response.waypointArray.size(); i++)
             {
@@ -55,7 +56,7 @@ bool ChooseRegion::runProc()
             waypointsToTravel.at(0).x = 8.0;
             waypointsToTravel.at(0).y = 0.0;
             callIntermediateWaypoints();
-            sendDriveGlobal();
+			sendDriveGlobal(false);
             state = _init_;
         }
         break;
@@ -64,9 +65,10 @@ bool ChooseRegion::runProc()
         else state = _exec_;
         break;
     case _interrupt_:
-        state = _init_; // Not sure about this
+		state = _exec_;
         break;
     case _finish_:
+		procsBeingExecuted.at(procType) = false;
         // ************************ THIS NEEDS TO GO SOMEWHERE ELSE LATER
         modROISrv.request.setVisitedROI = true;
         modROISrv.request.visitedROIState = true;

@@ -7,6 +7,7 @@
 #include <messages/nb1_to_i7_msg.h>
 #include "choose_region.h"
 #include "pause.h"
+#include "bit_utils.h"
 
 class MissionPlanning : public MissionPlanningProcessShare
 {
@@ -19,6 +20,7 @@ public:
 	ros::Subscriber navSub;
     ros::Subscriber execDequeEmptySub;
     ros::Subscriber nb1Sub;
+	ros::Subscriber collisionSub;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
     ChooseRegion chooseRegion;
@@ -60,7 +62,8 @@ public:
 
 	std::vector<robot_control::Waypoint> waypointsToPlan;
 	int bestPheromone;
-	bool collisionDetected;
+	bool collisionInterruptTrigger;
+	Leading_Edge_Latch collisionInterruptLEL;
 	bool commandedAvoidObstacle;
 	bool possessingSample;
 	bool commandedReturnHome;
@@ -78,6 +81,7 @@ public:
 	bool pauseStarted;
 	const float homeX = 5.0; // m
 	const float homeY = 0.0; // m
+	const float collisionDistanceThresh = 5.0; // m
 private:
 	void avoidObstacle_(); // ***
 	void returnHome_();// ***
@@ -95,6 +99,8 @@ private:
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
     void execDequeEmptyCallback_(const messages::ExecDequeEmpty::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
+	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
+	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);
 };
 
 #endif // MISSION_PLANNING_H

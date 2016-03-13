@@ -20,7 +20,7 @@ public:
     virtual bool runProc() = 0;
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
-    void sendDriveGlobal();
+	void sendDriveGlobal(bool pushToFront);
     void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 };
 
@@ -34,8 +34,9 @@ bool Process::run()
 {
     //ROS_DEBUG("before if(procsToExecute.at(this->procType");
     //ROS_DEBUG("this->procType = %i",static_cast<int>(this->procType));
+	if(procsToInterrupt.at(this->procType)) this->state = _interrupt_;
     if(procsToExecute.at(this->procType)) return this->runProc();
-    else if(procsBeingExecuted.at(this->procType) == true && procsToExecute.at(this->procType) == false) {state = _interrupt_; return this->runProc();}
+	//else if(procsBeingExecuted.at(this->procType) == true && procsToExecute.at(this->procType) == false) {this->state = _interrupt_; return this->runProc();}
     //ROS_DEBUG("after if - else if(procsToExecute.at(this->procType");
 }
 
@@ -78,14 +79,14 @@ void Process::callIntermediateWaypoints()
     }
 }
 
-void Process::sendDriveGlobal()
+void Process::sendDriveGlobal(bool pushToFront)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
         this->serialNum = i;
         execActionSrv.request.nextActionType = _driveGlobal;
         execActionSrv.request.newActionFlag = 1;
-        execActionSrv.request.pushToFrontFlag = false;
+		execActionSrv.request.pushToFrontFlag = pushToFront;
         execActionSrv.request.clearDequeFlag = false;
         execActionSrv.request.pause = false;
         execActionSrv.request.float1 = waypointsToTravel.at(i).x;
