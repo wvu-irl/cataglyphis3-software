@@ -105,6 +105,8 @@ catkin_package(
 #  DEPENDS system_lib INCLUDE_DIRS include
 )
 
+add_definitions("-std=gnu++11")
+
 ###########
 ## Build ##
 ###########
