@@ -65,6 +65,7 @@ bool ChooseRegion::runProc()
         else state = _exec_;
         break;
     case _interrupt_:
+		procsBeingExecuted.at(procType) = false;
 		state = _exec_;
         break;
     case _finish_:

@@ -47,7 +47,7 @@ public:
     static ros::ServiceClient modROIClient;
     static robot_control::ModifyROI modROISrv;
 	static messages::CollisionOut collisionMsg;
-	static float collisionInterruptThresh;
+	static float collisionInterruptThresh; // m
 	const float collisionMinDistance = 2.0; // m
 };
 

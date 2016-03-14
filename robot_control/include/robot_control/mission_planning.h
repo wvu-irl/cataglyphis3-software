@@ -5,6 +5,7 @@
 #include <messages/NavFilterOut.h>
 #include <messages/ExecDequeEmpty.h>
 #include <messages/nb1_to_i7_msg.h>
+#include "avoid.h"
 #include "choose_region.h"
 #include "pause.h"
 #include "bit_utils.h"
@@ -23,6 +24,7 @@ public:
 	ros::Subscriber collisionSub;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
+	Avoid avoid;
     ChooseRegion chooseRegion;
     Pause pause;
 	std::vector<int> value;
