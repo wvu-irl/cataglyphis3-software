@@ -5,7 +5,7 @@ MissionPlanning::MissionPlanning()
 	woiClient = nh.serviceClient<robot_control::WaypointsOfInterest>("/control/mapmanager/waypointsofinterest");
     execActionClient = nh.serviceClient<messages::ExecAction>("control/exec/actionin");
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
-    execDequeEmptySub = nh.subscribe<messages::ExecDequeEmpty>("control/exec/dequeempty", 1, &MissionPlanning::execDequeEmptyCallback_, this);
+    ExecActionEndedSub = nh.subscribe<messages::ExecActionEnded>("control/exec/dequeempty", 1, &MissionPlanning::ExecActionEndedCallback_, this);
     intermediateWaypointsClient = nh.serviceClient<robot_control::IntermediateWaypoints>("/control/safepathing/intermediatewaypoints");
     reqROIClient = nh.serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
     modROIClient = nh.serviceClient<robot_control::ModifyROI>("/control/mapmanager/modifyroi");
@@ -30,9 +30,11 @@ MissionPlanning::MissionPlanning()
     commandedChooseRegion = false;
     initComplete = false;
     commandedInit = false;
-    execDequeEmpty = false;
     pauseStarted = false;
     robotStatus.pauseSwitch = true;
+    execDequeEmpty = true;
+    execLastProcType = deposit__;
+    execLastSerialNum = 99;
     collisionInterruptThresh = 1.0; // m
     avoid.reg(avoid__);
     chooseRegion.reg(chooseRegion__); // Replace with loop over array of ptrs to objs. Also consider polymorphic constructor
@@ -135,7 +137,8 @@ void MissionPlanning::evalConditions_()
     {
         //if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted.at(avoid__)) procsToInterrupt.at(avoid__) = true;
         procsToExecute.at(avoid__) = true;
-        if(procsBeingExecuted.at(chooseRegion__)) procsToInterrupt.at(chooseRegion__) = true;
+        if(procsBeingExecuted.at(chooseRegion__)) {procsToInterrupt.at(chooseRegion__) = true; ROS_INFO("to interrupt chooseRegion");}
+        ROS_INFO("to execute avoid");
     }
     else
     {
@@ -146,6 +149,7 @@ void MissionPlanning::evalConditions_()
         // something for commmandedExamine
         // something for commandedPlanRegionPath
         procsToExecute.at(chooseRegion__) = true;
+        ROS_INFO("to execute chooseRegion");
         // something for commandedInit
     }
 }
@@ -154,8 +158,8 @@ void MissionPlanning::runProcesses_()
 {
     if(pauseStarted == true) pause.sendUnPause();
     pauseStarted = false;
-    if(procsToExecute.at(chooseRegion__)) chooseRegion.run(); // Change to array to make use of inherrited method
-    if(procsToExecute.at(avoid__)) avoid.run();
+    if(procsToExecute.at(chooseRegion__) || procsBeingExecuted.at(chooseRegion__)) chooseRegion.run(); // Change to array to make use of inherrited method
+    if(procsToExecute.at(avoid__) || procsBeingExecuted.at(avoid__)) avoid.run();
 }
 
 void MissionPlanning::runPause_()
@@ -320,9 +324,9 @@ void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
 	robotStatus.bearing = msg->bearing;
 }
 
-void MissionPlanning::execDequeEmptyCallback_(const messages::ExecDequeEmpty::ConstPtr &msg)
+void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)
 {
-    execDequeEmpty = true;
+    execDequeEmpty = msg->dequeEmpty;
     execLastProcType = static_cast<PROC_TYPES_T>(msg->procType);
     execLastSerialNum = msg->serialNum;
 }

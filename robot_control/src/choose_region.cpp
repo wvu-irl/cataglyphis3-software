@@ -2,6 +2,7 @@
 
 bool ChooseRegion::runProc()
 {
+	ROS_DEBUG("choose region state = %i",state);
     switch(state)
     {
     case _init_:

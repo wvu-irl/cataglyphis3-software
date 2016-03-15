@@ -2,6 +2,7 @@
 
 bool Avoid::runProc()
 {
+	ROS_DEBUG("avoid state = %i",state);
 	switch(state)
 	{
 	case _init_:
@@ -36,7 +37,7 @@ bool Avoid::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
-		if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
 	case _interrupt_:

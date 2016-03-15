@@ -8,7 +8,7 @@ Exec::Exec()
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
-    dequeEmptyPub = nh.advertise<messages::ExecDequeEmpty>("control/exec/dequeempty",1);
+    dequeEmptyPub = nh.advertise<messages::ExecActionEnded>("control/exec/dequeempty",1);
 	// "allocate" deque memory
     for(int i=0; i<NUM_ACTIONS; i++)
     {
@@ -77,11 +77,12 @@ void Exec::run()
 			if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) actionDeque_.front()->init(); // If new action was pushed to the front or deque was empty and became not empty, need to run init() for new action
             if(currentActionDone_) // If the action at the front of the deque is complete, pop this action off and init() the next action in the deque
             {
-                execDequeEmptyMsgOut_.procType = static_cast<uint8_t>(actionDeque_.front()->params.procType);
-                execDequeEmptyMsgOut_.serialNum = actionDeque_.front()->params.serialNum;
+                execActionEndedMsgOut_.procType = static_cast<uint8_t>(actionDeque_.front()->params.procType);
+                execActionEndedMsgOut_.serialNum = actionDeque_.front()->params.serialNum;
                 actionDeque_.pop_front();
-				if(actionDeque_.empty()==0) actionDeque_.front()->init();
-                else dequeEmptyPub.publish(execDequeEmptyMsgOut_);
+                if(actionDeque_.empty()==0) {actionDeque_.front()->init(); execActionEndedMsgOut_.dequeEmpty = false;}
+                else execActionEndedMsgOut_.dequeEmpty = true;
+                dequeEmptyPub.publish(execActionEndedMsgOut_);
             }
 			if(actionDeque_.empty()==0) currentActionDone_ = actionDeque_.front()->run();
 			else currentActionDone_ = 0;

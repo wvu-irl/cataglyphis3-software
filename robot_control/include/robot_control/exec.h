@@ -15,7 +15,7 @@
 #include <messages/ExecAction.h>
 #include <messages/ActuatorOut.h>
 #include <messages/ExecInfo.h>
-#include <messages/ExecDequeEmpty.h>
+#include <messages/ExecActionEnded.h>
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
 
@@ -54,7 +54,7 @@ private:
 	ACTION_PARAMS_T params_;
 	messages::ActuatorOut actuatorMsgOut_;
 	messages::ExecInfo execInfoMsgOut_;
-        messages::ExecDequeEmpty execDequeEmptyMsgOut_;
+	messages::ExecActionEnded execActionEndedMsgOut_;
 	// Methods
 	bool actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res);
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);

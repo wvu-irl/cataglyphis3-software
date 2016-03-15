@@ -5,11 +5,13 @@
 #include <messages/GrabberFeedback.h>
 #include <messages/SimControl.h>
 #include <messages/nb1_to_i7_msg.h>
+#include <messages/CollisionOut.h>
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
 
 messages::ActuatorOut actuatorCmd;
+messages::CollisionOut collisionMsgOut;
 RobotSim robotSim(0.0, 0.0, 0.0,20);
 
 int main(int argc, char** argv)
@@ -21,9 +23,11 @@ int main(int argc, char** argv)
     ros::Publisher navPub = nh.advertise<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1);
     ros::Publisher grabberPub = nh.advertise<messages::GrabberFeedback>("roboteq/grabberin/grabberin",1);
     ros::Publisher nb1Pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
+    ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
     messages::NavFilterOut navMsgOut;
     messages::GrabberFeedback grabberMsgOut;
     messages::nb1_to_i7_msg nb1MsgOut;
+
 
     double linV; // m/s
     double angV; // deg/s
@@ -54,6 +58,7 @@ int main(int argc, char** argv)
         navPub.publish(navMsgOut);
         grabberPub.publish(grabberMsgOut);
         nb1Pub.publish(nb1MsgOut);
+        collisionPub.publish(collisionMsgOut);
         loopRate.sleep();
         ros::spinOnce();
     }
@@ -77,4 +82,6 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     }
     if(msg->pauseSwitch) robotSim.nb1PauseSwitch = 255;
     else robotSim.nb1PauseSwitch = 0;
+    collisionMsgOut.collision = msg->collision;
+    collisionMsgOut.distance_to_collision = msg->collisionDistance;
 }

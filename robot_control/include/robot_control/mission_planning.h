@@ -3,7 +3,7 @@
 #include <ros/ros.h>
 #include "mission_planning_process_share.h"
 #include <messages/NavFilterOut.h>
-#include <messages/ExecDequeEmpty.h>
+#include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
 #include "avoid.h"
 #include "choose_region.h"
@@ -19,7 +19,7 @@ public:
 	// Members
 	ros::NodeHandle nh;
 	ros::Subscriber navSub;
-    ros::Subscriber execDequeEmptySub;
+	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
     messages::nb1_to_i7_msg nb1Msg;
@@ -99,7 +99,7 @@ private:
 	void antColony_();
 
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
-    void execDequeEmptyCallback_(const messages::ExecDequeEmpty::ConstPtr& msg);
+	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);

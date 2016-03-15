@@ -5,3 +5,5 @@ float64 teleHeading
 bool setSimSpeed
 float64 simSpeed
 bool pauseSwitch
+uint8 collision
+float32 collisionDistance
