@@ -33,7 +33,7 @@ MissionPlanning::MissionPlanning()
     execDequeEmpty = false;
     pauseStarted = false;
     robotStatus.pauseSwitch = true;
-    collisionInterruptThresh = 50.0; // m
+    collisionInterruptThresh = 1.0; // m
     avoid.reg(avoid__);
     chooseRegion.reg(chooseRegion__); // Replace with loop over array of ptrs to objs. Also consider polymorphic constructor
     for(int i=0; i<NUM_PROC_TYPES; i++)
@@ -133,7 +133,7 @@ void MissionPlanning::evalConditions_()
     for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
     if(collisionMsg.collision!=0 || procsBeingExecuted.at(avoid__))
     {
-        if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted.at(avoid__)) procsToInterrupt.at(avoid__) = true;
+        //if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted.at(avoid__)) procsToInterrupt.at(avoid__) = true;
         procsToExecute.at(avoid__) = true;
         if(procsBeingExecuted.at(chooseRegion__)) procsToInterrupt.at(chooseRegion__) = true;
     }

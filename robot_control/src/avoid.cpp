@@ -33,6 +33,7 @@ bool Avoid::runProc()
 			for(int i=0; i<numWaypointsToTravel; i++) waypointsToTravel.at(i) = intermediateWaypointsSrv.response.waypointArray.at(numWaypointsToTravel-1-i);
 			sendDriveGlobal(true);
 		}
+		state = _exec_;
 		break;
 	case _exec_:
 		if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;

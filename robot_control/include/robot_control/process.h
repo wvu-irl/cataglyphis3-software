@@ -105,7 +105,7 @@ void Process::sendDriveGlobal(bool pushToFront)
 
 void Process::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
 {
-    serialNum = 0;
+	this->serialNum = 0;
     execActionSrv.request.nextActionType = _driveRelative;
     execActionSrv.request.newActionFlag = 1;
     execActionSrv.request.pushToFrontFlag = frontOfDeque;
