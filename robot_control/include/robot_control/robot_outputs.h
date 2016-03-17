@@ -13,6 +13,8 @@ public:
 	int16_t frMotorSpeed = 0;
 	int16_t mrMotorSpeed = 0;
 	int16_t brMotorSpeed = 0;
+	bool stopFlag = true;
+	bool turnFlag = false;
     // Grabber output
 	int16_t slidePosCmd = 1000;
 	int16_t dropPosCmd = -1000;

@@ -10,3 +10,5 @@ bool[100] actionBool1
 uint8[100] actionProcType
 uint32[100] actionSerialNum
 bool pause
+bool stopFlag
+bool turnFlag

@@ -2,11 +2,12 @@
 
 bool Avoid::runProc()
 {
-	ROS_DEBUG("avoid state = %i",state);
+	ROS_INFO("avoid state = %i",state);
 	switch(state)
 	{
 	case _init_:
-		procsBeingExecuted.at(procType) = true;
+		procsBeingExecuted[procType] = true;
+		procsToExecute[procType] = false;
 		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
 		intermediateWaypointsSrv.request.collision = collisionMsg.collision;
 		intermediateWaypointsSrv.request.collisionDistance = collisionMsg.distance_to_collision;
@@ -37,15 +38,17 @@ bool Avoid::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
+		procsBeingExecuted[procType] = true;
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
 	case _interrupt_:
-		procsBeingExecuted.at(procType) = false;
+		procsBeingExecuted[procType] = false;
+		procsToInterrupt[procType] = false;
 		state = _init_;
 		break;
 	case _finish_:
-		procsBeingExecuted.at(procType) = false;
+		procsBeingExecuted[procType] = false;
 		state = _init_;
 		break;
 	}

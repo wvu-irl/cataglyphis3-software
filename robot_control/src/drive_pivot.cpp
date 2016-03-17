@@ -12,10 +12,14 @@ void DrivePivot::init()
 	rSpeedI_ = 0.0;
 	inThreshold_ = false;
 	thresholdTime_ = 0.0;
+    robotOutputs.stopFlag = false;
+    robotOutputs.turnFlag = true;
 }
 
 int DrivePivot::run()
 {
+    robotOutputs.stopFlag = false;
+    robotOutputs.turnFlag = true;
 	deltaHeading_ = robotStatus.heading - initHeading_;
 	rDes_ = kpR_*(desiredDeltaHeading_-deltaHeading_);
 	if(rDes_>rMax_) rDes_ = rMax_;

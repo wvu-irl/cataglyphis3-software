@@ -14,10 +14,14 @@ void DriveStraightCL::init()
 	headingErrorSpeedI_ = 0.0;
 	inThreshold_ = false;
 	thresholdTime_ = 0.0;
+    robotOutputs.stopFlag = false;
+    robotOutputs.turnFlag = false;
 }
 
 int DriveStraightCL::run()
 {
+    robotOutputs.stopFlag = false;
+    robotOutputs.turnFlag = false;
 	traversedDistance_ = driveSign_*hypot(robotStatus.xPos-initX_,robotStatus.yPos-initY_);
 	remainingDistance_ = desiredDistance_ - traversedDistance_;
 	vDesRaw_ = kpV_*remainingDistance_;

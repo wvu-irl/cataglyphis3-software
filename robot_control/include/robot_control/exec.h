@@ -28,7 +28,7 @@ public:
 	ros::NodeHandle nh;
 	ros::Publisher infoPub;
 	ros::Publisher actuatorPub;
-        ros::Publisher dequeEmptyPub;
+	ros::Publisher dequeEmptyPub;
 	ros::ServiceServer actionServ;
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;

@@ -38,11 +38,19 @@ MissionPlanning::MissionPlanning()
     collisionInterruptThresh = 1.0; // m
     avoid.reg(avoid__);
     chooseRegion.reg(chooseRegion__); // Replace with loop over array of ptrs to objs. Also consider polymorphic constructor
+    //procsToExecute.resize(NUM_PROC_TYPES);
+
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
-        procsToExecute.push_back(false);
-        procsToInterrupt.push_back(false);
-        procsBeingExecuted.push_back(false);
+        procsToExecute[i] = false;
+        procsToInterrupt[i] = false;
+        procsBeingExecuted[i] = false;
+        //procsToExecute.push_back(false);
+        //procsToInterrupt.push_back(false);
+        //procsBeingExecuted.push_back(false);
+        ROS_INFO("procsToExecute.at(i) = %d",procsToExecute[i]);
+        //ROS_INFO("procsToInterrupt.at(i) = %d",procsToInterrupt.at(i));
+        //ROS_INFO("procsBeingExecuted.at(i) = %d",procsBeingExecuted.at(i));
     }
 }
 
@@ -132,15 +140,15 @@ void MissionPlanning::init_()
 
 void MissionPlanning::evalConditions_()
 {
-    for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
-    if(collisionMsg.collision!=0 || procsBeingExecuted.at(avoid__))
+    //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
+    if(collisionMsg.collision!=0 && !procsBeingExecuted[avoid__] && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag)
     {
         //if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted.at(avoid__)) procsToInterrupt.at(avoid__) = true;
-        procsToExecute.at(avoid__) = true;
-        if(procsBeingExecuted.at(chooseRegion__)) {procsToInterrupt.at(chooseRegion__) = true; ROS_INFO("to interrupt chooseRegion");}
+        procsToExecute[avoid__] = true;
+        if(procsBeingExecuted[chooseRegion__]) {procsToInterrupt[chooseRegion__] = true; ROS_INFO("to interrupt chooseRegion");}
         ROS_INFO("to execute avoid");
     }
-    else
+    else if(!procsBeingExecuted[chooseRegion__] && !procsBeingExecuted[avoid__])
     {
         // something for commandedAvoidObstacle
         // something for commandedReturnHome
@@ -148,7 +156,7 @@ void MissionPlanning::evalConditions_()
         // something for commandedAcquire
         // something for commmandedExamine
         // something for commandedPlanRegionPath
-        procsToExecute.at(chooseRegion__) = true;
+        procsToExecute[chooseRegion__] = true;
         ROS_INFO("to execute chooseRegion");
         // something for commandedInit
     }
@@ -158,8 +166,14 @@ void MissionPlanning::runProcesses_()
 {
     if(pauseStarted == true) pause.sendUnPause();
     pauseStarted = false;
-    if(procsToExecute.at(chooseRegion__) || procsBeingExecuted.at(chooseRegion__)) chooseRegion.run(); // Change to array to make use of inherrited method
-    if(procsToExecute.at(avoid__) || procsBeingExecuted.at(avoid__)) avoid.run();
+    /*ROS_INFO("toExec choose region = %d", procsToExecute[chooseRegion__]);
+    ROS_INFO("beingExec choose region = %d", procsBeingExecuted[chooseRegion__]);
+    ROS_INFO("toExec avoid = %d", procsToExecute[avoid__]);
+    ROS_INFO("beingExec avoid = %d\n", procsBeingExecuted[avoid__]);*/
+    //if(procsToExecute[chooseRegion__] || procsBeingExecuted[chooseRegion__]) chooseRegion.run(); // Change to array to make use of inherrited method
+    //if(procsToExecute[avoid__] || procsBeingExecuted[avoid__]) avoid.run();
+    chooseRegion.run();
+    avoid.run();
 }
 
 void MissionPlanning::runPause_()

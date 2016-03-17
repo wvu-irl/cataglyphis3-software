@@ -2,11 +2,12 @@
 
 bool ChooseRegion::runProc()
 {
-	ROS_DEBUG("choose region state = %i",state);
+	ROS_INFO("choose region state = %i",state);
     switch(state)
     {
     case _init_:
-		procsBeingExecuted.at(procType) = true;
+		procsBeingExecuted[procType] = true;
+		procsToExecute[procType] = false;
         execDequeEmpty = false;
         // Request info about regions
         if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
@@ -58,19 +59,22 @@ bool ChooseRegion::runProc()
             waypointsToTravel.at(0).y = 0.0;
             callIntermediateWaypoints();
 			sendDriveGlobal(false);
+			procsBeingExecuted[procType] = false;
             state = _init_;
         }
         break;
     case _exec_:
+		procsBeingExecuted[procType] = true;
         if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         else state = _exec_;
         break;
     case _interrupt_:
-		procsBeingExecuted.at(procType) = false;
+		procsBeingExecuted[procType] = false;
+		procsToInterrupt[procType] = false;
 		state = _exec_;
         break;
     case _finish_:
-		procsBeingExecuted.at(procType) = false;
+		procsBeingExecuted[procType] = false;
         // ************************ THIS NEEDS TO GO SOMEWHERE ELSE LATER
         modROISrv.request.setVisitedROI = true;
         modROISrv.request.visitedROIState = true;

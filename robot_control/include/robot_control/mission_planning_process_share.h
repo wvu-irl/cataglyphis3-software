@@ -25,9 +25,12 @@ enum PROC_TYPES_T {avoid__, returnHome__, deposit__, acquire__, examine__, planR
 class MissionPlanningProcessShare
 {
 public:
-    static std::vector<bool> procsToExecute;
-	static std::vector<bool> procsToInterrupt;
-    static std::vector<bool> procsBeingExecuted;
+	//static std::vector<bool> procsToExecute;
+	//static std::vector<bool> procsToInterrupt;
+	//static std::vector<bool> procsBeingExecuted;
+	static bool procsToExecute[NUM_PROC_TYPES];
+	static bool procsToInterrupt[NUM_PROC_TYPES];
+	static bool procsBeingExecuted[NUM_PROC_TYPES];
     static ros::ServiceClient woiClient;
     static robot_control::WaypointsOfInterest woiSrv;
     static ros::ServiceClient execActionClient;
@@ -51,9 +54,12 @@ public:
 	const float collisionMinDistance = 2.0; // m
 };
 
-std::vector<bool> MissionPlanningProcessShare::procsToExecute;
-std::vector<bool> MissionPlanningProcessShare::procsToInterrupt;
-std::vector<bool> MissionPlanningProcessShare::procsBeingExecuted;
+//std::vector<bool> MissionPlanningProcessShare::procsToExecute;
+//std::vector<bool> MissionPlanningProcessShare::procsToInterrupt;
+//std::vector<bool> MissionPlanningProcessShare::procsBeingExecuted;
+bool MissionPlanningProcessShare::procsToExecute[NUM_PROC_TYPES];
+bool MissionPlanningProcessShare::procsToInterrupt[NUM_PROC_TYPES];
+bool MissionPlanningProcessShare::procsBeingExecuted[NUM_PROC_TYPES];
 ros::ServiceClient MissionPlanningProcessShare::woiClient;
 robot_control::WaypointsOfInterest MissionPlanningProcessShare::woiSrv;
 ros::ServiceClient MissionPlanningProcessShare::execActionClient;

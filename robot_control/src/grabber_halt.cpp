@@ -2,7 +2,7 @@
 
 void GrabberHalt::init()
 {
-	robotOutputs.grabberStopCmd = 1;
+    robotOutputs.grabberStopCmd = 1;
 }
 
 int GrabberHalt::run()

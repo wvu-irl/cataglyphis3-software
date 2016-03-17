@@ -34,8 +34,8 @@ bool Process::run()
 {
     //ROS_DEBUG("before if(procsToExecute.at(this->procType");
     //ROS_DEBUG("this->procType = %i",static_cast<int>(this->procType));
-	if(procsToInterrupt.at(this->procType)) this->state = _interrupt_;
-    if(procsToExecute.at(this->procType)) return this->runProc();
+	if(procsToInterrupt[this->procType]) this->state = _interrupt_;
+	if(procsToExecute[this->procType] || procsBeingExecuted[this->procType]) return this->runProc();
 	//else if(procsBeingExecuted.at(this->procType) == true && procsToExecute.at(this->procType) == false) {this->state = _interrupt_; return this->runProc();}
     //ROS_DEBUG("after if - else if(procsToExecute.at(this->procType");
 }
@@ -48,6 +48,7 @@ void Process::clearAndResizeWTT()
 
 void Process::callIntermediateWaypoints()
 {
+	intermediateWaypointsSrv.request.collision = collisionMsg.collision;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
 	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
@@ -68,7 +69,7 @@ void Process::callIntermediateWaypoints()
         }
         intermediateWaypointsSrv.request.finish.x = (*intermWaypointsIt).x;
         intermediateWaypointsSrv.request.finish.y = (*intermWaypointsIt).y;
-        if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful");
+		if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful, size = %u", intermediateWaypointsSrv.response.waypointArray.size());
         else ROS_ERROR("intermediateWaypoints service call unsuccessful");
         if(intermediateWaypointsSrv.response.waypointArray.size() > 0)
         {
@@ -89,8 +90,8 @@ void Process::sendDriveGlobal(bool pushToFront)
 		execActionSrv.request.pushToFrontFlag = pushToFront;
         execActionSrv.request.clearDequeFlag = false;
         execActionSrv.request.pause = false;
-        execActionSrv.request.float1 = waypointsToTravel.at(i).x;
-        execActionSrv.request.float2 = waypointsToTravel.at(i).y;
+		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
+		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
         execActionSrv.request.float3 = 1.5;
         execActionSrv.request.float4 = 45.0;
         execActionSrv.request.float5 = 0.0;

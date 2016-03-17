@@ -12,10 +12,14 @@ void DriveStraight::init()
 	timeoutValue_ = (unsigned int)round((30.0 + 1.0*fabs(desiredDistance_))*robotStatus.loopRate);
 	timeoutCounter_ = 0;
 	headingErrorSpeedI_ = 0.0;
+    robotOutputs.stopFlag = false;
+    robotOutputs.turnFlag = false;
 }
 
 int DriveStraight::run()
 {
+    robotOutputs.stopFlag = false;
+    robotOutputs.turnFlag = false;
 	traversedDistance_ = driveSign_*hypot(robotStatus.xPos-initX_,robotStatus.yPos-initY_);
 	remainingDistance_ = desiredDistance_ - traversedDistance_;
 	vDesRaw_ = kpV_*remainingDistance_;

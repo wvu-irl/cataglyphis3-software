@@ -8,7 +8,8 @@ void DriveHalt::init()
 	robotOutputs.frMotorSpeed = 0;
 	robotOutputs.mrMotorSpeed = 0;
 	robotOutputs.brMotorSpeed = 0;
-
+    robotOutputs.stopFlag = true;
+    robotOutputs.turnFlag = false;
 }
 
 int DriveHalt::run()
@@ -20,5 +21,7 @@ int DriveHalt::run()
 	robotOutputs.frMotorSpeed = 0;
 	robotOutputs.mrMotorSpeed = 0;
 	robotOutputs.brMotorSpeed = 0;
+    robotOutputs.stopFlag = true;
+    robotOutputs.turnFlag = false;
 	return 1;
 }

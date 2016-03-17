@@ -153,6 +153,8 @@ void Exec::packInfoMsgOut_()
 {
 	execInfoMsgOut_.actionDequeSize = actionDeque_.size();
 	execInfoMsgOut_.pause = pause_;
+    execInfoMsgOut_.stopFlag = robotOutputs.stopFlag;
+    execInfoMsgOut_.turnFlag = robotOutputs.turnFlag;
 	for(unsigned int i=0; i<100; i++)
 	{
 		execInfoMsgOut_.actionDeque[i] = 0;
