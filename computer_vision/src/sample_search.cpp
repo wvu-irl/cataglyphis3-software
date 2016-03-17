@@ -55,8 +55,10 @@ int SampleSearch::loadLookupTable(std::string filename)
 	return 1;
 }
 
-bool SampleSearch::searchForSamples(computer_vision::SearchForSamples::Request &req, computer_vision::SearchForSamples::Response &res)
+bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
-	res.c = req.a + req.b;
+	res.confidence =((double)rand() / RAND_MAX);
+	res.bearing = 0;
+	res.distance = 1;
 	return true;
 }

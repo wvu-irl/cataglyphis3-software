@@ -6,3 +6,6 @@ bool brass
 bool confirm
 bool save
 ---
+float32 confidence
+float32 bearing
+float32 distance
