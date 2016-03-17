@@ -509,7 +509,10 @@ private:
 				double b_h_diff = atan2(-v1_y,-v1_x); 
 				double heading_est = -(b_h_diff-bearing);
 
-				ROS_INFO("HOMING UPDATE! x, y, heading = %f, %f, %f", x_est, y_est, heading_est);
+				ROS_INFO("\nHOMING UPDATE!");
+				ROS_INFO("x = %f", x_est);
+				ROS_INFO("y = %f", y_est);
+				ROS_INFO("heading = %f", heading_est*180.0/3.14159265);
 
 				homing_x=x_est;
 				homing_y=y_est;
