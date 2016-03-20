@@ -2,9 +2,7 @@
 
 void Halt::init()
 {
-	driveDeque.clear();
-	grabberDeque.clear();
-	visionDeque.clear();
+    clearDeques();
 	visionHalt.init();
 }
 

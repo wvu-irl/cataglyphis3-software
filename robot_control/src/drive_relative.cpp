@@ -8,9 +8,7 @@ void DriveRelative::init()
 	rMax_ = params.float4;
 	desiredEndHeading_ = params.float5;
 	endHeading_ = params.bool1;
-	driveDeque.clear();
-	grabberDeque.clear();
-	visionDeque.clear();
+    clearDeques();
 	pushTask(_pivot_);
 	driveDeque.back()->params.float1 = angleToTurn_;
 	driveDeque.back()->params.float2 = rMax_;

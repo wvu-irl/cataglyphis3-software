@@ -27,6 +27,15 @@ public:
 	static GrabberHalt grabberHalt;
 	static GrabberIdle grabberIdle;
 	static VisionHalt visionHalt;
+	static int driveDequeEnded;
+	static int driveDequeEmpty;
+	static int driveDequeEmptyPrev;
+	static int grabberDequeEnded;
+	static int grabberDequeEmpty;
+	static int grabberDequeEmptyPrev;
+	static int visionDequeEnded;
+	static int visionDequeEmpty;
+	static int visionDequeEmptyPrev;
 };
 
 std::deque <Task*> ActuatorDequeInterface::driveDeque;
@@ -38,5 +47,14 @@ DriveHalt ActuatorDequeInterface::driveHalt;
 GrabberHalt ActuatorDequeInterface::grabberHalt;
 GrabberIdle ActuatorDequeInterface::grabberIdle;
 VisionHalt ActuatorDequeInterface::visionHalt;
+int ActuatorDequeInterface::driveDequeEnded;
+int ActuatorDequeInterface::driveDequeEmpty;
+int ActuatorDequeInterface::driveDequeEmptyPrev = 1;
+int ActuatorDequeInterface::grabberDequeEnded;
+int ActuatorDequeInterface::grabberDequeEmpty;
+int ActuatorDequeInterface::grabberDequeEmptyPrev = 1;
+int ActuatorDequeInterface::visionDequeEnded;
+int ActuatorDequeInterface::visionDequeEmpty;
+int ActuatorDequeInterface::visionDequeEmptyPrev = 1;
 
 #endif // ACTUATOR_DEQUE_INTERFACE_H

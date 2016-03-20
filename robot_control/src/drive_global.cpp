@@ -9,9 +9,7 @@ void DriveGlobal::init()
 	desiredEndHeading_ = params.float5;
 	endHeading_ = params.bool1;
 	ROS_DEBUG("before task deque clears");
-	driveDeque.clear();
-	grabberDeque.clear();
-	visionDeque.clear();
+    clearDeques();
 	calculatePath_();
 	ROS_DEBUG("before push task");
 	pushTask(_pivot_);
@@ -27,7 +25,7 @@ void DriveGlobal::init()
 	if(endHeading_)
 	{
 		pushTask(_pivot_);
-		driveDeque.back()->params.float1 = endHeading_ - (robotStatus.heading + angleToTurn_);
+        driveDeque.back()->params.float1 = desiredEndHeading_ - (robotStatus.heading + angleToTurn_);
 		driveDeque.back()->params.float2 = rMax_;
 	}
 }

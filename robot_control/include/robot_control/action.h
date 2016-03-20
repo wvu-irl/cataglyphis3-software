@@ -17,15 +17,7 @@ public:
 	ACTION_PARAMS_T params;
 	void pushTask(TASK_TYPE_T taskType);
 	int runDeques();
-	int driveDequeEnded;
-	int driveDequeEmpty;
-	int driveDequeEmptyPrev = 1;
-	int grabberDequeEnded;
-	int grabberDequeEmpty;
-	int grabberDequeEmptyPrev = 1;
-	int visionDequeEnded;
-	int visionDequeEmpty;
-	int visionDequeEmptyPrev = 1;
+	void clearDeques();
 };
 
 #endif // ACTION_H
