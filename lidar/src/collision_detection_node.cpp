@@ -73,7 +73,7 @@ float corridor_length = 5.5; // Length of the virtual corridor, THE CLOSEST DECT
 float x_shift = 0.0;
 float y_shirt = 0.0;
 float lidar_height = 1.0; // height of the lidar sensor
-float safe_envelope_angle = DEG2RAD*15; //safe envelope angle size
+float safe_envelope_angle = DEG2RAD*30; //safe envelope angle size
 int point_trigger_threshold = 5; // how many points that will trigger the avoid alarm
 
 //subscribe to state machine info
