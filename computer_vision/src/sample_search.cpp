@@ -45,7 +45,7 @@ void SampleSearch::display_image()
 
 	capture.capture_image_to_buffer();
 	capture.decode_image_from_buffer_to_mat();
-	//imwrite(path, capture.image_Mat);	
+	imwrite("captured_image.jpg", capture.image_Mat);	
 }
 
 int SampleSearch::loadLookupTable(std::string filename)

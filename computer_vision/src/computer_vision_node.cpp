@@ -14,14 +14,14 @@ int main(int argc, char **argv)
 	//boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	//samplesSearch.loadLookupTable(P.string() + "/lookup.csv");
 
-	while(ros::ok())
-	{
+	//while(ros::ok())
+	//{
 		samplesSearch.check_camera();
-		//samplesSearch.display_image();
+		samplesSearch.display_image();
 
-		ros::spinOnce();
-		loop_rate.sleep();
-	}
+		//ros::spinOnce();
+		//loop_rate.sleep();
+	//}
 
 	return 0;
 } 
