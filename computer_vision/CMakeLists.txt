@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(computer_vision)
 
+#SET(CMAKE_CXX_FLAGS "-O3 -std=c++11")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -54,10 +56,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   SearchForSamples.srv
-# )
+add_service_files(
+  FILES
+  SegmentImage.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -128,10 +130,15 @@ target_link_libraries(capture_class ${catkin_LIBRARIES}
 	gphoto2_port
 )
 
+add_library(segmentation src/segmentation.cpp)
+ target_link_libraries(segmentation 
+ 	${catkin_LIBRARIES}
+ 	capture_class
+ )
+
 add_library(sample_search src/sample_search.cpp)
  target_link_libraries(sample_search 
  	${catkin_LIBRARIES}
- 	capture_class
  )
 
 ## Add cmake target dependencies of the library
@@ -140,23 +147,26 @@ add_library(sample_search src/sample_search.cpp)
 # add_dependencies(lidar ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(computer_vision_node src/computer_vision_node.cpp)
-add_executable(recognition_by_color_node src/recognition_by_color_node.cpp)
+add_executable(sample_search_node src/sample_search_node.cpp)
+add_executable(segmentation_node src/segmentation_node.cpp)
 
 ## Add cmake target dependencies of the executable
-add_dependencies(computer_vision_node computer_vision_generate_messages_cpp)
-add_dependencies(recognition_by_color_node computer_vision_generate_messages_cpp)
+add_dependencies(sample_search_node computer_vision_generate_messages_cpp)
+add_dependencies(segmentation_node computer_vision_generate_messages_cpp)
 
 #add_dependencies(sample_search computer_vision_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(computer_vision_node 
+ target_link_libraries(sample_search_node 
  	${catkin_LIBRARIES}
  	sample_search
  )
 
-  target_link_libraries(recognition_by_color_node 
+  target_link_libraries(segmentation_node 
  	${catkin_LIBRARIES}
+ 	segmentation
+ 	boost_filesystem 
+ 	boost_system
  )
 
 #############
