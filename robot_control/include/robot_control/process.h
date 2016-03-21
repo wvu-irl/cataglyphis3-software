@@ -21,6 +21,7 @@ public:
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
 	void sendDriveGlobal(bool pushToFront);
+	void sendDriveAndSearch(bool purple, bool red, bool blue, bool silver, bool brass, bool confirm, bool save);
     void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 };
 
@@ -102,6 +103,63 @@ void Process::sendDriveGlobal(bool pushToFront)
         if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
         else ROS_ERROR("exec action service call unsuccessful");
     }
+}
+
+void Process::sendDriveAndSearch(bool purple, bool red, bool blue, bool silver, bool brass, bool confirm, bool save)
+{
+	this->serialNum = 0;
+	for(int i=0; i<numWaypointsToTravel; i++)
+	{
+		// Drive Global
+		execActionSrv.request.nextActionType = _driveGlobal;
+		execActionSrv.request.newActionFlag = 1;
+		execActionSrv.request.pushToFrontFlag = false;
+		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.pause = false;
+		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
+		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
+		execActionSrv.request.float3 = 1.5;
+		execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.int1 = 0;
+		execActionSrv.request.bool1 = false;
+		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool3 = false;
+		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool5 = false;
+		execActionSrv.request.bool6 = false;
+		execActionSrv.request.bool7 = false;
+		execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+		execActionSrv.request.serialNum = this->serialNum;
+		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+		else ROS_ERROR("exec action service call unsuccessful");
+		this->serialNum++;
+		// Search
+		execActionSrv.request.nextActionType = _search;
+		execActionSrv.request.newActionFlag = 1;
+		execActionSrv.request.pushToFrontFlag = false;
+		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.pause = false;
+		execActionSrv.request.float1 = 0.0;
+		execActionSrv.request.float2 = 0.0;
+		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float4 = 0.0;
+		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.int1 = 0;
+		execActionSrv.request.bool1 = purple;
+		execActionSrv.request.bool2 = red;
+		execActionSrv.request.bool3 = blue;
+		execActionSrv.request.bool4 = silver;
+		execActionSrv.request.bool5 = brass;
+		execActionSrv.request.bool6 = confirm;
+		execActionSrv.request.bool7 = save;
+		execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+		execActionSrv.request.serialNum = this->serialNum;
+		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+		else ROS_ERROR("exec action service call unsuccessful");
+		this->serialNum++;
+	}
+	this->serialNum--;
 }
 
 void Process::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)

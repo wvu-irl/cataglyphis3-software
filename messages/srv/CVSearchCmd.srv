@@ -5,4 +5,6 @@ bool silver
 bool brass
 bool confirm
 bool save
+uint8 procType
+uint32 serialNum
 ---

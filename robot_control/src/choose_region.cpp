@@ -39,7 +39,8 @@ bool ChooseRegion::runProc()
             clearAndResizeWTT();
             waypointsToTravel.at(0) = regionsOfInterestSrv.response.waypointArray.at(bestROINum);
             callIntermediateWaypoints();
-			sendDriveGlobal(false);
+			//sendDriveGlobal(false);
+			sendDriveAndSearch(true,true,true,true,true,false,false);
             state = _exec_;
         }
 		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

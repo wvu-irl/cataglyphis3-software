@@ -103,6 +103,7 @@ private:
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);
+	void cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr& msg);
 };
 
 #endif // MISSION_PLANNING_H

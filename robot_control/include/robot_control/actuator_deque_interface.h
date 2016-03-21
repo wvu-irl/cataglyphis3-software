@@ -12,6 +12,7 @@
 #include "grabber_set_slides.h"
 #include "grabber_idle.h"
 #include "vision_halt.h"
+#include "vision_search.h"
 #define TASK_POOL_SIZE 100
 #define PI 3.14159265359
 

@@ -12,6 +12,7 @@
 #include "drop.h"
 #include "grab.h"
 #include "open.h"
+#include "search.h"
 #include <messages/ExecAction.h>
 #include <messages/ActuatorOut.h>
 #include <messages/ExecInfo.h>
@@ -28,7 +29,7 @@ public:
 	ros::NodeHandle nh;
 	ros::Publisher infoPub;
 	ros::Publisher actuatorPub;
-	ros::Publisher dequeEmptyPub;
+	ros::Publisher actionEndedPub;
 	ros::ServiceServer actionServ;
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;
