@@ -1,32 +1,48 @@
 #include <computer_vision/capture_class.hpp>
 
+Capture::Capture()
+{
+
+}
+
 int Capture::capture_image()
 {
-	if(initialize_camera()!=1)
+	ROS_INFO("Camera initializing...");
+	int val = initialize_camera();
+	if(val!=1)
 	{
 		return 0;
 	}
 
-	if(auto_detect_camera()!=1)
+	ROS_INFO("Auto detecting camera...");
+	val = auto_detect_camera();
+	if(val!=1)
 	{
 		return 0;
 	}
 
-	if(capture_image_to_buffer()!=1)
+	ROS_INFO("Capturing image to buffer...");
+	val = capture_image_to_buffer();
+	if(val!=1)
 	{
 		return 0;
 	}
 
-	if(decode_image_from_buffer_to_mat()!=1)
+	ROS_INFO("Decoding image...");
+	val = decode_image_from_buffer_to_mat();
+	if(val!=1)
 	{
 		return 0;
 	}
 
-	if(capture_success()!=1)
+	ROS_INFO("Checking if image is captured...");
+	val = capture_success();
+	if(val!=1)
 	{
 		return 0;
 	}
 	
+	ROS_INFO("Closing camera...");
 	close_camera();
 	return 1;
 }
@@ -47,13 +63,17 @@ int Capture::initialize_camera()
 
 int Capture::auto_detect_camera()
 {
+	ROS_INFO("1...");
 	gp_camera_new (&camera);
+	ROS_INFO("2...");
 	context = gp_context_new();
+	ROS_INFO("3...");
 	//gp_context_set_error_func(context, error_func, NULL);
 	//gp_context_set_message_func(context, message_func, NULL);
 
 	//This call will autodetect cameras, take the first one from the list and use it
 	retval = gp_camera_init(camera, context);
+	ROS_INFO("4...");
 	if (retval != GP_OK) 
 	{
 		ROS_ERROR_THROTTLE(2,"Error Code: %s. Camera auto detect failure. Is the error code \"Unspecified Error\"? Try inserting a single memory card into the camera.", gp_result_as_string(retval));

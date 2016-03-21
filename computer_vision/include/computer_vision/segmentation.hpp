@@ -2,14 +2,14 @@
 #define SEGMENTATION_H
 #include <ros/ros.h>
 #include <computer_vision/capture_class.hpp> 
-#include <computer_vision/SegmentImage.h> 
+#include <computer_vision/SegmentImage.h>  
 #include <string>
 #include <fstream>
 #include <ros/package.h>
 #include <boost/filesystem.hpp>
 #include <computer_vision/patch.hpp>
 
-class Segmentation: public Capture
+class Segmentation
 {
 public:
 	// Methods
@@ -22,6 +22,7 @@ public:
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer segmentationServ;
+	Capture capture;
 	unsigned char ***G_lookup_table;
 };
 

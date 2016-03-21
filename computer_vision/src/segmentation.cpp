@@ -199,14 +199,14 @@ int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv
         if(tl_x < 0) tl_x = 0;
         if(tl_y < 0) tl_y = 0;
         if(br_x > origional.cols) br_x = origional.cols;
-        if(br_y > origional.rows) br_y = origional.rows;
+        if(br_y > origional.rows) br_y = origional.rows; 
         cv::Rect extended_rect = cv::Rect( cv::Point(tl_x,tl_y), cv::Point(br_x,br_y) );
 
         //resize image (150x150)
 
         //write image of blob to file
 		boost::filesystem::path P( ros::package::getPath("computer_vision") );
-        imwrite(P.string() + "/segments/segment" + patch::to_string(i+1) + ".jpg", origional( extended_rect ) );
+        imwrite(P.string() + "/segments/segment" + patch::to_string(i+1) + ".JPG", origional( extended_rect ) );
     }
 
     return 1;
@@ -215,12 +215,17 @@ int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv
 //callback function for segmentating image into blobs
 bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, computer_vision::SegmentImage::Response &res)
 {
-	// if(capture_image()!=1)
-	// {
-	// 	return false;
-	// }
 
-	cv::Mat image_file = cv::imread("/home/jared/cataglyphis_ws/src/computer_vision/img1.JPG");
+	if(capture.capture_image()!=1)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+
+	cv::Mat image_file = cv::imread("/home/atlas/cataglyphis_ws/src/computer_vision/img1.JPG");
 	cv::Mat image_file_copy = image_file.clone();
 
    /*
