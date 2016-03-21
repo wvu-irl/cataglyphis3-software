@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     ros::Publisher nb1Pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
     ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
-    ros::ServiceServer cvSearchCmdServ = nh.advertiseService("vision/samplesearch/searchcmd", cvSearchCmdCallback);
+    ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
     messages::NavFilterOut navMsgOut;
     messages::GrabberFeedback grabberMsgOut;
     messages::nb1_to_i7_msg nb1MsgOut;
