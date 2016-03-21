@@ -5,6 +5,49 @@ SampleSearch::SampleSearch()
 	searchForSamplesServ = nh.advertiseService("/vision/samplesearch/searchforsamples", &SampleSearch::searchForSamples, this);
 }
 
+void SampleSearch::initialize_camera()
+{
+	capture.initialize_camera();
+	capture.auto_detect_camera();
+
+	if(capture.camera_detection_error==0)
+	{
+		ROS_INFO("Camera initialized successfully.");	
+	}
+}
+
+int SampleSearch::check_camera()
+{
+	if(capture.camera_detection_error==1)
+	{
+		ROS_WARN_THROTTLE(2,"Warning camera connection failed. Trying to detect again...");
+
+		capture.initialize_camera();
+		capture.auto_detect_camera();
+
+		ros::Duration(0.02).sleep();
+		ros::spinOnce();
+
+		if(capture.camera_detection_error==0)
+		{
+			ROS_INFO("Camera re-initialized successful.");	
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+}
+
+void SampleSearch::display_image()
+{
+
+	capture.capture_image_to_buffer();
+	capture.decode_image_from_buffer_to_mat();
+	//imwrite(path, capture.image_Mat);	
+}
+
 int SampleSearch::loadLookupTable(std::string filename)
 {
 	//allocate memory for lookup table

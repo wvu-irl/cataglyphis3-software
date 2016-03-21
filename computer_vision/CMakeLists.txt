@@ -5,6 +5,8 @@ project(computer_vision)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  image_transport
   message_generation
   message_runtime
   messages
@@ -120,8 +122,17 @@ include_directories(
 )
 
 ## Declare a C++ library
+add_library(capture_class src/capture_class.cpp) 
+target_link_libraries(capture_class ${catkin_LIBRARIES} 
+	gphoto2 
+	gphoto2_port
+)
+
 add_library(sample_search src/sample_search.cpp)
-#target_link_libraries(sample_search ${catkin_LIBRARIES})
+ target_link_libraries(sample_search 
+ 	${catkin_LIBRARIES}
+ 	capture_class
+ )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
