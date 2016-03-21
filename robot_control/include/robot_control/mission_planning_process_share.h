@@ -13,6 +13,7 @@
 #include <messages/ExecAction.h>
 #include <messages/ExecInfo.h>
 #include <messages/CollisionOut.h>
+#include <messages/CVSamplesFound.h>
 #include <armadillo>
 #include <math.h>
 
@@ -52,6 +53,8 @@ public:
 	static messages::CollisionOut collisionMsg;
 	static float collisionInterruptThresh; // m
 	const float collisionMinDistance = 2.0; // m
+	static ros::Subscriber cvSamplesSub;
+	static messages::CVSamplesFound cvSamplesFoundMsg;
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -80,5 +83,7 @@ ros::ServiceClient MissionPlanningProcessShare::modROIClient;
 robot_control::ModifyROI MissionPlanningProcessShare::modROISrv;
 messages::CollisionOut MissionPlanningProcessShare::collisionMsg;
 float MissionPlanningProcessShare::collisionInterruptThresh;
+ros::Subscriber MissionPlanningProcessShare::cvSamplesSub;
+messages::CVSamplesFound MissionPlanningProcessShare::cvSamplesFoundMsg;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

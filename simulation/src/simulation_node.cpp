@@ -6,12 +6,17 @@
 #include <messages/SimControl.h>
 #include <messages/nb1_to_i7_msg.h>
 #include <messages/CollisionOut.h>
+#include <messages/CVSearchCmd.h>
+#include <messages/CVSamplesFound.h>
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
+bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
 
+ros::Publisher cvSamplesFoundPub;
 messages::ActuatorOut actuatorCmd;
 messages::CollisionOut collisionMsgOut;
+messages::CVSamplesFound cvSamplesFoundMsgOut;
 RobotSim robotSim(0.0, 0.0, 0.0,20);
 
 int main(int argc, char** argv)
@@ -24,6 +29,8 @@ int main(int argc, char** argv)
     ros::Publisher grabberPub = nh.advertise<messages::GrabberFeedback>("roboteq/grabberin/grabberin",1);
     ros::Publisher nb1Pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
     ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
+    cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
+    ros::ServiceServer cvSearchCmdServ = nh.advertiseService("vision/samplesearch/searchcmd", cvSearchCmdCallback);
     messages::NavFilterOut navMsgOut;
     messages::GrabberFeedback grabberMsgOut;
     messages::nb1_to_i7_msg nb1MsgOut;
@@ -85,4 +92,14 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     else robotSim.nb1PauseSwitch = 0;
     collisionMsgOut.collision = msg->collision;
     collisionMsgOut.distance_to_collision = msg->collisionDistance;
+}
+
+bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
+{
+    cvSamplesFoundMsgOut.procType = req.procType;
+    cvSamplesFoundMsgOut.serialNum = req.serialNum;
+    cvSamplesFoundMsgOut.sampleList.clear();
+    cvSamplesFoundPub.publish(cvSamplesFoundMsgOut);
+    ros::spinOnce();
+    return true;
 }

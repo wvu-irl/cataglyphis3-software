@@ -8,7 +8,8 @@ Exec::Exec()
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
-    dequeEmptyPub = nh.advertise<messages::ExecActionEnded>("control/exec/dequeempty",1);
+    actionEndedPub = nh.advertise<messages::ExecActionEnded>("control/exec/actionended",1);
+    cvSearchCmdClient = nh.serviceClient<messages::CVSearchCmd>("vision/samplesearch/searchcmd");
 	// "allocate" deque memory
     for(int i=0; i<NUM_ACTIONS; i++)
     {
@@ -23,6 +24,7 @@ Exec::Exec()
 		actionPool_[_grab][j] = new Grab;
 		actionPool_[_drop][j] = new Drop;
 		actionPool_[_open][j] = new Open;
+        actionPool_[_search][j] = new Search;
 	}
 	for(int k=0; k<NUM_TASKS; k++)
 	{
@@ -39,6 +41,7 @@ Exec::Exec()
 		pauseIdle_.taskPool[_grabberSetDrop_][l] = new GrabberSetDrop;
 		pauseIdle_.taskPool[_grabberSetSlides_][l] = new GrabberSetSlides;
 		pauseIdle_.taskPool[_visionHalt_][l] = new VisionHalt;
+        pauseIdle_.taskPool[_search_][l] = new VisionSearch;
 		// remaining vision tasks
 	}
 
@@ -82,7 +85,7 @@ void Exec::run()
                 actionDeque_.pop_front();
                 if(actionDeque_.empty()==0) {actionDeque_.front()->init(); execActionEndedMsgOut_.dequeEmpty = false;}
                 else execActionEndedMsgOut_.dequeEmpty = true;
-                dequeEmptyPub.publish(execActionEndedMsgOut_);
+                actionEndedPub.publish(execActionEndedMsgOut_);
             }
 			if(actionDeque_.empty()==0) currentActionDone_ = actionDeque_.front()->run();
 			else currentActionDone_ = 0;
@@ -113,6 +116,12 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.float5 = req.float5;
     params_.int1 = req.int1;
     params_.bool1 = req.bool1;
+    params_.bool2 = req.bool2;
+    params_.bool3 = req.bool3;
+    params_.bool4 = req.bool4;
+    params_.bool5 = req.bool5;
+    params_.bool6 = req.bool6;
+    params_.bool7 = req.bool7;
     params_.procType = static_cast<PROC_TYPES_T>(req.procType);
     params_.serialNum = req.serialNum;
 	ROS_INFO("ACTION CALLBACK, float1 = %f, float2 = %f",params_.float1,params_.float2);
@@ -165,6 +174,12 @@ void Exec::packInfoMsgOut_()
 		execInfoMsgOut_.actionFloat5[i] = 0;
 		execInfoMsgOut_.actionInt1[i] = 0;
 		execInfoMsgOut_.actionBool1[i] = 0;
+        execInfoMsgOut_.actionBool2[i] = 0;
+        execInfoMsgOut_.actionBool3[i] = 0;
+        execInfoMsgOut_.actionBool4[i] = 0;
+        execInfoMsgOut_.actionBool5[i] = 0;
+        execInfoMsgOut_.actionBool6[i] = 0;
+        execInfoMsgOut_.actionBool7[i] = 0;
         execInfoMsgOut_.actionProcType[i] = 0;
         execInfoMsgOut_.actionSerialNum[i] = 0;
 	}
@@ -178,6 +193,12 @@ void Exec::packInfoMsgOut_()
 		execInfoMsgOut_.actionFloat5[i] = actionDeque_.at(i)->params.float5;
 		execInfoMsgOut_.actionInt1[i] = actionDeque_.at(i)->params.int1;
 		execInfoMsgOut_.actionBool1[i] = actionDeque_.at(i)->params.bool1;
+        execInfoMsgOut_.actionBool2[i] = actionDeque_.at(i)->params.bool2;
+        execInfoMsgOut_.actionBool3[i] = actionDeque_.at(i)->params.bool3;
+        execInfoMsgOut_.actionBool4[i] = actionDeque_.at(i)->params.bool4;
+        execInfoMsgOut_.actionBool5[i] = actionDeque_.at(i)->params.bool5;
+        execInfoMsgOut_.actionBool6[i] = actionDeque_.at(i)->params.bool6;
+        execInfoMsgOut_.actionBool7[i] = actionDeque_.at(i)->params.bool7;
         execInfoMsgOut_.actionProcType[i] = static_cast<uint8_t>(actionDeque_.at(i)->params.procType);
         execInfoMsgOut_.actionSerialNum[i] = actionDeque_.at(i)->params.serialNum;
 	}

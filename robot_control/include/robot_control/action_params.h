@@ -13,8 +13,14 @@ struct ACTION_PARAMS_T
 	float float5;
 	int int1;
 	bool bool1;
-        PROC_TYPES_T procType;
-        unsigned int serialNum;
+	bool bool2;
+	bool bool3;
+	bool bool4;
+	bool bool5;
+	bool bool6;
+	bool bool7;
+	PROC_TYPES_T procType;
+	unsigned int serialNum;
 };
 
 #endif // ACTION_PARAMS_H

@@ -120,6 +120,7 @@ include_directories(
  add_library(grab src/grab.cpp)
  add_library(drop src/drop.cpp)
  add_library(open src/open.cpp)
+ add_library(search src/search.cpp)
  
  add_library(drive_straight src/drive_straight.cpp)
  add_library(drive_straight_cl src/drive_straight_cl.cpp)
@@ -130,6 +131,7 @@ include_directories(
  add_library(grabber_halt src/grabber_halt.cpp)
  add_library(grabber_idle src/grabber_idle.cpp)
  add_library(vision_halt src/vision_halt.cpp)
+ add_library(vision_search src/vision_search.cpp)
 
  add_library(map_manager src/map_manager.cpp)
  
@@ -174,6 +176,7 @@ include_directories(
    grab
    drop
    open
+   search
    drive_straight
    drive_straight_cl
    drive_pivot
@@ -183,6 +186,7 @@ include_directories(
    grabber_halt
    grabber_idle
    vision_halt
+   vision_search
  )
  
  target_link_libraries(map_manager_node
