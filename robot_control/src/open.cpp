@@ -2,9 +2,7 @@
 
 void Open::init()
 {
-	driveDeque.clear();
-	grabberDeque.clear();
-	visionDeque.clear();
+    clearDeques();
 	pushTask(_grabberSetSlides_);
 	grabberDeque.back()->params.int1 = GRABBER_OPEN;
 }

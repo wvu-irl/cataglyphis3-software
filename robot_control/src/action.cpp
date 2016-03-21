@@ -60,3 +60,13 @@ int Action::runDeques()
 	if(driveDequeEmpty && grabberDequeEmpty && visionDequeEmpty) return 1;
 	else return 0;
 }
+
+void Action::clearDeques()
+{
+    driveDeque.clear();
+    grabberDeque.clear();
+    visionDeque.clear();
+    driveDequeEmptyPrev = 1;
+    grabberDequeEmptyPrev = 1;
+    visionDequeEmptyPrev = 1;
+}
