@@ -86,7 +86,7 @@ void Segmentation::assign_colors(cv::Mat& I, uchar*** &lut)
     }
 }
 
-//find rectangles for blobs in segmented image
+//find rectangles for blobs in segmented image TODO: this function definitely doesn't work right, needs fixed.
 std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
 {
     // takes in a masked image (black and white) and returns a list of possible objects (blobs) in the scene
@@ -155,25 +155,36 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     {
         boundingBoxonBlob = boundingRect(cv::Mat(contourPoints[i]));
 
-        //ROS_INFO("segmented.cols, segmented.rows = %i, %i", segmented.cols, segmented.rows);
-
         //shift coordinates to be relative to center of image
-        float centerx = (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)/2 - segmented.rows/2;
-        float centery = (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y)/2 - segmented.cols/2;
+        int centerx = boundingBoxonBlob.x + boundingBoxonBlob.width/2 - segmented.rows/2;
+        int centery = boundingBoxonBlob.y + boundingBoxonBlob.height/2 - segmented.cols/2;
+
+        //ROS_INFO("segmented.cols, segmented.rows = %i, %i", segmented.cols, segmented.rows);
+        //ROS_INFO("blob, x, y = %i, %i, %i", i, centerx, centery);
 
         //remove blobs that might be inside the robot
-        if(centerx > 2100/5792 && centerx < 3700/5792 && centerx>2150)
+        if(centerx > 2100/5792*(float)segmented.cols && centerx < 3700/5792*(float)segmented.cols && centery>2150/5792*(float)segmented.rows)
         {
         	//ignore blob
-        	ROS_INFO("ignoring blob %i",i);
+        	//ROS_INFO("ignoring blob (in robot) %i",i);
         	continue;
         }
 
         //remove blobs that are too far from center
-        if(centerx*centerx+centery*centery < (2.0/3.0*segmented.rows/2)*(2.0/3.0*segmented.cols/2) )
+        double sq_distance_blob = centerx*centerx+centery*centery;
+        double sq_distance_thresh = (3.0/4.0*(double)segmented.rows/2)*(3.0/4.0*(double)segmented.cols/2);
+        ROS_INFO("sq_blob, sq_thresh = %f, %f", sq_distance_blob, sq_distance_thresh);
+        if( sq_distance_blob > sq_distance_thresh )
         {
         	//ignore blob
-        	ROS_INFO("ignoring blob %i",i);
+        	//ROS_INFO("ignoring blob (for distance) %i",i);
+        	continue;
+        }
+
+        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 350 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 350 )
+        {
+        	//ignore blob
+        	//ROS_INFO("ignoring blob (for size) %i",i);
         	continue;
         }
 
@@ -188,6 +199,12 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
 //write the segmented blobs to file
 int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv::Mat& origional)
 {
+    //get path to blob folder and delete and remake the folder
+	boost::filesystem::path P( ros::package::getPath("computer_vision") );
+	boost::filesystem::path folder = P / boost::filesystem::path("/data/blobs/");
+	remove_all(folder);
+	boost::filesystem::create_directory(folder);
+
     for(int i = 0; i<rectangles.size(); i++)
     {
         //enlarge bounding box for each blob
@@ -207,8 +224,7 @@ int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv
         //resize image (150x150)
 
         //write image of blob to file
-		//boost::filesystem::path P( ros::package::getPath("computer_vision") );
-        //imwrite(P.string() + "/segments/segment" + patch::to_string(i+1) + ".JPG", origional( extended_rect ) );
+        imwrite(folder.string() + "blob" + patch::to_string(i) + ".jpg", origional(extended_rect) );
     }
 
     return 1;
@@ -217,14 +233,38 @@ int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv
 //callback function for segmentating image into blobs
 bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, computer_vision::SegmentImage::Response &res)
 {
-
-	if(capture.capture_image()!=1)
+	cv::Mat image_file;
+	if(req.camera==true)
 	{
+		if(capture.capture_image()!=1)
+		{
+			return false;
+		}
+		else
+		{
+			image_file = capture.image_Mat;
+		}
+	}
+	else if(req.camera==false)
+	{
+		image_file = cv::imread(req.path);
+		if(!image_file.data)
+		{
+			ROS_ERROR("Error! Must enter valid path to image in request.");
+			return false;
+		}
+	}
+	else
+	{
+		ROS_ERROR("Must request to use camera (true) or path to image (false).");
 		return false;
 	}
-
-	cv::Mat image_file = capture.image_Mat; //cv::imread("/home/atlas/cataglyphis_ws/src/computer_vision/img1.JPG");
 	cv::Mat image_file_copy = image_file.clone();
+
+	//display resized image (just for debugging)
+	// cv::resize(image_file_copy,image_file_copy,cv::Size(800,800));
+	// cv::imshow("imresized 800x800", image_file_copy);
+	// cv::waitKey(0);
 
    /*
         COLOR CLASSIFICATION

@@ -1,2 +1,4 @@
+bool camera
+string path
 ---
 uint16 number_of_segments
