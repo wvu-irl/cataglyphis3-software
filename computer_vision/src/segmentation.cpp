@@ -165,6 +165,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         if(centerx > 2100/5792 && centerx < 3700/5792 && centerx>2150)
         {
         	//ignore blob
+        	ROS_INFO("ignoring blob %i",i);
         	continue;
         }
 
@@ -172,6 +173,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         if(centerx*centerx+centery*centery < (2.0/3.0*segmented.rows/2)*(2.0/3.0*segmented.cols/2) )
         {
         	//ignore blob
+        	ROS_INFO("ignoring blob %i",i);
         	continue;
         }
 
@@ -205,8 +207,8 @@ int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv
         //resize image (150x150)
 
         //write image of blob to file
-		boost::filesystem::path P( ros::package::getPath("computer_vision") );
-        imwrite(P.string() + "/segments/segment" + patch::to_string(i+1) + ".JPG", origional( extended_rect ) );
+		//boost::filesystem::path P( ros::package::getPath("computer_vision") );
+        //imwrite(P.string() + "/segments/segment" + patch::to_string(i+1) + ".JPG", origional( extended_rect ) );
     }
 
     return 1;
@@ -220,12 +222,8 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 	{
 		return false;
 	}
-	else
-	{
-		return true;
-	}
 
-	cv::Mat image_file = cv::imread("/home/atlas/cataglyphis_ws/src/computer_vision/img1.JPG");
+	cv::Mat image_file = capture.image_Mat; //cv::imread("/home/atlas/cataglyphis_ws/src/computer_vision/img1.JPG");
 	cv::Mat image_file_copy = image_file.clone();
 
    /*

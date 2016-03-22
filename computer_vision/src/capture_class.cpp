@@ -14,12 +14,12 @@ int Capture::capture_image()
 		return 0;
 	}
 
-	ROS_INFO("Auto detecting camera...");
-	val = auto_detect_camera();
-	if(val!=1)
-	{
-		return 0;
-	}
+	// ROS_INFO("Auto detecting camera...");
+	// val = auto_detect_camera();
+	// if(val!=1)
+	// {
+	// 	return 0;
+	// }
 
 	ROS_INFO("Capturing image to buffer...");
 	val = capture_image_to_buffer();
@@ -49,9 +49,13 @@ int Capture::capture_image()
 
 int Capture::initialize_camera()
 {
+	gp_camera_new (&camera);
+	context = gp_context_new();
+	//gp_context_set_error_func(context, error_func, NULL);
+	//gp_context_set_message_func(context, message_func, NULL);
+
 	if(auto_detect_camera()==1)
 	{
-		ROS_INFO("Camera initialized successful.");	
 		return 1;
 	}
 	else
@@ -63,17 +67,8 @@ int Capture::initialize_camera()
 
 int Capture::auto_detect_camera()
 {
-	ROS_INFO("1...");
-	gp_camera_new (&camera);
-	ROS_INFO("2...");
-	context = gp_context_new();
-	ROS_INFO("3...");
-	//gp_context_set_error_func(context, error_func, NULL);
-	//gp_context_set_message_func(context, message_func, NULL);
-
 	//This call will autodetect cameras, take the first one from the list and use it
 	retval = gp_camera_init(camera, context);
-	ROS_INFO("4...");
 	if (retval != GP_OK) 
 	{
 		ROS_ERROR_THROTTLE(2,"Error Code: %s. Camera auto detect failure. Is the error code \"Unspecified Error\"? Try inserting a single memory card into the camera.", gp_result_as_string(retval));
@@ -84,7 +79,6 @@ int Capture::auto_detect_camera()
 	}
 	else
 	{
-		ROS_INFO("Camera auto detect success.");
 		return 1;
 	}
 }
@@ -114,7 +108,6 @@ int Capture::decode_image_from_buffer_to_mat()
 {
 	if(image_UInt8MultiArray.data.size()>0) 
 	{
-		ROS_INFO("Decoding image...");
 		image_Mat = imdecode(cv::Mat(image_UInt8MultiArray.data), 1);
 		return 1;
 	}
@@ -134,7 +127,6 @@ int Capture::capture_success()
 	}
 	else
 	{
-		ROS_INFO("Capture successful...");
 		return 1;
 	}
 }
@@ -159,7 +151,6 @@ void Capture::write_buffer_to_file(std::string filename)
 
 void Capture::close_camera()
 {
-	ROS_INFO("Closing camera...");
 	gp_camera_exit(camera, context);
 }
 
@@ -185,8 +176,6 @@ int Capture::capture_to_memory(Camera *camera, GPContext *context, const char **
 	int retval;
 	CameraFile *file;
 	CameraFilePath camera_file_path;
-
-	ROS_INFO("Capturing image to buffer...");
 
 	/* NOP: This gets overridden in the library to /capt0000.jpg */
 	strcpy(camera_file_path.folder, "/");
