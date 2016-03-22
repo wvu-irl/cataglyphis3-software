@@ -350,6 +350,7 @@ class DeepFishNet:
         return self.predict(imgArray)
     def predictThisImageWithProbability(self, imgArray = None):
         #imgArray = self.getMeanNormalizedData(imgArray, 'TEST')
+        #imgArray = imgArray.astype('float64')
         return self.predictProb(imgArray)
     
     def getMeanNormalizedData(self, data, mode):

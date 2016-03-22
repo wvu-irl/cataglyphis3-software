@@ -4,6 +4,7 @@ SampleSearch::SampleSearch()
 {
 	searchForSamplesServ = nh.advertiseService("/vision/samplesearch/searchforsamples", &SampleSearch::searchForSamples, this);
 	segmentImageClient = nh.serviceClient<computer_vision::SegmentImage>("/vision/segmentation/segmentimage");
+	classifierClient = nh.serviceClient<computer_vision::ImageProbabilities>("/classify_feature_vector_service");
 	searchForSamplesPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout",1);
 }
 
@@ -38,8 +39,8 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std:
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
 	//call segmentation server
-	segmentImageSrv.request.camera = false;
-	segmentImageSrv.request.path = "/home/jared/cataglyphis_ws/src/computer_vision/img1.JPG";
+	segmentImageSrv.request.camera = true;
+	segmentImageSrv.request.path = "";
 	if(segmentImageClient.call(segmentImageSrv))
 	{
 		ROS_INFO("segmentImageSrv call successful!");
@@ -50,12 +51,31 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return false;
 	}
 
-	std::vector<int> binary;
-	for(int i=0; i<segmentImageSrv.response.coordinates.size(); i=i+2)
+	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+	if(classifierClient.call(imageProbabilitiesSrv))
 	{
-		binary.push_back(0);
+		ROS_INFO("imageProbabilitiesSrv call successful!");
+	}
+	else
+	{
+		ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+		return false;
 	}
 
+	std::vector<int> binary;
+	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
+	{
+		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.50)
+		{
+			binary.push_back(1);
+		}
+		else
+		{
+			binary.push_back(0);
+		}
+	}
+
+	//draw results on image
 	drawResultsOnImage(binary, segmentImageSrv.response.coordinates);
 
 	//publish results of search

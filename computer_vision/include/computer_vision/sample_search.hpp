@@ -7,6 +7,7 @@
 #include <messages/CVSearchCmd.h>
 #include <messages/CVSamplesFound.h>
 #include <computer_vision/SegmentImage.h> 
+#include <computer_vision/ImageProbabilities.h> 
 #include <string>
 #include <fstream>
 #include <vector>
@@ -23,7 +24,9 @@ public:
 	ros::Publisher searchForSamplesPub;
 	ros::ServiceServer searchForSamplesServ;
 	ros::ServiceClient segmentImageClient;
+	ros::ServiceClient classifierClient;
 	computer_vision::SegmentImage segmentImageSrv;
+	computer_vision::ImageProbabilities imageProbabilitiesSrv;
 	messages::CVSamplesFound searchForSamplesMsgOut;
 };
 
