@@ -1,10 +1,10 @@
-#ifndef PROCESS_H
-#define PROCESS_H
+#ifndef PROCEDURE_H
+#define PROCEDURE_H
 #include "mission_planning_process_share.h"
 
 enum PROC_STATE_T {_init_, _exec_, _interrupt_, _finish_};
 
-class Process : public MissionPlanningProcessShare
+class Procedure : public MissionPlanningProcessShare
 {
 public:
     // Members
@@ -25,13 +25,13 @@ public:
     void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 };
 
-void Process::reg(PROC_TYPES_T procTypeIn)
+void Procedure::reg(PROC_TYPES_T procTypeIn)
 {
     this->procType = procTypeIn;
     this->state = _init_;
 }
 
-bool Process::run()
+bool Procedure::run()
 {
     //ROS_DEBUG("before if(procsToExecute.at(this->procType");
     //ROS_DEBUG("this->procType = %i",static_cast<int>(this->procType));
@@ -41,13 +41,13 @@ bool Process::run()
     //ROS_DEBUG("after if - else if(procsToExecute.at(this->procType");
 }
 
-void Process::clearAndResizeWTT()
+void Procedure::clearAndResizeWTT()
 {
     waypointsToTravel.clear();
     waypointsToTravel.resize(numWaypointsToTravel);
 }
 
-void Process::callIntermediateWaypoints()
+void Procedure::callIntermediateWaypoints()
 {
 	intermediateWaypointsSrv.request.collision = collisionMsg.collision;
     initNumWaypointsToTravel = numWaypointsToTravel;
@@ -81,7 +81,7 @@ void Process::callIntermediateWaypoints()
     }
 }
 
-void Process::sendDriveGlobal(bool pushToFront)
+void Procedure::sendDriveGlobal(bool pushToFront)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
@@ -105,7 +105,7 @@ void Process::sendDriveGlobal(bool pushToFront)
     }
 }
 
-void Process::sendDriveAndSearch(bool purple, bool red, bool blue, bool silver, bool brass, bool confirm, bool save)
+void Procedure::sendDriveAndSearch(bool purple, bool red, bool blue, bool silver, bool brass, bool confirm, bool save)
 {
 	this->serialNum = 0;
 	for(int i=0; i<numWaypointsToTravel; i++)
@@ -162,7 +162,7 @@ void Process::sendDriveAndSearch(bool purple, bool red, bool blue, bool silver, 
 	this->serialNum--;
 }
 
-void Process::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
+void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
 {
 	this->serialNum = 0;
     execActionSrv.request.nextActionType = _driveRelative;
@@ -183,4 +183,4 @@ void Process::sendDriveRel(float deltaDistance, float deltaHeading, bool endHead
     else ROS_ERROR("exec action service call unsuccessful");
 }
 
-#endif // PROCESS_H
+#endif // PROCEDURE_H

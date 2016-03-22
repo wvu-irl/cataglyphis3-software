@@ -17,28 +17,25 @@ MissionPlanning::MissionPlanning()
 	woiSrv.request.medThresh = 0;
 	woiSrv.request.hardThresh = 0;
     collisionInterruptTrigger = false;
-    commandedAvoidObstacle = false;
     possessingSample = false;
-    commandedReturnHome = false;
-    confirmedAcquire = false;
-    commandedAcquire = false;
-    interestingSampleNearby = false;
-    commandedExamine = false;
-    inIncompleteROI = false;
-    commandedPlanRegionPath = false;
-    completedROI = false;
-    completedDeposit = false;
-    commandedChooseRegion = false;
+    possibleSample = false;
+    definiteSample = false;
+    sampleDataActedUpon = false;
+    sampleInCollectPosition = false;
+    confirmedPossession = false;
+    atHome = false;
+    inDepositPosition = false;
+    multiProcLockout = false;
+    lockoutSum = 0;
     initComplete = false;
-    commandedInit = false;
     pauseStarted = false;
     robotStatus.pauseSwitch = true;
     execDequeEmpty = true;
-    execLastProcType = deposit__;
+    execLastProcType = __depositSample__;
     execLastSerialNum = 99;
     collisionInterruptThresh = 1.0; // m
-    avoid.reg(avoid__);
-    chooseRegion.reg(chooseRegion__); // Replace with loop over array of ptrs to objs. Also consider polymorphic constructor
+    avoid.reg(__avoid__);
+    nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
     //procsToExecute.resize(NUM_PROC_TYPES);
 
     for(int i=0; i<NUM_PROC_TYPES; i++)
@@ -67,7 +64,7 @@ void MissionPlanning::run()
 
 void MissionPlanning::avoidObstacle_()
 {
-    commandedAvoidObstacle = true;
+    //commandedAvoidObstacle = true;
     //sendDriveRel_(/*avoidMsg*/);
 }
 
@@ -141,25 +138,88 @@ void MissionPlanning::init_()
 
 void MissionPlanning::evalConditions_()
 {
-    //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
-    if(collisionMsg.collision!=0 && !procsBeingExecuted[avoid__] && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag)
+    if(multiProcLockout)
     {
-        //if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted.at(avoid__)) procsToInterrupt.at(avoid__) = true;
-        procsToExecute[avoid__] = true;
-        if(procsBeingExecuted[chooseRegion__]) {procsToInterrupt[chooseRegion__] = true; ROS_INFO("to interrupt chooseRegion");}
-        ROS_INFO("to execute avoid");
+        multiProcLockout = true;
+        robotStatus.pauseSwitch = true;
+        ROS_FATAL_THROTTLE(3,"tried to execute multiple procedures..........");
     }
-    else if(!procsBeingExecuted[chooseRegion__] && !procsBeingExecuted[avoid__])
+    else
     {
-        // something for commandedAvoidObstacle
-        // something for commandedReturnHome
-        // something for commandDeposit
-        // something for commandedAcquire
-        // something for commmandedExamine
-        // something for commandedPlanRegionPath
-        procsToExecute[chooseRegion__] = true;
-        ROS_INFO("to execute chooseRegion");
-        // something for commandedInit
+        //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
+        if(collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag) // Avoid
+        {
+            for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
+            procsToInterrupt[__avoid__] = false;
+            if(!procsBeingExecuted[__avoid__]) procsToExecute[__avoid__] = true;
+            //else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) procsToInterrupt[__avoid__] = true;
+            //if(procsBeingExecuted[chooseRegion__]) {procsToInterrupt[chooseRegion__] = true; ROS_INFO("to interrupt chooseRegion");}
+            ROS_INFO("to execute avoid");
+        }
+        calcNumProcsToExec_();
+        if(numProcsToExec==0 && !possessingSample && !(possibleSample || definiteSample)) // Next Best Region
+        {
+            procsToExecute[__nextBestRegion__] = true;
+            ROS_INFO("to execute nextBestRegion");
+        }
+        calcNumProcsToExec_();
+        /*if(numProcsToExec==0 && ) // Search Closest Region
+        calcNumProcsToExec_();*/
+        /*if(numProcsToExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon) // Examine
+        {
+            sampleDataActedUpon = true;
+            procsToExecute[__examine__] = true;
+            ROS_INFO("to execute examine");
+        }
+        calcNumProcsToExec_();
+        if(numProcsToExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && !sampleDataActedUpon) // Approach
+        {
+            sampleDataActedUpon = true;
+            procsToExecute[__approach__] = true;
+            ROS_INFO("to execute approach");
+        }
+        calcNumProcsToExec_();
+        if(numProcsToExec==0 && sampleInCollectPosition && !possessingSample) // Collect
+        {
+            procsToExecute[__collect__] = true;
+            ROS_INFO("to execute collect");
+        }
+        calcNumProcsToExec_();
+        if(numProcsToExec==0 && possessingSample && !confirmedPossession) // Confirm Collect
+        {
+            procsToExecute[__confirmCollect__] = true;
+            ROS_INFO("to execute confirmCollect");
+        }
+        calcNumProcsToExec_();
+        if(numProcsToExec==0 && possessingSample && confirmedPossession && !atHome) // Go Home
+        {
+            procsToExecute[__goHome__] = true;
+            ROS_INFO("to execute goHome");
+        }
+        calcNumProcsToExec_();
+        if(numProcsToExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition) // Deposit Approach
+        {
+            procsToExecute[__depositApproach__] = true;
+            ROS_INFO("to execute depositApproach");
+        }
+        calcNumProcsToExec_();
+        if(numProcsToExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition) // Deposit Sample
+        {
+            procsToExecute[__depositSample__] = true;
+            ROS_INFO("to execute depositSample");
+        }*/
+
+        // *************** Multi Proc Lockout for testing *************************
+        lockoutSum = 0;
+        for(int i=0; i<NUM_PROC_TYPES; i++) if(procsToExecute[i] && !procsToInterrupt[i]) lockoutSum++;
+        if(lockoutSum>1) multiProcLockout = true;
+        else multiProcLockout = false;
+        if(multiProcLockout)
+        {
+            robotStatus.pauseSwitch = true;
+            ROS_FATAL("tried to execute multiple procedures..........");
+        }
+        // *************************************************************************
     }
 }
 
@@ -167,13 +227,7 @@ void MissionPlanning::runProcesses_()
 {
     if(pauseStarted == true) pause.sendUnPause();
     pauseStarted = false;
-    /*ROS_INFO("toExec choose region = %d", procsToExecute[chooseRegion__]);
-    ROS_INFO("beingExec choose region = %d", procsBeingExecuted[chooseRegion__]);
-    ROS_INFO("toExec avoid = %d", procsToExecute[avoid__]);
-    ROS_INFO("beingExec avoid = %d\n", procsBeingExecuted[avoid__]);*/
-    //if(procsToExecute[chooseRegion__] || procsBeingExecuted[chooseRegion__]) chooseRegion.run(); // Change to array to make use of inherrited method
-    //if(procsToExecute[avoid__] || procsBeingExecuted[avoid__]) avoid.run();
-    chooseRegion.run();
+    nextBestRegion.run();
     avoid.run();
 }
 
@@ -329,6 +383,12 @@ void MissionPlanning::antColony_()
 		i = bestJ;
 		ROS_DEBUG("waypointsToTravel[%i]: x = %f  y = %f", o, waypointsToTravel.at(o).x, waypointsToTravel.at(o).y);
 	}
+}
+
+void MissionPlanning::calcNumProcsToExec_()
+{
+    numProcsToExec = 0;
+    for(int i=0; i<NUM_PROC_TYPES; i++) if(procsToExecute[i]) numProcsToExec++;
 }
 
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)

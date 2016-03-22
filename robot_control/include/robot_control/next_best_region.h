@@ -1,8 +1,8 @@
-#ifndef CHOOSE_REGION_H
-#define CHOOSE_REGION_H
-#include "process.h"
+#ifndef NEXT_BEST_REGION_H
+#define NEXT_BEST_REGION_H
+#include "procedure.h"
 
-class ChooseRegion : public Process
+class NextBestRegion : public Procedure
 {
 public:
     // Members
@@ -19,4 +19,4 @@ public:
     bool runProc();
 };
 
-#endif // CHOOSE_REGION_H
+#endif // NEXT_BEST_REGION_H

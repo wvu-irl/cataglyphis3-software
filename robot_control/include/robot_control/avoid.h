@@ -1,9 +1,9 @@
 #ifndef AVOID_H
 #define AVOID_H
-#include "process.h"
+#include "procedure.h"
 #include "action_type_enum.h"
 
-class Avoid : public Process
+class Avoid : public Procedure
 {
 	// Members
 

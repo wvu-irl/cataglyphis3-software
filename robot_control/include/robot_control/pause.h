@@ -1,8 +1,8 @@
 #ifndef PAUSE_H
 #define PAUSE_H
-#include "process.h"
+#include "procedure.h"
 
-class Pause : public Process
+class Pause : public Procedure
 {
 public:
     // Methods

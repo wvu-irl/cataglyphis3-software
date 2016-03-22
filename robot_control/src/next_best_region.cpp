@@ -1,6 +1,6 @@
-#include <robot_control/choose_region.h>
+#include <robot_control/next_best_region.h>
 
-bool ChooseRegion::runProc()
+bool NextBestRegion::runProc()
 {
 	ROS_INFO("choose region state = %i",state);
     switch(state)
