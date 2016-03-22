@@ -17,7 +17,7 @@ public:
 	// Methods
 	SampleSearch(); // Constructor
 	bool searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
-	int drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &u, const std::vector<int> &v, cv::Mat &I);
+	void drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &coordinates);
 	// Members
 	ros::NodeHandle nh;
 	ros::Publisher searchForSamplesPub;

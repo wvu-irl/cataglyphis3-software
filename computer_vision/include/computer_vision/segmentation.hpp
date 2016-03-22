@@ -18,7 +18,7 @@ public:
 	int loadLookupTable(std::string filename); //30MB of memory for 255x255x255 lookup table
 	void assign_colors(cv::Mat& I, uchar*** &lut);
 	std::vector<cv::Rect> getIndividualBlobs(const cv::Mat& segmented);
-	int writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv::Mat& origional);
+	std::vector<int> writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv::Mat& origional);
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer segmentationServ;

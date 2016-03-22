@@ -166,25 +166,25 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         if(centerx > 2100/5792*(float)segmented.cols && centerx < 3700/5792*(float)segmented.cols && centery>2150/5792*(float)segmented.rows)
         {
         	//ignore blob
-        	//ROS_INFO("ignoring blob (in robot) %i",i);
+        	ROS_INFO("ignoring blob (in robot) %i",i);
         	continue;
         }
 
         //remove blobs that are too far from center
         double sq_distance_blob = centerx*centerx+centery*centery;
         double sq_distance_thresh = (3.0/4.0*(double)segmented.rows/2)*(3.0/4.0*(double)segmented.cols/2);
-        ROS_INFO("sq_blob, sq_thresh = %f, %f", sq_distance_blob, sq_distance_thresh);
+        //ROS_INFO("sq_blob, sq_thresh = %f, %f", sq_distance_blob, sq_distance_thresh);
         if( sq_distance_blob > sq_distance_thresh )
         {
         	//ignore blob
-        	//ROS_INFO("ignoring blob (for distance) %i",i);
+        	ROS_INFO("ignoring blob (for distance) %i",i);
         	continue;
         }
 
         if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 350 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 350 )
         {
         	//ignore blob
-        	//ROS_INFO("ignoring blob (for size) %i",i);
+        	ROS_INFO("ignoring blob (for size) %i",i);
         	continue;
         }
 
@@ -197,7 +197,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
 }
 
 //write the segmented blobs to file
-int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv::Mat& origional)
+std::vector<int> Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv::Mat& origional)
 {
     //get path to blob folder and delete and remake the folder
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
@@ -205,6 +205,7 @@ int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv
 	remove_all(folder);
 	boost::filesystem::create_directory(folder);
 
+    std::vector<int> coordinates;
     for(int i = 0; i<rectangles.size(); i++)
     {
         //enlarge bounding box for each blob
@@ -221,18 +222,23 @@ int Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectangles, const cv
         if(br_y > origional.rows) br_y = origional.rows; 
         cv::Rect extended_rect = cv::Rect( cv::Point(tl_x,tl_y), cv::Point(br_x,br_y) );
 
+        //coordinate of center of blob [u1,v1,u2,v2,...,un,vn]
+        coordinates.push_back(rectangles[i].x+rectangles[i].width/2);
+        coordinates.push_back(rectangles[i].y+rectangles[i].height/2);
+
         //resize image (150x150)
 
         //write image of blob to file
         imwrite(folder.string() + "blob" + patch::to_string(i) + ".jpg", origional(extended_rect) );
     }
 
-    return 1;
+    return coordinates;
 }
 
 //callback function for segmentating image into blobs
 bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, computer_vision::SegmentImage::Response &res)
 {
+    ROS_INFO("calling segmentations service...");
 	cv::Mat image_file;
 	if(req.camera==true)
 	{
@@ -260,6 +266,13 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 		return false;
 	}
 	cv::Mat image_file_copy = image_file.clone();
+
+    //write origional image to file
+    boost::filesystem::path P( ros::package::getPath("computer_vision") );
+    boost::filesystem::path folder = P / boost::filesystem::path("/data/images/");
+    remove_all(folder);
+    boost::filesystem::create_directory(folder);
+    cv::imwrite(folder.string() + "input_image.jpg",image_file_copy);
 
 	//display resized image (just for debugging)
 	// cv::resize(image_file_copy,image_file_copy,cv::Size(800,800));
@@ -316,8 +329,14 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
     //t = (get_wall_time() - t)*1000;
     //cout << "Time extract blobs from mask: " << t << " milliseconds." << endl;
 
-    writeSegmentsToFile(rectangles, image_file_copy);
+    //write blobs to file
+    //t = get_wall_time();
 
-	res.number_of_segments = rectangles.size();
+    std::vector<int> coordinates = writeSegmentsToFile(rectangles, image_file_copy);
+
+    //t = (get_wall_time() - t)*1000;
+    //cout << "Time extract blobs from mask: " << t << " milliseconds." << endl;
+
+    res.coordinates = coordinates;
 	return true;
 }
