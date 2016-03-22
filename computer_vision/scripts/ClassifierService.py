@@ -72,45 +72,32 @@ class ClassifierService:
 			# load images, subtract mean and normalize
 			tensorBlobImgs = self.readImgs(numBlobs)			
 		except:
-			print "Exception in reading the feature vectors"
+			print "Exception in reading the feature vectors and subtracting mean"
 			traceback.print_exc(file=sys.stdout)
 			os.system("rosnode kill /classify_feature_vector_server")
 			pass
 		try:
 			# classify
 			predictedProbabilities = self.deepFishNet.predictProb(tensorBlobImgs)
-			
+			# predictedProbabilities[:,0] contains non-object probabilities
+			# predictedProbabilities[:,1] contains object probabilities
+
+			# retreive only object probabilities
 			predictedProbabilities = predictedProbabilities[:,1]
 			
 			positiveConfidenceList = predictedProbabilities.tolist()
-			print positiveConfidenceList
-			print positiveConfidenceList.shape
+			# print positiveConfidenceList
+			# print positiveConfidenceList.shape
 			pass
 
 		except:
-			print 'Exception in combining feature vectors'
-			traceback.print_exc(file=sys.stdout)
-			os.system("rosnode kill /classify_feature_vector_server")
-			pass
-
-		try:
-			pass
-		except:
-			print 'error in reading positive and negative mean from disk'
-			traceback.print_exc(file=sys.stdout)
-			os.system("rosnode kill /classify_feature_vector_server")
-			pass
-
-		try:
-			print '--------------'
-		except:
-			print 'Exception in loading and classifying'
+			print 'obtaining probabilities from extracted probabilities'
 			traceback.print_exc(file=sys.stdout)
 			os.system("rosnode kill /classify_feature_vector_server")
 			pass
 
 		endTime = time.clock()
-		print 'time taken totally: ', endTime -startTime, 'seconds'
+		print 'time taken totally for classification: ', endTime -startTime, 'seconds'
 		return ImageProbabilitiesResponse(positiveConfidenceList)
 
 	def startService(self):
