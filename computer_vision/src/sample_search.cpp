@@ -52,18 +52,16 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std:
 	cv::Mat src = cv::imread(P.string()+"/data/images/input_image.jpg");
 
 	//draw circle for detected samples and nonsamples
-	int idx = 0;
 	for(int i=0; i<binary.size(); i++)
 	{
 		if(binary[i]==1)
 		{
-			circle(src, cv::Point(coordinates[idx],coordinates[idx+1]), 100, cv::Scalar(0,0,255), 3, 8);
+			circle(src, cv::Point(coordinates[i*2],coordinates[i*2+1]), 100, cv::Scalar(0,0,255), 3, 8);
 		}
 		else
 		{
-			circle(src, cv::Point(coordinates[idx],coordinates[idx+1]), 100, cv::Scalar(0,0,0), 3, 8);
+			circle(src, cv::Point(coordinates[i*2],coordinates[i*2+1]), 100, cv::Scalar(0,0,0), 3, 8);
 		}
-		idx=idx+2;
 	}
 
 	//write image to file
@@ -114,30 +112,27 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 	//calculate the position of each sample
 	std::vector<double> position;
-	int idx = 0;
+	messages::CVSampleProps sampleProps;
 	searchForSamplesMsgOut.sampleList.clear();
 	for(int i=0; i<binary.size(); i++)
 	{
 		if(binary[i]==1)
 		{
 			position.clear();
-			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[idx], segmentImageSrv.response.coordinates[idx+1]);
+			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[i*2], segmentImageSrv.response.coordinates[i*2+1]);
 			ROS_INFO("sample(%i) relative polar position = %f, %f", i, position[0], position[1]);
-
-			messages::CVSampleProps sampleProps;
 			sampleProps.type = i;
 			sampleProps.distance = position[0];
 			sampleProps.bearing = position[1];
 			sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i]*1000;
 			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
 		}
-		idx=idx+2;
 	}
 
 	//publish results of search
     searchForSamplesMsgOut.procType = req.procType;
     searchForSamplesMsgOut.serialNum = req.serialNum;
     searchForSamplesPub.publish(searchForSamplesMsgOut);
-    ros::spinOnce(); //publish results before completing request
+    ros::spinOnce(); //publish results before completing request (important!)
 	return true;
 }

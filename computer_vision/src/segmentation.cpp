@@ -14,7 +14,7 @@ int Segmentation::setCalibration()
     cv::Mat boundaryMask = cv::Mat::zeros(5792,5792,CV_8U);
     int cx = boundaryMask.cols/2;
     int cy = boundaryMask.rows/2;
-    int radius = 0.8*5792/2;
+    int radius = 0.825*5792/2;
     for(int i=0; i<boundaryMask.cols; i++)
     {
         for(int j=0; j<boundaryMask.rows; j++)
@@ -48,15 +48,17 @@ int Segmentation::setCalibration()
     //combine masks
     cv::bitwise_and(boundaryMask, robotMask, calibrationMask);
 
-    // //invert and threshold mask for display display masked image
-    // cv::Mat blendMask, displayMask;
-    // cv::Mat calibrationRGB = calibrationMask.clone();
-    // cv::cvtColor(calibrationRGB,calibrationRGB,CV_GRAY2RGB);
-    // cv::threshold(calibrationRGB,blendMask,0,100,1);
-    // cv::threshold(calibrationRGB,displayMask,0,255,0);
-
-    // boost::filesystem::path P( ros::package::getPath("computer_vision") );
+    //invert and threshold mask for display display masked image
+    cv::Mat displayMask;
+    cv::Mat calibrationRGB = calibrationMask.clone();
+    cv::cvtColor(calibrationRGB,calibrationRGB,CV_GRAY2RGB);
+    cv::threshold(calibrationRGB,displayMask,0,255,0);
+    boost::filesystem::path P( ros::package::getPath("computer_vision") );
+    cv::imwrite(P.string() + "/data/images/calibration_mask.jpg",displayMask);
     // cv::Mat image = cv::imread(P.string() + "/samples.jpg");   
+
+    // cv::Mat blendMask;
+    // cv::threshold(calibrationRGB,blendMask,0,100,1);
     // cv::Mat blended = cv::Mat::zeros(5792,5792,CV_8U);
     // cv::add(image,blendMask,blended);
 
@@ -265,8 +267,6 @@ std::vector<int> Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectang
         coordinates.push_back(rectangles[i].x+rectangles[i].width/2);
         coordinates.push_back(rectangles[i].y+rectangles[i].height/2);
 
-        //resize image (150x150)
-
         //write image of blob to file
         imwrite(folder.string() + "blob" + patch::to_string(i) + ".jpg", origional(extended_rect) );
     }
@@ -288,6 +288,11 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 		else
 		{
 			image_file = capture.image_Mat;
+            if(image_file.cols!=5792 || image_file.rows!=5792)
+            {
+                ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
+                return false;
+            }
 		}
 	}
 	else if(req.camera==false)
@@ -372,7 +377,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
     std::vector<int> coordinates = writeSegmentsToFile(rectangles, image_file_copy);
 
     //t = (get_wall_time() - t)*1000;
-    //cout << "Time extract blobs from mask: " << t << " milliseconds." << endl;
+    //cout << "Time to write segments to file: " << t << " milliseconds." << endl;
 
     res.coordinates = coordinates;
 	return true;
