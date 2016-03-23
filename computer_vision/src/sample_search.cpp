@@ -8,6 +8,17 @@ SampleSearch::SampleSearch()
 	searchForSamplesPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout",1);
 }
 
+void SampleSearch::createFolderForImageData()
+{
+    boost::filesystem::path P( ros::package::getPath("computer_vision") );
+    G_data_folder_name = patch::currentDateTime();
+    G_data_folder = boost::filesystem::path(P.string()+"/data/saved/" + G_data_folder_name);
+    boost::filesystem::create_directory(G_data_folder);
+    G_data_folder_full_images = boost::filesystem::path(G_data_folder.string()+"/full");
+    boost::filesystem::create_directory(G_data_folder_full_images);
+    G_image_index = 0;
+}
+
 std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int v)
 {
 	//transform pixels to center of image
@@ -71,8 +82,8 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std:
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
 	//call segmentation server
-	segmentImageSrv.request.camera = true;
-	segmentImageSrv.request.path = "";
+	segmentImageSrv.request.camera = false;
+	segmentImageSrv.request.path = "/home/jared/cataglyphis_ws/src/computer_vision/samples.jpg";
 	if(segmentImageClient.call(segmentImageSrv))
 	{
 		ROS_INFO("segmentImageSrv call successful!");
@@ -94,6 +105,29 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		ROS_ERROR("Error! Failed to call service ImageProbabilities!");
 		return false;
 	}
+
+	//save blobs with at least 0.2 probability of being a sample and the corresponding image
+	boost::filesystem::path P( ros::package::getPath("computer_vision") );
+	int save_image_flag = 0;
+	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
+	{
+		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.2)
+		{
+			boost::filesystem::path copy_from_blob(P.string() + "/data/blobs/blob" + patch::to_string(i) + ".jpg");
+			boost::filesystem::path copy_to_blob( G_data_folder.string() + "/img" + patch::to_string(G_image_index) + "_blob" + patch::to_string(i) + "_folder" + G_data_folder_name + ".jpg");
+			cv::Mat image_copy_from_blob = cv::imread(copy_from_blob.string());
+			cv::imwrite(copy_to_blob.string(),image_copy_from_blob);
+			if(save_image_flag==0)
+			{
+				save_image_flag=1;
+				boost::filesystem::path copy_from_full(P.string() + "/data/images/input_image.jpg");
+				boost::filesystem::path copy_to_full( G_data_folder_full_images.string() + "/" + patch::currentDateTime() + ".jpg");
+				cv::Mat image_copy_from_full = cv::imread(copy_from_full.string());
+				cv::imwrite(copy_to_full.string(),image_copy_from_full);
+			}
+		}
+	}
+	G_image_index++;
 
 	//draw samples and non samples on image
 	std::vector<int> binary;

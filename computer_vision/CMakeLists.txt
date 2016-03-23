@@ -140,6 +140,8 @@ add_library(segmentation src/segmentation.cpp)
 add_library(sample_search src/sample_search.cpp)
  target_link_libraries(sample_search 
  	${catkin_LIBRARIES}
+  	boost_filesystem 
+ 	boost_system
  )
 
 ## Add cmake target dependencies of the library
@@ -161,6 +163,8 @@ add_dependencies(segmentation_node computer_vision_generate_messages_cpp)
  target_link_libraries(sample_search_node 
  	${catkin_LIBRARIES}
  	sample_search
+  	boost_filesystem 
+ 	boost_system
  )
 
   target_link_libraries(segmentation_node 

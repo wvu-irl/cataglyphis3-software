@@ -6,6 +6,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "sample_search_node");
 	ROS_INFO("sample_search_node running...");
 	SampleSearch samplesSearch;
+	samplesSearch.createFolderForImageData();
 	ros::spin();
 	return 0;
 } 
