@@ -36,6 +36,12 @@ MissionPlanning::MissionPlanning()
     collisionInterruptThresh = 1.0; // m
     avoid.reg(__avoid__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
+    approach.reg(__approach__);
+    collect.reg(__collect__);
+    confirmCollect.reg(__confirmCollect__);
+    goHome.reg(__goHome__);
+    depositApproach.reg(__depositApproach__);
+    depositSample.reg(__depositSample__);
     //procsToExecute.resize(NUM_PROC_TYPES);
 
     for(int i=0; i<NUM_PROC_TYPES; i++)
@@ -170,7 +176,7 @@ void MissionPlanning::evalConditions_()
             sampleDataActedUpon = true;
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
-        }
+        }*/
         calcNumProcsToExec_();
         if(numProcsToExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && !sampleDataActedUpon) // Approach
         {
@@ -207,7 +213,7 @@ void MissionPlanning::evalConditions_()
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
-        }*/
+        }
 
         // *************** Multi Proc Lockout for testing *************************
         lockoutSum = 0;
@@ -229,6 +235,12 @@ void MissionPlanning::runProcesses_()
     pauseStarted = false;
     nextBestRegion.run();
     avoid.run();
+    approach.run();
+    collect.run();
+    confirmCollect.run();
+    goHome.run();
+    depositApproach.run();
+    depositSample.run();
 }
 
 void MissionPlanning::runPause_()
@@ -391,6 +403,17 @@ void MissionPlanning::calcNumProcsToExec_()
     for(int i=0; i<NUM_PROC_TYPES; i++) if(procsToExecute[i]) numProcsToExec++;
 }
 
+void MissionPlanning::findBestSample()
+{
+    bestSample.confidence = 0;
+    for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+    {
+        if(cvSamplesFoundMsg.sampleList.at(i).confidence > bestSample.confidence) bestSample = cvSamplesFoundMsg.sampleList.at(i);
+    }
+    if(bestSample.confidence >= possibleSampleConfThresh) possibleSample = true;
+    if(bestSample.confidence >= definiteSampleConfThresh) definiteSample = true;
+}
+
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
 {
 	robotStatus.xPos = msg->x_position;
@@ -424,5 +447,9 @@ void MissionPlanning::execInfoCallback_(const messages::ExecInfo::ConstPtr &msg)
 
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)
 {
+    possibleSample = false;
+    definiteSample = false;
     cvSamplesFoundMsg = *msg;
+    findBestSample();
+    sampleDataActedUpon = false;
 }

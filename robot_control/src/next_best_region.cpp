@@ -2,7 +2,7 @@
 
 bool NextBestRegion::runProc()
 {
-	ROS_INFO("choose region state = %i",state);
+	ROS_INFO("nextBestRegion state = %i",state);
     switch(state)
     {
     case _init_:
@@ -40,7 +40,7 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0) = regionsOfInterestSrv.response.waypointArray.at(bestROINum);
             callIntermediateWaypoints();
 			//sendDriveGlobal(false);
-			sendDriveAndSearch(true,true,true,true,true,false,false);
+			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             state = _exec_;
         }
 		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -66,6 +66,7 @@ bool NextBestRegion::runProc()
         break;
     case _exec_:
 		procsBeingExecuted[procType] = true;
+		procsToExecute[procType] = false;
         if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         else state = _exec_;
         break;
@@ -76,6 +77,7 @@ bool NextBestRegion::runProc()
         break;
     case _finish_:
 		procsBeingExecuted[procType] = false;
+		procsToExecute[procType] = false;
         // ************************ THIS NEEDS TO GO SOMEWHERE ELSE LATER
         modROISrv.request.setVisitedROI = true;
         modROISrv.request.visitedROIState = true;

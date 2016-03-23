@@ -7,6 +7,14 @@
 #include <messages/nb1_to_i7_msg.h>
 #include "avoid.h"
 #include "next_best_region.h"
+//#include "search_closest_region.h"
+//#include "examine.h"
+#include "approach.h"
+#include "collect.h"
+#include "confirm_collect.h"
+#include "go_home.h"
+#include "deposit_approach.h"
+#include "deposit_sample.h"
 #include "pause.h"
 #include "bit_utils.h"
 
@@ -26,6 +34,12 @@ public:
 	const int loopRate = 20; // Hz
 	Avoid avoid;
 	NextBestRegion nextBestRegion;
+	Approach approach;
+	Collect collect;
+	ConfirmCollect confirmCollect;
+	GoHome goHome;
+	DepositApproach depositApproach;
+	DepositSample depositSample;
     Pause pause;
 	std::vector<int> value;
 	int computedValue;
@@ -66,14 +80,6 @@ public:
 	int bestPheromone;
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
-	bool possessingSample;
-	bool possibleSample;
-	bool definiteSample;
-	bool sampleDataActedUpon;
-	bool sampleInCollectPosition;
-	bool confirmedPossession;
-	bool atHome;
-	bool inDepositPosition;
 	unsigned int numProcsToExec;
 	bool multiProcLockout;
 	unsigned int lockoutSum;
@@ -96,6 +102,7 @@ private:
 	void runPause_();
 	void antColony_();
 	void calcNumProcsToExec_();
+	void findBestSample();
 
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);

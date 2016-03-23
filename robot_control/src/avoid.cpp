@@ -39,6 +39,7 @@ bool Avoid::runProc()
 		break;
 	case _exec_:
 		procsBeingExecuted[procType] = true;
+		procsToExecute[procType] = false;
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
@@ -49,6 +50,7 @@ bool Avoid::runProc()
 		break;
 	case _finish_:
 		procsBeingExecuted[procType] = false;
+		procsToExecute[procType] = false;
 		state = _init_;
 		break;
 	}

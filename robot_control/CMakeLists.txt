@@ -136,9 +136,15 @@ include_directories(
  add_library(map_manager src/map_manager.cpp)
  
  add_library(mission_planning src/mission_planning.cpp)
- add_library(next_best_region src/next_best_region.cpp)
  add_library(pause src/pause.cpp)
  add_library(avoid src/avoid.cpp)
+ add_library(next_best_region src/next_best_region.cpp)
+ add_library(approach src/approach.cpp)
+ add_library(collect src/collect.cpp)
+ add_library(confirm_collect src/confirm_collect.cpp)
+ add_library(go_home src/go_home.cpp)
+ add_library(deposit_approach src/deposit_approach.cpp)
+ add_library(deposit_sample src/deposit_sample.cpp)
  
  add_library(safe_pathing src/safe_pathing.cpp)
 
@@ -198,9 +204,15 @@ include_directories(
  target_link_libraries(mission_planning_node
    ${catkin_LIBRARIES}
    mission_planning
-   next_best_region
    pause
    avoid
+   next_best_region
+   approach
+   collect
+   confirm_collect
+   go_home
+   deposit_approach
+   deposit_sample
  )
  
  target_link_libraries(safe_pathing_node

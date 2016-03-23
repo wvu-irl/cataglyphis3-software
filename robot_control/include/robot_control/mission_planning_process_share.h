@@ -56,6 +56,22 @@ public:
 	const float collisionMinDistance = 2.0; // m
 	static ros::Subscriber cvSamplesSub;
 	static messages::CVSamplesFound cvSamplesFoundMsg;
+	static messages::CVSampleProps bestSample;
+	const float distanceToGrabber = 0.86; // m
+	const float blindDriveDistance = 0.3048; // m
+	const float grabberDistanceTolerance = 0.05; // m
+	const float grabberAngleTolerance = 1.0; // deg
+	const int possibleSampleConfThresh = 700;
+	const int definiteSampleConfThresh = 900;
+	static bool possessingSample;
+	static bool possibleSample;
+	static bool definiteSample;
+	static bool sampleDataActedUpon;
+	static bool sampleInCollectPosition;
+	static bool confirmedPossession;
+	static bool atHome;
+	static bool inDepositPosition;
+
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -86,5 +102,14 @@ messages::CollisionOut MissionPlanningProcessShare::collisionMsg;
 float MissionPlanningProcessShare::collisionInterruptThresh;
 ros::Subscriber MissionPlanningProcessShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcessShare::cvSamplesFoundMsg;
+messages::CVSampleProps MissionPlanningProcessShare::bestSample;
+bool MissionPlanningProcessShare::possessingSample;
+bool MissionPlanningProcessShare::possibleSample;
+bool MissionPlanningProcessShare::definiteSample;
+bool MissionPlanningProcessShare::sampleDataActedUpon;
+bool MissionPlanningProcessShare::sampleInCollectPosition;
+bool MissionPlanningProcessShare::confirmedPossession;
+bool MissionPlanningProcessShare::atHome;
+bool MissionPlanningProcessShare::inDepositPosition;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H
