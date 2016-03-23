@@ -43,7 +43,7 @@ MissionPlanning::MissionPlanning()
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
     //procsToExecute.resize(NUM_PROC_TYPES);
-
+    samplesCollected = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
         procsToExecute[i] = false;
@@ -61,11 +61,20 @@ MissionPlanning::MissionPlanning()
 void MissionPlanning::run()
 {
     //ROS_DEBUG("before evalConditions");
+    ROS_INFO("=========================================");
+    ROS_INFO("possessingSample = %i",possessingSample);
+    ROS_INFO("possibleSample = %i",possibleSample);
+    ROS_INFO("definiteSample = %i",definiteSample);
+    ROS_INFO("sampleDataActedUpon = %i",sampleDataActedUpon);
+    ROS_INFO("sampleInCollectPosition = %i",sampleInCollectPosition);
+    ROS_INFO("confirmedPossession = %i",confirmedPossession);
+    ROS_INFO("atHome = %i",atHome);
+    ROS_INFO("inDepositPosition = %i",inDepositPosition);
     evalConditions_();
     //ROS_DEBUG("after evalConditions");
     if(robotStatus.pauseSwitch) runPause_();
     else runProcesses_();
-    
+    std::printf("\n");
 }
 
 void MissionPlanning::avoidObstacle_()
@@ -162,54 +171,53 @@ void MissionPlanning::evalConditions_()
             //if(procsBeingExecuted[chooseRegion__]) {procsToInterrupt[chooseRegion__] = true; ROS_INFO("to interrupt chooseRegion");}
             ROS_INFO("to execute avoid");
         }
-        calcNumProcsToExec_();
-        if(numProcsToExec==0 && !possessingSample && !(possibleSample || definiteSample)) // Next Best Region
+        calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample)) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
         }
-        calcNumProcsToExec_();
-        /*if(numProcsToExec==0 && ) // Search Closest Region
-        calcNumProcsToExec_();*/
-        /*if(numProcsToExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon) // Examine
+        calcNumProcsBeingExec_();
+        /*if(numProcsBeingExec==0 && ) // Search Closest Region
+        calcNumProcsBeingExec_();*/
+        /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon) // Examine
         {
             sampleDataActedUpon = true;
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
         }*/
-        calcNumProcsToExec_();
-        if(numProcsToExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && !sampleDataActedUpon) // Approach
+        calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition) // Approach
         {
-            sampleDataActedUpon = true;
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
         }
-        calcNumProcsToExec_();
-        if(numProcsToExec==0 && sampleInCollectPosition && !possessingSample) // Collect
+        calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
         }
-        calcNumProcsToExec_();
-        if(numProcsToExec==0 && possessingSample && !confirmedPossession) // Confirm Collect
+        calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && !confirmedPossession) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
-        calcNumProcsToExec_();
-        if(numProcsToExec==0 && possessingSample && confirmedPossession && !atHome) // Go Home
+        calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && !atHome) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
-        calcNumProcsToExec_();
-        if(numProcsToExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition) // Deposit Approach
+        calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
         }
-        calcNumProcsToExec_();
-        if(numProcsToExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition) // Deposit Sample
+        calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
@@ -397,10 +405,10 @@ void MissionPlanning::antColony_()
 	}
 }
 
-void MissionPlanning::calcNumProcsToExec_()
+void MissionPlanning::calcNumProcsBeingExec_()
 {
-    numProcsToExec = 0;
-    for(int i=0; i<NUM_PROC_TYPES; i++) if(procsToExecute[i]) numProcsToExec++;
+    numProcsBeingExec = 0;
+    for(int i=0; i<NUM_PROC_TYPES; i++) if(procsBeingExecuted[i]) numProcsBeingExec++;
 }
 
 void MissionPlanning::findBestSample()

@@ -80,7 +80,7 @@ public:
 	int bestPheromone;
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
-	unsigned int numProcsToExec;
+	unsigned int numProcsBeingExec;
 	bool multiProcLockout;
 	unsigned int lockoutSum;
 	bool initComplete;
@@ -101,7 +101,7 @@ private:
 	void runProcesses_();
 	void runPause_();
 	void antColony_();
-	void calcNumProcsToExec_();
+	void calcNumProcsBeingExec_();
 	void findBestSample();
 
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);

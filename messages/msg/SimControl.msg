@@ -7,3 +7,8 @@ float64 simSpeed
 bool pauseSwitch
 uint8 collision
 float32 collisionDistance
+bool cvFindSample
+int32 cvType
+float32 cvDistance
+float32 cvBearing
+int32 cvConfidence

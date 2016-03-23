@@ -18,6 +18,8 @@ messages::ActuatorOut actuatorCmd;
 messages::CollisionOut collisionMsgOut;
 messages::CVSamplesFound cvSamplesFoundMsgOut;
 RobotSim robotSim(0.0, 0.0, 0.0,20);
+bool cvFindSample = false;
+messages::CVSampleProps cvSampleProps;
 
 int main(int argc, char** argv)
 {
@@ -92,6 +94,11 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     else robotSim.nb1PauseSwitch = 0;
     collisionMsgOut.collision = msg->collision;
     collisionMsgOut.distance_to_collision = msg->collisionDistance;
+    cvFindSample = msg->cvFindSample;
+    cvSampleProps.type = msg->cvType;
+    cvSampleProps.distance = msg->cvDistance;
+    cvSampleProps.bearing = msg->cvBearing;
+    cvSampleProps.confidence = msg->cvConfidence;
 }
 
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
@@ -99,6 +106,10 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
     cvSamplesFoundMsgOut.procType = req.procType;
     cvSamplesFoundMsgOut.serialNum = req.serialNum;
     cvSamplesFoundMsgOut.sampleList.clear();
+    if(cvFindSample)
+    {
+        cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
+    }
     cvSamplesFoundPub.publish(cvSamplesFoundMsgOut);
     ros::spinOnce();
     return true;

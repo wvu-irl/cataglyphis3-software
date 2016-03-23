@@ -71,7 +71,7 @@ public:
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool inDepositPosition;
-
+	static int samplesCollected;
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -111,5 +111,6 @@ bool MissionPlanningProcessShare::sampleInCollectPosition;
 bool MissionPlanningProcessShare::confirmedPossession;
 bool MissionPlanningProcessShare::atHome;
 bool MissionPlanningProcessShare::inDepositPosition;
+int MissionPlanningProcessShare::samplesCollected;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

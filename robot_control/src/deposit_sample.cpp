@@ -24,6 +24,7 @@ bool DepositSample::runProc()
 		state = _init_;
 		break;
 	case _finish_:
+		samplesCollected++;
 		possessingSample = false;
 		confirmedPossession = false;
 		atHome = false;

@@ -12,6 +12,7 @@ public:
 	float angleToTurn; // deg
 	APPROACH_STEP_T step;
 	uint8_t sampleTypeMux;
+	const float maxDriveDistance = 4.0; // m
 	// Methods
 	bool runProc();
 };

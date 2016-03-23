@@ -22,10 +22,13 @@ bool Approach::runProc()
 		switch(step)
 		{
 		case _performSearch:
-			if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum &&
-					execLastProcType == procType && execLastSerialNum == serialNum)
+			ROS_INFO("procType = %i",static_cast<int>(this->procType));
+			ROS_INFO("serialNum = %i",this->serialNum);
+			ROS_INFO("cvSamplesFoundMsg.procType = %i",static_cast<int>(cvSamplesFoundMsg.procType));
+			ROS_INFO("cvSamplesFoundMsg.serialNum = %i",cvSamplesFoundMsg.serialNum);
+			if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
 			{
-				if((bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber) <= grabberDistanceTolerance) &&
+				if((bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
 						(fabs(bestSample.bearing) <= grabberAngleTolerance))
 				{
 					sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false);
@@ -34,7 +37,8 @@ bool Approach::runProc()
 				}
 				else
 				{
-					distanceToDrive = bestSample.distance - distanceToGrabber;
+					distanceToDrive = bestSample.distance - distanceToGrabber - blindDriveDistance;
+					if(distanceToDrive > maxDriveDistance) distanceToDrive = maxDriveDistance;
 					angleToTurn = bestSample.bearing;
 					sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false);
 					step = _driveManeuver;

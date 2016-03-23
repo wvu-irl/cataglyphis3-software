@@ -89,6 +89,7 @@ void Procedure::sendDriveGlobal(bool pushToFront)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
+		this->serialNum++;
         execActionSrv.request.nextActionType = _driveGlobal;
         execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = pushToFront;
@@ -105,7 +106,6 @@ void Procedure::sendDriveGlobal(bool pushToFront)
         execActionSrv.request.serialNum = this->serialNum;
         if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
         else ROS_ERROR("exec action service call unsuccessful");
-		this->serialNum++;
     }
 }
 
@@ -114,6 +114,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 	for(int i=0; i<numWaypointsToTravel; i++)
 	{
 		// Drive Global
+		this->serialNum++;
 		execActionSrv.request.nextActionType = _driveGlobal;
 		execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = false;
@@ -136,8 +137,8 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.serialNum = this->serialNum;
 		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 		else ROS_ERROR("exec action service call unsuccessful");
-		this->serialNum++;
 		// Search
+		this->serialNum++;
 		execActionSrv.request.nextActionType = _search;
 		execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = false;
@@ -160,13 +161,12 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.serialNum = this->serialNum;
 		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 		else ROS_ERROR("exec action service call unsuccessful");
-		this->serialNum++;
 	}
-	this->serialNum--;
 }
 
 void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
 {
+
     execActionSrv.request.nextActionType = _driveRelative;
     execActionSrv.request.newActionFlag = 1;
     execActionSrv.request.pushToFrontFlag = frontOfDeque;
@@ -183,11 +183,11 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
     execActionSrv.request.serialNum = this->serialNum;
     if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
     else ROS_ERROR("exec action service call unsuccessful");
-	this->serialNum++;
 }
 
 void Procedure::sendSearch(uint8_t typeMux)
 {
+	this->serialNum++;
 	execActionSrv.request.nextActionType = _search;
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
@@ -210,7 +210,6 @@ void Procedure::sendSearch(uint8_t typeMux)
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
-	this->serialNum++;
 }
 
 void Procedure::sendGrab()
