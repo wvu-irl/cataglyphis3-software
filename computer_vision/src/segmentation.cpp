@@ -220,32 +220,6 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     {
         boundingBoxonBlob = boundingRect(cv::Mat(contourPoints[i]));
 
-        //shift coordinates to be relative to center of image
-        int centerx = boundingBoxonBlob.x + boundingBoxonBlob.width/2 - segmented.rows/2;
-        int centery = boundingBoxonBlob.y + boundingBoxonBlob.height/2 - segmented.cols/2;
-
-        //ROS_INFO("segmented.cols, segmented.rows = %i, %i", segmented.cols, segmented.rows);
-        //ROS_INFO("blob, x, y = %i, %i, %i", i, centerx, centery);
-
-        //remove blobs that might be inside the robot
-        if(centerx > 2100/5792*(float)segmented.cols && centerx < 3700/5792*(float)segmented.cols && centery>2150/5792*(float)segmented.rows)
-        {
-        	//ignore blob
-        	ROS_INFO("ignoring blob (in robot) %i",i);
-        	continue;
-        }
-
-        //remove blobs that are too far from center
-        double sq_distance_blob = centerx*centerx+centery*centery;
-        double sq_distance_thresh = (3.0/4.0*(double)segmented.rows/2)*(3.0/4.0*(double)segmented.cols/2);
-        //ROS_INFO("sq_blob, sq_thresh = %f, %f", sq_distance_blob, sq_distance_thresh);
-        if( sq_distance_blob > sq_distance_thresh )
-        {
-        	//ignore blob
-        	ROS_INFO("ignoring blob (for distance) %i",i);
-        	continue;
-        }
-
         if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 350 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 350 )
         {
         	//ignore blob
