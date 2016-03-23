@@ -5,6 +5,71 @@ Segmentation::Segmentation()
 	segmentationServ = nh.advertiseService("/vision/segmentation/segmentimage", &Segmentation::segmentImage, this);
 }
 
+int Segmentation::setCalibration()
+{
+    //TODO: develop a function to generate this image interactively then save to file
+    //then this function will just load an image instead of generate an image
+
+    //generate mask for boundary
+    cv::Mat boundaryMask = cv::Mat::zeros(5792,5792,CV_8U);
+    int cx = boundaryMask.cols/2;
+    int cy = boundaryMask.rows/2;
+    int radius = 0.8*5792/2;
+    for(int i=0; i<boundaryMask.cols; i++)
+    {
+        for(int j=0; j<boundaryMask.rows; j++)
+        {
+            //distance from center of image
+            int dist = sqrt( (i-cx)*(i-cx) + (j-cy)*(j-cy) );
+            if(dist < radius)
+            {
+                boundaryMask.at<uchar>(j,i)=255;
+            }
+        }
+    }
+    
+
+    //generate mask for robot
+    cv::Mat robotMask = cv::Mat::zeros(5792,5792,CV_8U);
+    int leftLimit = 2100;
+    int rightLimit = 3700;
+    int frontLimit = 2150;
+    for(int i=0; i<robotMask.cols; i++)
+    {
+        for(int j=0; j<robotMask.rows; j++)
+        {
+            if(i < leftLimit || i > rightLimit || j < frontLimit)
+            {
+                robotMask.at<uchar>(j,i)=255;
+            }
+        }
+    }
+
+    //combine masks
+    cv::bitwise_and(boundaryMask, robotMask, calibrationMask);
+
+    // //invert and threshold mask for display display masked image
+    // cv::Mat blendMask, displayMask;
+    // cv::Mat calibrationRGB = calibrationMask.clone();
+    // cv::cvtColor(calibrationRGB,calibrationRGB,CV_GRAY2RGB);
+    // cv::threshold(calibrationRGB,blendMask,0,100,1);
+    // cv::threshold(calibrationRGB,displayMask,0,255,0);
+
+    // boost::filesystem::path P( ros::package::getPath("computer_vision") );
+    // cv::Mat image = cv::imread(P.string() + "/samples.jpg");   
+    // cv::Mat blended = cv::Mat::zeros(5792,5792,CV_8U);
+    // cv::add(image,blendMask,blended);
+
+    // //display masks
+    // cv::namedWindow("displayMask",CV_WINDOW_NORMAL);
+    // cv::imshow("displayMask", displayMask);
+    // cv::namedWindow("blended",CV_WINDOW_NORMAL);
+    // cv::imshow("blended", blended);
+    // cv::waitKey(0);
+    // cv::destroyAllWindows();
+    return 1;
+}
+
 //load segmentation lookup table from file
 int Segmentation::loadLookupTable(std::string filename)
 {
@@ -269,10 +334,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
     //write origional image to file
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
-    boost::filesystem::path folder = P / boost::filesystem::path("/data/images/");
-    remove_all(folder);
-    boost::filesystem::create_directory(folder);
-    cv::imwrite(folder.string() + "input_image.jpg",image_file_copy);
+    cv::imwrite(P.string() + "/data/images/input_image.jpg",image_file_copy);
 
 	//display resized image (just for debugging)
 	// cv::resize(image_file_copy,image_file_copy,cv::Size(800,800));
@@ -301,7 +363,8 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
 	std::vector<cv::Mat> channels(3);
 	split(image_file, channels);
-	cv::multiply(channels[0],cv::Scalar(255),channels[0]);
+	//cv::multiply(channels[0],cv::Scalar(255),channels[0]);
+    cv::multiply(channels[0],calibrationMask,channels[0]);
 
     //t = (get_wall_time() - t)*1000;
     //cout << "Time to extract blue channel: " << t << " milliseconds." << endl;
