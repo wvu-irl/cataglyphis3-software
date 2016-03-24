@@ -408,7 +408,10 @@ void MissionPlanning::antColony_()
 void MissionPlanning::calcNumProcsBeingExec_()
 {
     numProcsBeingExec = 0;
-    for(int i=0; i<NUM_PROC_TYPES; i++) if(procsBeingExecuted[i]) numProcsBeingExec++;
+    for(int i=0; i<NUM_PROC_TYPES; i++) 
+    {
+	if(procsBeingExecuted[i]) numProcsBeingExec++;
+    }
 }
 
 void MissionPlanning::findBestSample()
