@@ -22,12 +22,12 @@ from DeepFishNet import DeepFishNet
 class ClassifierService:
 
 	def __init__(self, myClassifier, meanData, imgSize, cvModulePath):
-		myClassifier, meanData, imgSize, cvModulePath
+		# myClassifier, meanData, imgSize, cvModulePath
 		print 'ClassifierService constructor'
 		time.sleep(1)
 		self.deepFishNet = myClassifier
 		self.meanData = meanData
-		self.imgSize = 150
+		self.imgSize = imgSize
 		self.cvModulePath = cvModulePath
 		print 'successfully loaded the classifier'
 		time.sleep(1)
