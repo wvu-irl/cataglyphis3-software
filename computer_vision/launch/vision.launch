@@ -1,0 +1,5 @@
+<launch>
+  <node name="segmentation_node" pkg="computer_vision" type="segmentation_node" respawn="true" />
+  <node name="sample_search_node" pkg="computer_vision" type="sample_search_node" respawn="true" />
+  <node name="ClassifierService" pkg="computer_vision" type="ClassifierService.py" respawn="true" />
+</launch>
