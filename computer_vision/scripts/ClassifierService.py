@@ -22,12 +22,12 @@ from DeepFishNet import DeepFishNet
 class ClassifierService:
 
 	def __init__(self, myClassifier, meanData, imgSize, cvModulePath):
-		myClassifier, meanData, imgSize, cvModulePath
+		# myClassifier, meanData, imgSize, cvModulePath
 		print 'ClassifierService constructor'
 		time.sleep(1)
 		self.deepFishNet = myClassifier
 		self.meanData = meanData
-		self.imgSize = 150
+		self.imgSize = imgSize
 		self.cvModulePath = cvModulePath
 		print 'successfully loaded the classifier'
 		time.sleep(1)
@@ -85,9 +85,9 @@ class ClassifierService:
 			# retreive only object probabilities
 			predictedProbabilities = predictedProbabilities[:,1]
 			
+			# convert to list and for returning it to the client
 			positiveConfidenceList = predictedProbabilities.tolist()
-			# print positiveConfidenceList
-			# print positiveConfidenceList.shape
+
 			pass
 
 		except:
@@ -113,7 +113,6 @@ class ClassifierService:
 			os.system("rosnode kill /classify_feature_vector_server")
 
 if __name__ == "__main__":
-	
 	rospack = rospkg.RosPack()
 
 	# get CV module path
@@ -129,7 +128,14 @@ if __name__ == "__main__":
 
 	# read the classifier
 	classifierPath = cvModulePath+'/data/classifier/554_convnet_150imgsize.npz'
-	myClassifier = DeepFishNet(mode='Test', modelToLoad = classifierPath)
+
+	# set dropout parameters for better performance
+	dropout_params = {}
+	dropout_params['conv'] = 0.4
+	dropout_params['fc'] = 0.4
+	
+	# initialize DeepFishNet
+	myClassifier = DeepFishNet(mode='Test', modelToLoad = classifierPath, dropout_params = dropout_params)
 
 	# initialize classifier service
 	cService = ClassifierService(myClassifier, meanData, imgSize, cvModulePath)
