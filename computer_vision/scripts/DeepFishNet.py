@@ -13,7 +13,7 @@ from theano import tensor as T
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 import numpy as np
 from theano.tensor.nnet.conv import conv2d
-from theano.tensor.signal.downsample import max_pool_2d
+from theano.tensor.signal.pool import pool_2d
 from lasagne.init import GlorotUniform
 import os
 from os.path import expanduser
@@ -88,7 +88,7 @@ class DeepFishNet:
 
     def matrifyMyData(self):
         '''
-        returns labels in matrix form by "matrifying" (some ridiculous name i came up with)
+        returns labels in matrix form by "matrifying" (some ridiculous name I came up with)
         labels of 0, 1, 1, ... will be replaced by the matrices with their respective index set to 1
         as 
         [1, 0], [0, 1], [0, 1], .....
@@ -172,7 +172,7 @@ class DeepFishNet:
 
         # first convolutional layer
         l1a = self.rectify(conv2d(X, w1, border_mode='full'))
-        l1 = max_pool_2d(l1a, (2, 2), st=None, padding=(0, 0), mode='max')
+        l1 = pool_2d(l1a, (2, 2), st=None, ignore_border=False, padding=(0, 0), mode='max')
         if(self.mode == "Train"):
             l1 = self.dropout(l1, p_drop_conv)
         # convOut1 = conv2d(X, w1)
@@ -180,13 +180,13 @@ class DeepFishNet:
         
         # second convolutional layer
         l2a = self.rectify(conv2d(l1, w2))
-        l2 = max_pool_2d(l2a, (2, 2))
+        l2 = pool_2d(l2a, (2, 2), st=None, ignore_border=False, padding=(0, 0), mode='max')
         if(self.mode == "Train"):
             l2 = self.dropout(l2, p_drop_conv)
 
         # # third convolutional layer
         l3a = self.rectify(conv2d(l2, w3))
-        l3 = max_pool_2d(l3a, (2, 2))
+        l3 = pool_2d(l3a, (2, 2), st=None, ignore_border=False, padding=(0, 0), mode='max')
 
         # # flatten the output
         l3 = T.flatten(l3, outdim=2)
@@ -235,17 +235,20 @@ class DeepFishNet:
         # flatten the inputs and pass to fully connected layer
         w_output = self.init_weights((500, 2), weightType = 'Xavier')
 
-        # define your deep model
         if(self.dropout_params == None):
             # if there is no default dropout params mentioned, just set them manually
             self.dropout_params = {}
             self.dropout_params['conv'] = 0.1
             self.dropout_params['fc'] = 0.2
         print 'initializing with dropout_params: ', self.dropout_params['conv'], self.dropout_params['fc']
+        
+        # define your deep model
         noise_l1, noise_l2, noise_l3, noise_l4, noise_l5, noise_py_x, convOut1 = self.model(X, w1, w2, w3, w4, w5, w_output, p_drop_conv = self.dropout_params['conv'], p_drop_hidden = self.dropout_params['fc'])
      
         # get your label from the predicted probabilties
         y_x = T.argmax(noise_py_x, axis=1)
+
+        # for binary cross entropy
         # y_x = noise_py_x >= 0.5
 
         self.learning_rate = 0.001
@@ -270,7 +273,7 @@ class DeepFishNet:
         end_compilation_time = time.clock()
         self.getFirstLayerOutput = theano.function(inputs=[X], outputs=convOut1)
         print 'compiled the functions, ended at ', strftime("%Y-%m-%d %H:%M:%S")
-        print 'time takent compile the functions: ', end_compilation_time - start_compilation_time
+        print 'time taken to compile the functions: ', end_compilation_time - start_compilation_time
         
     def saveThisModel(self, fileName = None):
         os.chdir(curDirName)
