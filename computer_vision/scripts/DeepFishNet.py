@@ -261,7 +261,7 @@ class DeepFishNet:
         #self.paramUpdates = self.MomentumOptimizer(self.cost, self.params, lr = self.learning_rate)
 
         print 'compiling functions'
-        print 'current learning rate: ', self.learning_rate
+        # print 'current learning rate: ', self.learning_rate
         start_compilation_time = time.clock()
         if(self.mode == "Train"):
             print 'compiling train function startin at ', strftime("%Y-%m-%d %H:%M:%S")
@@ -272,7 +272,7 @@ class DeepFishNet:
         self.predictProb = theano.function(inputs=[X], outputs=noise_py_x, allow_input_downcast=True)
         end_compilation_time = time.clock()
         self.getFirstLayerOutput = theano.function(inputs=[X], outputs=convOut1)
-        print 'compiled the functions, ended at ', strftime("%Y-%m-%d %H:%M:%S")
+        # print 'compiled the functions, ended at ', strftime("%Y-%m-%d %H:%M:%S")
         print 'time taken to compile the functions: ', end_compilation_time - start_compilation_time
         
     def saveThisModel(self, fileName = None):
@@ -292,19 +292,19 @@ class DeepFishNet:
         pass
     
     def loadThisModel(self, modelToLoad):
-        print 'loading this model'
+        print 'loading the classifier model'
         print modelToLoad
-        print os.path.exists(modelToLoad) == True
+        # print os.path.exists(modelToLoad) == True
         params = np.load(modelToLoad)
         allParams = params['params']
-        print type(allParams)
-        print allParams.shape
-        for eachParam in range(allParams.shape[0]):
-            print allParams[eachParam].shape
+        # print type(allParams)
+        # print allParams.shape
+        # for eachParam in range(allParams.shape[0]):
+        #     print allParams[eachParam].shape
         #self.params = None
         for eachParam in range(allParams.shape[0]):
             self.params[eachParam].set_value(allParams[eachParam])
-        print 'loaded the saved convnet classifier params'
+        print 'loaded the saved convnet classifier classifier parameters'
         pass
 
     def predictThisModel(self):
