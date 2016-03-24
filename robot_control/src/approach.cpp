@@ -13,8 +13,8 @@ bool Approach::runProc()
 		sampleTypeMux = 0;
 		sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
 		ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
-		sendSearch(sampleTypeMux);
-		//sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+		//sendSearch(sampleTypeMux);
+		sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 		state = _exec_;
 		break;
 	case _exec_:
@@ -81,6 +81,7 @@ bool Approach::runProc()
 			else state = _exec_;
 			break;
 		}
+		break;
 	case _interrupt_:
 		backUpCount = 0;
 		sampleDataActedUpon = true;
