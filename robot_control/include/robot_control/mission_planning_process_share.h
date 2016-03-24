@@ -61,8 +61,8 @@ public:
 	const float blindDriveDistance = 0.3048; // m
 	const float grabberDistanceTolerance = 0.05; // m
 	const float grabberAngleTolerance = 1.0; // deg
-	const int possibleSampleConfThresh = 700;
-	const int definiteSampleConfThresh = 900;
+	const int possibleSampleConfThresh = 250;
+	const int definiteSampleConfThresh = 500;
 	static bool possessingSample;
 	static bool possibleSample;
 	static bool definiteSample;
