@@ -25,8 +25,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 	{
 		const float turn_angle = -30; //turn 30 degrees (to left)
 		//avoidance waypoint
-		waypoint.x = req.current_x + req.collisionDistance*cos(req.current_heading + turn_angle*3.14159265/180); //turn 30 deg drive 4 meters
-		waypoint.y = req.current_y + req.collisionDistance*sin(req.current_heading + turn_angle*3.14159265/180); //turn 30 deg drive 4 meters
+        waypoint.x = req.current_x + req.collisionDistance*(cos(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)-sin(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
+        waypoint.y = req.current_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
 		waypoint.easyProb = 0.0;
 		waypoint.medProb = 0.0;
 		waypoint.hardProb = 0.0;
