@@ -23,6 +23,7 @@ public:
 	SampleSearch(); // Constructor
 	bool searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
 	void createFolderForImageData();
+	void createFileForImageData();
 	void drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &coordinates);
 	std::vector<double> calculateFlatGroundPositionOfPixel(int u, int v);
 	// Members
@@ -44,7 +45,10 @@ public:
 	boost::filesystem::path G_data_folder;
 	boost::filesystem::path G_data_folder_full_images;
 	std::string G_data_folder_name;
+	std::string G_blob_image_name;
 	int G_image_index;
+	std::ofstream G_outputInfoFile;
+	std::string G_info_filename;
 };
 
 #endif // SAMPLE_SEARCH_H

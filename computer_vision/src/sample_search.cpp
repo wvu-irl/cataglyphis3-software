@@ -19,6 +19,13 @@ void SampleSearch::createFolderForImageData()
     G_image_index = 0;
 }
 
+void SampleSearch::createFileForImageData()
+{
+	G_info_filename = G_data_folder.string() + "/" + patch::currentDateTime() + "_info.txt";
+    G_outputInfoFile.open(G_info_filename.c_str(), std::ofstream::out | std::ofstream::trunc);
+    G_outputInfoFile.close();
+}
+
 std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int v)
 {
 	//transform pixels to center of image
@@ -82,8 +89,8 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std:
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
 	//call segmentation server
-	segmentImageSrv.request.camera = true;
-	segmentImageSrv.request.path = "";
+	segmentImageSrv.request.camera = false;
+	segmentImageSrv.request.path = "/home/jared/cataglyphis_ws/src/computer_vision/samples.jpg";
 	if(segmentImageClient.call(segmentImageSrv))
 	{
 		ROS_INFO("segmentImageSrv call successful!");
@@ -113,18 +120,37 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	{
 		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.2)
 		{
+		    //write full image to file
+			if(save_image_flag==0) //only save full image once
+			{
+				save_image_flag=1;
+				G_blob_image_name = patch::currentDateTime() + ".jpg";
+				boost::filesystem::path copy_from_full(P.string() + "/data/images/input_image.jpg");
+				boost::filesystem::path copy_to_full( G_data_folder_full_images.string() + "/" + G_blob_image_name);
+				cv::Mat image_copy_from_full = cv::imread(copy_from_full.string());
+				cv::imwrite(copy_to_full.string(),image_copy_from_full);
+			}
+
+			//write blob to file
 			boost::filesystem::path copy_from_blob(P.string() + "/data/blobs/blob" + patch::to_string(i) + ".jpg");
 			boost::filesystem::path copy_to_blob( G_data_folder.string() + "/img" + patch::to_string(G_image_index) + "_blob" + patch::to_string(i) + "_folder" + G_data_folder_name + ".jpg");
 			cv::Mat image_copy_from_blob = cv::imread(copy_from_blob.string());
 			cv::imwrite(copy_to_blob.string(),image_copy_from_blob);
-			if(save_image_flag==0)
-			{
-				save_image_flag=1;
-				boost::filesystem::path copy_from_full(P.string() + "/data/images/input_image.jpg");
-				boost::filesystem::path copy_to_full( G_data_folder_full_images.string() + "/" + patch::currentDateTime() + ".jpg");
-				cv::Mat image_copy_from_full = cv::imread(copy_from_full.string());
-				cv::imwrite(copy_to_full.string(),image_copy_from_full);
-			}
+
+			//write blob info to file
+		    G_outputInfoFile.open(G_info_filename.c_str()); //open the file
+            G_outputInfoFile << "img" + patch::to_string(G_image_index) + "_blob" + patch::to_string(i) + "_" + G_data_folder_name + ".jpg"; //name of blob image
+            G_outputInfoFile << "," << G_data_folder_name + "/full/" + G_blob_image_name; //folder containing full image
+            // G_outputInfoFile << "," << copy_origional.cols; //width of origional image
+            // G_outputInfoFile << "," << copy_origional.rows; //height of origional image
+            // G_outputInfoFile << "," << (rectangles[i].tl().x+rectangles[i].br().x)/2; //center of object x
+            // G_outputInfoFile << "," << (rectangles[i].tl().y+rectangles[i].br().y)/2; //center of obejct y
+            // G_outputInfoFile << "," << rectangles[i].width; //origional width of segment
+            // G_outputInfoFile << "," << rectangles[i].height; //origional height of segment
+            // G_outputInfoFile << "," << extended_rect.width; //expanded width of segment
+            // G_outputInfoFile << "," << extended_rect.height; //expanded height of segment
+            G_outputInfoFile << std::endl; //end line for each blob
+		    G_outputInfoFile.close(); //close the file (must include this in the case the program crashes)
 		}
 	}
 	G_image_index++;
