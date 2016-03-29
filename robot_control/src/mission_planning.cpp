@@ -164,11 +164,10 @@ void MissionPlanning::evalConditions_()
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
         if(collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag) // Avoid
         {
-            for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
+            for(int i=1; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             procsToInterrupt[__avoid__] = false;
             if(!procsBeingExecuted[__avoid__]) procsToExecute[__avoid__] = true;
-            //else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) procsToInterrupt[__avoid__] = true;
-            //if(procsBeingExecuted[chooseRegion__]) {procsToInterrupt[chooseRegion__] = true; ROS_INFO("to interrupt chooseRegion");}
+            else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) procsToInterrupt[__avoid__] = true;
             ROS_INFO("to execute avoid");
         }
         calcNumProcsBeingExec_();

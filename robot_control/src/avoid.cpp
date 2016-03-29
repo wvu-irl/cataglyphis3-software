@@ -33,7 +33,8 @@ bool Avoid::runProc()
 			numWaypointsToTravel = intermediateWaypointsSrv.response.waypointArray.size();
 			clearAndResizeWTT();
 			for(int i=0; i<numWaypointsToTravel; i++) waypointsToTravel.at(i) = intermediateWaypointsSrv.response.waypointArray.at(numWaypointsToTravel-1-i);
-			sendDriveGlobal(true);
+			sendDriveGlobal(true, interrupted);
+			if(interrupted) interrupted = false;
 		}
 		state = _exec_;
 		break;
@@ -46,6 +47,7 @@ bool Avoid::runProc()
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+		interrupted = true;
 		state = _init_;
 		break;
 	case _finish_:

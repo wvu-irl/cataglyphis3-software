@@ -6,7 +6,7 @@
 class Avoid : public Procedure
 {
 	// Members
-
+	bool interrupted = false;
 	// Methods
 	bool runProc();
 };

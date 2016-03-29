@@ -9,7 +9,7 @@ bool DepositSample::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		sendDrop();
-		sendDriveRel(-3.0, 0.0, false, 0.0, false);
+		sendDriveRel(-3.0, 0.0, false, 0.0, false, false);
 		state = _exec_;
 		break;
 	case _exec_:

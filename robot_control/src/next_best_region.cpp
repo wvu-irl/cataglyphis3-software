@@ -39,7 +39,7 @@ bool NextBestRegion::runProc()
             clearAndResizeWTT();
             waypointsToTravel.at(0) = regionsOfInterestSrv.response.waypointArray.at(bestROINum);
             callIntermediateWaypoints();
-			//sendDriveGlobal(false);
+			//sendDriveGlobal(false, false);
 			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             state = _exec_;
         }
@@ -59,7 +59,7 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).x = 8.0;
             waypointsToTravel.at(0).y = 0.0;
             callIntermediateWaypoints();
-			sendDriveGlobal(false);
+			sendDriveGlobal(false, false);
 			procsBeingExecuted[procType] = false;
             state = _init_;
         }

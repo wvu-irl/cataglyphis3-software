@@ -13,7 +13,7 @@ bool DepositApproach::runProc()
 		waypointsToTravel.at(0).x = 1.2;
 		waypointsToTravel.at(0).y = 0.0;
 		callIntermediateWaypoints();
-		sendDriveGlobal(false);
+		sendDriveGlobal(false, false);
 		state = _exec_;
 		break;
 	case _exec_:

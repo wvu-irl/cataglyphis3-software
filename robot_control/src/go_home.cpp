@@ -13,7 +13,7 @@ bool GoHome::runProc()
 		waypointsToTravel.at(0).x = 5.0;
 		waypointsToTravel.at(0).y = 0.0;
 		callIntermediateWaypoints();
-		sendDriveGlobal(false);
+		sendDriveGlobal(false, false);
 		state = _exec_;
 		break;
 	case _exec_:

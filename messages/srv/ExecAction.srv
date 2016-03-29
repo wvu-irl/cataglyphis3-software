@@ -2,6 +2,7 @@ uint8 nextActionType
 bool newActionFlag
 bool pushToFrontFlag
 bool clearDequeFlag
+bool clearFrontFlag
 bool pause
 float32 float1
 float32 float2

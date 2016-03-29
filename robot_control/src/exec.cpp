@@ -50,6 +50,7 @@ Exec::Exec()
 void Exec::run()
 {
     if(clearDequeFlag_) actionDeque_.clear(); // Clear deque
+    if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
     {
         if(pushToFrontFlag_) // Push new action to front of deque
@@ -72,6 +73,7 @@ void Exec::run()
         if(actionDeque_.empty()) // Check if deque is empty
         {
 			pauseIdle_.run(); // Perform pause action to halt the robot
+            currentActionDone_ = 0;
 			//ROS_DEBUG("after deque empty pauseIdle.run");
 			//if(newActionFlag_ && !pushToFrontFlag_) actionDeque_.front()->init();  // If a new action has been pushed to the back of the deque, run init() on the new action
         }

@@ -45,6 +45,7 @@ private:
 	bool newActionFlag_ = false;
 	bool pushToFrontFlag_ = false;
 	bool clearDequeFlag_ = false;
+	bool clearFrontFlag_ = false;
 	bool pause_ = false;
 	bool pausePrev_ = false;
 	bool actionDequeEmpty_ = false;

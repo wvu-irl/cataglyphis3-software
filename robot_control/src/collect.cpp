@@ -9,7 +9,7 @@ bool Collect::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		sendGrab();
-		sendDriveRel(-1.0, 0.0, false, 0.0, false);
+		sendDriveRel(-1.0, 0.0, false, 0.0, false, false);
 		state = _exec_;
 		break;
 	case _exec_:

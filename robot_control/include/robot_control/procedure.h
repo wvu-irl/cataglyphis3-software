@@ -20,9 +20,9 @@ public:
     virtual bool runProc() = 0;
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
-	void sendDriveGlobal(bool pushToFront);
+	void sendDriveGlobal(bool pushToFront, bool clearFront);
 	void sendDriveAndSearch(uint8_t typeMux);
-    void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
+	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool clearFront);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
 	void sendDrop();
@@ -85,7 +85,7 @@ void Procedure::callIntermediateWaypoints()
     }
 }
 
-void Procedure::sendDriveGlobal(bool pushToFront)
+void Procedure::sendDriveGlobal(bool pushToFront, bool clearFront)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
@@ -94,6 +94,7 @@ void Procedure::sendDriveGlobal(bool pushToFront)
         execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = pushToFront;
         execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.clearFrontFlag = clearFront;
         execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
@@ -119,6 +120,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = false;
 		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.clearFrontFlag = false;
 		execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
@@ -143,6 +145,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = false;
 		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.clearFrontFlag = false;
 		execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = 0.0;
 		execActionSrv.request.float2 = 0.0;
@@ -164,13 +167,13 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 	}
 }
 
-void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
+void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool clearFront)
 {
-
     execActionSrv.request.nextActionType = _driveRelative;
     execActionSrv.request.newActionFlag = 1;
     execActionSrv.request.pushToFrontFlag = frontOfDeque;
     execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = clearFront;
     execActionSrv.request.pause = false;
     execActionSrv.request.float1 = deltaDistance;
     execActionSrv.request.float2 = deltaHeading;
@@ -192,6 +195,7 @@ void Procedure::sendSearch(uint8_t typeMux)
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
 	execActionSrv.request.float1 = 0.0;
 	execActionSrv.request.float2 = 0.0;
@@ -218,6 +222,7 @@ void Procedure::sendGrab()
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
 	execActionSrv.request.float1 = 0.0;
 	execActionSrv.request.float2 = 0.0;
@@ -245,6 +250,7 @@ void Procedure::sendDrop()
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
 	execActionSrv.request.float1 = 0.0;
 	execActionSrv.request.float2 = 0.0;
@@ -272,6 +278,7 @@ void Procedure::sendOpen()
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
 	execActionSrv.request.float1 = 0.0;
 	execActionSrv.request.float2 = 0.0;
