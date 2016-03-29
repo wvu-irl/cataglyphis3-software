@@ -79,9 +79,9 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 
 
 
-#add_executable(keyframe src/keyframe.cpp)
-#add_dependencies(keyframe ${PROJECT_NAME}_gencpp)
-#target_link_libraries(keyframe ${catkin_LIBRARIES})
+add_executable(keyframe src/keyframe.cpp)
+add_dependencies(keyframe ${PROJECT_NAME}_gencpp)
+target_link_libraries(keyframe ${catkin_LIBRARIES})
 
 add_executable(keymapper src/keymapper.cpp)
 add_dependencies(keymapper ${PROJECT_NAME}_gencpp)

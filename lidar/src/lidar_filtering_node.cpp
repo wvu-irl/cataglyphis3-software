@@ -1,4 +1,5 @@
-#include <ros/ros.h>
+#include "ros/ros.h"
+#include "ros/console.h"
 #include <iostream>
 #include <stdio.h>
 #include <string>
@@ -38,6 +39,9 @@
 #include <pcl-1.7/pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
 #include <armadillo>
 #include <messages/LidarFilterOut.h>
+
+#include "pcl/conversions.h"
+#include "sensor_msgs/PointCloud2.h"
 
 int map_range = 40; //size of local map is 20x20 m
 float grid_size = 1; // size of the local map grid
@@ -168,29 +172,33 @@ private:
 	    {
 	      object_filtered_projection->points[i].z=0;
 	    }
-
+	    /*
 	    // BUILD LOCAL MAP, THE CURRENT ALGORITHM IS VERY UN-EFFECTIVE, NEED TO IMPROVE LATER
-		// vector < pcl::PointCloud<pcl::PointXYZ>::Ptr > local_grid;
-		// cout << "Object after projection has " << object_filtered_projection->points.size() << " points." << endl;
-		// for (int i=0; i<(2*map_range)*(2*map_range); i++) // generate gird element
-		// {
-		// 	pass.setInputCloud(object_filtered_projection);
-		// 	pass.setFilterFieldName("y");
-		// 	pass.setFilterLimits(-map_range + floor(i/(2*map_range)) , -map_range + floor((i/2*map_range)) + grid_size); //ML direction
-		// 	pass.filter(*grid_cloud);
-		// 	pass.setInputCloud(grid_cloud);
-		// 	pass.setFilterFieldName("x");
-		// 	pass.setFilterLimits(-map_range + i % (2*map_range) , -map_range + i % (2*map_range) + grid_size); //ML direction
-		// 	pass.filter(*grid_cloud);
-		// 	//cout << "grid has " << grid_cloud->points.size() << " points" << endl;
-		// 	//local_grid.push_back((*grid_cloud).make_shared());
-		// 	local_grid.push_back(grid_cloud);
-		// 	//cout << "Size of grid map " << local_grid.size() << endl;
-		// 	cout << "Grid " << i << " has " << (local_grid[i])->points.size() << " points."<< endl;
-		// }
+		std::vector < pcl::PointCloud<pcl::PointXYZ>::Ptr > local_grid;
+		cout << "Object after projection has " << object_filtered_projection->points.size() << " points." << endl;
+		for (int i=0; i<(2*map_range)*(2*map_range); i++) // generate gird element
+		{
+			pass.setInputCloud(object_filtered_projection);
+			pass.setFilterFieldName("y");
+			pass.setFilterLimits(-map_range + floor(i/(2*map_range)) , -map_range + floor((i/2*map_range)) + grid_size); //ML direction
+			pass.filter(*grid_cloud);
+			pass.setInputCloud(grid_cloud);
+			pass.setFilterFieldName("x");
+			pass.setFilterLimits(-map_range + i % (2*map_range) , -map_range + i % (2*map_range) + grid_size); //ML direction
+			pass.filter(*grid_cloud);
+			//cout << "grid has " << grid_cloud->points.size() << " points" << endl;
+			//local_grid.push_back((*grid_cloud).make_shared());
+			local_grid.push_back(grid_cloud);
+			//cout << "Size of grid map " << local_grid.size() << endl;
+			//cout << "Grid " << i << " has " << (local_grid[i])->points.size() << " points."<< endl;
+		}
+		*/
 
 		// THE local_grid HAS ALL INFO, NEED TO PUBLISH IT
-
+		//TRANSFER POINTCLOUD TO POINTCLOUD2
+		pcl::PCLPointCloud2 tmp_cloud;
+		pcl::toPCLPointCloud2(*object_filtered_projection,tmp_cloud);
+		pcl_conversions::fromPCL(tmp_cloud, local_map_SLAM);
 
 		// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
 		// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
@@ -536,6 +544,8 @@ public:
 	float homing_heading=0;
 	bool homing_found=false;
 	int counter=0;
+
+	sensor_msgs::PointCloud2 local_map_SLAM;
 	Registration()
 	{
 		sub_laser = nn.subscribe("/velodyne_points", 1, &Registration::registrationCallback, this);
@@ -550,6 +560,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::Rate loop_rate(5);
 	ros::Publisher pub_lidar = nh.advertise<messages::LidarFilterOut>("lidar/lidarfilteringout/lidarfilteringout",1);
+	//publish 
+	ros::Publisher pub_local_map_SLAM = nh.advertise<sensor_msgs::PointCloud2>("cloud_pcd",1);
+
+
+
 
 	//subscriber and algorithm
 	Registration registration; 
@@ -581,7 +596,8 @@ int main(int argc, char **argv)
 
 		//publish message
 		pub_lidar.publish(msg_LidarFilterOut);
-
+		pub_local_map_SLAM.publish(registration.local_map_SLAM);
+		
 		loop_rate.sleep();
 		ros::spinOnce();		
 	}

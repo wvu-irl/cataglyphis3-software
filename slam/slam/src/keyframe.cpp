@@ -86,13 +86,12 @@ keyframe::keyframe(ros::NodeHandle& node):
 
 
 	node(node),
-	pn(pn),
 
 	inputQueueSize(getParam<int>("inputQueueSize", 10)),	//limit the number of input data
 	minOverlap(getParam<double>("minOverlap", 0.5)),
 	mindistance_key(getParam<double>("mindistance_key", 10)),	//min distance between each key frame
 	minReadingPointCount(getParam<int>("minReadingPointCount", 2000)),
-	minMapPointCount(getParam<int>("minMapPointCount", 500)),
+//	minMapPointCount(getParam<int>("minMapPointCount", 500)),
 	ref_frame(getParam<string>("ref_frame", "reference")),
 	read_frame(getParam<string>("read_frame", "reading")),	
 	map_frame(getParam<string>("map_frame", "map")),
@@ -180,7 +179,7 @@ void keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 
 	//Dimension of the point cloud, we seem like handle 3D
 	const int dimp1(newPointCloud.features.rows());
-	ROS_EDBUG_STREAM("dimp1: "<<dimp1);
+	ROS_DEBUG_STREAM("dimp1: "<<dimp1);
 	ROS_INFO_STREAM("Processing new point cloud");
 	{
 		timer t; //print how long take the algorithm
