@@ -89,8 +89,8 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std:
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
 	//call segmentation server
-	segmentImageSrv.request.camera = false;
-	segmentImageSrv.request.path = "/home/jared/cataglyphis_ws/src/computer_vision/samples.jpg";
+	segmentImageSrv.request.camera = true;
+	segmentImageSrv.request.path = "";
 	if(segmentImageClient.call(segmentImageSrv))
 	{
 		ROS_INFO("segmentImageSrv call successful!");
