@@ -88,22 +88,22 @@ MapManager::MapManager()
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
     regionsOfInterest.push_back(waypoint);
-    waypoint.x = -8.0;
+    /*waypoint.x = -8.0;
     waypoint.y = 5.0;
     waypoint.easyProb = 500;
     waypoint.medProb = 500;
     waypoint.hardProb = 500;
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
-    regionsOfInterest.push_back(waypoint);
-    waypoint.x = -8.0;
+    regionsOfInterest.push_back(waypoint);*/
+    /*waypoint.x = -8.0;
     waypoint.y = -5.0;
     waypoint.easyProb = 400;
     waypoint.medProb = 400;
     waypoint.hardProb = 400;
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
-    regionsOfInterest.push_back(waypoint);
+    regionsOfInterest.push_back(waypoint);*/
     waypoint.x = 8.0;
     waypoint.y = -5.0;
     waypoint.easyProb = 300;
