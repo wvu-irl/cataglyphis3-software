@@ -4,6 +4,7 @@
 #include <robot_control/Waypoint.h>
 #include <robot_control/IntermediateWaypoints.h>
 #include <vector>
+#include <math.h>
 
 class SafePathing
 {
@@ -16,6 +17,11 @@ public:
 	ros::ServiceServer ppServ;
 	std::vector <robot_control::Waypoint> intermediateWaypoints;
 	robot_control::Waypoint waypoint;
+	robot_control::Waypoint transitionWaypoint1;
+	robot_control::Waypoint transitionWaypoint2;
+	const float transitionWaypointRadius = 30.0; // m
+	float startRadialDistance;
+	float finishRadialDistance;
 };
 
 #endif // SAFE_PATHING_H 

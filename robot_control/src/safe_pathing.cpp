@@ -3,6 +3,20 @@
 SafePathing::SafePathing()
 {
 	ppServ = nh.advertiseService("/control/safepathing/intermediatewaypoints", &SafePathing::FindPath, this);
+    startRadialDistance = 0.0;
+    finishRadialDistance = 0.0;
+    transitionWaypoint1.x = 15.2711;
+    transitionWaypoint1.y = -17.9457;
+    transitionWaypoint1.easyProb = 0.0;
+    transitionWaypoint1.medProb = 0.0;
+    transitionWaypoint1.hardProb = 0.0;
+    transitionWaypoint1.terrainHazard = 0.0;
+    transitionWaypoint2.x = 31.9061;
+    transitionWaypoint2.y = -22.1341;
+    transitionWaypoint2.easyProb = 0.0;
+    transitionWaypoint2.medProb = 0.0;
+    transitionWaypoint2.hardProb = 0.0;
+    transitionWaypoint2.terrainHazard = 0.0;
 }
 
 bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, robot_control::IntermediateWaypoints::Response &res)
@@ -33,6 +47,21 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 		waypoint.terrainHazard = 0.0;
 		intermediateWaypoints.push_back(waypoint);	
 	}
+    else if(req.collision==0) // No collision
+    {
+        startRadialDistance = hypot(req.start.x, req.start.y);
+        finishRadialDistance = hypot(req.finish.x, req.finish.y);
+        if(finishRadialDistance>=transitionWaypointRadius && startRadialDistance<transitionWaypointRadius)
+        {
+            intermediateWaypoints.push_back(transitionWaypoint1);
+            intermediateWaypoints.push_back(transitionWaypoint2);
+        }
+        else if(finishRadialDistance<transitionWaypointRadius && startRadialDistance>=transitionWaypointRadius)
+        {
+            intermediateWaypoints.push_back(transitionWaypoint2);
+            intermediateWaypoints.push_back(transitionWaypoint1);
+        }
+    }
 
 	res.waypointArray = intermediateWaypoints;
 	return true;

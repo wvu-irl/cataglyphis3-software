@@ -8,9 +8,19 @@ bool DepositSample::runProc()
 	case _init_:
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		sendDrop();
-		sendDriveRel(-3.0, 0.0, false, 0.0, false, false);
-		state = _exec_;
+		samplesCollected++;
+		if(samplesCollected<MAX_SAMPLES)
+		{
+			sendDrop();
+			sendDriveRel(-3.0, 0.0, false, 0.0, false, false);
+			missionEnded = false;
+			state = _exec_;
+		}
+		else
+		{
+			missionEnded = true;
+			state = _finish_;
+		}
 		break;
 	case _exec_:
 		procsBeingExecuted[procType] = true;
@@ -24,7 +34,6 @@ bool DepositSample::runProc()
 		state = _init_;
 		break;
 	case _finish_:
-		samplesCollected++;
 		possessingSample = false;
 		confirmedPossession = false;
 		atHome = false;

@@ -25,6 +25,7 @@ MissionPlanning::MissionPlanning()
     confirmedPossession = false;
     atHome = false;
     inDepositPosition = false;
+    missionEnded = false;
     multiProcLockout = false;
     lockoutSum = 0;
     initComplete = false;
@@ -162,7 +163,7 @@ void MissionPlanning::evalConditions_()
     else
     {
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
-        if(collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag) // Avoid
+        if(collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !missionEnded) // Avoid
         {
             for(int i=1; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             procsToInterrupt[__avoid__] = false;
@@ -171,7 +172,7 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute avoid");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample)) // Next Best Region
+        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
@@ -179,44 +180,44 @@ void MissionPlanning::evalConditions_()
         calcNumProcsBeingExec_();
         /*if(numProcsBeingExec==0 && ) // Search Closest Region
         calcNumProcsBeingExec_();*/
-        /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon) // Examine
+        /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon && !missionEnded) // Examine
         {
             sampleDataActedUpon = true;
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
         }*/
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition) // Approach
+        if(numProcsBeingExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample) // Collect
+        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && !confirmedPossession) // Confirm Collect
+        if(numProcsBeingExec==0 && possessingSample && !confirmedPossession && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && !atHome) // Go Home
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && !atHome && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition) // Deposit Approach
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition) // Deposit Sample
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
@@ -241,6 +242,7 @@ void MissionPlanning::runProcesses_()
     if(pauseStarted == true) pause.sendUnPause();
     pauseStarted = false;
     nextBestRegion.run();
+    //searchClosestRegion.run();
     avoid.run();
     approach.run();
     collect.run();

@@ -21,6 +21,7 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 #define NUM_PROC_TYPES 11
+#define MAX_SAMPLES 10
 enum PROC_TYPES_T {__avoid__, __nextBestRegion__, __searchClosestRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
 //enum PROC_TYPES_T {avoid__, returnHome__, deposit__, acquire__, examine__, planRegionPath__, chooseRegion__, init__, pause__};
 
@@ -71,6 +72,7 @@ public:
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool inDepositPosition;
+	static bool missionEnded;
 	static int samplesCollected;
 };
 
@@ -111,6 +113,7 @@ bool MissionPlanningProcessShare::sampleInCollectPosition;
 bool MissionPlanningProcessShare::confirmedPossession;
 bool MissionPlanningProcessShare::atHome;
 bool MissionPlanningProcessShare::inDepositPosition;
+bool MissionPlanningProcessShare::missionEnded;
 int MissionPlanningProcessShare::samplesCollected;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

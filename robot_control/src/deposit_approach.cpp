@@ -1,17 +1,52 @@
 #include <robot_control/deposit_approach.h>
 
+DepositApproach::DepositApproach()
+{
+	depositLocations.resize(MAX_SAMPLES);
+	depositLocations.at(0).x = 0.8;
+	depositLocations.at(0).y = 0.0;
+
+	depositLocations.at(1).x = 0.8;
+	depositLocations.at(1).y = -0.483;
+
+	depositLocations.at(2).x = 1.25;
+	depositLocations.at(2).y = -0.483;
+
+	depositLocations.at(3).x = 0.8;
+	depositLocations.at(3).y = 0.483;
+
+	depositLocations.at(4).x = 1.25;
+	depositLocations.at(4).y = 0.0;
+
+	depositLocations.at(5).x = 1.7;
+	depositLocations.at(5).y = -0.483;
+
+	depositLocations.at(6).x = 1.25;
+	depositLocations.at(6).y = 0.483;
+
+	depositLocations.at(7).x = 1.7;
+	depositLocations.at(7).y = 0.0;
+
+	depositLocations.at(8).x = 1.7;
+	depositLocations.at(8).y = 0.483;
+
+	depositLocations.at(9).x = 1.7;
+	depositLocations.at(9).y = 0.0;
+}
+
 bool DepositApproach::runProc()
 {
 	ROS_INFO("depositApproachState = %i", state);
 	switch(state)
 	{
 	case _init_:
+		step = _align;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		numWaypointsToTravel = 1;
 		clearAndResizeWTT();
-		waypointsToTravel.at(0).x = 1.2;
-		waypointsToTravel.at(0).y = 0.0;
+		waypointsToTravel.at(0).x = depositAlignXDistance;
+		waypointsToTravel.at(0).y = depositLocations.at(samplesCollected).y;
 		callIntermediateWaypoints();
 		sendDriveGlobal(false, false);
 		state = _exec_;
@@ -19,19 +54,53 @@ bool DepositApproach::runProc()
 	case _exec_:
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
-		else state = _exec_;
+		switch(step)
+		{
+		case _align:
+			if(execLastProcType == procType && execLastSerialNum == serialNum)
+			{
+				calcPlatformDrive();
+				sendDriveRel(platformDriveDistance, platformPivotAngle, false, 0.0, false, false);
+				step = _platform;
+				state = _exec_;
+			}
+			else
+			{
+				step = _align;
+				state = _exec_;
+			}
+			break;
+		case _platform:
+			if(execLastProcType == procType && execLastSerialNum == serialNum)
+			{
+				state = _finish_;
+			}
+			else
+			{
+				step = _platform;
+				state = _exec_;
+			}
+			break;
+		}
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+		step = _align;
 		state = _exec_;
 		break;
 	case _finish_:
 		inDepositPosition = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+		step = _align;
 		state = _init_;
 		break;
 	}
+}
+
+void DepositApproach::calcPlatformDrive()
+{
+	platformDriveDistance = hypot((robotStatus.xPos - depositLocations.at(samplesCollected).x), (robotStatus.yPos - depositLocations.at(samplesCollected).y)) - distanceToGrabber;
+	platformPivotAngle = 180.0 - robotStatus.heading + atan2((robotStatus.yPos - depositLocations.at(samplesCollected).y), (robotStatus.xPos - depositLocations.at(samplesCollected).x));
 }
