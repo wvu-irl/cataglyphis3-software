@@ -79,7 +79,7 @@ MapManager::MapManager()
 	ROS_INFO("wapointsOfInterestVector Size = %u",waypointsOfInterestVector.size());
 
     roiServ = nh.advertiseService("/control/mapmanager/regionsofinterest", &MapManager::ROI, this);
-    // Temporary ROIs
+    // Temporary ROIs. Rectangle around starting platform
     waypoint.x = 8.0;
     waypoint.y = 5.0;
     waypoint.easyProb = 600;
@@ -112,6 +112,96 @@ MapManager::MapManager()
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
     regionsOfInterest.push_back(waypoint);
+
+    // Temporary ROIs. Search in front of library
+    /*waypoint.x = 35.0826;
+    waypoint.y = -20.9706;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 34.9990;
+    waypoint.y = -28.0289;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 42.0208;
+    waypoint.y = -28.1840;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 48.9591;
+    waypoint.y = -28.0289;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 48.9591;
+    waypoint.y = -21.0482;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 42.1044;
+    waypoint.y = -21.2033;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 41.9373;
+    waypoint.y = -34.9320;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 45.7825;
+    waypoint.y = -31.5968;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 45.4482;
+    waypoint.y = -24.3059;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 38.5099;
+    waypoint.y = -24.5385;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 38.5935;
+    waypoint.y = -31.5968;
+    waypoint.easyProb = 600;
+    waypoint.medProb = 600;
+    waypoint.hardProb = 600;
+    waypoint.terrainHazard = 35;
+    waypoint.visited = false;
+    regionsOfInterest.push_back(waypoint);*/
 
 	// ***********************************
     satMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/satmap",1);

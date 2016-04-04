@@ -38,6 +38,7 @@ bool Approach::runProc()
 				if((bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
 						(fabs(bestSample.bearing) <= grabberAngleTolerance))
 				{
+					sampleInCollectPosition = true;
 					backUpCount = 0;
 					state = _finish_;
 				}
