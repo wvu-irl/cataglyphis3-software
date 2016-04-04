@@ -8,6 +8,7 @@ bool Collect::runProc()
 	case _init_:
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+		sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false, false);
 		sendGrab();
 		sendDriveRel(-1.0, 0.0, false, 0.0, false, false);
 		state = _exec_;

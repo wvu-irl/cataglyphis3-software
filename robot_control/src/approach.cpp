@@ -1,5 +1,12 @@
 #include <robot_control/approach.h>
 
+Approach::Approach()
+{
+	approachableSample = false;
+	numSampleCandidates = 0;
+	commandedSearch = false;
+}
+
 bool Approach::runProc()
 {
 	ROS_INFO("approachState = %i", state);
@@ -7,14 +14,15 @@ bool Approach::runProc()
 	switch(state)
 	{
 	case _init_:
-		step = _performSearch;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		sampleTypeMux = 0;
-		sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
-		ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
+		findHighestConfSample();
+		expectedSampleDistance = highestConfSample.distance;
+		expectedSampleAngle = highestConfSample.bearing;
+		//sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
+		//ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
 		//sendSearch(sampleTypeMux);
-		sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+		step = _computeManeuver;
 		state = _exec_;
 		break;
 	case _exec_:
@@ -22,63 +30,59 @@ bool Approach::runProc()
 		procsToExecute[procType] = false;
 		switch(step)
 		{
-		case _performSearch:
-			ROS_INFO("procType = %i",static_cast<int>(this->procType));
-			ROS_INFO("serialNum = %i",this->serialNum);
-			ROS_INFO("cvSamplesFoundMsg.procType = %i",static_cast<int>(cvSamplesFoundMsg.procType));
-			ROS_INFO("cvSamplesFoundMsg.serialNum = %i",cvSamplesFoundMsg.serialNum);
-			if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
+		case _computeManeuver:
+			sampleTypeMux = 0;
+			computeSampleValues();
+			if(approachableSample)
 			{
 				if((bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
 						(fabs(bestSample.bearing) <= grabberAngleTolerance))
 				{
-					sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false, false);
-					step = _blindDrive;
-					state = _exec_;
-				}
-				else if(bestSample.confidence==0)
-				{
-					backUpCount++;
-					if(backUpCount>maxBackUpCount)
-					{
-						backUpCount = 0;
-						state = _finish_;
-					}
-					else
-					{
-						sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
-						step = _driveManeuver;
-						state = _exec_;
-					}
+					backUpCount = 0;
+					state = _finish_;
 				}
 				else
 				{
 					distanceToDrive = bestSample.distance - distanceToGrabber - blindDriveDistance;
 					if(distanceToDrive > maxDriveDistance) distanceToDrive = maxDriveDistance;
 					angleToTurn = bestSample.bearing;
+					computeExpectedSampleLocation();
 					sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false, false);
-					step = _driveManeuver;
+					sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+					commandedSearch = true;
+					step = _performManeuver;
 					state = _exec_;
 				}
 			}
 			else
 			{
-				step = _performSearch;
-				state = _exec_;
+				backUpCount++;
+				if(backUpCount>maxBackUpCount)
+				{
+					backUpCount = 0;
+					state = _finish_;
+				}
+				else
+				{
+					sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
+					commandedSearch = false;
+					step = _performManeuver;
+					state = _exec_;
+				}
 			}
 			break;
-		case _driveManeuver:
-			if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
-			else state = _exec_;
-			break;
-		case _blindDrive:
-			if(execLastProcType == procType && execLastSerialNum == serialNum)
+		case _performManeuver:
+			if(commandedSearch)
 			{
-				backUpCount = 0;
-				sampleInCollectPosition = true;
-				state = _finish_;
+				if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) step = _computeManeuver;
+				else step = _performManeuver;
 			}
-			else state = _exec_;
+			else
+			{
+				if(execLastProcType == procType && execLastSerialNum == serialNum) step = _computeManeuver;
+				else step = _performManeuver;
+			}
+			state = _exec_;
 			break;
 		}
 		break;
@@ -87,15 +91,54 @@ bool Approach::runProc()
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+		step = _computeManeuver;
 		state = _init_;
-		step = _performSearch;
 		break;
 	case _finish_:
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+		step = _computeManeuver;
 		state = _init_;
-		step = _performSearch;
 		break;
+	}
+}
+
+void Approach::computeSampleValues()
+{
+	numSampleCandidates = cvSamplesFoundMsg.sampleList.size();
+	sampleValues.clear();
+	sampleValues.resize(numSampleCandidates);
+	bestSampleValue = 0;
+	approachableSample = false;
+	for(int i=0; i<numSampleCandidates; i++)
+	{
+		sampleValues.at(i) = (sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
+								(int)(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2)+pow(expectedSampleDistance,2)-
+									2*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
+										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle)))))/sampleConfidenceGain;
+
+		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
+		if(bestSampleValue >= approachValueThreshold) approachableSample = true;
+	}
+}
+
+void Approach::computeExpectedSampleLocation()
+{
+	expectedSampleDistance = pow(bestSample.distance,2) + pow(distanceToDrive,2) - 2*bestSample.distance*distanceToDrive*cos(DEG2RAD*(bestSample.bearing));
+	if(distanceToDrive < bestSample.distance) expectedSampleAngle = bestSample.bearing + RAD2DEG*asin(DEG2RAD*(distanceToDrive/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing)));
+	else
+	{
+		if(bestSample.bearing >= 0.0) expectedSampleAngle = 180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
+		else expectedSampleAngle = -180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
+	}
+}
+
+void Approach::findHighestConfSample()
+{
+	highestConfSample.confidence = 0;
+	for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+	{
+		if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestConfSample.confidence) highestConfSample = cvSamplesFoundMsg.sampleList.at(i);
 	}
 }

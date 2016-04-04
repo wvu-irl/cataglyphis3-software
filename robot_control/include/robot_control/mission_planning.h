@@ -102,7 +102,7 @@ private:
 	void runPause_();
 	void antColony_();
 	void calcNumProcsBeingExec_();
-	void findBestSample();
+	void updateSampleFlags_();
 
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);

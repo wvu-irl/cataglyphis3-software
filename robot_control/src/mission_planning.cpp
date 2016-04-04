@@ -415,15 +415,15 @@ void MissionPlanning::calcNumProcsBeingExec_()
     }
 }
 
-void MissionPlanning::findBestSample()
+void MissionPlanning::updateSampleFlags_()
 {
-    bestSample.confidence = 0;
+    possibleSample = false;
+    definiteSample = false;
     for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
     {
-        if(cvSamplesFoundMsg.sampleList.at(i).confidence > bestSample.confidence) bestSample = cvSamplesFoundMsg.sampleList.at(i);
+        if(cvSamplesFoundMsg.sampleList.at(i).confidence >= possibleSampleConfThresh) possibleSample = true;
+        if(cvSamplesFoundMsg.sampleList.at(i).confidence >= definiteSampleConfThresh) definiteSample = true;
     }
-    if(bestSample.confidence >= possibleSampleConfThresh) possibleSample = true;
-    if(bestSample.confidence >= definiteSampleConfThresh) definiteSample = true;
 }
 
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
@@ -459,9 +459,7 @@ void MissionPlanning::execInfoCallback_(const messages::ExecInfo::ConstPtr &msg)
 
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)
 {
-    possibleSample = false;
-    definiteSample = false;
     cvSamplesFoundMsg = *msg;
-    findBestSample();
+    updateSampleFlags_();
     sampleDataActedUpon = false;
 }
