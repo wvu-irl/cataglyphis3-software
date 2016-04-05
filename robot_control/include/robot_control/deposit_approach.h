@@ -9,7 +9,7 @@ class DepositApproach : public Procedure
 public:
 	// Members
 	std::vector<robot_control::Waypoint> depositLocations;
-	const float depositAlignXDistance = 5.0; // m
+	const float depositAlignXDistance = 3.0; // m
 	DEPOSIT_APPROACH_STEP_T step;
 	float platformDriveDistance;
 	float platformPivotAngle;

@@ -44,7 +44,7 @@ Exec::Exec()
         pauseIdle_.taskPool[_search_][l] = new VisionSearch;
 		// remaining vision tasks
 	}
-
+    execStartTime_ = ros::Time::now().toSec();
 }
 
 void Exec::run()
@@ -101,6 +101,8 @@ void Exec::run()
 	packInfoMsgOut_();
 	actuatorPub.publish(actuatorMsgOut_);
 	infoPub.publish(execInfoMsgOut_);
+    execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
+    ROS_INFO_THROTTLE(3,"execElapsedTime = %f",execElapsedTime_);
 }
 
 bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res)
