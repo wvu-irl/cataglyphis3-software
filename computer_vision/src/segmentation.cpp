@@ -218,6 +218,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     cv::Rect boundingBoxonBlob;
     std::vector<cv::Rect> blob_list;
     cv::Mat r1;
+    int tempCounter = 0;
     for(int i = 0;i<contourPoints.size();i++)
     {
         boundingBoxonBlob = boundingRect(cv::Mat(contourPoints[i]));
@@ -227,6 +228,45 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         	//ignore blob
         	ROS_INFO("ignoring blob (for size) %i",i);
         	continue;
+        }
+
+        float ratio = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)/(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
+        if( ratio > 2.5/1.0 || ratio < 1.0/2.5 )
+        {
+            //ignore blob
+            ROS_INFO("ignoring blob (for ratio) %i",i);
+            continue;
+        }
+
+        //must calculate center of image, shift pixel to center of image, then transform so u and v to the x and y of the robot in pixel units
+        //NOTE that x = -v and y = u
+        //NOTE the transofmration is not saved, so this must be calculated again when estimating the position
+        //NOTE the reason this is being performed here is because the origional area is not possible to access in the sample search class in the sample search node
+        float imageWidth = segmented.cols;
+        float imageHeight = segmented.rows;
+        float xCoordPixels = -1*(boundingBoxonBlob.y+boundingBoxonBlob.width/2 - imageHeight/2);
+        float yCoordPixels = (boundingBoxonBlob.x+boundingBoxonBlob.width/2 - imageWidth/2);
+        float distanceFromCenterOfImageInPixels = sqrt(xCoordPixels*xCoordPixels + yCoordPixels*yCoordPixels);
+        float segmentAreaInPixels = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)*(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
+        ROS_INFO("distance from center, area, object number = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
+        tempCounter++;
+        if( distanceFromCenterOfImageInPixels > 2000 )
+        {
+            if(segmentAreaInPixels < 750)
+            {
+                //ignore blob
+                ROS_INFO("ignoring blob (for near area thresh) %i",i);
+                continue;
+            }
+        }
+        if(distanceFromCenterOfImageInPixels < 2000)
+        {
+            if(segmentAreaInPixels < 1000)
+            {
+                //ignore blob
+                ROS_INFO("ignoring blob (for far area thresh) %i",i);
+                continue;              
+            }
         }
 
         blob_list.push_back(boundingBoxonBlob);
@@ -344,6 +384,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 	split(image_file, channels);
 	//cv::multiply(channels[0],cv::Scalar(255),channels[0]);
     cv::multiply(channels[0],calibrationMask,channels[0]);
+    cv::imwrite(P.string() + "/data/images/segmented.jpg",channels[0].clone());
 
     //t = (get_wall_time() - t)*1000;
     //cout << "Time to extract blue channel: " << t << " milliseconds." << endl;
@@ -359,6 +400,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
     dilate(channels[0], channels[0], dilateElement);
     dilate(channels[0], channels[0], dilateElement);
+    cv::imwrite(P.string() + "/data/images/morphed.jpg",channels[0].clone());
 
     //t = (get_wall_time() - t)*1000;
     //cout << "Time perform morphological operations: " << t << " milliseconds." << endl;

@@ -106,7 +106,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES lidar
-  CATKIN_DEPENDS message_generation message_runtime messages roscpp rospy std_msgs 
+  CATKIN_DEPENDS message_generation message_runtime messages roscpp rospy std_msgs image_transport cv_bridge
 #  DEPENDS system_lib INCLUDE_DIRS include
 )
 
@@ -152,10 +152,12 @@ add_library(sample_search src/sample_search.cpp)
 ## Declare a C++ executable
 add_executable(sample_search_node src/sample_search_node.cpp)
 add_executable(segmentation_node src/segmentation_node.cpp)
+add_executable(save_data_node src/save_data_node.cpp)
 
 ## Add cmake target dependencies of the executable
 add_dependencies(sample_search_node computer_vision_generate_messages_cpp)
 add_dependencies(segmentation_node computer_vision_generate_messages_cpp)
+add_dependencies(save_data_node computer_vision_generate_messages_cpp)
 
 #add_dependencies(sample_search computer_vision_generate_messages_cpp)
 
@@ -173,6 +175,11 @@ add_dependencies(segmentation_node computer_vision_generate_messages_cpp)
  	boost_filesystem 
  	boost_system
  )
+
+ target_link_libraries(save_data_node 
+ 	${catkin_LIBRARIES}
+ )
+
 
 #############
 ## Install ##
