@@ -37,6 +37,7 @@ DepositApproach::DepositApproach()
 bool DepositApproach::runProc()
 {
 	ROS_INFO("depositApproachState = %i", state);
+	ROS_INFO("depositApproachStep = %i",step);
 	switch(state)
 	{
 	case _init_:
@@ -102,5 +103,6 @@ bool DepositApproach::runProc()
 void DepositApproach::calcPlatformDrive()
 {
 	platformDriveDistance = hypot((robotStatus.xPos - depositLocations.at(samplesCollected).x), (robotStatus.yPos - depositLocations.at(samplesCollected).y)) - distanceToGrabber;
-	platformPivotAngle = 180.0 - robotStatus.heading + atan2((robotStatus.yPos - depositLocations.at(samplesCollected).y), (robotStatus.xPos - depositLocations.at(samplesCollected).x));
+	if(robotStatus.heading>=0.0) platformPivotAngle = 180.0 - fmod(robotStatus.heading,360.0) + RAD2DEG*atan2((robotStatus.yPos - depositLocations.at(samplesCollected).y), (robotStatus.xPos - depositLocations.at(samplesCollected).x));
+	else platformPivotAngle = -180.0 - fmod(robotStatus.heading,360.0) + RAD2DEG*atan2((robotStatus.yPos - depositLocations.at(samplesCollected).y), (robotStatus.xPos - depositLocations.at(samplesCollected).x));
 }

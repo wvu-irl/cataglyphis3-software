@@ -20,7 +20,7 @@
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
 
-#define ACTION_POOL_SIZE 20
+#define ACTION_POOL_SIZE 100
 
 class Exec : public RobotControlInterface
 {
@@ -57,6 +57,8 @@ private:
 	messages::ActuatorOut actuatorMsgOut_;
 	messages::ExecInfo execInfoMsgOut_;
 	messages::ExecActionEnded execActionEndedMsgOut_;
+	double execStartTime_;
+	double execElapsedTime_;
 	// Methods
 	bool actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res);
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
