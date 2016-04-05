@@ -122,6 +122,7 @@ add_definitions(${PCL_DEFINITIONS})
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${PCL_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )

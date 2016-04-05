@@ -11,6 +11,7 @@
 #include <pcl/filters/filter.h>
 #include <vector>
 #include <cmath>
+#include <lidar/patch.hpp>
 #include <sstream>
 #include <stdlib.h>
 #include <pcl/io/openni_grabber.h>
@@ -47,6 +48,7 @@ int map_range = 40; //size of local map is 20x20 m
 float grid_size = 1; // size of the local map grid
 float threshold_tree_height = 10.0; // above which the points will be disgarded
 float home_detection_range = 15.0;
+std::string fileName;
 
 struct cylinder
 {
@@ -263,6 +265,13 @@ private:
 	    cylinders.clear();
 	    //loop through clusters
 	    //ROS_INFO("%i clusters extracted from scan.", points_cluster.size());
+        static bool stopSavingDataToFile = false;
+        bool cylinderWasDetected = false;
+		std::ofstream outputFile;
+		if(stopSavingDataToFile==false)
+		{
+			outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
+		}
 	    for (int i=0; i<points_cluster.size(); i++)
 	    {
 	        ne.setSearchMethod (tree2);
@@ -295,6 +304,7 @@ private:
 	        cylinder current_cylinder;
 	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
 	        {
+	        	cylinderWasDetected = true;
 	            ROS_INFO("cluster %i has fit the cylinder model with probability %f", i, seg.getProbability());
 	            // cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
 	            //                                << coefficients_cylinder->values[1] << " "
@@ -306,11 +316,11 @@ private:
 	            //cout << "Probability is " << seg.getProbability () << endl;
 
 		    	current_cylinder.point_in_space(0,0) = coefficients_cylinder->values[0];
-		    	current_cylinder.point_in_space(1,0) = coefficients_cylinder->values[1];
-		    	current_cylinder.point_in_space(2,0) = coefficients_cylinder->values[2];
+		    	current_cylinder.point_in_space(1,0) = -coefficients_cylinder->values[1];
+		    	current_cylinder.point_in_space(2,0) = -coefficients_cylinder->values[2];
 		    	current_cylinder.axis_direction(0,0) = coefficients_cylinder->values[3];
-		    	current_cylinder.axis_direction(1,0) = coefficients_cylinder->values[4];
-		    	current_cylinder.axis_direction(2,0) = coefficients_cylinder->values[5];
+		    	current_cylinder.axis_direction(1,0) = -coefficients_cylinder->values[4];
+		    	current_cylinder.axis_direction(2,0) = -coefficients_cylinder->values[5];
 		    	current_cylinder.raius_estimate(0,0) = coefficients_cylinder->values[6];
 			    	
 			    current_cylinder.points.zeros(3,cloud_cylinder->points.size());
@@ -319,12 +329,28 @@ private:
 			    	current_cylinder.points(0,jj)=object_filtered_projection->points[jj].x;
 			    	current_cylinder.points(1,jj)=-object_filtered_projection->points[jj].y;
 			    	current_cylinder.points(2,jj)=-object_filtered_projection->points[jj].z;
+
+			    	if(stopSavingDataToFile==false)
+			    	{
+				    	outputFile << current_cylinder.points(0,jj) << ",";
+				    	outputFile << current_cylinder.points(1,jj) << ",";
+				    	outputFile << current_cylinder.points(2,jj) << ",";
+				    	outputFile << i << ","; //cylinder number
+				    	outputFile << current_cylinder.point_in_space(0,0) << ",";
+				    	outputFile << current_cylinder.point_in_space(1,0) << ",";
+				    	outputFile << current_cylinder.point_in_space(2,0) << ",";
+				    	outputFile << current_cylinder.axis_direction(0,0) << ",";
+				    	outputFile << current_cylinder.axis_direction(1,0) << ",";
+				    	outputFile << current_cylinder.axis_direction(2,0) << ",";
+				    	outputFile << current_cylinder.raius_estimate(0,0) << ",";
+				    	outputFile << std::endl;   		
+			    	}
 			    }
 			    //cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
 			    cylinders.push_back(current_cylinder);
 	        }   
 	    }
-
+ 
 	    //begin homing
 	    if(cylinders.size()>=2) 
 	    {
@@ -535,6 +561,16 @@ private:
 				homing_found=false;
 			}
 			// end homing
+
+			if(stopSavingDataToFile==false && homing_found==true)
+			{
+				outputFile.close();
+				stopSavingDataToFile=true; 
+			}
+			else
+			{
+				outputFile.close();
+			}
 		}
 		counter++;
 	}
@@ -564,7 +600,7 @@ int main(int argc, char **argv)
 	ros::Publisher pub_local_map_SLAM = nh.advertise<sensor_msgs::PointCloud2>("cloud_pcd",1);
 
 
-
+	fileName = "points_from_cylinders_" + patch::currentDateTime() + ".txt";
 
 	//subscriber and algorithm
 	Registration registration; 
