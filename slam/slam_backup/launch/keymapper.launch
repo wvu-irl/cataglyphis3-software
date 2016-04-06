@@ -8,8 +8,8 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 <launch>
 	<node name="keymapper" type="keymapper" pkg="slam" output="screen" >
 		<remap from="current_scan" to="current_scan" />
-		<param name="icpConfig" value="$(find navigation)/launch/icp.yaml" />
-		<param name="inputFiltersConfig" value="$(find navigation)/launch/input_filters.yaml" />
+		<param name="icpConfig" value="$(find slam)/launch/icp.yaml" />
+		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters.yaml" />
 		
 		
 		
@@ -34,10 +34,10 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 	
 	</node>
 
-	<node name="keyframe" type="keyframe" pkg="navigation" output="screen" >
+	<node name="keyframe" type="keyframe" pkg="slam" output="screen" >
 		<remap from="cloud_pcd" to="cloud_pcd" />
-		<param name="icpConfig" value="$(find navigation)/launch/icp.yaml" />
-		<param name="inputFiltersConfig" value="$(find navigation)/launch/input_filters.yaml" />
+		<param name="icpConfig" value="$(find slam)/launch/icp.yaml" />
+		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters.yaml" />
 		
 		
 		

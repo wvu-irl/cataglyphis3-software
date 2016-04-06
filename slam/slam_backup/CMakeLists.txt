@@ -19,22 +19,10 @@ find_package(catkin REQUIRED
 	message_generation 
 	libpointmatcher 
 	eigen_conversions
-	interactive_markers
-	messages
-	message_runtime)
+	interactive_markers)
 
 find_package(PkgConfig REQUIRED)
 
-## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   transformation_msg.msg
-)
-
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-)
 
 
 catkin_package (
@@ -50,11 +38,7 @@ catkin_package (
 	libpointmatcher_ros 
  	libpointmatcher 
  	eigen_conversions
- 	interactive_markers
-	messages
-	message_runtime
-        message_generation
-	 
+ 	interactive_markers 
 )
 
 # Set the build type.  Options are:
@@ -86,37 +70,19 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 # - N2672: Initializer lists (gcc)
 # - N1984: auto-typed variables (gcc, clang)
 
-
-
-
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 add_definitions(-DHAVE_YAML_CPP)
 
-include_directories(include 		   
-		${catkin_INCLUDE_DIRS} )
+include_directories(include ${catkin_INCLUDE_DIRS} )
 
-add_library(Position src/Position.cpp)
-target_link_libraries(Position ${catkin_LIBRARIES})
 
-add_library(Keyframe src/Keyframe.cpp)
-target_link_libraries(Keyframe ${catkin_LIBRARIES})
 
-add_library(keyframe_Position src/keyframe_Position.cpp)
-target_link_libraries(keyframe_Position ${catkin_LIBRARIES})
+add_executable(keyframe src/keyframe.cpp)
+add_dependencies(keyframe ${PROJECT_NAME}_gencpp)
+target_link_libraries(keyframe ${catkin_LIBRARIES})
 
-add_library(Mapper src/Mapper.cpp)
-target_link_libraries(Mapper ${catkin_LIBRARIES})
-
-add_executable(Keyframe_node src/Keyframe_node.cpp)
-add_dependencies(Keyframe_node ${PROJECT_NAME}_gencpp)
-target_link_libraries(Keyframe_node ${catkin_LIBRARIES} Keyframe Position)
-
-add_executable(Mapper_node src/Mapper_node.cpp)
-add_dependencies(Mapper_node ${PROJECT_NAME}_gencpp)
-target_link_libraries(Mapper_node ${catkin_LIBRARIES} Mapper keyframe_Position)
-
-#add_executable(keymapper src/keymapper.cpp)
-#add_dependencies(keymapper ${PROJECT_NAME}_gencpp)
-#target_link_libraries(keymapper ${catkin_LIBRARIES})
+add_executable(keymapper src/keymapper.cpp)
+add_dependencies(keymapper ${PROJECT_NAME}_gencpp)
+target_link_libraries(keymapper ${catkin_LIBRARIES})

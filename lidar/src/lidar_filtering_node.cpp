@@ -326,9 +326,9 @@ private:
 			    current_cylinder.points.zeros(3,cloud_cylinder->points.size());
 			    for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
 			    {
-			    	current_cylinder.points(0,jj)=object_filtered_projection->points[jj].x;
-			    	current_cylinder.points(1,jj)=-object_filtered_projection->points[jj].y;
-			    	current_cylinder.points(2,jj)=-object_filtered_projection->points[jj].z;
+			    	current_cylinder.points(0,jj)=cloud_cylinder->points[jj].x;
+			    	current_cylinder.points(1,jj)=-cloud_cylinder->points[jj].y;
+			    	current_cylinder.points(2,jj)=-cloud_cylinder->points[jj].z;
 
 			    	if(stopSavingDataToFile==false)
 			    	{
@@ -342,7 +342,7 @@ private:
 				    	outputFile << current_cylinder.axis_direction(0,0) << ",";
 				    	outputFile << current_cylinder.axis_direction(1,0) << ",";
 				    	outputFile << current_cylinder.axis_direction(2,0) << ",";
-				    	outputFile << current_cylinder.raius_estimate(0,0) << ",";
+				    	outputFile << current_cylinder.raius_estimate(0,0);
 				    	outputFile << std::endl;   		
 			    	}
 			    }
@@ -410,10 +410,13 @@ private:
 		    	cylinders[ii].axis_direction = Rot*cylinders[ii].axis_direction;
 
 		    	// translate point to x_y plane along axis direction
-		    	t = -cylinders[ii].point_in_space(2,0)/cylinders[ii].axis_direction(2,0);
-		    	cylinders[ii].point_in_space(0,0) = cylinders[ii].point_in_space(0,0)+t*cylinders[ii].axis_direction(0,0);
-		    	cylinders[ii].point_in_space(1,0) = cylinders[ii].point_in_space(1,0)+t*cylinders[ii].axis_direction(1,0);
-		    	cylinders[ii].point_in_space(2,0) = 0.0;
+			if (cylinders[ii].axis_direction(2,0)!=0)
+			{
+			    	t = -cylinders[ii].point_in_space(2,0)/cylinders[ii].axis_direction(2,0);
+			    	cylinders[ii].point_in_space(0,0) = cylinders[ii].point_in_space(0,0)+t*cylinders[ii].axis_direction(0,0);
+			    	cylinders[ii].point_in_space(1,0) = cylinders[ii].point_in_space(1,0)+t*cylinders[ii].axis_direction(1,0);
+			    	cylinders[ii].point_in_space(2,0) = 0.0;
+			}
 		    }
 
 		    //cout << "1" << endl;
@@ -610,6 +613,7 @@ int main(int argc, char **argv)
 
 	//new message counter
 	int prev_counter = registration.counter;
+	int publish_counter = 0;
 	while(ros::ok())
 	{
 		if(prev_counter != registration.counter)
@@ -632,8 +636,12 @@ int main(int argc, char **argv)
 
 		//publish message
 		pub_lidar.publish(msg_LidarFilterOut);
-		pub_local_map_SLAM.publish(registration.local_map_SLAM);
-		
+		if(publish_counter >= 10)
+		{
+			pub_local_map_SLAM.publish(registration.local_map_SLAM);
+			publish_counter = 0;
+		}
+		publish_counter++;
 		loop_rate.sleep();
 		ros::spinOnce();		
 	}
