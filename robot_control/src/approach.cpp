@@ -66,7 +66,8 @@ bool Approach::runProc()
 				else
 				{
 					sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
-					commandedSearch = false;
+					sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+					commandedSearch = true;
 					step = _performManeuver;
 					state = _exec_;
 				}
@@ -75,7 +76,13 @@ bool Approach::runProc()
 		case _performManeuver:
 			if(commandedSearch)
 			{
-				if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) step = _computeManeuver;
+				if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
+				{
+					findHighestConfSample();
+					expectedSampleDistance = highestConfSample.distance;
+					expectedSampleAngle = highestConfSample.bearing;
+					step = _computeManeuver;
+				}
 				else step = _performManeuver;
 			}
 			else

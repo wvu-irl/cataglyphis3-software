@@ -23,7 +23,7 @@ public:
 	float expectedSampleDistance;
 	float expectedSampleAngle;
 	const int sampleConfidenceGain = 1000;
-	const int sampleDistanceToExpectedGain = 1000;
+	const int sampleDistanceToExpectedGain = 1000000;
 	const int approachValueThreshold = 700;
 	bool commandedSearch;
 	messages::CVSampleProps highestConfSample;
