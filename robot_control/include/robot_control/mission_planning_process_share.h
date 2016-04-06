@@ -74,6 +74,7 @@ public:
 	static bool inDepositPosition;
 	static bool missionEnded;
 	static int samplesCollected;
+	static bool avoidLockout;
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -115,5 +116,6 @@ bool MissionPlanningProcessShare::atHome;
 bool MissionPlanningProcessShare::inDepositPosition;
 bool MissionPlanningProcessShare::missionEnded;
 int MissionPlanningProcessShare::samplesCollected;
+bool MissionPlanningProcessShare::avoidLockout;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

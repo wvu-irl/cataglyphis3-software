@@ -6,6 +6,7 @@ bool Avoid::runProc()
 	switch(state)
 	{
 	case _init_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
@@ -39,18 +40,21 @@ bool Avoid::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
 	case _interrupt_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		interrupted = true;
 		state = _init_;
 		break;
 	case _finish_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
 		state = _init_;

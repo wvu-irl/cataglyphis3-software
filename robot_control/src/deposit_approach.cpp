@@ -41,6 +41,7 @@ bool DepositApproach::runProc()
 	switch(state)
 	{
 	case _init_:
+		avoidLockout = true;
 		step = _align;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
@@ -53,6 +54,7 @@ bool DepositApproach::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
+		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		switch(step)
@@ -85,12 +87,14 @@ bool DepositApproach::runProc()
 		}
 		break;
 	case _interrupt_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		step = _align;
 		state = _exec_;
 		break;
 	case _finish_:
+		avoidLockout = false;
 		inDepositPosition = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

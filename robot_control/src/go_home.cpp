@@ -6,6 +6,7 @@ bool GoHome::runProc()
 	switch(state)
 	{
 	case _init_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		numWaypointsToTravel = 1;
@@ -17,17 +18,20 @@ bool GoHome::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
 	case _interrupt_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		state = _exec_;
 		break;
 	case _finish_:
+		avoidLockout = false;
 		atHome = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

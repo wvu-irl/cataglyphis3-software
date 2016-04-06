@@ -6,6 +6,7 @@ bool ConfirmCollect::runProc()
 	switch(state)
 	{
 	case _init_:
+		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		sampleTypeMux = 0;
@@ -16,6 +17,7 @@ bool ConfirmCollect::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
+		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum &&
@@ -37,6 +39,7 @@ bool ConfirmCollect::runProc()
 		else state = _exec_;
 		break;
 	case _interrupt_:
+		avoidLockout = false;
 		sampleDataActedUpon = true;
 		sampleInCollectPosition = false;
 		procsBeingExecuted[procType] = false;
@@ -44,6 +47,7 @@ bool ConfirmCollect::runProc()
 		state = _init_;
 		break;
 	case _finish_:
+		avoidLockout = false;
 		sampleDataActedUpon = true;
 		sampleInCollectPosition = false;
 		procsBeingExecuted[procType] = false;

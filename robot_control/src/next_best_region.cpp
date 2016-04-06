@@ -6,6 +6,7 @@ bool NextBestRegion::runProc()
     switch(state)
     {
     case _init_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         execDequeEmpty = false;
@@ -65,17 +66,20 @@ bool NextBestRegion::runProc()
         }
         break;
     case _exec_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         else state = _exec_;
         break;
     case _interrupt_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		state = _exec_;
         break;
     case _finish_:
+		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         // ************************ THIS NEEDS TO GO SOMEWHERE ELSE LATER

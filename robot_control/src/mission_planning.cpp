@@ -32,6 +32,7 @@ MissionPlanning::MissionPlanning()
     pauseStarted = false;
     robotStatus.pauseSwitch = true;
     execDequeEmpty = true;
+    avoidLockout = false;
     execLastProcType = __depositSample__;
     execLastSerialNum = 99;
     collisionInterruptThresh = 1.0; // m
@@ -43,6 +44,7 @@ MissionPlanning::MissionPlanning()
     goHome.reg(__goHome__);
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
+    depositSample.sendOpen(); // Make sure the grabber is open initially
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++)
@@ -163,7 +165,7 @@ void MissionPlanning::evalConditions_()
     else
     {
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
-        if(collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !missionEnded) // Avoid
+        if(collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
         {
             for(int i=1; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             procsToInterrupt[__avoid__] = false;

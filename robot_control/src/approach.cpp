@@ -14,6 +14,7 @@ bool Approach::runProc()
 	switch(state)
 	{
 	case _init_:
+		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		findHighestConfSample();
@@ -26,6 +27,7 @@ bool Approach::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
+		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		switch(step)
@@ -65,6 +67,11 @@ bool Approach::runProc()
 				}
 				else
 				{
+					bestSample.distance = expectedSampleDistance;
+					bestSample.bearing = expectedSampleAngle;
+					distanceToDrive = backUpDistance;
+					angleToTurn = 0.0;
+					computeExpectedSampleLocation();
 					sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
 					sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 					commandedSearch = true;
@@ -95,6 +102,7 @@ bool Approach::runProc()
 		}
 		break;
 	case _interrupt_:
+		avoidLockout = false;
 		backUpCount = 0;
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
@@ -103,6 +111,7 @@ bool Approach::runProc()
 		state = _init_;
 		break;
 	case _finish_:
+		avoidLockout = false;
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
