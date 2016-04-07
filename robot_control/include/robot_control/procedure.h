@@ -27,6 +27,9 @@ public:
 	void sendGrab();
 	void sendDrop();
 	void sendOpen();
+	void computeSampleValuesWithExpectedDistance();
+	void computeExpectedSampleLocation();
+	void findHighestConfSample();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -172,6 +175,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 
 void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool clearFront)
 {
+	this->serialNum++;
     execActionSrv.request.nextActionType = _driveRelative;
     execActionSrv.request.newActionFlag = 1;
     execActionSrv.request.pushToFrontFlag = frontOfDeque;
@@ -221,6 +225,7 @@ void Procedure::sendSearch(uint8_t typeMux)
 
 void Procedure::sendGrab()
 {
+	this->serialNum++;
 	execActionSrv.request.nextActionType = _grab;
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
@@ -244,11 +249,11 @@ void Procedure::sendGrab()
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
-	this->serialNum++;
 }
 
 void Procedure::sendDrop()
 {
+	this->serialNum++;
 	execActionSrv.request.nextActionType = _drop;
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
@@ -272,11 +277,11 @@ void Procedure::sendDrop()
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
-	this->serialNum++;
 }
 
 void Procedure::sendOpen()
 {
+	this->serialNum++;
 	execActionSrv.request.nextActionType = _open;
 	execActionSrv.request.newActionFlag = 1;
 	execActionSrv.request.pushToFrontFlag = false;
@@ -300,7 +305,43 @@ void Procedure::sendOpen()
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
-	this->serialNum++;
+}
+
+void Procedure::computeSampleValuesWithExpectedDistance()
+{
+	numSampleCandidates = cvSamplesFoundMsg.sampleList.size();
+	sampleValues.clear();
+	sampleValues.resize(numSampleCandidates);
+	bestSampleValue = 0;
+	for(int i=0; i<numSampleCandidates; i++)
+	{
+		sampleValues.at(i) = (sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
+								(int)(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2)+pow(expectedSampleDistance,2)-
+									2*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
+										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle)))))/sampleConfidenceGain;
+
+		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
+	}
+}
+
+void Procedure::computeExpectedSampleLocation()
+{
+	expectedSampleDistance = pow(bestSample.distance,2) + pow(distanceToDrive,2) - 2*bestSample.distance*distanceToDrive*cos(DEG2RAD*(bestSample.bearing));
+	if(distanceToDrive < bestSample.distance) expectedSampleAngle = bestSample.bearing + RAD2DEG*asin(DEG2RAD*(distanceToDrive/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing)));
+	else
+	{
+		if(bestSample.bearing >= 0.0) expectedSampleAngle = 180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
+		else expectedSampleAngle = -180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
+	}
+}
+
+void Procedure::findHighestConfSample()
+{
+	highestConfSample.confidence = 0;
+	for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+	{
+		if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestConfSample.confidence) highestConfSample = cvSamplesFoundMsg.sampleList.at(i);
+	}
 }
 
 #endif // PROCEDURE_H

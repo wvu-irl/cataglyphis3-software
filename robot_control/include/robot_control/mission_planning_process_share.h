@@ -75,6 +75,16 @@ public:
 	static bool missionEnded;
 	static int samplesCollected;
 	static bool avoidLockout;
+	static unsigned int numSampleCandidates;
+	static std::vector<int> sampleValues;
+	static int bestSampleValue;
+	static float distanceToDrive; // m
+	static float angleToTurn; // deg
+	static float expectedSampleDistance;
+	static float expectedSampleAngle;
+	static messages::CVSampleProps highestConfSample;
+	const int sampleConfidenceGain = 1000;
+	const int sampleDistanceToExpectedGain = 1000000;
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -117,5 +127,13 @@ bool MissionPlanningProcessShare::inDepositPosition;
 bool MissionPlanningProcessShare::missionEnded;
 int MissionPlanningProcessShare::samplesCollected;
 bool MissionPlanningProcessShare::avoidLockout;
+unsigned int MissionPlanningProcessShare::numSampleCandidates;
+std::vector<int> MissionPlanningProcessShare::sampleValues;
+int MissionPlanningProcessShare::bestSampleValue;
+float MissionPlanningProcessShare::distanceToDrive;
+float MissionPlanningProcessShare::angleToTurn;
+float MissionPlanningProcessShare::expectedSampleDistance;
+float MissionPlanningProcessShare::expectedSampleAngle;
+messages::CVSampleProps MissionPlanningProcessShare::highestConfSample;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

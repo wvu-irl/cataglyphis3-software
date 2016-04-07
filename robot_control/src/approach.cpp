@@ -34,7 +34,9 @@ bool Approach::runProc()
 		{
 		case _computeManeuver:
 			sampleTypeMux = 0;
-			computeSampleValues();
+			computeSampleValuesWithExpectedDistance();
+			if(bestSampleValue >= approachValueThreshold) approachableSample = true;
+			else approachableSample = false;
 			if(approachableSample)
 			{
 				if((bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
@@ -118,44 +120,5 @@ bool Approach::runProc()
 		step = _computeManeuver;
 		state = _init_;
 		break;
-	}
-}
-
-void Approach::computeSampleValues()
-{
-	numSampleCandidates = cvSamplesFoundMsg.sampleList.size();
-	sampleValues.clear();
-	sampleValues.resize(numSampleCandidates);
-	bestSampleValue = 0;
-	approachableSample = false;
-	for(int i=0; i<numSampleCandidates; i++)
-	{
-		sampleValues.at(i) = (sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
-								(int)(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2)+pow(expectedSampleDistance,2)-
-									2*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
-										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle)))))/sampleConfidenceGain;
-
-		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
-		if(bestSampleValue >= approachValueThreshold) approachableSample = true;
-	}
-}
-
-void Approach::computeExpectedSampleLocation()
-{
-	expectedSampleDistance = pow(bestSample.distance,2) + pow(distanceToDrive,2) - 2*bestSample.distance*distanceToDrive*cos(DEG2RAD*(bestSample.bearing));
-	if(distanceToDrive < bestSample.distance) expectedSampleAngle = bestSample.bearing + RAD2DEG*asin(DEG2RAD*(distanceToDrive/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing)));
-	else
-	{
-		if(bestSample.bearing >= 0.0) expectedSampleAngle = 180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
-		else expectedSampleAngle = -180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
-	}
-}
-
-void Approach::findHighestConfSample()
-{
-	highestConfSample.confidence = 0;
-	for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
-	{
-		if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestConfSample.confidence) highestConfSample = cvSamplesFoundMsg.sampleList.at(i);
 	}
 }
