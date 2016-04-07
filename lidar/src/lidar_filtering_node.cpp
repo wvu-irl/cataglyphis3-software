@@ -315,20 +315,20 @@ private:
 	            //                                << coefficients_cylinder->values[6] << endl;
 	            //cout << "Probability is " << seg.getProbability () << endl;
 
-		    	current_cylinder.point_in_space(0,0) = coefficients_cylinder->values[0];
-		    	current_cylinder.point_in_space(1,0) = -coefficients_cylinder->values[1];
-		    	current_cylinder.point_in_space(2,0) = -coefficients_cylinder->values[2];
-		    	current_cylinder.axis_direction(0,0) = coefficients_cylinder->values[3];
-		    	current_cylinder.axis_direction(1,0) = -coefficients_cylinder->values[4];
-		    	current_cylinder.axis_direction(2,0) = -coefficients_cylinder->values[5];
-		    	current_cylinder.raius_estimate(0,0) = coefficients_cylinder->values[6];
+		    	current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
+		    	current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
+		    	current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
+		    	current_cylinder.axis_direction(0,0) =  (double)coefficients_cylinder->values[3];
+		    	current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
+		    	current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
+		    	current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
 			    	
 			    current_cylinder.points.zeros(3,cloud_cylinder->points.size());
 			    for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
 			    {
-			    	current_cylinder.points(0,jj)=cloud_cylinder->points[jj].x;
-			    	current_cylinder.points(1,jj)=-cloud_cylinder->points[jj].y;
-			    	current_cylinder.points(2,jj)=-cloud_cylinder->points[jj].z;
+			    	current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
+			    	current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
+			    	current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
 
 			    	if(stopSavingDataToFile==false)
 			    	{
@@ -366,6 +366,7 @@ private:
 			double r = 6.0*0.0254;
 			double t, c1_x, c1_y, c2_x, c2_y, x, y, ax1, ay1, ax2, ay2, x_mean, y_mean, d, bearing;
 			double v1_x, v1_y, v2_x, v2_y, v1_mag, v2_mag, v_dot, X1s_x, X1s_y, X2s_x, X2s_y, X1s_mag, X2s_mag;
+			double cx1, cx2, cy1, cy2;
 			bool cylinder_found = false;
 
 			// rotate points
@@ -440,6 +441,10 @@ private:
 		    				ys1 = cylinders[ii].points.row(1);
 		    				xs2 = cylinders[jj].points.row(0);
 		    				ys2 = cylinders[jj].points.row(1);
+						cx1 = c1_x;
+						cy1 = c1_y;
+						cx2 = c2_x;
+						cy2 = c2_y;
 		    			}
 		    			else
 		    			{
@@ -447,6 +452,10 @@ private:
 		    				ys1 = cylinders[jj].points.row(1);
 		    				xs2 = cylinders[ii].points.row(0);
 		    				ys2 = cylinders[ii].points.row(1);
+						cx1 = c2_x;
+						cy1 = c2_y;
+						cx2 = c1_x;
+						cy2 = c1_y;
 		    			}
 		    		}
 		    	}
@@ -464,10 +473,10 @@ private:
 
 			if (cylinder_found)
 			{
-				X(0,0) = c1_x; //column 1 x-center
-				X(1,0) = c1_y; //column 1 y-center
-				X(2,0) = c2_x; //column 2 x-center
-				X(3,0) = c2_y; //column 2 y-center
+				X(0,0) = cx1; //column 1 x-center
+				X(1,0) = cy1; //column 1 y-center
+				X(2,0) = cx2; //column 2 x-center
+				X(3,0) = cy2; //column 2 y-center
 				//ROS_INFO("Cylinder centroids = %f, %f, %f, %f", c1_x, c1_y, c2_x, c2_y);
 				// alternate initial guess
 					// double X1s_x = arma::as_scalar(arma::mean(xs1,1));
@@ -521,17 +530,17 @@ private:
 				}
 
 				//cout << "5" << endl;
-				// x_mean = (X(0,0)+X(2,0))/2;
-				// y_mean = (X(1,0)+X(3,0))/2;
+				x_mean = (X(0,0)+X(2,0))/2;
+				y_mean = (X(1,0)+X(3,0))/2;
 
-				x_mean = (c1_x+c2_x)/2;
-				y_mean = (c1_y+c2_y)/2;
+				//x_mean = (cx1+cx2)/2;
+				//y_mean = (cy1+cy2)/2;
 				d = sqrt(x_mean*x_mean+y_mean*y_mean);
 
-				// v2_x = X(0,0)-X(2,0);
-				// v2_y = X(1,0)-X(3,0);
-				v2_x = c1_x-c2_x;
-				v2_y = c1_y+c2_y;
+				v2_x = X(0,0)-X(2,0);
+				v2_y = X(1,0)-X(3,0);
+				v2_x = cx1-cx2;
+				v2_y = cy1-cy2;
 				v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
 				v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
 				v1_x = x_mean/v1_mag;

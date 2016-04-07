@@ -59,7 +59,7 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.3048; // m
+	const float blindDriveDistance = 0.457; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
 	const int possibleSampleConfThresh = 900;
