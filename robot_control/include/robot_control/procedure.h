@@ -319,6 +319,7 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 								(int)(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2)+pow(expectedSampleDistance,2)-
 									2*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
 										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle)))))/sampleConfidenceGain;
+		ROS_INFO("^^^^^ sampleValues.at(%i) = %i",i,sampleValues.at(i));
 
 		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
 	}
@@ -326,12 +327,12 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 
 void Procedure::computeExpectedSampleLocation()
 {
-	expectedSampleDistance = pow(bestSample.distance,2) + pow(distanceToDrive,2) - 2*bestSample.distance*distanceToDrive*cos(DEG2RAD*(bestSample.bearing));
-	if(distanceToDrive < bestSample.distance) expectedSampleAngle = bestSample.bearing + RAD2DEG*asin(DEG2RAD*(distanceToDrive/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing)));
+	expectedSampleDistance = sqrt(pow(bestSample.distance,2) + pow(distanceToDrive,2) - 2.0*bestSample.distance*distanceToDrive*cos(DEG2RAD*(bestSample.bearing-angleToTurn)));
+	if(distanceToDrive < bestSample.distance) expectedSampleAngle = bestSample.bearing - angleToTurn + RAD2DEG*asin(distanceToDrive/expectedSampleDistance*sin(DEG2RAD*(bestSample.bearing-angleToTurn)));
 	else
 	{
-		if(bestSample.bearing >= 0.0) expectedSampleAngle = 180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
-		else expectedSampleAngle = -180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*bestSample.bearing));
+		if(bestSample.bearing >= 0.0) expectedSampleAngle = 180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*(bestSample.bearing-angleToTurn)));
+		else expectedSampleAngle = -180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*(bestSample.bearing-angleToTurn)));
 	}
 }
 

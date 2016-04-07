@@ -73,6 +73,18 @@ void MissionPlanning::run()
     ROS_INFO("confirmedPossession = %i",confirmedPossession);
     ROS_INFO("atHome = %i",atHome);
     ROS_INFO("inDepositPosition = %i",inDepositPosition);
+
+   /* ROS_INFO("\n");
+    bestSample.distance = 1.934814;
+    bestSample.bearing = 3.434462;
+    bestSample.confidence = 1000;
+    distanceToDrive = bestSample.distance - distanceToGrabber - blindDriveDistance;
+    if(distanceToDrive > 4.0) distanceToDrive = 4.0;
+    angleToTurn = bestSample.bearing;
+    approach.computeExpectedSampleLocation();
+    ROS_INFO("expectedSampleDistance = %f",expectedSampleDistance);
+    ROS_INFO("expectedSampleAngle = %f",expectedSampleAngle);*/
+
     evalConditions_();
     //ROS_DEBUG("after evalConditions");
     if(robotStatus.pauseSwitch) runPause_();
