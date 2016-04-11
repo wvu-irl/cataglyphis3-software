@@ -64,6 +64,7 @@ public:
 	const float grabberAngleTolerance = 6.0; // deg
 	const int possibleSampleConfThresh = 900;
 	const int definiteSampleConfThresh = 900;
+	static bool inSearchableRegion;
 	static bool possessingSample;
 	static bool possibleSample;
 	static bool definiteSample;
@@ -116,6 +117,7 @@ float MissionPlanningProcessShare::collisionInterruptThresh;
 ros::Subscriber MissionPlanningProcessShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcessShare::cvSamplesFoundMsg;
 messages::CVSampleProps MissionPlanningProcessShare::bestSample;
+bool MissionPlanningProcessShare::inSearchableRegion;
 bool MissionPlanningProcessShare::possessingSample;
 bool MissionPlanningProcessShare::possibleSample;
 bool MissionPlanningProcessShare::definiteSample;

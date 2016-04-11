@@ -7,7 +7,7 @@
 #include <messages/nb1_to_i7_msg.h>
 #include "avoid.h"
 #include "next_best_region.h"
-//#include "search_closest_region.h"
+//#include "search_region.h"
 //#include "examine.h"
 #include "approach.h"
 #include "collect.h"

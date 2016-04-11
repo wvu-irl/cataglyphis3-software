@@ -17,6 +17,7 @@ MissionPlanning::MissionPlanning()
 	woiSrv.request.medThresh = 0;
 	woiSrv.request.hardThresh = 0;
     collisionInterruptTrigger = false;
+    inSearchableRegion = false;
     possessingSample = false;
     possibleSample = false;
     definiteSample = false;
@@ -192,7 +193,10 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute nextBestRegion");
         }
         calcNumProcsBeingExec_();
-        /*if(numProcsBeingExec==0 && ) // Search Closest Region
+        /*if(numProcsBeingExec==0 && ) // Search Region
+        {
+
+        }
         calcNumProcsBeingExec_();*/
         /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon && !missionEnded) // Examine
         {
