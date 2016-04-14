@@ -315,6 +315,24 @@ private:
 	            //                                << coefficients_cylinder->values[6] << endl;
 	            //cout << "Probability is " << seg.getProbability () << endl;
 
+
+			float max_x = cloud_cylinder->points[0].x;
+		    float max_y = cloud_cylinder->points[0].y;
+		    float min_x = cloud_cylinder->points[0].x;
+		    float min_y = cloud_cylinder->points[0].y;
+		    for (int jj=1; jj<cloud_cylinder->points.size();jj++)
+		    {
+			if(cloud_cylinder->points[jj].x > max_x)
+			    max_x = cloud_cylinder->points[jj].x;
+			if(cloud_cylinder->points[jj].y > max_y)
+			    max_y = cloud_cylinder->points[jj].y;
+			if(cloud_cylinder->points[jj].x < min_x)
+			    min_x = cloud_cylinder->points[jj].x;
+			if(cloud_cylinder->points[jj].y < min_y)
+			    min_y = cloud_cylinder->points[jj].y;
+		    }
+				if(abs(max_x-min_x)<0.6 && abs(max_y-min_y)<0.6)
+				{
 		    	current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
 		    	current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
 		    	current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
@@ -348,6 +366,7 @@ private:
 			    }
 			    //cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
 			    cylinders.push_back(current_cylinder);
+				}
 	        }   
 	    }
  
@@ -432,10 +451,10 @@ private:
 		    		//cout << "3" << endl;
 		    		c2_x = cylinders[jj].point_in_space(0,0);
 		    		c2_y = cylinders[jj].point_in_space(1,0);
-		    		if (abs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.2)
+		    		if (abs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.05)
 		    		{
 		    			cylinder_found = true;
-		    			if (c1_y<c2_y)
+		    			if (c1_x*c2_y-c2_x*c1_y>0)
 		    			{
 		    				xs1 = cylinders[ii].points.row(0);
 		    				ys1 = cylinders[ii].points.row(1);
@@ -473,30 +492,30 @@ private:
 
 			if (cylinder_found)
 			{
-				X(0,0) = cx1; //column 1 x-center
-				X(1,0) = cy1; //column 1 y-center
-				X(2,0) = cx2; //column 2 x-center
-				X(3,0) = cy2; //column 2 y-center
+				//X(0,0) = cx1; //column 1 x-center
+				//X(1,0) = cy1; //column 1 y-center
+				//X(2,0) = cx2; //column 2 x-center
+				//X(3,0) = cy2; //column 2 y-center
 				//ROS_INFO("Cylinder centroids = %f, %f, %f, %f", c1_x, c1_y, c2_x, c2_y);
 				// alternate initial guess
-					// double X1s_x = arma::as_scalar(arma::mean(xs1,1));
-					// double X1s_y = arma::as_scalar(arma::mean(ys1,1));
-					// double X2s_x = arma::as_scalar(arma::mean(xs2,1));
-					// double X2s_y = arma::as_scalar(arma::mean(ys2,1));
+					double X1s_x = arma::as_scalar(arma::mean(xs1,1));
+					double X1s_y = arma::as_scalar(arma::mean(ys1,1));
+					double X2s_x = arma::as_scalar(arma::mean(xs2,1));
+					double X2s_y = arma::as_scalar(arma::mean(ys2,1));
 					// cout<<"X1s_x="<<X1s_x<<endl;
 					// cout<<"X1s_y="<<X1s_y<<endl;
 					// cout<<"X2s_x="<<X2s_x<<endl;
 					// cout<<"X2s_y="<<X2s_y<<endl;
-					// double X1s_mag = sqrt(X1s_x*X1s_x+X1s_y*X1s_y);
-					// double X2s_mag = sqrt(X2s_x*X2s_x+X2s_y*X2s_y);
-					// X1s_x = X1s_x+r*X1s_x/X1s_mag;
-					// X1s_y = X1s_y+r*X1s_y/X1s_mag;
-					// X2s_x = X2s_x+r*X2s_x/X2s_mag;
-					// X2s_y = X2s_y+r*X2s_y/X2s_mag;
-					// X(0) = X1s_x; //column 1 x-center
-					// X(1) = X1s_y; //column 1 y-center
-					// X(2) = X2s_x; //column 2 x-center
-					// X(3) = X2s_y; //column 2 y-center
+					double X1s_mag = sqrt(X1s_x*X1s_x+X1s_y*X1s_y);
+					double X2s_mag = sqrt(X2s_x*X2s_x+X2s_y*X2s_y);
+					X1s_x = X1s_x+r*X1s_x/X1s_mag;
+					X1s_y = X1s_y+r*X1s_y/X1s_mag;
+					X2s_x = X2s_x+r*X2s_x/X2s_mag;
+					X2s_y = X2s_y+r*X2s_y/X2s_mag;
+					X(0) = X1s_x; //column 1 x-center
+					X(1) = X1s_y; //column 1 y-center
+					X(2) = X2s_x; //column 2 x-center
+					X(3) = X2s_y; //column 2 y-center
 
 				for (int ii = 0; ii<100; ii++)
 				{
@@ -526,7 +545,7 @@ private:
 					J(n1+n2,1) = 2*ay1-2*ay2;
 					J(n1+n2,2) = 2*ax2-2*ax1;
 					J(n1+n2,3) = 2*ay2-2*ay1;
-					// X = X-0.25*solve(J.st()*W*J,J.st()*W*FX);
+					X = X-0.25*solve(J.st()*W*J,J.st()*W*FX);
 				}
 
 				//cout << "5" << endl;
@@ -539,8 +558,8 @@ private:
 
 				v2_x = X(0,0)-X(2,0);
 				v2_y = X(1,0)-X(3,0);
-				v2_x = cx1-cx2;
-				v2_y = cy1-cy2;
+				//v2_x = cx1-cx2;
+				//v2_y = cy1-cy2;
 				v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
 				v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
 				v1_x = x_mean/v1_mag;
@@ -560,10 +579,18 @@ private:
 				ROS_INFO("y = %f", y_est);
 				ROS_INFO("heading = %f", heading_est*180.0/3.14159265);
 
-				homing_x=x_est;
-				homing_y=y_est;
+				//homing_x=x_est;
+				//homing_y=y_est;
+				homing_x = x_mean;
+				homing_y = y_mean;
 				homing_heading=heading_est;
 				homing_found=true;
+				ROS_INFO("********************");
+				ROS_INFO("x_est = %f",x_est);
+				ROS_INFO("y_est = %f",y_est);
+				ROS_INFO("x_mean = %f",x_mean);
+				ROS_INFO("y_mean = %f",y_mean);
+				ROS_INFO("heading = %f\n",heading_est);
 			}
 			else
 			{
