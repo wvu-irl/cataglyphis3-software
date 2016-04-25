@@ -7,10 +7,10 @@
 		value = "100" />
 	<param name = "ADDR_LOCAL"
 		type = "str"
-		value = "10.20.15.1" />
+		value = "10.10.10.1" />
 	<param name = "ADDR_OTHER"
 		type = "str"
-		value = "10.20.15.2" />
+		value = "10.10.10.2" />
 	<param name = "PORT_LOCAL"
 		type = "int"
 		value = "9002" />
