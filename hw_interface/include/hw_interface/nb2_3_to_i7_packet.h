@@ -35,7 +35,7 @@ public:
         int32_t zdv;*/
 		uint8_t num_imus;
 		uint8_t pause_switch;
-		uint8_t main_loop_counter;
+		uint16_t main_loop_counter;
 		uint8_t checksum;
 	} __attribute__((packed));
 	

@@ -52,14 +52,14 @@ void NB1_To_I7::unpackMsg()
     msg.rate_q          	= pkt.rate_q*0.02/65536.0;
     msg.rate_r          	= pkt.rate_r*0.02/65536.0;
     
-    msg.pot1                = pkt.potValues[0] >> 3;
-    msg.pot2                = pkt.potValues[1] >> 3;
-    msg.pot3                = pkt.potValues[2] >> 3;
-    msg.pot4                = pkt.potValues[3] >> 3;
-    msg.pot5                = pkt.potValues[4] >> 3;
-    msg.pot6                = pkt.potValues[5] >> 3;
-    msg.pot7                = pkt.potValues[6] >> 3;
-    msg.pot8                = pkt.potValues[7] >> 3;
+    msg.pot1                = (pkt.potValues[0] >> 3) / 8;
+    msg.pot2                = (pkt.potValues[1] >> 3) / 8;
+    msg.pot3                = (pkt.potValues[2] >> 3) / 8;
+    msg.pot4                = (pkt.potValues[3] >> 3) / 8;
+    msg.pot5                = (pkt.potValues[4] >> 3) / 8;
+    msg.pot6                = (pkt.potValues[5] >> 3) / 8;
+    msg.pot7                = (pkt.potValues[6] >> 3) / 8;
+    msg.pot8                = (pkt.potValues[7] >> 3) / 8;
     
     /*msg.xda                 = pkt.xda;
     msg.yda                 = pkt.yda;

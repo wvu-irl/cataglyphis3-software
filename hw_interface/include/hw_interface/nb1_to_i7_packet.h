@@ -49,7 +49,7 @@ public:
 	 * and the packet structure variables
 	 */
 	union {
-		char buf[100]; /* size buffer >3X data size */
+		char buf[250]; /* size buffer >3X data size */
 		nb1_to_i7_t pkt;
 	};
 	messages::nb1_to_i7_msg msg;
