@@ -15,7 +15,7 @@ void Action::pushTask(TASK_TYPE_T taskType)
 		visionDeque.push_back(taskPool[taskType][taskPoolIndex[taskType]]);
 	else ROS_ERROR("attempted to push back invalid TASK type");
 	taskPoolIndex[taskType]++;
-	if(taskPoolIndex[taskType]>TASK_POOL_SIZE) taskPoolIndex[taskType] = 0;
+    if(taskPoolIndex[taskType]>=TASK_POOL_SIZE) taskPoolIndex[taskType] = 0;
 }
 
 int Action::runDeques()

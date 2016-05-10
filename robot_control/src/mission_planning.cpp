@@ -88,6 +88,7 @@ void MissionPlanning::run()
 
     evalConditions_();
     //ROS_DEBUG("after evalConditions");
+    ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch) runPause_();
     else runProcesses_();
     std::printf("\n");

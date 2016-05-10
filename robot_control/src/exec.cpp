@@ -102,7 +102,13 @@ void Exec::run()
 	actuatorPub.publish(actuatorMsgOut_);
 	infoPub.publish(execInfoMsgOut_);
     execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
-    ROS_INFO_THROTTLE(3,"execElapsedTime = %f",execElapsedTime_);
+    ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
+    for(int i=0; i<NUM_ACTIONS; i++) ROS_INFO("actionPoolIndex[%i] = %i",i,actionPoolIndex_[i]);
+    for(int i=0; i<NUM_TASKS; i++) ROS_INFO("taskPoolIndex[%i] = %i",i,pauseIdle_.taskPoolIndex[i]);
+    ROS_INFO("actionDeque size = %u",actionDeque_.size());
+    ROS_INFO("driveDeque size = %u",pauseIdle_.driveDeque.size());
+    ROS_INFO("grabberDeque size = %u",pauseIdle_.grabberDeque.size());
+    ROS_INFO("visionDeque size = %u\n",pauseIdle_.visionDeque.size());
 }
 
 bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res)
