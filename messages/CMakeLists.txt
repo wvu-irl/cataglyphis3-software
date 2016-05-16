@@ -7,6 +7,8 @@ project(messages)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_runtime
+  grid_map_ros
+  grid_map_msgs
   roscpp
   rospy
 )
@@ -57,6 +59,8 @@ find_package(catkin REQUIRED COMPONENTS
    SimControl.msg
    CVSampleProps.msg
    CVSamplesFound.msg
+   Keyframe.msg
+   KeyframeList.msg
    #added for Comm port, remove
    nb1_to_i7_msg.msg
    nb2_3_to_i7_msg.msg
@@ -72,6 +76,8 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    ExecAction.srv
    CVSearchCmd.srv
+   ROIGridMap.srv
+   MapSegment.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -84,6 +90,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
+   grid_map_msgs
 #   std_msgs  # Or other packages containing msgs
  )
 
@@ -99,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES messages
-#  CATKIN_DEPENDS message_generation message_runtime roscpp rospy
+  CATKIN_DEPENDS message_generation message_runtime roscpp rospy
 #  DEPENDS system_lib
 )
 

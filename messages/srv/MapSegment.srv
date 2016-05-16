@@ -1,0 +1,8 @@
+int32 segmentType
+float32 spec1
+float32 spec2
+float32 spec3
+float32 spec4
+float32 spec5
+---
+grid_map_msgs/GridMap map

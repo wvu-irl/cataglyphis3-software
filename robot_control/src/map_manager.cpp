@@ -100,45 +100,45 @@ MapManager::MapManager()
 
     roiServ = nh.advertiseService("/control/mapmanager/regionsofinterest", &MapManager::ROI, this);
     // Temporary ROIs. Rectangle around starting platform
-    /*waypoint.x = 8.0;
+    waypoint.x = 8.0;
     waypoint.y = 5.0;
     waypoint.easyProb = 600;
     waypoint.medProb = 600;
     waypoint.hardProb = 600;
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
-    waypoint.searchable = true;
-    regionsOfInterest.push_back(waypoint);*/
-    /*waypoint.x = -8.0;
+    waypoint.searchable = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = -8.0;
     waypoint.y = 5.0;
     waypoint.easyProb = 500;
     waypoint.medProb = 500;
     waypoint.hardProb = 500;
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
-    waypoint.searchable = true;
-    regionsOfInterest.push_back(waypoint);*/
-    /*waypoint.x = -8.0;
+    waypoint.searchable = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = -8.0;
     waypoint.y = -5.0;
     waypoint.easyProb = 400;
     waypoint.medProb = 400;
     waypoint.hardProb = 400;
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
-    waypoint.searchable = true;
-    regionsOfInterest.push_back(waypoint);*/
-    /*waypoint.x = 8.0;
+    waypoint.searchable = false;
+    regionsOfInterest.push_back(waypoint);
+    waypoint.x = 8.0;
     waypoint.y = -5.0;
     waypoint.easyProb = 300;
     waypoint.medProb = 300;
     waypoint.hardProb = 300;
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
-    waypoint.searchable = true;
-    regionsOfInterest.push_back(waypoint);*/
+    waypoint.searchable = false;
+    regionsOfInterest.push_back(waypoint);
 
     // Temporary ROIs. Search in front of library
-    waypoint.x = 35.0826;
+    /*waypoint.x = 35.0826;
     waypoint.y = 20.9706;
     waypoint.easyProb = 600;
     waypoint.medProb = 600;
@@ -236,7 +236,7 @@ MapManager::MapManager()
     waypoint.terrainHazard = 35;
     waypoint.visited = false;
     waypoint.searchable = true;
-    regionsOfInterest.push_back(waypoint);
+    regionsOfInterest.push_back(waypoint);*/
 
 	// ***********************************
     satMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/satmap",1);
