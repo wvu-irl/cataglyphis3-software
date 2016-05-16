@@ -64,6 +64,7 @@ find_package(catkin REQUIRED COMPONENTS
    encoder_data.msg
    LidarFilterOut.msg
    CollisionOut.msg
+   SLAMPoseOut.msg
  )
 
 ## Generate services in the 'srv' folder
