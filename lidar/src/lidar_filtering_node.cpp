@@ -40,6 +40,8 @@
 #include <pcl-1.7/pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
 #include <armadillo>
 #include <messages/LidarFilterOut.h>
+#include <messages/NavFilterOut.h>
+#include <messages/LocalMap.h>
 
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
@@ -56,6 +58,37 @@ struct cylinder
 	arma::mat point_in_space = arma::zeros<arma::mat>(3,1);
 	arma::mat axis_direction = arma::zeros<arma::mat>(3,1);
 	arma::mat raius_estimate = arma::zeros<arma::mat>(1,1);
+};
+
+
+class NavigationFilter
+{
+private:
+	ros::NodeHandle nh;
+	ros::Subscriber sub;
+	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg)
+	{
+        this->x = msg->x_position; //meters
+        this->y = msg->y_position; //meters
+        this->roll = msg->roll; //radians
+        this->pitch = msg->pitch; //radians
+        this->heading = msg->heading; //radians
+	}
+public:
+	float x;
+	float y;
+	float roll;
+	float pitch;
+	float heading;
+	NavigationFilter()
+	{
+        x=0;
+        y=0;
+        roll=0;
+        pitch=0;
+        heading=0;    
+		sub = nh.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &NavigationFilter::navigationFilterCallback, this);
+	}
 };
 
 class Registration
@@ -620,6 +653,24 @@ public:
 	bool homing_found=false;
 	int counter=0;
 
+    //x, y, heading, roll, and pitch from the navigation filter node
+	float robot_x=0;
+	float robot_y=0;
+	float robot_roll=0;
+	float robot_pitch=0;
+	float robot_heading=0;
+	
+	//local map output for slam node
+	std::vector<float> x_mean;
+	std::vector<float> y_mean;
+	std::vector<float> z_mean;
+	std::vector<float> var_z;
+	std::vector<bool> ground_adjacent;
+	float copied_robot_x;
+	float copied_robot_y;
+	float copied_robot_heading;
+	
+	
 	sensor_msgs::PointCloud2 local_map_SLAM;
 	Registration()
 	{
@@ -636,48 +687,92 @@ int main(int argc, char **argv)
 	ros::Rate loop_rate(5);
 	ros::Publisher pub_lidar = nh.advertise<messages::LidarFilterOut>("lidar/lidarfilteringout/lidarfilteringout",1);
 	//publish 
-	ros::Publisher pub_local_map_SLAM = nh.advertise<sensor_msgs::PointCloud2>("cloud_pcd",1);
+	//ros::Publisher pub_local_map_SLAM = nh.advertise<sensor_msgs::PointCloud2>("cloud_pcd",1);
+	ros::Publisher pub_local_map = nh.advertise<messages::LocalMap>("/lidar/lidarfilteringnode/localmap",1);
 
 
 	fileName = "points_from_cylinders_" + patch::currentDateTime() + ".txt";
 
 	//subscriber and algorithm
 	Registration registration; 
+	NavigationFilter navigation_filter;
 
 	//output messages
 	messages::LidarFilterOut msg_LidarFilterOut;
+	messages::LocalMap msg_LocalMap;
 
 	//new message counter
 	int prev_counter = registration.counter;
 	int publish_counter = 0;
 	while(ros::ok())
 	{
+	    //update registration variables to navigation filter pose
+	    registration.robot_x = navigation_filter.x; //meters
+	    registration.robot_y = navigation_filter.y; //meters
+	    registration.robot_roll = navigation_filter.roll; //radians
+	    registration.robot_pitch = navigation_filter.pitch; //radians
+	    registration.robot_heading = navigation_filter.heading; //radians
+	    
+	
 		if(prev_counter != registration.counter)
 		{
-			//populate message
+			//populate message for homing
 			msg_LidarFilterOut.homing_x = registration.homing_x;
 			msg_LidarFilterOut.homing_y = registration.homing_y;
 			msg_LidarFilterOut.homing_heading = registration.homing_heading;
 			msg_LidarFilterOut.homing_found = registration.homing_found;
+			
+			//populate message for local map
+			msg_LocalMap.x_mean.clear();
+			msg_LocalMap.y_mean.clear();
+			msg_LocalMap.z_mean.clear();
+			msg_LocalMap.var_z.clear();
+			msg_LocalMap.ground_adjacent.clear();
+			for(int i=0; i<100/*registration.local_grid_map.size()*/; i++)
+			{
+			    msg_LocalMap.x_mean.push_back(i);
+			    msg_LocalMap.y_mean.push_back(i);
+			    msg_LocalMap.z_mean.push_back(i);
+			    msg_LocalMap.var_z.push_back(i);
+			    msg_LocalMap.ground_adjacent.push_back(i);
+			}
+			msg_LocalMap.x_filter = registration.copied_robot_x;
+			msg_LocalMap.y_filter = registration.copied_robot_y;
+			msg_LocalMap.heading_filter = registration.copied_robot_heading;
+			msg_LocalMap.new_data = true;
 		}
 		else
 		{
 			msg_LidarFilterOut.homing_x = 0;
 			msg_LidarFilterOut.homing_y = 0;
 			msg_LidarFilterOut.homing_heading = 0;
-			msg_LidarFilterOut.homing_found = 0;			
+			msg_LidarFilterOut.homing_found = 0;
+			
+			//if no new data fill message with 0
+			msg_LocalMap.x_mean.clear();
+			msg_LocalMap.y_mean.clear();
+			msg_LocalMap.z_mean.clear();
+			msg_LocalMap.var_z.clear();
+			msg_LocalMap.ground_adjacent.clear();
+			msg_LocalMap.x_filter = 0;
+			msg_LocalMap.y_filter = 0;
+			msg_LocalMap.heading_filter = 0;	
+			msg_LocalMap.new_data = false;	
 		}
 
 		prev_counter = registration.counter;
 
 		//publish message
 		pub_lidar.publish(msg_LidarFilterOut);
+		pub_local_map.publish(msg_LocalMap);
+		/*
 		if(publish_counter >= 10)
 		{
 			pub_local_map_SLAM.publish(registration.local_map_SLAM);
 			publish_counter = 0;
 		}
 		publish_counter++;
+		*/
 		loop_rate.sleep();
 		ros::spinOnce();		
 	}

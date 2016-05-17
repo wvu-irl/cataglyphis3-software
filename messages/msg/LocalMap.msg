@@ -1,0 +1,10 @@
+float32[] x_mean
+float32[] y_mean
+float32[] z_mean
+float32[] var_z
+bool[] ground_adjacent
+float32 x_filter
+float32 y_filter
+float32 heading_filter
+bool new_data
+
