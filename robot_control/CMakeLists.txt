@@ -54,14 +54,13 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    Keys_Pressed.msg
    Waypoint.msg
+   ROI.msg
  )
 
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
-   WaypointsOfInterest.srv
    RegionsOfInterest.srv
-   WaypointsOfRegion.srv
    IntermediateWaypoints.srv
    ModifyROI.srv
  )

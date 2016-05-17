@@ -61,14 +61,16 @@ find_package(catkin REQUIRED COMPONENTS
    CVSamplesFound.msg
    Keyframe.msg
    KeyframeList.msg
+   LidarFilterOut.msg
+   CollisionOut.msg
+   SLAMPoseOut.msg
+   RobotPose.msg
    #added for Comm port, remove
    nb1_to_i7_msg.msg
    nb2_3_to_i7_msg.msg
    i7_to_nb1_msg.msg
    encoder_data.msg
-   LidarFilterOut.msg
-   CollisionOut.msg
-   SLAMPoseOut.msg
+
  )
 
 ## Generate services in the 'srv' folder

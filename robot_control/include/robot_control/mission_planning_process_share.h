@@ -3,9 +3,7 @@
 #include <vector>
 #include <ros/ros.h>
 #include <robot_control/Waypoint.h>
-#include <robot_control/WaypointsOfInterest.h> // Remove
 #include <robot_control/RegionsOfInterest.h>
-#include <robot_control/WaypointsOfRegion.h>
 #include <robot_control/IntermediateWaypoints.h>
 #include <robot_control/ModifyROI.h>
 #include "robot_status.h"
@@ -34,8 +32,6 @@ public:
 	static bool procsToExecute[NUM_PROC_TYPES];
 	static bool procsToInterrupt[NUM_PROC_TYPES];
 	static bool procsBeingExecuted[NUM_PROC_TYPES];
-    static ros::ServiceClient woiClient;
-    static robot_control::WaypointsOfInterest woiSrv;
     static ros::ServiceClient execActionClient;
     static messages::ExecAction execActionSrv;
 	static ros::Subscriber execInfoSub;
@@ -94,8 +90,6 @@ public:
 bool MissionPlanningProcessShare::procsToExecute[NUM_PROC_TYPES];
 bool MissionPlanningProcessShare::procsToInterrupt[NUM_PROC_TYPES];
 bool MissionPlanningProcessShare::procsBeingExecuted[NUM_PROC_TYPES];
-ros::ServiceClient MissionPlanningProcessShare::woiClient;
-robot_control::WaypointsOfInterest MissionPlanningProcessShare::woiSrv;
 ros::ServiceClient MissionPlanningProcessShare::execActionClient;
 messages::ExecAction MissionPlanningProcessShare::execActionSrv;
 ros::Subscriber MissionPlanningProcessShare::execInfoSub;

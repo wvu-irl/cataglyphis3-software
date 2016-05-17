@@ -2,7 +2,6 @@
 
 MissionPlanning::MissionPlanning()
 {
-	woiClient = nh.serviceClient<robot_control::WaypointsOfInterest>("/control/mapmanager/waypointsofinterest");
     execActionClient = nh.serviceClient<messages::ExecAction>("control/exec/actionin");
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
     ExecActionEndedSub = nh.subscribe<messages::ExecActionEnded>("control/exec/actionended", 1, &MissionPlanning::ExecActionEndedCallback_, this);
@@ -13,9 +12,6 @@ MissionPlanning::MissionPlanning()
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
     execInfoSub = nh.subscribe<messages::ExecInfo>("control/exec/info", 1, &MissionPlanning::execInfoCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
-	woiSrv.request.easyThresh = 0;
-	woiSrv.request.medThresh = 0;
-	woiSrv.request.hardThresh = 0;
     collisionInterruptTrigger = false;
     inSearchableRegion = false;
     possessingSample = false;
