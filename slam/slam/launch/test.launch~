@@ -1,0 +1,17 @@
+
+<launch>
+<node name="keymapper" type="keymapper" pkg="navigation" output="screen" >
+		<remap from="current_scan" to="current_scan" />
+		<param name="icpConfig" value="$(find navigation)/launch/icp.yaml" />
+		<param name="inputFiltersConfig" value="$(find navigation)/launch/input_filters.yaml" />
+		
+		
+		
+		<param name="useROSLogger" value="true" />
+		<param name="minOverlap" value="0.5" /> 
+		<param name="minReadingPointCount" value="1" /> 
+		<param name="minMapPointCount" value="1" /> <!-- quick fix to have map published each time -->
+		<param name="tfRefreshPeriod" value="0"/>
+	</node>
+
+</launch>

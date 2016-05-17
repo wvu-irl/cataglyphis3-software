@@ -2,7 +2,7 @@
 <package>
   <name>slam</name>
   <version>0.0.0</version>
-  <description>The navigation package</description>
+  <description>The slam package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -52,7 +52,9 @@
   <build_depend>tf2</build_depend>
   <build_depend>tf_conversions</build_depend>
   <build_depend>message_filters</build_depend>
-  
+  <build_depend>messages</build_depend>
+  <build_depend>message_runtime</build_depend>
+
   <build_depend>libpointmatcher</build_depend>
   <build_depend>libpointmatcher_ros</build_depend>
   <build_depend>eigen_conversions</build_depend>
@@ -72,6 +74,8 @@
   <run_depend>tf2</run_depend>
   <run_depend>tf_conversions</run_depend>
   <run_depend>message_filters</run_depend>
+  <run_depend>messages</run_depend>
+  <run_depend>message_runtime</run_depend>
 
   <run_depend>libpointmatcher</run_depend>
   <run_depend>libpointmatcher_ros</run_depend>

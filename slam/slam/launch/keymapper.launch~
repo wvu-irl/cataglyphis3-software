@@ -6,10 +6,10 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 -->
 
 <launch>
-	<node name="Mapper_node" type="Mapper_node" pkg="slam" output="screen" >
+	<node name="keymapper" type="keymapper" pkg="navigation" output="screen" >
 		<remap from="current_scan" to="current_scan" />
-		<param name="icpConfig" value="$(find slam)/launch/icp_mapper.yaml" />
-		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters_mapper.yaml" />
+		<param name="icpConfig" value="$(find navigation)/launch/icp.yaml" />
+		<param name="inputFiltersConfig" value="$(find navigation)/launch/input_filters.yaml" />
 		
 		
 		
@@ -19,7 +19,7 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 		<param name="minMapPointCount" value="1" /> <!-- quick fix to have map published each time -->
 		<param name="tfRefreshPeriod" value="0"/>
 	</node>
-
+	
 	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
 		<param name="resolution" value="0.05" />
 		
@@ -34,10 +34,10 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 	
 	</node>
 
-	<node name="Keyframe_node" type="Keyframe_node" pkg="slam" output="screen" >
+	<node name="keyframe" type="keyframe" pkg="navigation" output="screen" >
 		<remap from="cloud_pcd" to="cloud_pcd" />
-		<param name="icpConfig" value="$(find slam)/launch/icp_keyframe.yaml" />
-		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters_keyframe.yaml" />
+		<param name="icpConfig" value="$(find navigation)/launch/icp.yaml" />
+		<param name="inputFiltersConfig" value="$(find navigation)/launch/input_filters.yaml" />
 		
 		
 		
@@ -47,6 +47,5 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 		<param name="minMapPointCount" value="1" /> <!-- quick fix to have map published each time -->
 		<param name="tfRefreshPeriod" value="0"/>
 	</node>
-
 	
 </launch>

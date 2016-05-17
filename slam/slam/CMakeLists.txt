@@ -21,14 +21,15 @@ find_package(catkin REQUIRED
 	eigen_conversions
 	interactive_markers
 	messages
-	message_runtime)
+	message_runtime
+	pcl_conversions 
+  	pcl_ros)
 
 find_package(PkgConfig REQUIRED)
 
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   transformation_msg.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -53,7 +54,9 @@ catkin_package (
  	interactive_markers
 	messages
 	message_runtime
-        message_generation
+    message_generation
+    pcl_conversions 
+  	pcl_ros
 	 
 )
 
@@ -97,25 +100,25 @@ add_definitions(-DHAVE_YAML_CPP)
 include_directories(include 		   
 		${catkin_INCLUDE_DIRS} )
 
-add_library(Position src/Position.cpp)
-target_link_libraries(Position ${catkin_LIBRARIES})
+#add_library(Position src/Position.cpp)
+#target_link_libraries(Position ${catkin_LIBRARIES})
 
 add_library(Keyframe src/Keyframe.cpp)
 target_link_libraries(Keyframe ${catkin_LIBRARIES})
 
-add_library(keyframe_Position src/keyframe_Position.cpp)
-target_link_libraries(keyframe_Position ${catkin_LIBRARIES})
+#add_library(keyframe_Position src/keyframe_Position.cpp)
+#target_link_libraries(keyframe_Position ${catkin_LIBRARIES})
 
-add_library(Mapper src/Mapper.cpp)
-target_link_libraries(Mapper ${catkin_LIBRARIES})
+#add_library(Mapper src/Mapper.cpp)
+#target_link_libraries(Mapper ${catkin_LIBRARIES})
 
 add_executable(Keyframe_node src/Keyframe_node.cpp)
 add_dependencies(Keyframe_node ${PROJECT_NAME}_gencpp)
-target_link_libraries(Keyframe_node ${catkin_LIBRARIES} Keyframe Position)
+target_link_libraries(Keyframe_node ${catkin_LIBRARIES} Keyframe)
 
-add_executable(Mapper_node src/Mapper_node.cpp)
-add_dependencies(Mapper_node ${PROJECT_NAME}_gencpp)
-target_link_libraries(Mapper_node ${catkin_LIBRARIES} Mapper keyframe_Position)
+#add_executable(Mapper_node src/Mapper_node.cpp)
+#add_dependencies(Mapper_node ${PROJECT_NAME}_gencpp)
+#target_link_libraries(Mapper_node ${catkin_LIBRARIES} Mapper keyframe_Position)
 
 #add_executable(keymapper src/keymapper.cpp)
 #add_dependencies(keymapper ${PROJECT_NAME}_gencpp)

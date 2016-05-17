@@ -6,10 +6,11 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 -->
 
 <launch>
-	<node name="keyframe" type="keyframe" pkg="slam" output="screen" >
-		<remap from="cloud_pcd" to="cloud_pcd" />
-		<param name="icpConfig" value="$(find slam)/launch/icp.yaml" />
-		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters.yaml" />
+	<node name="mapper" type="mapper" pkg="ethzasl_icp_mapper" output="screen" >
+		<remap from="cloud_in" to="cloud_pcd" />
+		<param name="subscribe_scan" value="false"/>
+		<param name="icpConfig" value="$(find ethzasl_icp_mapper)/launch/artor/icp.yaml" />
+		<param name="inputFiltersConfig" value="$(find ethzasl_icp_mapper)/launch/artor/input_filters.yaml" />
 		
 		
 		
@@ -17,7 +18,7 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 		<param name="minOverlap" value="0.5" /> 
 		<param name="minReadingPointCount" value="1" /> 
 		<param name="minMapPointCount" value="1" /> <!-- quick fix to have map published each time -->
-		<param name="tfRefreshPeriod" value="1"/>
+		<param name="tfRefreshPeriod" value="0"/>
 	</node>
 
 	

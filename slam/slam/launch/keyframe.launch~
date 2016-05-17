@@ -7,7 +7,7 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 
 <launch>
 	<node name="Keyframe_node" type="Keyframe_node" pkg="slam" output="screen" >
-		<remap from="cloud_pcd" to="cloud_pcd" />
+		<remap from="cloud_pcd" to="/octomap_point_cloud_centers" />
 		<param name="icpConfig" value="$(find slam)/launch/icp_keyframe.yaml" />
 		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters_keyframe.yaml" />
 		

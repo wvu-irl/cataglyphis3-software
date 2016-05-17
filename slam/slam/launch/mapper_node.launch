@@ -1,0 +1,17 @@
+
+<launch>
+<node name="Mapper_node" type="Mapper_node" pkg="slam" output="screen" >
+		<remap from="current_scan" to="current_scan" />
+		<param name="icpConfig" value="$(find slam)/launch/icp_mapper.yaml" />
+		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters_mapper.yaml" />
+		
+		
+		
+		<param name="useROSLogger" value="true" />
+		<param name="minOverlap" value="0.5" /> 
+		<param name="minReadingPointCount" value="1" /> 
+		<param name="minMapPointCount" value="1" /> <!-- quick fix to have map published each time -->
+		<param name="tfRefreshPeriod" value="0"/>
+	</node>
+
+</launch>

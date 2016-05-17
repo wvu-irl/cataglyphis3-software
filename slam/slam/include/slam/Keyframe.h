@@ -15,15 +15,20 @@
 #include "pointmatcher_ros/ros_logger.h"
 // position
 #include "nav_msgs/Odometry.h"
+#include "messages/NavFilterOut.h"
+#include "messages/SLAMPoseOut.h"
+#include "messages/LocalMap.h"
 
-#include "tf/transform_broadcaster.h"
-#include "tf_conversions/tf_eigen.h"
-#include "tf/transform_listener.h"
+// #include "tf/transform_broadcaster.h"
+// #include "tf_conversions/tf_eigen.h"
+// #include "tf/transform_listener.h"
 #include "eigen_conversions/eigen_msg.h"
 
 #include "Eigen/Dense"
 
-
+#include "pcl_ros/point_cloud.h"
+#include "pcl/conversions.h"
+#include "sensor_msgs/PointCloud2.h"
 //using namespace std;
 using namespace PointMatcherSupport;
 
@@ -35,13 +40,16 @@ class Keyframe
 	ros::NodeHandle node;
 
 	// data from processed point cloud
-	ros::Subscriber cloudSub;
+	ros::Subscriber localmapSub;
+//	ros::Subscriber subscriber_nav;
 //	ros::Subscriber IMU 	//position from IMU
 	// key frame position and point cloud
-//	ros::Publisher positionPub;
-//	ros::Publisher cloudPub;
+	ros::Publisher keyframe_odomPub;
+	ros::Publisher keyframe_cloudPub;
+	ros::Publisher keyframe_positionPub;
+	ros::Publisher frame_positionPub;
 
-	PM::DataPointsFilters inputFilters;
+//	PM::DataPointsFilters inputFilters;
 
 	PM::DataPoints refPointCloud;
 	
@@ -52,7 +60,7 @@ class Keyframe
 	int inputQueueSize; //limit the input data 
 	double minOverlap;
 
-	int minReadingPointCount;
+
 
 	
 	std::string ref_frame;
@@ -68,6 +76,7 @@ class Keyframe
 	ros::Time publishStamp;
 
 //	tf::TransformListener tfListener;
+//	tf::TransformBroadcaster tfBroadcaster;
 	float x0, x1, y0, y1, heading0, heading1;
 	double theta, diff_x, diff_y, sin_theta, cos_theta;
 	const double PI = 3.1415926;
@@ -84,20 +93,25 @@ public:
 	float x;
 	float y;
 	float heading;
-	double mindistance_key;
+	double maxdistance_key;
 	double distance;
-
+	// int counter;
+//	slam::transformation_msg keyframe_position;
+	messages::SLAMPoseOut slamPoseOut;
 
 	void set_parameters();
-	void set_IMU_data(float IMU_x, float IMU_y, float IMU_heading);
+
 	Keyframe();
 
 
 
 
 protected:
-	void gotKeyframecallback(const sensor_msgs::PointCloud2& cloudMsgIn);
+	void getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn); //change the message type
 
 	void processCloud(PM::DataPoints newPointCloud, const std::string& read_frame, const ros::Time& stamp);	
+	//navigation callback for deadreckoning position
+	void set_IMU_data(float IMU_x, float IMU_y, float IMU_heading);
+
 
 };
