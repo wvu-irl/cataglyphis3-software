@@ -207,27 +207,63 @@ private:
 	    {
 	      object_filtered_projection->points[i].z=0;
 	    }
-	    /*
+	    
 	    // BUILD LOCAL MAP, THE CURRENT ALGORITHM IS VERY UN-EFFECTIVE, NEED TO IMPROVE LATER
-		std::vector < pcl::PointCloud<pcl::PointXYZ>::Ptr > local_grid;
-		cout << "Object after projection has " << object_filtered_projection->points.size() << " points." << endl;
-		for (int i=0; i<(2*map_range)*(2*map_range); i++) // generate gird element
-		{
-			pass.setInputCloud(object_filtered_projection);
-			pass.setFilterFieldName("y");
-			pass.setFilterLimits(-map_range + floor(i/(2*map_range)) , -map_range + floor((i/2*map_range)) + grid_size); //ML direction
-			pass.filter(*grid_cloud);
-			pass.setInputCloud(grid_cloud);
-			pass.setFilterFieldName("x");
-			pass.setFilterLimits(-map_range + i % (2*map_range) , -map_range + i % (2*map_range) + grid_size); //ML direction
-			pass.filter(*grid_cloud);
-			//cout << "grid has " << grid_cloud->points.size() << " points" << endl;
-			//local_grid.push_back((*grid_cloud).make_shared());
-			local_grid.push_back(grid_cloud);
-			//cout << "Size of grid map " << local_grid.size() << endl;
-			//cout << "Grid " << i << " has " << (local_grid[i])->points.size() << " points."<< endl;
-		}
-		*/
+		std::vector<float> point;
+	    std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
+	    int index = 0;
+	    for (int i = 0; i< object_filtered->points.size(); i++)
+	    {
+	        point.push_back(object_filtered->points[i].x);
+	        point.push_back(object_filtered->points[i].y);
+	        point.push_back(object_filtered->points[i].z);
+	        index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
+	        grid_map_cells[index].push_back(point);
+	        point.clear();
+	    }
+	    float total_x = 0;
+	    float total_y = 0;
+	    float total_z = 0;
+	    float average_x = 0;
+	    float average_y = 0;
+	    float average_z = 0;
+	    float variance_z = 0;
+	    for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
+	    {
+	        for (int j = 0; j < grid_map_cells[i].size(); j++)
+	        {
+	            total_x += grid_map_cells[i][j][0];
+	            total_y += grid_map_cells[i][j][1];
+	            total_z += grid_map_cells[i][j][2];
+	        }
+	        average_x = total_x/grid_map_cells[i].size();
+	        average_y = total_y/grid_map_cells[i].size();
+	        average_z = total_z/grid_map_cells[i].size();
+	        for (int j = 0; j < grid_map_cells[i].size(); j++)
+	        {
+	            variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
+	        }
+	        variance_z = sqrt(variance_z);
+	        if (total_x || total_y || total_z)
+	        {
+	            point.push_back(average_x);
+	            point.push_back(average_y);
+	            point.push_back(average_z);
+	            point.push_back(variance_z);
+	            local_grid_map.push_back(point);
+	            point.clear();
+	        }
+	        //print out points
+	        if (total_x || total_y || total_z)
+	            cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
+	        total_x = 0;
+	        total_y = 0;
+	        total_z = 0;
+	        average_x = 0;
+	        average_y = 0;
+	        average_z = 0;
+	        variance_z = 0;
+	    }
 
 		// THE local_grid HAS ALL INFO, NEED TO PUBLISH IT
 		//TRANSFER POINTCLOUD TO POINTCLOUD2
@@ -666,6 +702,7 @@ public:
 	std::vector<float> z_mean;
 	std::vector<float> var_z;
 	std::vector<bool> ground_adjacent;
+	std::vector<std::vector<float> > local_grid_map;
 	float copied_robot_x;
 	float copied_robot_y;
 	float copied_robot_heading;
@@ -728,13 +765,13 @@ int main(int argc, char **argv)
 			msg_LocalMap.z_mean.clear();
 			msg_LocalMap.var_z.clear();
 			msg_LocalMap.ground_adjacent.clear();
-			for(int i=0; i<100/*registration.local_grid_map.size()*/; i++)
+			for(int i=0; i<registration.local_grid_map.size(); i++)
 			{
-			    msg_LocalMap.x_mean.push_back(i);
-			    msg_LocalMap.y_mean.push_back(i);
-			    msg_LocalMap.z_mean.push_back(i);
-			    msg_LocalMap.var_z.push_back(i);
-			    msg_LocalMap.ground_adjacent.push_back(i);
+			    msg_LocalMap.x_mean.push_back(registration.local_grid_map[i][0]);
+			    msg_LocalMap.y_mean.push_back(registration.local_grid_map[i][1]);
+			    msg_LocalMap.z_mean.push_back(registration.local_grid_map[i][2]);
+			    msg_LocalMap.var_z.push_back(registration.local_grid_map[i][3]);
+			    msg_LocalMap.ground_adjacent.push_back(1);
 			}
 			msg_LocalMap.x_filter = registration.copied_robot_x;
 			msg_LocalMap.y_filter = registration.copied_robot_y;
