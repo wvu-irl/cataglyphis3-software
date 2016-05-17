@@ -44,8 +44,8 @@ void Keyframe::set_parameters()
 	TkeyToprekey = PM::TransformationParameters::Identity(4,4);
 	guessT = PM::TransformationParameters::Identity(4,4);
 	//set logger
-	if (getParam<bool>("useROSlogger", false))
-		PointMatcherSupport::setLogger(new PointMatcherSupport::ROSLogger);
+	// if (getParam<bool>("useROSlogger", false))
+	// 	PointMatcherSupport::setLogger(new PointMatcherSupport::ROSLogger);
 
 	//load configs
 	std::string configFileName;

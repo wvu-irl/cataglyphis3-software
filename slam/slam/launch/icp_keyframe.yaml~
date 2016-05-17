@@ -26,8 +26,8 @@ errorMinimizer:
 
 transformationCheckers:
   - DifferentialTransformationChecker:
-      minDiffRotErr: 0.001
-      minDiffTransErr: 0.01
+      minDiffRotErr: 0.01
+      minDiffTransErr: 0.1
       smoothLength: 10
   - CounterTransformationChecker:
       maxIterationCount: 500

@@ -1,2 +1,2 @@
 #!/bin/bash
-roslaunch slam mapper.launch
+roslaunch slam keyframe.launch

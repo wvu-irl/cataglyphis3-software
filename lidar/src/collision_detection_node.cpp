@@ -72,7 +72,7 @@ float corridor_width = 1.5; // Width of the virtual corridor
 float corridor_length = 5.5; // Length of the virtual corridor, THE CLOSEST DECTECTION IS ~2.8 M
 float x_shift = 0.0;
 float y_shirt = 0.0;
-float lidar_height = 1.0; // height of the lidar sensor
+float lidar_height = 0.75; // height of the lidar sensor
 float safe_envelope_angle = DEG2RAD*40; //safe envelope angle size
 int point_trigger_threshold = 5; // how many points that will trigger the avoid alarm
 
@@ -192,10 +192,10 @@ private:
 			{
 				//cout << "x,y,z =" << cloud->points[i].x << ", " << cloud->points[i].y << ", " << cloud->points[i].z << endl;
 				//CHECK IF POINT IN CORRIDOR
-				if(cloud->points[i].x > 0 && cloud->points[i].y < 1 && cloud->points[i].y > -1 && cloud->points[i].x<2)
+				if(cloud->points[i].x > 0 && cloud->points[i].y < 1.5 && cloud->points[i].y > -1.5 && cloud->points[i].x<4)
 				{
 					// CHECK IF THE POINT IS OUTSIDE OF THE SAFE ENVELOPE
-					if((abs(lidar_height - cloud->points[i].z)/cloud->points[i].x) > tan(safe_envelope_angle))
+					if((abs(lidar_height + cloud->points[i].z)/cloud->points[i].x) > tan(safe_envelope_angle))
 					{
 						// NEED TO AVOID
 						collision_point_counter++;
