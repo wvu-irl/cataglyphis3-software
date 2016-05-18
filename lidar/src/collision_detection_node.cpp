@@ -127,16 +127,16 @@ private:
 			pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::PointIndicesPtr ground (new pcl::PointIndices);
 
-			// pcl::PassThrough<pcl::PointXYZ> pass;
-			// pass.setInputCloud(cloud);
-			// pass.setFilterFieldName("x");
-			// pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
-			// pass.filter(*cloud);
-			// pass.setInputCloud(cloud);
-			// pass.setFilterFieldName("y");
-			// pass.setFilterLimits(y_shirt + 0.35,y_shirt + corridor_length);
-			// pass.filter(*cloud);
-			// ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
+			 pcl::PassThrough<pcl::PointXYZ> pass;
+			 pass.setInputCloud(cloud);
+			 pass.setFilterFieldName("x");
+			 pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
+			 pass.filter(*cloud);
+			 pass.setInputCloud(cloud);
+			 pass.setFilterFieldName("y");
+			 pass.setFilterLimits(y_shirt + 0.35,y_shirt + corridor_length);
+			 pass.filter(*cloud);
+			 ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
 
 			
 			// // //use rough ground removal, method A: rough 
