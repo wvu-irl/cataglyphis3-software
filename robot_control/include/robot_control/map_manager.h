@@ -8,7 +8,12 @@
 #include <messages/KeyframeList.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
+#include "global_map_layers.h"
 #include <vector>
+
+#define PI 3.14159265359
+#define DEG2RAD PI/180.0
+#define RAD2DEG 180.0/PI
 
 class MapManager
 {
@@ -29,12 +34,25 @@ public:
 	robot_control::Waypoint waypoint;
 	robot_control::ROI ROI;
 	std::vector<robot_control::ROI> regionsOfInterest;
-	grid_map::GridMap satMap;
-	messages::KeyframeList keyframes;
-	ros::Publisher satMapPub;
-	grid_map_msgs::GridMap satMapMsg;
+	grid_map::GridMap globalMap;
+	ros::Publisher globalMapPub;
+	grid_map_msgs::GridMap globalMapMsg;
+	messages::KeyframeList newKeyframesIn;
+	grid_map::GridMap currentKeyframe;
+	grid_map::GridMap keyframeTransform;
+	float keyframeOriginalXLen;
+	float keyframeOriginalYLen;
+	float keyframeOriginalXPos;
+	float keyframeOriginalYPos;
+	grid_map::Position keyframeOriginalCoord;
+	//float keyframeOriginalYCoord;
+	float keyframeTransformXLen;
+	float keyframeTransformYLen;
+	float keyframeTransformHeading;
+	grid_map::Position globalXTransformCoord;
+	//float globalYTransformPos;
 	int currentROI;
-
+	const float mapResolution = 1.0; // m
 };
 
 #endif // MAP_MANAGER_H

@@ -1,7 +1,7 @@
 #include <robot_control/map_manager.h>
 
 MapManager::MapManager()
-    : satMap({"sampleProb","hazard"})
+    : globalMap({"sampleProb","hazard"}) // FIX THIS !!!!!!!!! somehow incorporate with new technique in common header
 {
     roiServ = nh.advertiseService("/control/mapmanager/regionsofinterest", &MapManager::listROI, this);
     modROIServ = nh.advertiseService("/control/mapmanager/modifyroi", &MapManager::modROI, this);
@@ -149,25 +149,33 @@ MapManager::MapManager()
     regionsOfInterest.push_back(ROI);*/
 
 	// ***********************************
-    satMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/satmap",1);
-    satMap.setFrameId("map");
-    satMap.setGeometry(grid_map::Length(300.0, 200.0), 1.0, grid_map::Position(12.0, 65.0));
-    satMap.add("sampleProb", 458);
-    satMap.add("hazard", 998);
-    /*for(grid_map::GridMapIterator it(satMap); !it.isPastEnd(); ++it)
+    globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
+    globalMap.setFrameId("map");
+    globalMap.setGeometry(grid_map::Length(300.0, 200.0), mapResolution, grid_map::Position(12.0, 65.0));
+    globalMap.add("sampleProb", 458);
+    globalMap.add("hazard", 998);
+    //globalMap.
+    ROS_INFO("globalMap x len = %i",globalMap.getSize()(0));
+    ROS_INFO("globalMap y len = %i",globalMap.getSize()(1));
+    ROS_INFO("globalMap resolution = %f",globalMap.getResolution());
+    ROS_INFO("globalMap x lenF = %f",(float)globalMap.getSize()(0)*globalMap.getResolution());
+    ROS_INFO("globalMap y lenF = %f",(float)globalMap.getSize()(1)*globalMap.getResolution());
+    /*for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
     {
-        satMap.at("sampleProb", *it) = 322.9;
-        satMap.at("hazard", *it) = 190.1;
+        globalMap.at("sampleProb", *it) = 322.9;
+        globalMap.at("hazard", *it) = 190.1;
     }*/
-    satMap.atPosition("sampleProb", grid_map::Position(50.1, 7.0)) = 500.2;
-    ROS_INFO("prob at (80,80) = %f", satMap.atPosition("sampleProb", grid_map::Position(80.0, 80.0)));
-    ROS_INFO("prob at (90,7.2) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.0, 7.2)));
-    ROS_INFO("prob at (90.1,7.0) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.1, 7.0)));
-    ROS_INFO("prob at (90.5,7.0) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.5, 7.0)));
-    ROS_INFO("prob at (90.5,6.8) = %f", satMap.atPosition("sampleProb", grid_map::Position(90.5, 6.8)));
-    grid_map::GridMapRosConverter::toMessage(satMap,satMapMsg);
+    globalMap.atPosition("sampleProb", grid_map::Position(50.1, 7.0)) = 500.2;
+    ROS_INFO("prob at (80,80) = %f", globalMap.atPosition("sampleProb", grid_map::Position(80.0, 80.0)));
+    ROS_INFO("prob at (90,7.2) = %f", globalMap.atPosition("sampleProb", grid_map::Position(90.0, 7.2)));
+    ROS_INFO("prob at (90.1,7.0) = %f", globalMap.atPosition("sampleProb", grid_map::Position(90.1, 7.0)));
+    ROS_INFO("prob at (90.5,7.0) = %f", globalMap.atPosition("sampleProb", grid_map::Position(90.5, 7.0)));
+    ROS_INFO("prob at (90.5,6.8) = %f", globalMap.atPosition("sampleProb", grid_map::Position(90.5, 6.8)));
+    grid_map::GridMapRosConverter::toMessage(globalMap,globalMapMsg);
     ros::Duration(1.0).sleep();
-    satMapPub.publish(satMapMsg);
+    globalMapPub.publish(globalMapMsg);
+
+    keyframeTransform.setFrameId("map");
 }
 
 bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res)
@@ -196,8 +204,31 @@ bool MapManager::mapROI(messages::ROIGridMap::Request &req, messages::ROIGridMap
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)
 {
-    keyframes = *msg;
-    updateCurrentROI();
+    newKeyframesIn = *msg;
+    for(int i=0; i<newKeyframesIn.keyframeList.size(); i++)
+    {
+        grid_map::GridMapRosConverter::fromMessage(newKeyframesIn.keyframeList.at(i).map,currentKeyframe);
+        for(int j=0; j<NUM_GLOBAL_MAP_LAYERS; j++) keyframeTransform.add(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(j)),0);
+        keyframeOriginalXLen = currentKeyframe.getLength().x();
+        keyframeOriginalYLen = currentKeyframe.getLength().y();
+        keyframeTransformHeading = newKeyframesIn.keyframeList.at(i).heading;
+        keyframeOriginalXPos = newKeyframesIn.keyframeList.at(i).x;
+        keyframeOriginalYPos = newKeyframesIn.keyframeList.at(i).y;
+        keyframeTransformXLen = keyframeOriginalXLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalYLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
+        keyframeTransformYLen = keyframeOriginalYLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalXLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
+        keyframeTransform.setGeometry(grid_map::Length(keyframeTransformXLen,keyframeTransformYLen), mapResolution, grid_map::Position(0.0,0.0));
+        for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
+        {
+            currentKeyframe.getPosition(*it, keyframeOriginalCoord);
+            globalXTransformCoord[0] = keyframeOriginalCoord[0]*cos(DEG2RAD*keyframeTransformHeading)-keyframeOriginalCoord[1]*sin(DEG2RAD*keyframeTransformHeading)+keyframeOriginalXPos;
+            globalXTransformCoord[1] = keyframeOriginalCoord[0]*sin(DEG2RAD*keyframeTransformHeading)+keyframeOriginalCoord[1]*cos(DEG2RAD*keyframeTransformHeading)+keyframeOriginalYPos;
+            for(int j=0; j<NUM_GLOBAL_MAP_LAYERS; j++)
+            {
+                globalMap.atPosition(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(j)),globalXTransformCoord) = currentKeyframe.at(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(j)),*it);
+            }
+        }
+    }
+    //updateCurrentROI();
 }
 
 void MapManager::updateCurrentROI()
