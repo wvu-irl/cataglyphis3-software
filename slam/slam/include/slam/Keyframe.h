@@ -49,7 +49,7 @@ class Keyframe
 	ros::Publisher keyframe_positionPub;
 	ros::Publisher frame_positionPub;
 
-//	PM::DataPointsFilters inputFilters;
+	PM::DataPointsFilters inputFilters;
 
 	PM::DataPoints refPointCloud;
 	
@@ -80,6 +80,8 @@ class Keyframe
 	float x0, x1, y0, y1, heading0, heading1;
 	double theta, diff_x, diff_y, sin_theta, cos_theta;
 	const double PI = 3.1415926;
+	double slamPoseOutheading0 = 0.0;
+	double slamPoseOutheading1 = 0.0;
 
 public:
 	PM::DataPoints keyPointCloud;
@@ -98,7 +100,6 @@ public:
 	// int counter;
 //	slam::transformation_msg keyframe_position;
 	messages::SLAMPoseOut slamPoseOut;
-
 	void set_parameters();
 
 	Keyframe();

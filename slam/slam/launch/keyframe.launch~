@@ -9,11 +9,11 @@ and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
 	<node name="Keyframe_node" type="Keyframe_node" pkg="slam" output="screen" >
 		<!--remap from="/lidar/lidarfilteringnode/localmap" to="cloud_pcd" /-->
 		<param name="icpConfig" value="$(find slam)/launch/icp_keyframe.yaml" />
-		<!--param name="inputFiltersConfig" value="$(find slam)/launch/input_filters_keyframe.yaml" /-->
+		<param name="inputFiltersConfig" value="$(find slam)/launch/input_filters_keyframe.yaml" /-->
 		
 		
 		
-		<param name="useROSLogger" value="true" />
+		<!--param name="useROSLogger" value="true" /-->
 		<param name="minOverlap" value="0.5" /> 
 		<!--param name="minReadingPointCount" value="1" /--> 
 		<!--param name="minMapPointCount" value="1" /--> <!-- quick fix to have map published each time -->

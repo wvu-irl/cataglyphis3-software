@@ -212,6 +212,7 @@ private:
 		std::vector<float> point;
 	    std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
 	    int index = 0;
+	    local_grid_map.clear();
 	    for (int i = 0; i< object_filtered->points.size(); i++)
 	    {
 	        point.push_back(object_filtered->points[i].x);
@@ -273,9 +274,9 @@ private:
 
 		// THE local_grid HAS ALL INFO, NEED TO PUBLISH IT
 		//TRANSFER POINTCLOUD TO POINTCLOUD2
-		pcl::PCLPointCloud2 tmp_cloud;
-		pcl::toPCLPointCloud2(*object_filtered_projection,tmp_cloud);
-		pcl_conversions::fromPCL(tmp_cloud, local_map_SLAM);
+		// pcl::PCLPointCloud2 tmp_cloud;
+		// pcl::toPCLPointCloud2(*object_filtered_projection,tmp_cloud);
+		// pcl_conversions::fromPCL(tmp_cloud, local_map_SLAM);
 
 		// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
 		// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
@@ -709,12 +710,12 @@ public:
 	std::vector<float> var_z;
 	std::vector<bool> ground_adjacent;
 	std::vector<std::vector<float> > local_grid_map;
-	float copied_robot_x;
-	float copied_robot_y;
-	float copied_robot_heading;
+	// float copied_robot_x;
+	// float copied_robot_y;
+	// float copied_robot_heading;
 	
 	
-	sensor_msgs::PointCloud2 local_map_SLAM;
+	// sensor_msgs::PointCloud2 local_map_SLAM;
 	Registration()
 	{
 		sub_laser = nn.subscribe("/velodyne_points", 1, &Registration::registrationCallback, this);
@@ -779,9 +780,9 @@ int main(int argc, char **argv)
 			    msg_LocalMap.var_z.push_back(registration.local_grid_map[i][3]);
 			    msg_LocalMap.ground_adjacent.push_back(1);
 			}
-			msg_LocalMap.x_filter = registration.copied_robot_x;
-			msg_LocalMap.y_filter = registration.copied_robot_y;
-			msg_LocalMap.heading_filter = registration.copied_robot_heading;
+			msg_LocalMap.x_filter = registration.robot_x;
+			msg_LocalMap.y_filter = registration.robot_y;
+			msg_LocalMap.heading_filter = registration.robot_heading;
 			msg_LocalMap.new_data = true;
 		}
 		else

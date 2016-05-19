@@ -44,8 +44,8 @@ void Keyframe::set_parameters()
 	TkeyToprekey = PM::TransformationParameters::Identity(4,4);
 	guessT = PM::TransformationParameters::Identity(4,4);
 	//set logger
-	// if (getParam<bool>("useROSlogger", false))
-	// 	PointMatcherSupport::setLogger(new PointMatcherSupport::ROSLogger);
+	if (getParam<bool>("useROSlogger", false))
+		PointMatcherSupport::setLogger(new PointMatcherSupport::ROSLogger);
 
 	//load configs
 	std::string configFileName;
@@ -65,6 +65,30 @@ void Keyframe::set_parameters()
 		ROS_INFO_STREAM("No ICP config file given, using default");
 		icp.setDefault();
 	}
+	//input filter
+	if (getParam<bool>("useROSLogger", false))
+		PointMatcherSupport::setLogger(new PointMatcherSupport::ROSLogger);
+	
+	if (ros::param::get("~inputFiltersConfig", configFileName))
+	{
+		std::ifstream ifs(configFileName.c_str());
+		if (ifs.good())
+		{
+			inputFilters = PM::DataPointsFilters(ifs);
+		}
+		else
+		{
+			ROS_ERROR_STREAM("Cannot load input filters config from YAML file " << configFileName);
+		}
+	}
+	else
+	{
+		ROS_INFO_STREAM("No input filters config file given, not using these filters");
+	}
+
+	slamPoseOut.x = 0;
+	slamPoseOut.y = 0;
+	slamPoseOut.heading = 0;
 	
 }
 void Keyframe::set_IMU_data(float IMU_x, float IMU_y, float IMU_heading)
@@ -72,36 +96,67 @@ void Keyframe::set_IMU_data(float IMU_x, float IMU_y, float IMU_heading)
 	x = IMU_x;
 	y = IMU_y;
 	heading = IMU_heading;
+	ROS_INFO_STREAM("test1");
 }
 
 void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 {
 
 	//***************************************//
+	if (LocalMapMsgIn.new_data)
+	{
 	set_IMU_data(LocalMapMsgIn.x_filter, LocalMapMsgIn.y_filter, LocalMapMsgIn.heading_filter);
-	
+	ROS_INFO_STREAM(LocalMapMsgIn.x_filter<<LocalMapMsgIn.y_filter<<LocalMapMsgIn.heading_filter);
 
 	// transfer from x y points to ros pointcloud2
 	pcl::PointCloud<pcl::PointXYZ> PCLcloudMsgIn;
-	for (int i=0; i < LocalMapMsgIn.x_mean.size(); i++)
-	{
-		PCLcloudMsgIn[i].x = LocalMapMsgIn.x_mean[i];
-		PCLcloudMsgIn[i].y = LocalMapMsgIn.y_mean[i];
-	}
-	
 	pcl::PCLPointCloud2 tmp_cloud;
 	sensor_msgs::PointCloud2 cloudMsgIn;
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr PCLcloudMsgIn (new pcl::PointCloud<pcl::PointXYZ>);
+
+	float z_test = 0;
+	for (int i=0; i < LocalMapMsgIn.x_mean.size(); i++)
+	{
+
+		// ROS_INFO_STREAM("number of localmap size: "<< LocalMapMsgIn.x_mean.size());
+		// ROS_INFO_STREAM("LocalMapMsgIn.x_mean "<< i <<" "<< LocalMapMsgIn.x_mean[i]);
+		// ROS_INFO_STREAM("LocalMapMsgIn.y_mean "<< i <<" "<< LocalMapMsgIn.y_mean[i]);
+		float z_test = 0;
+
+		// PCLcloudMsgIn->points[i].x = LocalMapMsgIn.x_mean[i];
+		// PCLcloudMsgIn->points[i].y = LocalMapMsgIn.y_mean[i];
+		// PCLcloudMsgIn->points[i].z = z_test;
+		// if (LocalMapMsgIn.x_mean[i] == 0 && LocalMapMsgIn.y_mean[i] == 0)
+		// {
+		// 	continue;
+		// }
+		// else
+		// {
+			PCLcloudMsgIn.push_back (pcl::PointXYZ(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i],z_test));
+		// 	ROS_INFO_STREAM("PCLcloudMsgIn z "<< i <<" "<< PCLcloudMsgIn.points[i].z);
+		// // }
+	}
+	// *PCLcloudMsgIn = PCLcloudMsgIn_temp;
+	
+
 	pcl::toPCLPointCloud2(PCLcloudMsgIn,tmp_cloud);
 	pcl_conversions::fromPCL(tmp_cloud, cloudMsgIn);
+
+	ROS_INFO_STREAM("number of localmap size: "<< LocalMapMsgIn.x_mean.size());
+	ROS_INFO_STREAM("cloudMsgIn: "<<cloudMsgIn.width);
+
 
 
 	//do ICP
 	PM::DataPoints cloud(DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn)));
-	read_frame = "robot";
-	processCloud(cloud, read_frame, cloudMsgIn.header.stamp);
-	cloud_stamp = cloudMsgIn.header.stamp;
+	// read_frame = "robot";
+	// ROS_INFO_STREAM("Time stamp "<< cloudMsgIn.header.stamp);
+	// ROS_INFO_STREAM("frame_id "<< cloudMsgIn.header.frame_id);
+	processCloud(cloud, cloudMsgIn.header.frame_id, cloudMsgIn.header.stamp);
+	// cloud_stamp = cloudMsgIn.header.stamp;
 	// counter++;
 	// ROS_INFO_STREAM("counter: " <<counter);
+	}
 }
 
 void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& read_frame, const ros::Time& stamp)
@@ -110,23 +165,32 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 
 	//Convert point cloud
 	const size_t goodCount(newPointCloud.features.cols());
-	ROS_DEBUG_STREAM("goodCount: "<<goodCount);
+	ROS_INFO_STREAM("goodCount: "<<goodCount);
 	if (goodCount == 0)
 	{
 		ROS_ERROR("I found no good points in the cloud");
 		return;
 	}
+	
+	{
+		timer t; //print how long take the algorithm
 
+		//apply filters to incoming cloud, in robot coordinates
+		inputFilters.apply(newPointCloud);
+
+		ROS_INFO_STREAM("Input filters took "<< t.elapsed() <<" [s]");
+
+	}
 	//Dimension of the point cloud, we seem like handle 3D
 	const int dimp1(newPointCloud.features.rows());
-	ROS_DEBUG_STREAM("dimp1: "<<dimp1);
+	// ROS_INFO_STREAM("dimp1: "<<dimp1);
 //	ROS_INFO_STREAM("Processing new point cloud");
 
 	//if it is the start point
 	if (refPointCloud.features.cols() == 0)
 	{
-	ROS_DEBUG_STREAM(refPointCloud.features.cols());
-
+	// ROS_INFO_STREAM(refPointCloud.features.cols());
+	// ROS_INFO_STREAM(readPointCloud.features.cols());
 		refPointCloud = newPointCloud;
 		keyPointCloud = newPointCloud;
 		readPointCloud = newPointCloud;
@@ -155,8 +219,8 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 	 	}
 
 	 	readPointCloud = newPointCloud;
-		ROS_DEBUG_STREAM(refPointCloud.features.cols());
-		ROS_DEBUG_STREAM(readPointCloud.features.cols());
+		ROS_INFO_STREAM(refPointCloud.features.cols());
+		ROS_INFO_STREAM(readPointCloud.features.cols());
 
 		x1 = x;
 	 	y1 = y;
@@ -188,7 +252,7 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 	 	guessT(3,1) = 0;
 	 	guessT(3,2) = 0;
 	 	guessT(3,3) = 1;
-
+	 	ROS_INFO_STREAM("guessT: \n" << guessT);
 
 	 }
 	
@@ -196,15 +260,17 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 	try
 	{
 
-
+		// ROS_INFO_STREAM("test1");
+		// ROS_INFO_STREAM(refPointCloud.features.cols());
+		// ROS_INFO_STREAM(readPointCloud.features.cols());
 		//based on IMU transformation to be a guess
-		 TreadToref = icp(readPointCloud, refPointCloud, guessT);
+		TreadToref = icp(readPointCloud, refPointCloud, guessT);
 
 		//use reading and reference to get transformation
-		//TreadToref = icp(readPointCloud, refPointCloud);
+		// TreadToref = icp(readPointCloud, refPointCloud);
 //
 		ROS_INFO_STREAM("TreadToref (icp) :\n" << TreadToref);
-		ROS_INFO_STREAM("guessT: \n" << guessT << "x= " << x);
+		
 		
 
 
@@ -227,11 +293,23 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 
 		//	put into the main function
 		//tfBroadcaster.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(TreadTomap, map_frame, read_frame, stamp));
-		ROS_DEBUG_STREAM("TreadTomap:\n" << TreadTomap);
+		ROS_INFO_STREAM("TreadTomap:\n" << TreadTomap);
 
 		slamPoseOut.x = slamPoseOut.x + TreadTomap(0,3);
 		slamPoseOut.y = slamPoseOut.y + TreadTomap(1,3);
-		slamPoseOut.heading = slamPoseOut.heading + (acos(TreadTomap(0,0)) * 180.0 / PI);
+
+		ROS_INFO_STREAM("TreadTomap(0,0): " << TreadTomap(0,0));
+		ROS_INFO_STREAM("TreadTomap(0,0): " << (acos(TreadTomap(0,0)) * 180.0 / PI));
+		//calculate the angle
+		slamPoseOutheading0 = slamPoseOutheading1;
+
+		if (TreadTomap(0,0) != 0)
+			slamPoseOutheading1 = atan2(TreadTomap(0,1), TreadTomap(0,0)) * 180.0 / PI;
+		else 
+			slamPoseOutheading1 = 90.0;
+	
+		// slamPoseOut.heading = slamPoseOut.heading + (acos((double)TreadTomap(0,0)) * 180.0 / PI);
+		slamPoseOut.heading = slamPoseOut.heading + (slamPoseOutheading1 - slamPoseOutheading0);
 
 		frame_positionPub.publish(slamPoseOut);
 
@@ -242,6 +320,7 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 						<<"NavfilterOut.x: "<<x1<<"\n"
 						<<"NavfilterOut.y: "<<y1<<"\n"
 						<<"NavfilterOut.heading: "<<heading1<<"\n");
+		//***********************************************//
 		if (estimatedOverlap < minOverlap || distance >= maxdistance_key)
 		{
 
