@@ -192,14 +192,14 @@ private:
 			{
 				//cout << "x,y,z =" << cloud->points[i].x << ", " << cloud->points[i].y << ", " << cloud->points[i].z << endl;
 				//CHECK IF POINT IN CORRIDOR
-				if(cloud->points[i].x > 0 && cloud->points[i].y < 1.5 && cloud->points[i].y > -1.5 && cloud->points[i].x<4)
+				if(cloud->points[i].y > 0 && cloud->points[i].x < 1.5 && cloud->points[i].x > -1.5 && cloud->points[i].y < 5)
 				{
 					// CHECK IF THE POINT IS OUTSIDE OF THE SAFE ENVELOPE
 					if((abs(lidar_height + cloud->points[i].z)/cloud->points[i].x) > tan(safe_envelope_angle))
 					{
 						// NEED TO AVOID
 						collision_point_counter++;
-						if(cloud->points[i].y<0)
+						if(cloud->points[i].x<0)
 						{
 							collision_left_counter++;
 						}
@@ -208,6 +208,18 @@ private:
 							collision_right_counter++;
 						}
 					} 
+				}
+				else if (cloud->points[i].y > 0 && cloud->points[i].y < 1)
+				{
+				    collision_point_counter++;
+					if(cloud->points[i].x<0)
+					{
+						collision_left_counter++;
+					}
+					else
+					{
+						collision_right_counter++;
+					}
 				}
 			}
 
