@@ -7,6 +7,7 @@ MapManager::MapManager()
     modROIServ = nh.advertiseService("/control/mapmanager/modifyroi", &MapManager::modROI, this);
     mapROIServ = nh.advertiseService("/control/mapmanager/roigridmap", &MapManager::mapROI, this);
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/slam/keyframelist", 1, &MapManager::keyframesCallback, this);
+    robotPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/robotpose", 1, &MapManager::robotPoseCallback, this);
     currentROI = 0; // 0 means in no ROI
 
     // Temporary ROIs. Rectangle around starting platform
@@ -204,34 +205,40 @@ bool MapManager::mapROI(messages::ROIGridMap::Request &req, messages::ROIGridMap
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)
 {
-    newKeyframesIn = *msg;
-    for(int i=0; i<newKeyframesIn.keyframeList.size(); i++)
+    keyframes = *msg;
+    clearGlobalMapLayers(GLOBAL_MAP_KEYFRAME_LAYERS_START_INDEX, GLOBAL_MAP_KEYFRAME_LAYERS_END_INDEX);
+    for(int i=0; i<keyframes.keyframeList.size(); i++)
     {
-        grid_map::GridMapRosConverter::fromMessage(newKeyframesIn.keyframeList.at(i).map,currentKeyframe);
-        for(int j=0; j<NUM_GLOBAL_MAP_LAYERS; j++) keyframeTransform.add(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(j)),0);
-        keyframeOriginalXLen = currentKeyframe.getLength().x();
-        keyframeOriginalYLen = currentKeyframe.getLength().y();
-        keyframeTransformHeading = newKeyframesIn.keyframeList.at(i).heading;
-        keyframeOriginalXPos = newKeyframesIn.keyframeList.at(i).x;
-        keyframeOriginalYPos = newKeyframesIn.keyframeList.at(i).y;
-        keyframeTransformXLen = keyframeOriginalXLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalYLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
-        keyframeTransformYLen = keyframeOriginalYLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalXLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
-        keyframeTransform.setGeometry(grid_map::Length(keyframeTransformXLen,keyframeTransformYLen), mapResolution, grid_map::Position(0.0,0.0));
+        grid_map::GridMapRosConverter::fromMessage(keyframes.keyframeList.at(i).map,currentKeyframe);
+        //for(int j=0; j<NUM_GLOBAL_MAP_LAYERS; j++) keyframeTransform.add(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(j)),0);
+        //keyframeOriginalXLen = currentKeyframe.getLength().x();
+        //keyframeOriginalYLen = currentKeyframe.getLength().y();
+        keyframeHeading = keyframes.keyframeList.at(i).heading;
+        keyframeXPos = keyframes.keyframeList.at(i).x;
+        keyframeYPos = keyframes.keyframeList.at(i).y;
+        //keyframeTransformXLen = keyframeOriginalXLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalYLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
+        //keyframeTransformYLen = keyframeOriginalYLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalXLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
+        //keyframeTransform.setGeometry(grid_map::Length(keyframeTransformXLen,keyframeTransformYLen), mapResolution, grid_map::Position(0.0,0.0));
         for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
         {
-            currentKeyframe.getPosition(*it, keyframeOriginalCoord);
-            globalXTransformCoord[0] = keyframeOriginalCoord[0]*cos(DEG2RAD*keyframeTransformHeading)-keyframeOriginalCoord[1]*sin(DEG2RAD*keyframeTransformHeading)+keyframeOriginalXPos;
-            globalXTransformCoord[1] = keyframeOriginalCoord[0]*sin(DEG2RAD*keyframeTransformHeading)+keyframeOriginalCoord[1]*cos(DEG2RAD*keyframeTransformHeading)+keyframeOriginalYPos;
-            for(int j=0; j<NUM_GLOBAL_MAP_LAYERS; j++)
+            currentKeyframe.getPosition(*it, keyframeCoord);
+            globalXTransformCoord[0] = keyframeCoord[0]*cos(DEG2RAD*keyframeHeading)-keyframeCoord[1]*sin(DEG2RAD*keyframeHeading)+keyframeXPos;
+            globalXTransformCoord[1] = keyframeCoord[0]*sin(DEG2RAD*keyframeHeading)+keyframeCoord[1]*cos(DEG2RAD*keyframeHeading)+keyframeYPos;
+            for(int j=GLOBAL_MAP_KEYFRAME_LAYERS_START_INDEX; j<=GLOBAL_MAP_KEYFRAME_LAYERS_END_INDEX; j++)
             {
                 globalMap.atPosition(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(j)),globalXTransformCoord) = currentKeyframe.at(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(j)),*it);
             }
         }
     }
-    //updateCurrentROI();
 }
 
-void MapManager::updateCurrentROI()
+void MapManager::robotPoseCallback(const messages::RobotPose::ConstPtr &msg)
 {
+    robotPose = *msg;
+    currentROI = globalMap.atPosition(layerToString(_roiNum),grid_map::Position(robotPose.x, robotPose.y));
+}
 
+void MapManager::clearGlobalMapLayers(int startIndex, int endIndex)
+{
+    for(int i=startIndex; i<=endIndex; i++) globalMap.clear(layerToString(static_cast<GLOBAL_MAP_LAYERS_T>(i)));
 }

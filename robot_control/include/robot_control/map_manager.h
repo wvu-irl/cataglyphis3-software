@@ -6,6 +6,7 @@
 #include <robot_control/ModifyROI.h>
 #include <messages/ROIGridMap.h>
 #include <messages/KeyframeList.h>
+#include <messages/RobotPose.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "global_map_layers.h"
@@ -24,31 +25,34 @@ public:
 	bool modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res);
 	bool mapROI(messages::ROIGridMap::Request &req, messages::ROIGridMap::Response &res);
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
-	void updateCurrentROI();
+	void robotPoseCallback(const messages::RobotPose::ConstPtr& msg);
+	void clearGlobalMapLayers(int startIndex, int endIndex);
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;
 	ros::ServiceServer modROIServ;
 	ros::ServiceServer mapROIServ;
 	ros::Subscriber keyframesSub;
+	ros::Subscriber robotPoseSub;
 	robot_control::Waypoint waypoint;
 	robot_control::ROI ROI;
 	std::vector<robot_control::ROI> regionsOfInterest;
 	grid_map::GridMap globalMap;
 	ros::Publisher globalMapPub;
 	grid_map_msgs::GridMap globalMapMsg;
-	messages::KeyframeList newKeyframesIn;
+	messages::RobotPose robotPose;
+	messages::KeyframeList keyframes;
 	grid_map::GridMap currentKeyframe;
-	grid_map::GridMap keyframeTransform;
-	float keyframeOriginalXLen;
-	float keyframeOriginalYLen;
-	float keyframeOriginalXPos;
-	float keyframeOriginalYPos;
-	grid_map::Position keyframeOriginalCoord;
+	grid_map::GridMap keyframeTransform; // ***
+	float keyframeOriginalXLen; // ***
+	float keyframeOriginalYLen; // ***
+	float keyframeXPos;
+	float keyframeYPos;
+	grid_map::Position keyframeCoord;
 	//float keyframeOriginalYCoord;
-	float keyframeTransformXLen;
-	float keyframeTransformYLen;
-	float keyframeTransformHeading;
+	float keyframeTransformXLen; // ***
+	float keyframeTransformYLen; // ***
+	float keyframeHeading;
 	grid_map::Position globalXTransformCoord;
 	//float globalYTransformPos;
 	int currentROI;
