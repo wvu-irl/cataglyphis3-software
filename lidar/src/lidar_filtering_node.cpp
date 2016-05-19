@@ -249,7 +249,7 @@ private:
 	            // switch the coordinate of the LIDAR
 	            float temp_holder = 0.0;
 	            average_z = -average_z;
-	            average_x = temp_holder;
+	            atemp_holder = average_x;
 	            average_x = average_y;
 	            average_y = temp_holder;
 	            point.push_back(average_x);
