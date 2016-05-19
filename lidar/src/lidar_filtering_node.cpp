@@ -246,6 +246,12 @@ private:
 	        variance_z = sqrt(variance_z);
 	        if (total_x || total_y || total_z)
 	        {
+	            // switch the coordinate of the LIDAR
+	            float temp_holder = 0.0;
+	            average_z = -average_z;
+	            average_x = temp_holder;
+	            average_x = average_y;
+	            average_y = temp_holder;
 	            point.push_back(average_x);
 	            point.push_back(average_y);
 	            point.push_back(average_z);
