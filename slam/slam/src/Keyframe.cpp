@@ -96,7 +96,7 @@ void Keyframe::set_IMU_data(float IMU_x, float IMU_y, float IMU_heading)
 	x = IMU_x;
 	y = IMU_y;
 	heading = IMU_heading;
-	ROS_INFO_STREAM("test1");
+	// ROS_INFO_STREAM("test1");
 }
 
 void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
@@ -106,7 +106,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	if (LocalMapMsgIn.new_data)
 	{
 	set_IMU_data(LocalMapMsgIn.x_filter, LocalMapMsgIn.y_filter, LocalMapMsgIn.heading_filter);
-	ROS_INFO_STREAM(LocalMapMsgIn.x_filter<<LocalMapMsgIn.y_filter<<LocalMapMsgIn.heading_filter);
+	// ROS_INFO_STREAM(LocalMapMsgIn.x_filter<<LocalMapMsgIn.y_filter<<LocalMapMsgIn.heading_filter);
 
 	// transfer from x y points to ros pointcloud2
 	pcl::PointCloud<pcl::PointXYZ> PCLcloudMsgIn;
@@ -121,7 +121,6 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		// ROS_INFO_STREAM("number of localmap size: "<< LocalMapMsgIn.x_mean.size());
 		// ROS_INFO_STREAM("LocalMapMsgIn.x_mean "<< i <<" "<< LocalMapMsgIn.x_mean[i]);
 		// ROS_INFO_STREAM("LocalMapMsgIn.y_mean "<< i <<" "<< LocalMapMsgIn.y_mean[i]);
-		float z_test = 0;
 
 		// PCLcloudMsgIn->points[i].x = LocalMapMsgIn.x_mean[i];
 		// PCLcloudMsgIn->points[i].y = LocalMapMsgIn.y_mean[i];
@@ -142,8 +141,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	pcl::toPCLPointCloud2(PCLcloudMsgIn,tmp_cloud);
 	pcl_conversions::fromPCL(tmp_cloud, cloudMsgIn);
 
-	ROS_INFO_STREAM("number of localmap size: "<< LocalMapMsgIn.x_mean.size());
-	ROS_INFO_STREAM("cloudMsgIn: "<<cloudMsgIn.width);
+	// ROS_INFO_STREAM("number of localmap size: "<< LocalMapMsgIn.x_mean.size());
+	// ROS_INFO_STREAM("cloudMsgIn: "<<cloudMsgIn.width);
 
 
 
@@ -165,7 +164,7 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 
 	//Convert point cloud
 	const size_t goodCount(newPointCloud.features.cols());
-	ROS_INFO_STREAM("goodCount: "<<goodCount);
+	// ROS_INFO_STREAM("goodCount: "<<goodCount);
 	if (goodCount == 0)
 	{
 		ROS_ERROR("I found no good points in the cloud");
@@ -219,15 +218,15 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 	 	}
 
 	 	readPointCloud = newPointCloud;
-		ROS_INFO_STREAM(refPointCloud.features.cols());
-		ROS_INFO_STREAM(readPointCloud.features.cols());
+		// ROS_INFO_STREAM(refPointCloud.features.cols());
+		// ROS_INFO_STREAM(readPointCloud.features.cols());
 
 		x1 = x;
 	 	y1 = y;
 	 	heading1 = heading;
 
 	 	theta = heading1 - heading0;
-	 	ROS_INFO_STREAM("theta in degree: " << theta);
+	 	// ROS_INFO_STREAM("theta in degree: " << theta);
 	 	// transfer from degree to radians
 	 	theta = theta * PI / 180;
 	 	diff_x = x1 - x0;
@@ -252,7 +251,7 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 	 	guessT(3,1) = 0;
 	 	guessT(3,2) = 0;
 	 	guessT(3,3) = 1;
-	 	ROS_INFO_STREAM("guessT: \n" << guessT);
+	 	// ROS_INFO_STREAM("guessT: \n" << guessT);
 
 	 }
 	
@@ -269,7 +268,7 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 		//use reading and reference to get transformation
 		// TreadToref = icp(readPointCloud, refPointCloud);
 //
-		ROS_INFO_STREAM("TreadToref (icp) :\n" << TreadToref);
+		// ROS_INFO_STREAM("TreadToref (icp) :\n" << TreadToref);
 		
 		
 
@@ -293,20 +292,22 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 
 		//	put into the main function
 		//tfBroadcaster.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(TreadTomap, map_frame, read_frame, stamp));
-		ROS_INFO_STREAM("TreadTomap:\n" << TreadTomap);
+		// ROS_INFO_STREAM("TreadTomap:\n" << TreadTomap);
 
 		slamPoseOut.x = slamPoseOut.x + TreadTomap(0,3);
 		slamPoseOut.y = slamPoseOut.y + TreadTomap(1,3);
 
-		ROS_INFO_STREAM("TreadTomap(0,0): " << TreadTomap(0,0));
-		ROS_INFO_STREAM("TreadTomap(0,0): " << (acos(TreadTomap(0,0)) * 180.0 / PI));
+		// ROS_INFO_STREAM("TreadTomap(0,0): " << TreadTomap(0,0));
+		// ROS_INFO_STREAM("TreadTomap(0,0): " << (acos(TreadTomap(0,0)) * 180.0 / PI));
 		//calculate the angle
 		slamPoseOutheading0 = slamPoseOutheading1;
 
 		if (TreadTomap(0,0) != 0)
 			slamPoseOutheading1 = atan2(TreadTomap(0,1), TreadTomap(0,0)) * 180.0 / PI;
-		else 
+		else if (TreadTomap(0,1) == 1)
 			slamPoseOutheading1 = 90.0;
+		else if (TreadTomap(0,1) == -1)
+			slamPoseOutheading1 = -90.0;
 	
 		// slamPoseOut.heading = slamPoseOut.heading + (acos((double)TreadTomap(0,0)) * 180.0 / PI);
 		slamPoseOut.heading = slamPoseOut.heading + (slamPoseOutheading1 - slamPoseOutheading0);
