@@ -69,7 +69,7 @@ const float DEG2RAD = PI/180;
 const float RAD2DEG = 180/PI;
 
 float corridor_width = 1.5; // Width of the virtual corridor
-float corridor_length = 5.5; // Length of the virtual corridor, THE CLOSEST DECTECTION IS ~2.8 M
+float corridor_length = 10.0; // Length of the virtual corridor, THE CLOSEST DECTECTION IS ~2.8 M
 float x_shift = 0.0;
 float y_shirt = 0.0;
 float lidar_height = 0.75; // height of the lidar sensor
@@ -127,16 +127,16 @@ private:
 			pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::PointIndicesPtr ground (new pcl::PointIndices);
 
-			 pcl::PassThrough<pcl::PointXYZ> pass;
-			 pass.setInputCloud(cloud);
-			 pass.setFilterFieldName("x");
-			 pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
-			 pass.filter(*cloud);
-			 pass.setInputCloud(cloud);
-			 pass.setFilterFieldName("y");
-			 pass.setFilterLimits(y_shirt + 0.35,y_shirt + corridor_length);
-			 pass.filter(*cloud);
-			 ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
+            pcl::PassThrough<pcl::PointXYZ> pass;
+            pass.setInputCloud(cloud);
+            pass.setFilterFieldName("x");
+            pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
+            pass.filter(*cloud);
+            pass.setInputCloud(cloud);
+            pass.setFilterFieldName("y");
+            pass.setFilterLimits(y_shirt, y_shirt + corridor_length);
+            pass.filter(*cloud);
+            ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
 
 			
 			// // //use rough ground removal, method A: rough 
@@ -181,6 +181,11 @@ private:
 			extract.filter (*ground_filtered);
 			extract.setNegative (true);
 			extract.filter (*object_filtered);
+			if (object_filtered->points.size() > 20)
+			{
+			    ROS_INFO("OBJECT FOUND BY LAYER 2, SIZE IS %i points.", object_filtered->points.size());
+			}
+			
 			// B: end
 
 			//check for collision
@@ -195,7 +200,7 @@ private:
 				if(cloud->points[i].y > 0 && cloud->points[i].x < 1.5 && cloud->points[i].x > -1.5 && cloud->points[i].y < 5)
 				{
 					// CHECK IF THE POINT IS OUTSIDE OF THE SAFE ENVELOPE
-					if((abs(lidar_height + cloud->points[i].z)/cloud->points[i].x) > tan(safe_envelope_angle))
+					if((abs(lidar_height + cloud->points[i].z)/cloud->points[i].y) > tan(safe_envelope_angle))
 					{
 						// NEED TO AVOID
 						collision_point_counter++;
