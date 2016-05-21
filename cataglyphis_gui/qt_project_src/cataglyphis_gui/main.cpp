@@ -1,11 +1,11 @@
-#include "cataglyphis_gui.h"
 #include <QApplication>
+#include "cataglyphis_gui.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    Cataglyphis_Gui w;
-    w.show();
+    cataglyphis_gui cata_gui;
+    cata_gui.show();
 
     return a.exec();
 }

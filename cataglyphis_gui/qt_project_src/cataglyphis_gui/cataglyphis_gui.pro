@@ -13,11 +13,22 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        cataglyphis_gui.cpp
+    cataglyphis_startup_form_main.cpp \
+    map_viewer.cpp \
+    window_selector.cpp \
+    cataglyphis_gui.cpp
 
-HEADERS  += cataglyphis_gui.h
+HEADERS  += \
+    cataglyphis_startup_form_main.h \
+    map_viewer.h \
+    window_selector.h \
+    cataglyphis_gui.h
 
-FORMS    += cataglyphis_gui.ui
+FORMS    += \
+    cataglyphis_startup_form_main.ui \
+    map_viewer.ui \
+    window_selector.ui \
+    cataglyphis_gui.ui
 
 RESOURCES += \
     resources.qrc
