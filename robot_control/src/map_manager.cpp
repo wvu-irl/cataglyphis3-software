@@ -8,7 +8,8 @@ MapManager::MapManager()
     mapROIServ = nh.advertiseService("/control/mapmanager/roigridmap", &MapManager::mapROI, this);
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/slam/keyframelist", 1, &MapManager::keyframesCallback, this);
     robotPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/robotpose", 1, &MapManager::robotPoseCallback, this);
-    currentROI = 0; // 0 means in no ROI
+    currentROIPub = nh.advertise<robot_control::CurrentROI>("/control/mapmanager/currentroi", 1);
+    currentROIMsg.currentROINum = 0; // 0 means in no ROI
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.x = 8.0;
@@ -235,7 +236,8 @@ void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)
 void MapManager::robotPoseCallback(const messages::RobotPose::ConstPtr &msg)
 {
     robotPose = *msg;
-    currentROI = globalMap.atPosition(layerToString(_roiNum),grid_map::Position(robotPose.x, robotPose.y));
+    currentROIMsg.currentROINum = globalMap.atPosition(layerToString(_roiNum),grid_map::Position(robotPose.x, robotPose.y));
+    currentROIPub.publish(currentROIMsg);
 }
 
 void MapManager::clearGlobalMapLayers(int startIndex, int endIndex)

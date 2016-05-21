@@ -1,6 +1,7 @@
 float32 x
 float32 y
-float32 diameter
+float32 radialAxis
+float32 tangentialAxis
 int16 purpleProb
 int16 redProb
 int16 blueProb

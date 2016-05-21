@@ -4,6 +4,7 @@
 #include <robot_control/Waypoint.h>
 #include <robot_control/RegionsOfInterest.h>
 #include <robot_control/ModifyROI.h>
+#include <robot_control/CurrentROI.h>
 #include <messages/ROIGridMap.h>
 #include <messages/KeyframeList.h>
 #include <messages/RobotPose.h>
@@ -34,6 +35,7 @@ public:
 	ros::ServiceServer mapROIServ;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber robotPoseSub;
+	ros::Publisher currentROIPub;
 	robot_control::Waypoint waypoint;
 	robot_control::ROI ROI;
 	std::vector<robot_control::ROI> regionsOfInterest;
@@ -55,7 +57,7 @@ public:
 	float keyframeHeading;
 	grid_map::Position globalXTransformCoord;
 	//float globalYTransformPos;
-	int currentROI;
+	robot_control::CurrentROI currentROIMsg;
 	const float mapResolution = 1.0; // m
 };
 
