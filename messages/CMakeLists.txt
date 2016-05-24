@@ -80,6 +80,7 @@ find_package(catkin REQUIRED COMPONENTS
    CVSearchCmd.srv
    ROIGridMap.srv
    MapSegment.srv
+   CreateROIKeyframe.srv
  )
 
 ## Generate actions in the 'action' folder

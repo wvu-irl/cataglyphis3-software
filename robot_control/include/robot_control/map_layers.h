@@ -1,13 +1,15 @@
-#ifndef GLOBAL_MAP_LAYERS_H
-#define GLOBAL_MAP_LAYERS_H
+#ifndef MAP_LAYERS_H
+#define MAP_LAYERS_H
 #include <string>
 
-#define NUM_GLOBAL_MAP_LAYERS 12
-#define GLOBAL_MAP_KEYFRAME_LAYERS_START_INDEX 1
-#define GLOBAL_MAP_KEYFRAME_LAYERS_END_INDEX 5
-enum GLOBAL_MAP_LAYERS_T {_slope, _driveability, _objectType, _objectIndex, _objectHeight, _reflectivity, _purpleProb, _redProb, _blueProb, _silverProb, _brassProb,
+#define NUM_MAP_LAYERS 12
+#define MAP_KEYFRAME_LAYERS_START_INDEX 1
+#define MAP_KEYFRAME_LAYERS_END_INDEX 5
+#define MAP_SAMPLE_PROB_LAYERS_START_INDEX 6
+#define MAP_SAMPLE_PROB_LAYERS_END_INDEX 10
+enum MAP_LAYERS_T {_slope, _driveability, _objectType, _objectIndex, _objectHeight, _reflectivity, _purpleProb, _redProb, _blueProb, _silverProb, _brassProb,
 						 _roiNum};
-inline std::string layerToString(GLOBAL_MAP_LAYERS_T layer)
+inline std::string layerToString(MAP_LAYERS_T layer)
 {
 	switch(layer)
 	{
@@ -25,4 +27,4 @@ inline std::string layerToString(GLOBAL_MAP_LAYERS_T layer)
 	}
 }
 
-#endif // GLOBAL_MAP_LAYERS_H
+#endif // MAP_LAYERS_H
