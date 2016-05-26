@@ -112,16 +112,9 @@ class DeepFishNet150:
         return np.asarray(X, dtype=theano.config.floatX)
 
     def init_weights(self, shape, weightType = None, typeLayer = None, caffeLayerName = None):
-        if(weightType == 'Xavier' and typeLayer == None):
-            W=GlorotUniform()
-            weights = W.sample(shape)
-            if(self.mode == "Train"):
-                if(self.caffeModelName != None and caffeLayerName != None):
-                    caffeWeights = self.loadTheseWeights(self.caffeModelName, caffeLayerName)
-                    print caffeWeights.shape
-                print weights.shape
-            print 'returning Xavier weights'
-            return theano.shared(self.floatX(weights), borrow=True)
+        '''
+            return randomly initialized weights
+        '''
         return theano.shared(self.floatX(np.random.randn(*shape) * 0.01),borrow=True)
 
     def sigmoid(self, X):
