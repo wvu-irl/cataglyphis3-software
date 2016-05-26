@@ -57,6 +57,9 @@ public:
 	messages::KeyframeList keyframes;
 	messages::CreateROIKeyframe createROIKeyframeSrv;
 	grid_map::GridMap currentKeyframe;
+	float currentCellValue;
+	float possibleNewCellValue;
+	unsigned int keyframeCallbackSerialNum;
 	grid_map::GridMap ROIKeyframe;
 	float sigmaROIX;
 	float sigmaROIY;

@@ -13,6 +13,7 @@ MapManager::MapManager()
     currentROIPub = nh.advertise<robot_control::CurrentROI>("/control/mapmanager/currentroi", 1);
     currentROIMsg.currentROINum = 0; // 0 means in no ROI
     searchLocalMapROINum = 0;
+    keyframeCallbackSerialNum = 0;
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.x = 8.0;
@@ -252,28 +253,39 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)
 {
+    ++keyframeCallbackSerialNum;
     keyframes = *msg;
     clearGlobalMapLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX);
     for(int i=0; i<keyframes.keyframeList.size(); i++)
     {
         grid_map::GridMapRosConverter::fromMessage(keyframes.keyframeList.at(i).map,currentKeyframe);
-        //for(int j=0; j<NUM_MAP_LAYERS; j++) keyframeTransform.add(layerToString(static_cast<MAP_LAYERS_T>(j)),0);
-        //keyframeOriginalXLen = currentKeyframe.getLength().x();
-        //keyframeOriginalYLen = currentKeyframe.getLength().y();
         keyframeHeading = keyframes.keyframeList.at(i).heading;
         keyframeXPos = keyframes.keyframeList.at(i).x;
         keyframeYPos = keyframes.keyframeList.at(i).y;
-        //keyframeTransformXLen = keyframeOriginalXLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalYLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
-        //keyframeTransformYLen = keyframeOriginalYLen*cos(DEG2RAD*fmod(keyframeTransformHeading,90.0))+fabs(keyframeOriginalXLen*sin(DEG2RAD*fmod(keyframeTransformHeading,90.0)));
-        //keyframeTransform.setGeometry(grid_map::Length(keyframeTransformXLen,keyframeTransformYLen), mapResolution, grid_map::Position(0.0,0.0));
         for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
         {
             currentKeyframe.getPosition(*it, keyframeCoord);
             globalTransformCoord[0] = keyframeCoord[0]*cos(DEG2RAD*keyframeHeading)-keyframeCoord[1]*sin(DEG2RAD*keyframeHeading)+keyframeXPos;
             globalTransformCoord[1] = keyframeCoord[0]*sin(DEG2RAD*keyframeHeading)+keyframeCoord[1]*cos(DEG2RAD*keyframeHeading)+keyframeYPos;
+            globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) = (float)keyframeCallbackSerialNum;
             for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
             {
-                globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = currentKeyframe.at(layerToString(static_cast<MAP_LAYERS_T>(j)),*it);
+                currentCellValue = globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord);
+                possibleNewCellValue = currentKeyframe.at(layerToString(static_cast<MAP_LAYERS_T>(j)),*it);
+                if((static_cast<MAP_LAYERS_T>(j)==_driveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
+                {
+                    if((possibleNewCellValue > currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
+                        globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
+                }
+                else if(static_cast<MAP_LAYERS_T>(j)==_objectHeight)
+                {
+                    if(currentKeyframe.at(layerToString(_driveability),*it) == _noObject) globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = 0;
+                    else
+                    {
+                        if((possibleNewCellValue < currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
+                            globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
+                    }
+                }
             }
         }
     }
