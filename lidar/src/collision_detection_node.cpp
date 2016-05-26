@@ -248,7 +248,7 @@ private:
 	                ROS_INFO("LARGEST COLLISION ON LEFT FROM LAYER 2");
 	            }
             }
-            elseif(points_cluster.size() == 2)
+            else if(points_cluster.size() == 2)
             {
                 ROS_INFO("There are only 2 objects in the region.");
                 Eigen::Vector4f centroid1, centroid2;
