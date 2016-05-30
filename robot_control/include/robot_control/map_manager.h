@@ -31,7 +31,7 @@ public:
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
-	void clearGlobalMapLayers(int startIndex, int endIndex);
+	void resetGlobalMapLayers(int startIndex, int endIndex);
 	void gridMapAddLayers(int layerStartIndex, int layerEndIndex ,grid_map::GridMap& map);
 	// Members
 	ros::NodeHandle nh;

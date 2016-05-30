@@ -1,7 +1,7 @@
 #include <robot_control/map_manager.h>
 
 MapManager::MapManager()
-    : globalMap({"sampleProb","hazard"}) // FIX THIS !!!!!!!!! somehow incorporate with new technique in common header
+    //: globalMap({"sampleProb","hazard"}) // FIX THIS !!!!!!!!! somehow incorporate with new technique in common header
 {
     roiServ = nh.advertiseService("/control/mapmanager/regionsofinterest", &MapManager::listROI, this);
     modROIServ = nh.advertiseService("/control/mapmanager/modifyroi", &MapManager::modROI, this);
@@ -11,6 +11,7 @@ MapManager::MapManager()
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
     keyframeRelPoseSub = nh.subscribe<messages::SLAMPoseOut>("/slam/keyframesnode/slamposeout", 1, &MapManager::keyframeRelPoseCallback, this);
     currentROIPub = nh.advertise<robot_control::CurrentROI>("/control/mapmanager/currentroi", 1);
+    globalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/globalmapviz", 1);
     currentROIMsg.currentROINum = 0; // 0 means in no ROI
     searchLocalMapROINum = 0;
     keyframeCallbackSerialNum = 0;
@@ -181,9 +182,14 @@ MapManager::MapManager()
     ros::Duration(1.0).sleep();
     globalMapPub.publish(globalMapMsg);*/
 
+    ROS_DEBUG("before global map set frame id");
     globalMap.setFrameId("map");
+    ROS_DEBUG("after global map set frame id");
     globalMap.setGeometry(grid_map::Length(300.0, 200.0), mapResolution, grid_map::Position(12.0, 65.0));
-    gridMapAddLayers(0, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
+    ROS_DEBUG("after global map set geometry");
+    //gridMapAddLayers(0, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
+    gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMap);
+    ROS_DEBUG("after global map add layers");
 
     searchLocalMap.setFrameId("map");
     searchLocalMap.setGeometry(grid_map::Length(searchLocalMapLength, searchLocalMapWidth), mapResolution, grid_map::Position(0.0, 0.0));
@@ -191,6 +197,13 @@ MapManager::MapManager()
 
     currentKeyframe.setFrameId("map");
     ROIKeyframe.setFrameId("map");
+
+    ros::Duration(3).sleep();
+    ROS_DEBUG("before global map toMsssage");
+    grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
+    ROS_DEBUG("after global map toMsssage");
+    globalMapPub.publish(globalMapMsg);
+    ROS_DEBUG("after global map publish");
 }
 
 bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res)
@@ -255,40 +268,48 @@ void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)
 {
     ++keyframeCallbackSerialNum;
     keyframes = *msg;
-    clearGlobalMapLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX);
+    resetGlobalMapLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX);
     for(int i=0; i<keyframes.keyframeList.size(); i++)
     {
         grid_map::GridMapRosConverter::fromMessage(keyframes.keyframeList.at(i).map,currentKeyframe);
         keyframeHeading = keyframes.keyframeList.at(i).heading;
         keyframeXPos = keyframes.keyframeList.at(i).x;
         keyframeYPos = keyframes.keyframeList.at(i).y;
+        ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0,30.0)));
         for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
         {
             currentKeyframe.getPosition(*it, keyframeCoord);
             globalTransformCoord[0] = keyframeCoord[0]*cos(DEG2RAD*keyframeHeading)-keyframeCoord[1]*sin(DEG2RAD*keyframeHeading)+keyframeXPos;
             globalTransformCoord[1] = keyframeCoord[0]*sin(DEG2RAD*keyframeHeading)+keyframeCoord[1]*cos(DEG2RAD*keyframeHeading)+keyframeYPos;
-            globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) = (float)keyframeCallbackSerialNum;
-            for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
+            if(globalMap.isInside(globalTransformCoord))
             {
-                currentCellValue = globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord);
-                possibleNewCellValue = currentKeyframe.at(layerToString(static_cast<MAP_LAYERS_T>(j)),*it);
-                if((static_cast<MAP_LAYERS_T>(j)==_driveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
+                for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
                 {
-                    if((possibleNewCellValue > currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
-                        globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
-                }
-                else if(static_cast<MAP_LAYERS_T>(j)==_objectHeight)
-                {
-                    if(currentKeyframe.at(layerToString(_driveability),*it) == _noObject) globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = 0;
-                    else
+                    currentCellValue = globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord);
+                    possibleNewCellValue = currentKeyframe.at(layerToString(static_cast<MAP_LAYERS_T>(j)),*it);
+                    //if(j==(int)_driveability && possibleNewCellValue!=0.0) ROS_INFO("possibleNewCellValue = %f, currentCellValue = %f, currentSerialNum = %f, newSerialNum = %f",possibleNewCellValue, currentCellValue, globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord),(float)keyframeCallbackSerialNum);
+                    if((static_cast<MAP_LAYERS_T>(j)==_driveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
                     {
-                        if((possibleNewCellValue < currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
+                        if((possibleNewCellValue > currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
                             globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
                     }
+                    else if(static_cast<MAP_LAYERS_T>(j)==_objectHeight)
+                    {
+                        if(currentKeyframe.at(layerToString(_driveability),*it) == _noObject) globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = 0;
+                        else
+                        {
+                            if((possibleNewCellValue < currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
+                                globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
+                        }
+                    }
                 }
+                globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) = (float)keyframeCallbackSerialNum;
             }
         }
     }
+    ROS_INFO("globalMap.at = %f",globalMap.atPosition(layerToString(_driveability), grid_map::Position(50.0,45.0)));
+    grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
+    globalMapPub.publish(globalMapMsg);
 }
 
 void MapManager::globalPoseCallback(const messages::RobotPose::ConstPtr &msg)
@@ -303,15 +324,15 @@ void MapManager::keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr &
     keyframeRelPose = *msg;
 }
 
-void MapManager::clearGlobalMapLayers(int startIndex, int endIndex)
+void MapManager::resetGlobalMapLayers(int startIndex, int endIndex)
 {
-    for(int i=startIndex; i<=endIndex; i++) globalMap.clear(layerToString(static_cast<MAP_LAYERS_T>(i)));
+    for(int i=startIndex; i<=endIndex; i++) globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
 }
 
 void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map)
 {
     for(int i=layerStartIndex; i<=layerEndIndex; i++)
     {
-        map.add(layerToString(static_cast<MAP_LAYERS_T>(i)));
+        map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);;
     }
 }

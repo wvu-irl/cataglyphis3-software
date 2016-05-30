@@ -1,6 +1,7 @@
 #ifndef MAP_LAYERS_H
 #define MAP_LAYERS_H
 #include <string>
+#include <ros/ros.h>
 
 #define NUM_MAP_LAYERS 11
 #define MAP_KEYFRAME_LAYERS_START_INDEX 1
@@ -23,6 +24,9 @@ inline std::string layerToString(MAP_LAYERS_T layer)
 	case _blueProb: return "blueProb";
 	case _silverProb: return "silverProb";
 	case _brassProb: return "brassProb";
+	case _roiNum: return "roiNum";
+	case _keyframeCallbackSerialNum: return "keyframeCallbackSerialNum";
+	default: ROS_FATAL("layerToString: unknown layer type");
 	}
 }
 
