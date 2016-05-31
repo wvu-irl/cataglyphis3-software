@@ -46,6 +46,7 @@
 #include <messages/LocalMap.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
+#include <pcl/common/transforms.h>
 
 class LidarFilter
 {
@@ -71,6 +72,10 @@ private:
 	float _navigation_filter_heading;
 	short int _navigation_filter_counter;
 	short int _navigation_filter_counter_prev;
+
+	//transform points from lidar frame to robot body
+	Eigen::Matrix3f _R_tilt_robot_to_beacon; //robot to homing beacon rotation (pitch and roll rotation only)
+	Eigen::Matrix3f _R_lidar_to_robot; //lidar body from to robot body frame (rotation)
 
 	//registration callback
 	pcl::PointCloud<pcl::PointXYZ> _input_cloud;

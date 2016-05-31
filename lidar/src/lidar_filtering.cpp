@@ -12,6 +12,20 @@ LidarFilter::LidarFilter()
 	_navigation_filter_counter_prev = 0;
 	_sub_navigation = _nh.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &LidarFilter::navigationFilterCallback, this);
 
+	//rotation from robot to homing beacon (pitch and roll rotation only)
+	_R_tilt_robot_to_beacon = Eigen::Matrix3f::Identity();
+
+	//rotation from lidar to robot body frame (rotation)
+	_R_lidar_to_robot(0,0) = 1;
+	_R_lidar_to_robot(0,1) = 0;
+	_R_lidar_to_robot(0,2) = 0;
+	_R_lidar_to_robot(1,0) = 0;
+	_R_lidar_to_robot(1,1) = -1;
+	_R_lidar_to_robot(1,2) = 0;
+	_R_lidar_to_robot(2,0) = 0;
+	_R_lidar_to_robot(2,1) = 0;
+	_R_lidar_to_robot(2,2) = -1;
+
 	//velodyne callback initializations
 	_registration_counter = 0;
 	_registration_counter_prev = 0;
@@ -32,12 +46,67 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_navigation_filter_pitch = msg->pitch; //radians
 	_navigation_filter_heading = msg->heading; //radians
 	_navigation_filter_counter = _navigation_filter_counter + 1;
+
+	//roll rotation using navigation data
+	Eigen::Matrix3f _R_roll;
+	_R_roll(0,0) = 1;
+	_R_roll(0,1) = 0;
+	_R_roll(0,2) = 0;
+	_R_roll(1,0) = 0;
+	_R_roll(1,1) = cos(_navigation_filter_roll);
+	_R_roll(1,2) = sin(_navigation_filter_roll);
+	_R_roll(2,0) = 0;
+	_R_roll(2,1) = -sin(_navigation_filter_roll);
+	_R_roll(2,2) = cos(_navigation_filter_roll);
+
+	//pitch rotation using navigation data
+	Eigen::Matrix3f _R_pitch;
+	_R_pitch(0,0) = cos(_navigation_filter_pitch);
+	_R_pitch(0,1) = 0;
+	_R_pitch(0,2) = -sin(_navigation_filter_pitch);
+	_R_pitch(1,0) = 0;
+	_R_pitch(1,1) = 1;
+	_R_pitch(1,2) = 0;
+	_R_pitch(2,0) = sin(_navigation_filter_pitch);
+	_R_pitch(2,1) = 0;
+	_R_pitch(2,2) = cos(_navigation_filter_pitch);
+
+	//rotation from lidar to robot body frame (rotation)
+	_R_tilt_robot_to_beacon = _R_roll*_R_pitch;
 }
 
 void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
 {
-    _input_cloud = input_cloud;
+	pcl::PointCloud<pcl::PointXYZ> temp_cloud = input_cloud;
     _registration_counter = _registration_counter + 1;
+
+    //calculate rotation from lidar to robot body then compensate for the robot tilt
+    Eigen::Matrix3f R_temporary = _R_tilt_robot_to_beacon*_R_lidar_to_robot;
+
+    //create 4x4 transformation with 0 translation
+    Eigen::Matrix4f T_temporary;
+    T_temporary(0,0) = R_temporary(0,0);
+    T_temporary(0,1) = R_temporary(0,1);
+    T_temporary(0,2) = R_temporary(0,2);
+    T_temporary(0,3) = 0;
+
+    T_temporary(1,0) = R_temporary(1,0);
+    T_temporary(1,1) = R_temporary(1,1);
+    T_temporary(1,2) = R_temporary(1,2);
+    T_temporary(1,3) = 0;
+
+    T_temporary(2,0) = R_temporary(2,0);
+    T_temporary(2,1) = R_temporary(2,1);
+    T_temporary(2,2) = R_temporary(2,2);
+    T_temporary(2,3) = 0;
+
+    T_temporary(3,0) = 0;
+    T_temporary(3,1) = 0;
+    T_temporary(3,2) = 0;
+    T_temporary(3,3) = 1;
+
+    //apply rotation to temp_cloud (note translation is 0)
+    pcl::transformPointCloud(temp_cloud, _input_cloud, T_temporary);
 }
 
 void LidarFilter::setPreviousCounters()
@@ -616,7 +685,7 @@ void LidarFilter::doMathHoming()
 			X(1) = X1s_y; //column 1 y-center
 			X(2) = X2s_x; //column 2 x-center
 			X(3) = X2s_y; //column 2 y-center
-
+/*
 			for (int ii = 0; ii<100; ii++)
 			{
 				ax1 = X(0,0);
@@ -646,20 +715,20 @@ void LidarFilter::doMathHoming()
 				J(n1+n2,2) = 2*ax2-2*ax1;
 				J(n1+n2,3) = 2*ay2-2*ay1;
 				X = X-0.25*solve(J.st()*W*J,J.st()*W*FX);
-			}
+			}*/
 
 			//cout << "5" << endl;
-			x_mean = (X(0,0)+X(2,0))/2;
-			y_mean = (X(1,0)+X(3,0))/2;
+			//x_mean = (X(0,0)+X(2,0))/2;
+			//y_mean = (X(1,0)+X(3,0))/2;
 
-			//x_mean = (cx1+cx2)/2;
-			//y_mean = (cy1+cy2)/2;
+			x_mean = (cx1+cx2)/2;
+			y_mean = (cy1+cy2)/2;
 			d = sqrt(x_mean*x_mean+y_mean*y_mean);
 
-			v2_x = X(0,0)-X(2,0);
-			v2_y = X(1,0)-X(3,0);
-			//v2_x = cx1-cx2;
-			//v2_y = cy1-cy2;
+			//v2_x = X(0,0)-X(2,0);
+			//v2_y = X(1,0)-X(3,0);
+			v2_x = cx1-cx2;
+			v2_y = cy1-cy2;
 			v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
 			v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
 			v1_x = x_mean/v1_mag;
