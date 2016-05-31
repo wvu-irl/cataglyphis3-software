@@ -236,10 +236,10 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 	 	cos_theta = cos(theta);
 	 	// calculate guess transformation from IMU
 	 	guessT(0,0) = (float)cos_theta;
-	 	guessT(0,1) = (float)sin_theta;
+	 	guessT(0,1) = (float)(-sin_theta);
 	 	guessT(0,2) = 0;
 	 	guessT(0,3) = (float)diff_x;
-	 	guessT(1,0) = (float)(-sin_theta);
+	 	guessT(1,0) = (float)sin_theta;
 	 	guessT(1,1) = (float)cos_theta;
 	 	guessT(1,2) = 0;
 	 	guessT(1,3) = (float)diff_y;
@@ -258,13 +258,13 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 	//use icp to calculate transformation between reading and reference
 	try
 	{
-
+		timer t; //print how long take the ICP
 		// ROS_INFO_STREAM("test1");
 		// ROS_INFO_STREAM(refPointCloud.features.cols());
 		// ROS_INFO_STREAM(readPointCloud.features.cols());
 		//based on IMU transformation to be a guess
 		TreadToref = icp(readPointCloud, refPointCloud, guessT);
-
+		ROS_INFO_STREAM("ICP took "<< t.elapsed() <<" [s]");
 		//use reading and reference to get transformation
 		// TreadToref = icp(readPointCloud, refPointCloud);
 //
@@ -287,30 +287,41 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 
 		//compute tf
 		TreadTomap = TreadToref * TrefTomap;
-		ROS_DEBUG_STREAM("TreadTomap:\n"<<TreadTomap);
+		ROS_DEBUG_STREAM("TrefTomap:\n"<<TrefTomap);
 		//publish tf
 
 		//	put into the main function
 		//tfBroadcaster.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(TreadTomap, map_frame, read_frame, stamp));
 		// ROS_INFO_STREAM("TreadTomap:\n" << TreadTomap);
+		// slamPoseOutx0 = slamPoseOutx1;
+		// slamPoseOutx1 = TreadTomap(0,3);
 
-		slamPoseOut.x = slamPoseOut.x + TreadTomap(0,3);
-		slamPoseOut.y = slamPoseOut.y + TreadTomap(1,3);
+		// slamPoseOuty0 = slamPoseOuty1;
+		// slamPoseOuty1 = TreadTomap(1,3);
+		
+		// slamPoseOut.x = slamPoseOut.x + (slamPoseOutx1 - slamPoseOutx0);
+		// slamPoseOut.y = slamPoseOut.y + (slamPoseOuty1 - slamPoseOuty0);
 
 		// ROS_INFO_STREAM("TreadTomap(0,0): " << TreadTomap(0,0));
 		// ROS_INFO_STREAM("TreadTomap(0,0): " << (acos(TreadTomap(0,0)) * 180.0 / PI));
 		//calculate the angle
-		slamPoseOutheading0 = slamPoseOutheading1;
+		// slamPoseOutheading0 = slamPoseOutheading1;
 
 		if (TreadTomap(0,0) != 0)
-			slamPoseOutheading1 = atan2(TreadTomap(0,1), TreadTomap(0,0)) * 180.0 / PI;
+			slamPoseOutheading1 = atan2(-TreadTomap(0,1), TreadTomap(0,0)) * 180.0 / PI;
 		else if (TreadTomap(0,1) == 1)
 			slamPoseOutheading1 = 90.0;
 		else if (TreadTomap(0,1) == -1)
 			slamPoseOutheading1 = -90.0;
 	
 		// slamPoseOut.heading = slamPoseOut.heading + (acos((double)TreadTomap(0,0)) * 180.0 / PI);
-		slamPoseOut.heading = slamPoseOut.heading + (slamPoseOutheading1 - slamPoseOutheading0);
+		// slamPoseOut.heading = slamPoseOut.heading + (slamPoseOutheading1 - slamPoseOutheading0);
+
+
+		/**************test x y heading from home ****************/
+		slamPoseOut.x = TreadTomap(0,3);
+		slamPoseOut.y = TreadTomap(1,3);
+		slamPoseOut.heading = slamPoseOutheading1;
 
 		frame_positionPub.publish(slamPoseOut);
 
@@ -326,9 +337,9 @@ void Keyframe::processCloud(PM::DataPoints newPointCloud, const std::string& rea
 		{
 
 
-			keyPointCloud = readPointCloud;
-			key_frame = read_frame;
-			TkeyToprekey = PM::TransformationParameters::Identity(dimp1,dimp1);	
+			// keyPointCloud = readPointCloud;
+			// key_frame = read_frame;
+			// TkeyToprekey = PM::TransformationParameters::Identity(dimp1,dimp1);	
 //is it necessary to publish position?
 			// keyframe_position.x = x1;
 			// keyframe_position.y = y1;

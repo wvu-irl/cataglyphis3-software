@@ -26,14 +26,14 @@ errorMinimizer:
 
 transformationCheckers:
   - DifferentialTransformationChecker:
-      minDiffRotErr: 0.01
-      minDiffTransErr: 0.1
+      minDiffRotErr: 0.001
+      minDiffTransErr: 0.01
       smoothLength: 10
   - CounterTransformationChecker:
       maxIterationCount: 500
   - BoundTransformationChecker:
       maxRotationNorm: 2
-      maxTranslationNorm: 30
+      maxTranslationNorm: 35
 
 inspector:
 #  VTKFileInspector

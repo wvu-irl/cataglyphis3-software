@@ -83,6 +83,12 @@ class Keyframe
 	double slamPoseOutheading0 = 0.0;
 	double slamPoseOutheading1 = 0.0;
 
+	double slamPoseOutx0 = 0.0;
+	double slamPoseOutx1 = 0.0;
+
+	double slamPoseOuty0 = 0.0;
+	double slamPoseOuty1 = 0.0;
+
 public:
 	PM::DataPoints keyPointCloud;
 	PM::DataPoints readPointCloud;
