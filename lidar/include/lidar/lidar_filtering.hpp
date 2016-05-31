@@ -73,7 +73,7 @@ private:
 	short int _navigation_filter_counter_prev;
 
 	//registration callback
-	pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud;
+	pcl::PointCloud<pcl::PointXYZ> _input_cloud;
 	short int _registration_counter;
 	short int _registration_counter_prev;
 
@@ -82,7 +82,7 @@ private:
 	const float grid_size = 1; // size of the local map grid
 	const float threshold_tree_height = 10.0; // above which the points will be disgarded
 	std::vector<std::vector<float> > _local_grid_map;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr _object_filtered;
+	pcl::PointCloud<pcl::PointXYZ> _object_filtered;
 
 	//homing function
 	struct cylinder

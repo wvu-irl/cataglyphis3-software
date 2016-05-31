@@ -251,22 +251,22 @@ private:
             else if(points_cluster.size() == 2)
             {
                 ROS_INFO("There are only 2 objects in the region.");
-                Eigen::Vector4f centroid1, centroid2;
-	            pcl::compute3DCentroid(*(points_cluster[0]), centroid1);
-	            pcl::compute3DCentroid(*(points_cluster[1]), centroid2);
-	            if(centroid1 < 0 && centroid2 < 0) // both on right
-	            {
-	                ROS_INFO("LARGEST COLLISION ON RIGHT FROM LAYER 2");
-	            }
-	            elseif(centroid1 > 0 && centroid2 > 0) // both on left
-	            {
-	                ROS_INFO("LARGEST COLLISION ON LEFT FROM LAYER 2");
-	            }
-	            else // one on left, one on right
-	            {
-	                //
-	                ROS_INFO("COLLISION ON BOTH SIDE FROM LAYER 2");
-	            }
+				// Eigen::Vector4f centroid1, centroid2;
+				// pcl::compute3DCentroid(*(points_cluster[0]), centroid1);
+				// pcl::compute3DCentroid(*(points_cluster[1]), centroid2);
+				// if(centroid1 < 0 && centroid2 < 0) // both on right
+				// {
+				//     ROS_INFO("LARGEST COLLISION ON RIGHT FROM LAYER 2");
+				// }
+				// elseif(centroid1 > 0 && centroid2 > 0) // both on left
+				// {
+				//     ROS_INFO("LARGEST COLLISION ON LEFT FROM LAYER 2");
+				// }
+				// else // one on left, one on right
+				// {
+				//     //
+				//     ROS_INFO("COLLISION ON BOTH SIDE FROM LAYER 2");
+				// }
                 
             }
             else
