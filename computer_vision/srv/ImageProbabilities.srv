@@ -1,3 +1,4 @@
 uint32 numBlobs
+uint32 imgSize
 ---
 float32[] responseProbabilities

@@ -17,79 +17,79 @@ import rospkg
 
 from computer_vision.srv import *
 from std_msgs.msg import String
-from DeepFishNet import DeepFishNet
+# from DeepFishNet import DeepFishNet
+from DeepFishNet150 import DeepFishNet150
+from DeepFishNet50 import DeepFishNet50
 
 class ClassifierService:
 
-	def __init__(self, myClassifier, meanData, imgSize, cvModulePath):
-		# myClassifier, meanData, imgSize, cvModulePath
+	def __init__(self, classifierDict):
+		'''
+		ClassifierService constructor takes classifier dictionary as parameters
+			# per imgResolution of the image, classifierDict has classifier, meanData, classifier module path
+		'''
 		print 'ClassifierService constructor'
+		# get CV module path
+		self.classifierDict = classifierDict
 		time.sleep(1)
-		self.deepFishNet = myClassifier
-		self.meanData = meanData
-		self.imgSize = imgSize
-		self.cvModulePath = cvModulePath
+		imgSize = 50
+		self.cvModulePath = self.classifierDict[imgSize]['modulePath']
 		print 'successfully loaded the classifier'
 		time.sleep(1)
 
-	def getMeanNormalizedData(self, img):
-		# print img.shape
-		img = cv2.resize(img, (self.imgSize, self.imgSize))
-		# print img.shape
+	def getMeanNormalizedData(self, img, imgSize):
 		imgB, imgG, imgR = cv2.split(img)
 		# print imgB.shape
 		# print imgG.shape
 		# print imgR.shape
-		tensorImg = np.zeros((1, 3, self.imgSize, self.imgSize))
+		tensorImg = np.zeros((1, 3, imgSize, imgSize))
 		tensorImg[0, 0, :, :] = imgB
 		tensorImg[0, 1, :, :] = imgG
 		tensorImg[0, 2, :, :] = imgR
-		tensorImg = tensorImg.astype('float64') - self.meanData
+
+		tensorImg = tensorImg.astype('float64') - classifierDict[imgSize]['mean']
 		tensorImg = tensorImg/float(255.0)
 		# print 'returning shape', tensorImg.shape
 		return tensorImg
 
-	def readImgs(self, numBlobs):
+	def readImgs(self, numBlobs, imgSize):
 		# numBlobs = 48, read imgs from 0-47
 		imgList = []
 		for eachIndex in range(numBlobs):
 			curImgPath = self.cvModulePath+'/data/blobs/blob'+str(eachIndex)+'.jpg'
 			print 'reading ', curImgPath
 			img = cv2.imread(curImgPath, 1)
-			meanNormalizedImg = self.getMeanNormalizedData(img)
+			img = cv2.resize(img, (imgSize, imgSize))
+			meanNormalizedImg = self.getMeanNormalizedData(img, imgSize)
 			imgList.append(meanNormalizedImg)
 		imgList = np.array(imgList)
 		# print 'imgList shape: ',imgList.shape
-		imgList = np.reshape(imgList, (numBlobs, 3, self.imgSize, self.imgSize))
+		imgList = np.reshape(imgList, (numBlobs, 3, imgSize, imgSize))
 		# print 'imgList shape: ',imgList.shape
 		return imgList
 
 	def handle_classification_request(self, incomingMessage):
 		startTime = time.clock()
 		numBlobs = int(incomingMessage.numBlobs)
+		imgSize = int(incomingMessage.imgSize)
 		positiveConfidenceList = []
 		try:
 			# load images, subtract mean and normalize
-			tensorBlobImgs = self.readImgs(numBlobs)			
+			tensorBlobImgs = self.readImgs(numBlobs, imgSize)
 		except:
 			print "Exception in reading the feature vectors and subtracting mean"
 			traceback.print_exc(file=sys.stdout)
 			os.system("rosnode kill /classify_feature_vector_server")
 			pass
 		try:
+			print tensorBlobImgs.shape
 			# classify
-			predictedProbabilities = self.deepFishNet.predictProb(tensorBlobImgs)
-			# predictedProbabilities[:,0] contains non-object probabilities
-			# predictedProbabilities[:,1] contains object probabilities
-
+			predictedProbabilities = self.classifierDict[imgSize]['classifier'].predictProb(tensorBlobImgs)
 			# retreive only object probabilities
 			predictedProbabilities = predictedProbabilities[:,1]
-			
 			# convert to list and for returning it to the client
 			positiveConfidenceList = predictedProbabilities.tolist()
-
 			pass
-
 		except:
 			print 'obtaining probabilities from extracted probabilities'
 			traceback.print_exc(file=sys.stdout)
@@ -121,23 +121,58 @@ if __name__ == "__main__":
 	# imgSize
 	imgSize = 150
 	
-	# read the mean data
-	meanDataPath = cvModulePath+"/data/mean_file/"+'data_lmdb.npy'
-	meanData = np.load(meanDataPath)
-	meanData = np.reshape(meanData, (1, 3, imgSize, imgSize))
+	# dictionary to store classifier parameters
+	classifierDict = {}
 
+	# read the mean data
+	meanData150Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	meanData150 = np.load(meanData150Path)
+	meanData150 = np.reshape(meanData150, (1, 3, imgSize, imgSize))
+	
 	# read the classifier
-	classifierPath = cvModulePath+'/data/classifier/554_convnet_150imgsize.npz'
+	classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
 
 	# set dropout parameters for better performance
-	dropout_params = {}
-	dropout_params['conv'] = 0.4
-	dropout_params['fc'] = 0.4
+	dropoutParams150 = {}
+	dropoutParams150['conv'] = 0.5
+	dropoutParams150['fc'] = 0.5
 	
-	# initialize DeepFishNet
-	myClassifier = DeepFishNet(mode='Test', modelToLoad = classifierPath, dropout_params = dropout_params)
+	# initialize DeepFishNet150
+	# myClassifier = DeepFishNet(mode='Test', modelToLoad = classifier150Path, dropout_params = dropoutParams150)
+	myClassifier150 = DeepFishNet150(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams150, mode='Test', modelToLoad = classifier150Path)
+	
+	# store 150 x 150 classifier details
+	classifierDict[imgSize] = {}
+	classifierDict[imgSize]['classifier'] = myClassifier150
+	classifierDict[imgSize]['mean'] = meanData150
+	classifierDict[imgSize]['modulePath'] = cvModulePath
+	
+	# imgSize
+	imgSize = 50
+	
+	# read the mean data
+	meanData50Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	meanData50 = np.load(meanData50Path)
+	meanData50 = np.reshape(meanData50, (1, 3, imgSize, imgSize))
+	
+	# read the classifier
+	classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	
+	# set dropout parameters for better performance
+	dropoutParams50 = {}
+	dropoutParams50['conv'] = 0.5
+	dropoutParams50['fc'] = 0.5
+	
+	# initialize DeepFishNet50
+	myClassifier50 = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50, mode='Test', modelToLoad = classifier50Path)
+
+	# store 50 x 50 classifier details
+	classifierDict[imgSize] = {}
+	classifierDict[imgSize]['classifier'] = myClassifier50
+	classifierDict[imgSize]['mean'] = meanData50
+	classifierDict[imgSize]['modulePath'] = cvModulePath
 
 	# initialize classifier service
-	cService = ClassifierService(myClassifier, meanData, imgSize, cvModulePath)
+	cService = ClassifierService(classifierDict)
 	cService.startService()
 	pass
