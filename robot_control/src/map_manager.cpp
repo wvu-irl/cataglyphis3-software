@@ -15,6 +15,7 @@ MapManager::MapManager()
     currentROIMsg.currentROINum = 0; // 0 means in no ROI
     searchLocalMapROINum = 0;
     keyframeCallbackSerialNum = 0;
+    searchLocalMapExists = false;
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.x = 8.0;
@@ -234,31 +235,37 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
 {
     if(req.createMap && !req.deleteMap)
     {
-        createROIKeyframeSrv.request.roiIndex = req.roiIndex;
-        if(createROIKeyframeClient.call(createROIKeyframeSrv)) ROS_DEBUG("MAP MANAGER: createROIKeyframe service call successful"); // call createROIKeyframe service
-        else {ROS_ERROR("MAP MANAGER createROIKeyframe service call unsuccessful"); return false;}
-        grid_map::GridMapRosConverter::fromMessage(createROIKeyframeSrv.response.keyframe.map, ROIKeyframe);
-        searchLocalMapToROIAngle = RAD2DEG*atan2(regionsOfInterest.at(req.roiIndex).y, regionsOfInterest.at(req.roiIndex).x) - fmod(createROIKeyframeSrv.response.keyframe.heading, 360.0);
-        sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
-        sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
-        for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
+        if(searchLocalMapExists) ROS_WARN("MAP MANAGER: tried to create searchLocalMap when it already exists");
+        else
         {
-            searchLocalMap.getPosition(*it, searchLocalMapCoord);
-            ROIX = searchLocalMapCoord[0]*cos(DEG2RAD*searchLocalMapToROIAngle)-searchLocalMapCoord[1]*sin(DEG2RAD*searchLocalMapToROIAngle);
-            ROIY = searchLocalMapCoord[0]*sin(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*cos(DEG2RAD*searchLocalMapToROIAngle);
-            for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
+            searchLocalMapExists = true;
+            createROIKeyframeSrv.request.roiIndex = req.roiIndex;
+            if(createROIKeyframeClient.call(createROIKeyframeSrv)) ROS_DEBUG("MAP MANAGER: createROIKeyframe service call successful"); // call createROIKeyframe service
+            else {ROS_ERROR("MAP MANAGER: createROIKeyframe service call unsuccessful"); return false;}
+            grid_map::GridMapRosConverter::fromMessage(createROIKeyframeSrv.response.keyframe.map, ROIKeyframe);
+            searchLocalMapToROIAngle = RAD2DEG*atan2(regionsOfInterest.at(req.roiIndex).y, regionsOfInterest.at(req.roiIndex).x) - fmod(createROIKeyframeSrv.response.keyframe.heading, 360.0);
+            sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
+            sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
+            for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
-                searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = ROIKeyframe.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)), searchLocalMapCoord);
-            }
-            for(int k=MAP_SAMPLE_PROB_LAYERS_START_INDEX; k<=MAP_SAMPLE_PROB_LAYERS_END_INDEX; k++)
-            {
-                // Add condition to exclude sample types already known to be completely collected
-                searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(k)), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
+                searchLocalMap.getPosition(*it, searchLocalMapCoord);
+                ROIX = searchLocalMapCoord[0]*cos(DEG2RAD*searchLocalMapToROIAngle)-searchLocalMapCoord[1]*sin(DEG2RAD*searchLocalMapToROIAngle);
+                ROIY = searchLocalMapCoord[0]*sin(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*cos(DEG2RAD*searchLocalMapToROIAngle);
+                for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
+                {
+                    searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = ROIKeyframe.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)), searchLocalMapCoord);
+                }
+                for(int k=MAP_SAMPLE_PROB_LAYERS_START_INDEX; k<=MAP_SAMPLE_PROB_LAYERS_END_INDEX; k++)
+                {
+                    // Add condition to exclude sample types already known to be completely collected
+                    searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(k)), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
+                }
             }
         }
     }
     else if(req.deleteMap && !req.createMap)
     {
+        searchLocalMapExists = false;
         searchLocalMap.clearBasic();
     }
     return true;
@@ -322,6 +329,16 @@ void MapManager::globalPoseCallback(const messages::RobotPose::ConstPtr &msg)
 void MapManager::keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr &msg)
 {
     keyframeRelPose = *msg;
+}
+
+void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr &msg)
+{
+    cvSamplesFoundMsg = *msg;
+    if(searchLocalMapExists/* && (keyframeRelPose.keyframeIndex == currentROIMsg.currentROINum)*/) // Do we want this condition?
+    {
+        //donutSmash(MAP_SAMPLE_PROB_LAYERS_START_INDEX, MAP_SAMPLE_PROB_LAYERS_END_INDEX, searchLocalMap, grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY));
+        //addFoundSamples(MAP_SAMPLE_PROB_LAYERS_START_INDEX, MAP_SAMPLE_PROB_LAYERS_END_INDEX, searchLocalMap, grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
+    }
 }
 
 void MapManager::resetGlobalMapLayers(int startIndex, int endIndex)

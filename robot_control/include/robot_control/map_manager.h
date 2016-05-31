@@ -11,6 +11,7 @@
 #include <messages/RobotPose.h>
 #include <messages/SLAMPoseOut.h>
 #include <messages/CreateROIKeyframe.h>
+#include <messages/CVSamplesFound.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
@@ -31,8 +32,11 @@ public:
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
+	void cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr& msg);
 	void resetGlobalMapLayers(int startIndex, int endIndex);
 	void gridMapAddLayers(int layerStartIndex, int layerEndIndex ,grid_map::GridMap& map);
+	void donutSmash(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos);
+	void addFoundSamples(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos, float heading);
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;
@@ -43,6 +47,7 @@ public:
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
 	ros::Subscriber keyframeRelPoseSub;
+	ros::Subscriber cvSamplesFoundSub;
 	ros::Publisher currentROIPub;
 	robot_control::Waypoint waypoint;
 	robot_control::ROI ROI;
@@ -50,6 +55,7 @@ public:
 	grid_map::GridMap globalMap;
 	grid_map::GridMap searchLocalMap;
 	int searchLocalMapROINum;
+	bool searchLocalMapExists;
 	ros::Publisher globalMapPub;
 	grid_map_msgs::GridMap globalMapMsg;
 	messages::RobotPose globalPose;
@@ -80,6 +86,7 @@ public:
 	grid_map::Position globalTransformCoord;
 	//float globalYTransformPos;
 	robot_control::CurrentROI currentROIMsg;
+	messages::CVSamplesFound cvSamplesFoundMsg;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m
