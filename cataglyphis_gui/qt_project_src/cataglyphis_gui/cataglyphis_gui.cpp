@@ -1,38 +1,48 @@
 #include "cataglyphis_gui.h"
 #include "ui_cataglyphis_gui.h"
-#include <stdio.h>
 
-
-Cataglyphis_Gui::Cataglyphis_Gui(QWidget *parent) :
+cataglyphis_gui::cataglyphis_gui(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
     QMainWindow(parent),
-    ui(new Ui::Cataglyphis_Gui)
+    ui(new Ui::cataglyphis_gui)
 {
-    scene = new QGraphicsScene();
-    //field_pic = new QImage[4];
-    field_pic[0] = new QImage(":/field_pictures/resources/pattern_test.jpg");
-    field_pic[1] = new QImage(":/field_pictures/resources/institute_park.jpg");
+    ROS_DEBUG("Cataglyphis_GUI:: Core app init");
     ui->setupUi(this);
+
+    cataglyphis_gui::gui_nh = nh;
+    ROS_DEBUG("Cataglypis_GUI:: Starting %d callback theads", NUM_MSG_CALLBACK_THREADS);
+    cataglyphis_gui::async_spinner = boost::shared_ptr<ros::AsyncSpinner>(new ros::AsyncSpinner(NUM_MSG_CALLBACK_THREADS));
+    if(async_spinner->canStart())
+    {
+        async_spinner->start();
+    }
+    else
+    {
+        ROS_INFO("Cataglypis_GUI:: Cannot start callback threads. Is another GUI instance running?");
+    }
+
+    if(!nh->ok())
+    {
+        ROS_ERROR("Node Invalid, Cannot connect to ROS Master");
+    }
+
+
+    cataglyphis_gui::cataglyphis_startup_form =
+            boost::shared_ptr<cataglyphis_startup_form_main>
+                            (new cataglyphis_startup_form_main(ui->guiTabber,
+                                                                    nh));
+
+    cataglyphis_gui::map_view_form =
+            boost::shared_ptr<map_viewer>(new map_viewer(ui->guiTabber, 0));
+
+    ui->guiTabber->addTab(cataglyphis_gui::cataglyphis_startup_form.get(), "Startup");
+    ui->guiTabber->addTab(cataglyphis_gui::map_view_form.get(), "Map");
 }
 
-Cataglyphis_Gui::~Cataglyphis_Gui()
+cataglyphis_gui::~cataglyphis_gui()
 {
-    //printf("%p, %p, %p, %p\n", scene, view, item, field_pic);
-    delete ui;
-    //printf("%p, %p, %p, %p\n", scene, view, item, field_pic);
+    //delete ui;
+    cataglyphis_gui::async_spinner->stop();
+    //ui.reset();
 }
 
-void Cataglyphis_Gui::on_fieldSelector_currentIndexChanged(int index)
-{
-    printf("Index Changed %d\n", index);
 
-    scene->clear();
-    item = new QGraphicsPixmapItem(QPixmap::fromImage(*field_pic[index]));
-
-    //need to load new info about the map to display the roer on it.
-    //where coordinate 0,0 is
-    //the distance each pixel represents on the map
-    ui->fieldDisplay->setScene(scene);
-    scene->addItem(item);
-    cataglyphisRect = scene->addRect(QRectF(0,0,50,50));
-    ui->fieldDisplay->show();
-}

@@ -29,6 +29,7 @@ LidarFilter::LidarFilter()
 	//velodyne callback initializations
 	_registration_counter = 0;
 	_registration_counter_prev = 0;
+	_registration_new = false;
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &LidarFilter::registrationCallback, this);
 
 	//homing initialization
@@ -119,10 +120,12 @@ bool LidarFilter::newPointCloudAvailable()
 {
 	if(_registration_counter != _registration_counter_prev)
 	{
+		_registration_new = true;
 		return true;
 	}
 	else
 	{
+		_registration_new = false;
 		return false;
 	}
 }
@@ -152,7 +155,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	msg.heading_filter = this->_navigation_filter_heading;
 
 	//flag the data as new
-	msg.new_data = true;
+	msg.new_data = _registration_new;
 }
 
 void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)

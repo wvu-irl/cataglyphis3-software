@@ -143,6 +143,17 @@ target_link_libraries(lidar_filtering
   blas
 )
 
+add_library(collision_detection src/collision_detection.cpp) 
+target_link_libraries(collision_detection 
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+  ${PCL_IO_LIBRARIES}
+  armadillo
+  lapack
+  blas
+)
+
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -153,11 +164,13 @@ target_link_libraries(lidar_filtering
 add_executable(lidar_filtering_node src/lidar_filtering_node.cpp)
 add_executable(lidar_filtering_node_updated src/lidar_filtering_node_updated.cpp)
 add_executable(collision_detection_node src/collision_detection_node.cpp)
+add_executable(collision_detection_node_updated src/collision_detection_node_updated.cpp)
 
 ## Add cmake target dependencies of the executable
 add_dependencies(lidar_filtering_node lidar_generate_messages_cpp)
 add_dependencies(lidar_filtering_node_updated lidar_generate_messages_cpp)
 add_dependencies(collision_detection_node lidar_generate_messages_cpp)
+add_dependencies(collision_detection_node_updated lidar_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(lidar_filtering_node 
@@ -183,6 +196,11 @@ target_link_libraries(lidar_filtering_node_updated
 
 target_link_libraries(collision_detection_node 
  	${catkin_LIBRARIES}
+ )
+
+target_link_libraries(collision_detection_node_updated 
+ 	${catkin_LIBRARIES}
+ 	collision_detection
  )
 
 #############

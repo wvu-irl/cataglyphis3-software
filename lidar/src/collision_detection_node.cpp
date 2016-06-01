@@ -75,9 +75,9 @@ const float RAD2DEG = 180/PI;
 float corridor_width = 1.5; // Width of the virtual corridor
 float corridor_length = 10.0; // Length of the virtual corridor, THE CLOSEST DECTECTION IS ~2.8 M
 float x_shift = 0.0;
-float y_shirt = 0.0;
-float lidar_height = 0.75; // height of the lidar sensor
-float safe_envelope_angle = DEG2RAD*40; //safe envelope angle size
+float y_shift = 0.0;
+float lidar_height = 0.76; // height of the lidar sensor
+float safe_envelope_angle = DEG2RAD*15; //safe envelope angle size
 int point_trigger_threshold = 5; // how many points that will trigger the avoid alarm
 
 //subscribe to state machine info
@@ -126,7 +126,7 @@ private:
 			//do ground removal on points in virtual corridor
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); // The raw point cloud from the LIDAR
 			*cloud = input_cloud;
-
+/*
 			pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZ>);
@@ -134,14 +134,14 @@ private:
 
             pcl::PassThrough<pcl::PointXYZ> pass;
             pass.setInputCloud(cloud);
-            pass.setFilterFieldName("x");
-            pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
+            pass.setFilterFieldName("y");
+            pass.setFilterLimits(y_shift - corridor_width,y_shift + corridor_width); 
             pass.filter(*cloud);
             pass.setInputCloud(cloud);
-            pass.setFilterFieldName("y");
-            pass.setFilterLimits(y_shirt, y_shirt + corridor_length);
+            pass.setFilterFieldName("x");
+            pass.setFilterLimits(x_shift, x_shift + corridor_length);
             pass.filter(*cloud);
-            ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
+            //ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
 
 			
 			// // //use rough ground removal, method A: rough 
@@ -235,22 +235,22 @@ private:
             
             if(points_cluster.size() == 1)
             {
-                ROS_INFO("There is only 1 object in the region.");
+                //ROS_INFO("There is only 1 object in the region.");
                 // Calculate the center and size, determine which way to go and aovid it
                 Eigen::Vector4f centroid;
 	            pcl::compute3DCentroid(*(points_cluster[0]), centroid);
 	            if(centroid[1] < 0)
 	            {
-	                ROS_INFO("LARGEST COLLISION ON RIGHT FROM LAYER 2");
+	                //ROS_INFO("LARGEST COLLISION ON RIGHT FROM LAYER 2");
 	            }
 	            else
 	            {
-	                ROS_INFO("LARGEST COLLISION ON LEFT FROM LAYER 2");
+	                //ROS_INFO("LARGEST COLLISION ON LEFT FROM LAYER 2");
 	            }
             }
             else if(points_cluster.size() == 2)
             {
-                ROS_INFO("There are only 2 objects in the region.");
+                //ROS_INFO("There are only 2 objects in the region.");
 				// Eigen::Vector4f centroid1, centroid2;
 				// pcl::compute3DCentroid(*(points_cluster[0]), centroid1);
 				// pcl::compute3DCentroid(*(points_cluster[1]), centroid2);
@@ -271,11 +271,11 @@ private:
             }
             else
             {
-                ROS_INFO("There are %i objects in the region.", points_cluster.size());
+                //ROS_INFO("There are %i objects in the region.", points_cluster.size());
                 // 
             }
 			// B: end
-
+*/
 			//check for collision
 			int collision_point_counter = 0;
 			int collision_left_counter = 0;
@@ -285,11 +285,15 @@ private:
 			{
 				//cout << "x,y,z =" << cloud->points[i].x << ", " << cloud->points[i].y << ", " << cloud->points[i].z << endl;
 				//CHECK IF POINT IN CORRIDOR
-				if(cloud->points[i].x > 0 && cloud->points[i].y < 1.5 && cloud->points[i].y > -1.5 && cloud->points[i].x < 5)
+
+				if(cloud->points[i].x > 0 && cloud->points[i].y < 1 && cloud->points[i].y > -1 && cloud->points[i].x < 5)
 				{
+					//cout << cloud->points[i].x << " " << cloud->points[i].z << " " << fabs(atan2(cloud->points[i].z,cloud->points[i].x))*RAD2DEG << " " << safe_envelope_angle << endl;
 					// CHECK IF THE POINT IS OUTSIDE OF THE SAFE ENVELOPE
-					if((abs(lidar_height + cloud->points[i].z)/cloud->points[i].x) > tan(safe_envelope_angle))
+					if(fabs(atan2( (lidar_height + cloud->points[i].z),cloud->points[i].x )) > safe_envelope_angle )
+					//if(cloud->points[i].z > -0.2 && cloud->points[i].z  < 0.2)
 					{
+						//cout << "x,y,z =" << cloud->points[i].x << ", " << cloud->points[i].y << ", " << cloud->points[i].z << endl;
 						// NEED TO AVOID
 						collision_point_counter++;
 						if(cloud->points[i].y<0)
@@ -309,12 +313,12 @@ private:
 				if(collision_left_counter > collision_right_counter)
 				{
 					collision=1;
-					ROS_INFO("LARGEST COLLISION ON RIGHT");
+					ROS_INFO("LARGEST COLLISION ON LEFT");
 				}
 				else
 				{
 					collision=2;
-					ROS_INFO("LARGEST COLLISION ON LEFT");				
+					ROS_INFO("LARGEST COLLISION ON RIGHT");				
 				}
 			}
 			else
