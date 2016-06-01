@@ -6,6 +6,9 @@ MapManager::MapManager()
     roiServ = nh.advertiseService("/control/mapmanager/regionsofinterest", &MapManager::listROI, this);
     modROIServ = nh.advertiseService("/control/mapmanager/modifyroi", &MapManager::modROI, this);
     mapROIServ = nh.advertiseService("/control/mapmanager/roigridmap", &MapManager::mapROI, this);
+    searchMapServ = nh.advertiseService("/control/mapmanager/searchlocalmap", &MapManager::searchMapCallback, this);
+    globalMapPathHazardsServ = nh.advertiseService("/control/mapmanager/globalmappathhazards", &MapManager::globalMapPathHazardsCallback, this);
+    searchLocalMapInfoServ = nh.advertiseService("/control/mapmanager/searchlocalmapinfo", &MapManager::searchLocalMapInfoCallback, this);
     createROIKeyframeClient = nh.serviceClient<messages::CreateROIKeyframe>("/slam/keyframesnode/createroikeyframe");
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, &MapManager::keyframesCallback, this);
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
@@ -16,6 +19,7 @@ MapManager::MapManager()
     searchLocalMapROINum = 0;
     keyframeCallbackSerialNum = 0;
     searchLocalMapExists = false;
+    globalMapPathHazardsVertices.resize(4);
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.x = 8.0;
@@ -191,6 +195,7 @@ MapManager::MapManager()
     //gridMapAddLayers(0, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
     gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMap);
     ROS_DEBUG("after global map add layers");
+    globalMapPathHazardsPolygon.setFrameId(globalMap.getFrameId());
 
     searchLocalMap.setFrameId("map");
     searchLocalMap.setGeometry(grid_map::Length(searchLocalMapLength, searchLocalMapWidth), mapResolution, grid_map::Position(0.0, 0.0));
@@ -269,6 +274,51 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
         searchLocalMap.clearBasic();
     }
     return true;
+}
+
+bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res)
+{
+    globalMapPathHazardsPolygon.removeVertices();
+    res.numHazards = 0;
+    res.hazardList.clear();
+    globalMapPathHazardsPolygonHeading = atan2(req.yEnd - req.yStart, req.xEnd - req.xStart); // radians
+    globalMapPathHazardsVertices.at(0)[0] = req.xStart + req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsVertices.at(0)[1] = req.yStart - req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsVertices.at(1)[0] = req.xStart - req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsVertices.at(1)[1] = req.yStart + req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsVertices.at(2)[0] = req.xEnd - req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsVertices.at(2)[1] = req.yEnd + req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsVertices.at(3)[0] = req.xEnd + req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsVertices.at(3)[1] = req.yEnd - req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
+    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(0));
+    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(1));
+    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(2));
+    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(3));
+    for(grid_map::PolygonIterator it(globalMap, globalMapPathHazardsPolygon); !it.isPastEnd(); ++it)
+    {
+        globalMapPathHazardValue = globalMap.at(layerToString(_driveability), *it);
+        if(globalMapPathHazardValue > 0.0)
+        {
+            res.numHazards++;
+            globalMap.getPosition(*it, globalMapPathHazardPosition);
+            res.hazardList.push_back(messages::DriveabilityHazards());
+            res.hazardList.at(res.numHazards-1).type = (int)globalMapPathHazardValue;
+            res.hazardList.at(res.numHazards-1).localX = globalMapPathHazardPosition[0];
+            res.hazardList.at(res.numHazards-1).localY = globalMapPathHazardPosition[1];
+            res.hazardList.at(res.numHazards-1).height = globalMap.at(layerToString(_objectHeight), *it);
+        }
+    }
+    return true;
+}
+
+bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res)
+{
+    if(searchLocalMapExists)
+    {
+        res.value = searchLocalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(req.layer)), grid_map::Position(req.x, req.y));
+        return true;
+    }
+    else return false;
 }
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)

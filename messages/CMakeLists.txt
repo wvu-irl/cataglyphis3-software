@@ -65,6 +65,7 @@ find_package(catkin REQUIRED COMPONENTS
    CollisionOut.msg
    SLAMPoseOut.msg
    RobotPose.msg
+   DriveabilityHazards.msg
    #added for Comm port, remove
    nb1_to_i7_msg.msg
    nb2_3_to_i7_msg.msg
@@ -81,6 +82,8 @@ find_package(catkin REQUIRED COMPONENTS
    ROIGridMap.srv
    MapSegment.srv
    CreateROIKeyframe.srv
+   SearchLocalMapInfo.srv
+   GlobalMapPathHazards.srv
  )
 
 ## Generate actions in the 'action' folder

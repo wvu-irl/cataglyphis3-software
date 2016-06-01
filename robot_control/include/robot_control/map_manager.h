@@ -12,6 +12,8 @@
 #include <messages/SLAMPoseOut.h>
 #include <messages/CreateROIKeyframe.h>
 #include <messages/CVSamplesFound.h>
+#include <messages/GlobalMapPathHazards.h>
+#include <messages/SearchLocalMapInfo.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
@@ -29,12 +31,14 @@ public:
 	bool modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res);
 	bool mapROI(messages::ROIGridMap::Request &req, messages::ROIGridMap::Response &res);
 	bool searchMapCallback(robot_control::SearchMap::Request &req, robot_control::SearchMap::Response &res);
+	bool globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res);
+	bool searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res);
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
 	void cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr& msg);
 	void resetGlobalMapLayers(int startIndex, int endIndex);
-	void gridMapAddLayers(int layerStartIndex, int layerEndIndex ,grid_map::GridMap& map);
+	void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map);
 	void donutSmash(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos);
 	void addFoundSamples(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos, float heading);
 	// Members
@@ -43,6 +47,8 @@ public:
 	ros::ServiceServer modROIServ;
 	ros::ServiceServer mapROIServ;
 	ros::ServiceServer searchMapServ;
+	ros::ServiceServer globalMapPathHazardsServ;
+	ros::ServiceServer searchLocalMapInfoServ;
 	ros::ServiceClient createROIKeyframeClient;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
@@ -58,6 +64,11 @@ public:
 	bool searchLocalMapExists;
 	ros::Publisher globalMapPub;
 	grid_map_msgs::GridMap globalMapMsg;
+	grid_map::Polygon globalMapPathHazardsPolygon;
+	std::vector<grid_map::Position> globalMapPathHazardsVertices;
+	float globalMapPathHazardsPolygonHeading;
+	float globalMapPathHazardValue;
+	grid_map::Position globalMapPathHazardPosition;
 	messages::RobotPose globalPose;
 	messages::SLAMPoseOut keyframeRelPose;
 	messages::KeyframeList keyframes;
