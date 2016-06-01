@@ -1,0 +1,27 @@
+bool runBiasRemoval
+
+bool setNorthAngle
+float32 northAngle
+
+bool sunnyDay
+
+bool beginForkliftDeadReckoning
+
+bool setGlobalPose
+float32 range
+float32 bearing
+float32 heading
+
+---
+float32 p1Offset
+float32 q1Offset
+float32 r1Offset
+
+float32 p2Offset
+float32 q2Offset
+float32 r2Offset
+
+float32 p3Offset
+float32 q3Offset
+float32 r3Offset
+

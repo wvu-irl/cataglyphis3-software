@@ -7,6 +7,8 @@ project(cataglyphis_gui)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_runtime
+  grid_map_ros
+  grid_map_msgs
   messages
   roscpp
   rospy
@@ -19,6 +21,8 @@ find_package(catkin REQUIRED COMPONENTS
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
+
+set(Qt5Core_DIR /opt/Qt5.5.1/5.5/gcc_64/lib/cmake/Qt5Core)
 
 # Find the QtWidgets library
 find_package(Qt5Core)
@@ -60,6 +64,7 @@ link_directories(  /opt/Qt5.5.1/5.5/gcc_64/lib)
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
+   messages
 #   std_msgs  # Or other packages containing msgs
  )
 
@@ -76,7 +81,7 @@ link_directories(  /opt/Qt5.5.1/5.5/gcc_64/lib)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
 catkin_package(
-  INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES robot_control
   CATKIN_DEPENDS message_generation message_runtime messages roscpp rospy
 #  DEPENDS system_lib
@@ -150,20 +155,46 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(cataglyphis_gui qt_project_src/cataglyphis_gui/cataglyphis_gui.cpp)
-add_library(moc_cataglyphis_gui qt_project_src/build-cataglyphis_gui/moc_cataglyphis_gui.cpp)
-add_library(gui_resources qt_project_src/build-cataglyphis_gui/qrc_resources.cpp)
+add_library(ros_workers                         qt_project_src/cataglyphis_gui/ros_workers.cpp)
 
+add_library(cataglyphis_gui                     qt_project_src/cataglyphis_gui/cataglyphis_gui.cpp)
+add_library(cataglyphis_startup_form_main       qt_project_src/cataglyphis_gui/cataglyphis_startup_form_main.cpp)
 
-add_executable(test_node src/test_node.cpp)
+add_library(map_viewer                          qt_project_src/cataglyphis_gui/map_viewer.cpp)
 
-target_link_libraries(test_node
+add_library(init_step_one                       qt_project_src/cataglyphis_gui/init_step_one.cpp)
+add_library(bias_removal_form                   qt_project_src/cataglyphis_gui/bias_removal_form.cpp)
+
+#add_library(moc_cataglyphis_gui                 qt_project_src/build-cataglyphis_gui/moc_cataglyphis_gui.cpp)
+#add_library(moc_cataglyphis_startup_form_main   qt_project_src/build-cataglyphis_gui/moc_cataglyphis_startup_form_main.cpp)
+#add_library(moc_init_step_one                   qt_project_src/build-cataglyphis_gui/moc_init_step_one.cpp)
+#add_library(moc_map_viewer                      qt_project_src/build-cataglyphis_gui/moc_map_viewer.cpp)
+#add_library(moc_generic_error_dialog            qt_project_src/build-cataglyphis_gui/moc_generic_error_dialog.cpp)
+add_library(moc_ros_workers                  qt_project_src/build-cataglyphis_gui/moc_ros_workers.cpp)
+
+add_library(gui_resources                       qt_project_src/build-cataglyphis_gui/qrc_resources.cpp)
+
+add_executable(cataglyphis_gui_node             src/cataglyphis_gui_node.cpp)
+
+target_link_libraries(cataglyphis_gui_node
     ${catkin_LIBRARIES}
     
     libQt5Widgets.so
     gui_resources
-    moc_cataglyphis_gui
+
+#    moc_cataglyphis_gui
+#    moc_cataglyphis_startup_form_main
+#    moc_init_step_one
+#    moc_generic_error_dialog
+#    moc_map_viewer
+
     cataglyphis_gui
+    cataglyphis_startup_form_main
+    init_step_one
+    bias_removal_form
+    map_viewer
+    moc_ros_workers
+    ros_workers
     )
 ###########
 ## Build ##

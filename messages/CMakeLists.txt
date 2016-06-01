@@ -79,6 +79,7 @@ find_package(catkin REQUIRED COMPONENTS
    CVSearchCmd.srv
    ROIGridMap.srv
    MapSegment.srv
+   NavFilterControl.srv
  )
 
 ## Generate actions in the 'action' folder
