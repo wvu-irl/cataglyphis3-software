@@ -81,6 +81,7 @@ private:
 	pcl::PointCloud<pcl::PointXYZ> _input_cloud;
 	short int _registration_counter;
 	short int _registration_counter_prev;
+	bool _registration_new;
 
 	//mapping function
 	const int map_range = 40; //size of local map is 20x20 m
