@@ -15,8 +15,9 @@ public:
     explicit window_selector(QWidget *parent = 0);
     ~window_selector();
 
-private:
     Ui::window_selector *ui;
+private:
+
 };
 
 #endif // WINDOW_SELECTOR_H
