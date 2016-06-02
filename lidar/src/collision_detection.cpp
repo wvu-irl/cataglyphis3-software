@@ -103,7 +103,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 				{
 					//increment collision counter
 					collision_point_counter++;
-					if(cloud->points[i].y<0)
+					if(cloud->points[i].y>0)
 					{
 						collision_right_counter++; //right point counter
 					}

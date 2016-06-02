@@ -113,7 +113,7 @@ catkin_package(
 
 #add_definitions("-std=gnu++11")
 add_definitions(${PCL_DEFINITIONS})
-
+add_definitions("-std=gnu++11")
 ###########
 ## Build ##
 ###########
