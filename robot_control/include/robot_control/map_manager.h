@@ -22,6 +22,22 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
+#define EVANSDALE
+//#define UHS
+//#define INSTITUTE_PARK
+
+#ifdef EVANSDALE
+#include "evansdale_maps.h"
+#endif // EVANSDALE
+
+#ifdef UHS
+#include "uhs_maps.h"
+#endif // UHS
+
+#ifdef INSTITUTE_PARK
+#include "institute_park_maps.h"
+#endif // INSTITUTE_PARK
+
 class MapManager
 {
 public:
@@ -41,6 +57,8 @@ public:
 	void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map);
 	void donutSmash(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos);
 	void addFoundSamples(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos, float heading);
+	void rotateCoord(float &origX, float &origY, float &newX, float &newY, float &angle);
+	void writeSatMapIntoGlobalMap();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;
@@ -55,6 +73,10 @@ public:
 	ros::Subscriber keyframeRelPoseSub;
 	ros::Subscriber cvSamplesFoundSub;
 	ros::Publisher currentROIPub;
+	ros::Publisher globalMapPub;
+	ros::Publisher searchLocalMapPub;
+	grid_map_msgs::GridMap globalMapMsg;
+	grid_map_msgs::GridMap searchLocalMapMsg;
 	robot_control::Waypoint waypoint;
 	robot_control::ROI ROI;
 	std::vector<robot_control::ROI> regionsOfInterest;
@@ -62,8 +84,6 @@ public:
 	grid_map::GridMap searchLocalMap;
 	int searchLocalMapROINum;
 	bool searchLocalMapExists;
-	ros::Publisher globalMapPub;
-	grid_map_msgs::GridMap globalMapMsg;
 	grid_map::Polygon globalMapPathHazardsPolygon;
 	std::vector<grid_map::Position> globalMapPathHazardsVertices;
 	float globalMapPathHazardsPolygonHeading;
@@ -95,13 +115,14 @@ public:
 	float keyframeTransformYLen; // ***
 	float keyframeHeading;
 	grid_map::Position globalTransformCoord;
+	grid_map::Position satMapToGlobalMapPos;
 	//float globalYTransformPos;
 	robot_control::CurrentROI currentROIMsg;
 	messages::CVSamplesFound cvSamplesFoundMsg;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m
-	const int sampleProbPeak = 1000;
+	const float sampleProbPeak = 1000.0;
 };
 
 #endif // MAP_MANAGER_H

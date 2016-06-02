@@ -4,6 +4,6 @@
   	type="grid_map_visualization"
   	name="grid_map_visualization"
   	output="screen">
-    <rosparam command="load" file="$(find robot_control)/config/map_manager_demo.yaml" />
+    <rosparam command="load" file="$(find robot_control)/config/map_manager_search_local_map.yaml" />
   </node>
 </launch>

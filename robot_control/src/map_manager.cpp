@@ -1,7 +1,6 @@
 #include <robot_control/map_manager.h>
 
 MapManager::MapManager()
-    //: globalMap({"sampleProb","hazard"}) // FIX THIS !!!!!!!!! somehow incorporate with new technique in common header
 {
     roiServ = nh.advertiseService("/control/mapmanager/regionsofinterest", &MapManager::listROI, this);
     modROIServ = nh.advertiseService("/control/mapmanager/modifyroi", &MapManager::modROI, this);
@@ -15,6 +14,7 @@ MapManager::MapManager()
     keyframeRelPoseSub = nh.subscribe<messages::SLAMPoseOut>("/slam/keyframesnode/slamposeout", 1, &MapManager::keyframeRelPoseCallback, this);
     currentROIPub = nh.advertise<robot_control::CurrentROI>("/control/mapmanager/currentroi", 1);
     globalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/globalmapviz", 1);
+    searchLocalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/searchlocalmapviz", 1);
     currentROIMsg.currentROINum = 0; // 0 means in no ROI
     searchLocalMapROINum = 0;
     keyframeCallbackSerialNum = 0;
@@ -29,6 +29,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = -8.0;
@@ -38,6 +40,8 @@ MapManager::MapManager()
     ROI.blueProb = 500;
     ROI.silverProb = 500;
     ROI.brassProb = 500;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = -8.0;
@@ -47,6 +51,8 @@ MapManager::MapManager()
     ROI.blueProb = 400;
     ROI.silverProb = 400;
     ROI.brassProb = 400;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 8.0;
@@ -56,6 +62,8 @@ MapManager::MapManager()
     ROI.blueProb = 300;
     ROI.silverProb = 300;
     ROI.brassProb = 300;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
 
@@ -67,6 +75,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 34.9990;
@@ -76,6 +86,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 42.0208;
@@ -85,6 +97,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 48.9591;
@@ -94,6 +108,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 48.9591;
@@ -103,6 +119,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 42.1044;
@@ -112,6 +130,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 41.9373;
@@ -121,6 +141,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 45.7825;
@@ -130,6 +152,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 45.4482;
@@ -139,6 +163,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 38.5099;
@@ -148,6 +174,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.x = 38.5935;
@@ -157,6 +185,8 @@ MapManager::MapManager()
     ROI.blueProb = 600;
     ROI.silverProb = 600;
     ROI.brassProb = 600;
+    ROI.radialAxis = 20.0;
+    ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);*/
 
@@ -187,14 +217,16 @@ MapManager::MapManager()
     ros::Duration(1.0).sleep();
     globalMapPub.publish(globalMapMsg);*/
 
-    ROS_DEBUG("before global map set frame id");
     globalMap.setFrameId("map");
-    ROS_DEBUG("after global map set frame id");
-    globalMap.setGeometry(grid_map::Length(300.0, 200.0), mapResolution, grid_map::Position(12.0, 65.0));
-    ROS_DEBUG("after global map set geometry");
+#ifdef EVANSDALE
+    globalMap.setGeometry(grid_map::Length(200.0, 100.0), mapResolution, grid_map::Position(59.643, 25.834));
+#endif // EVANSDALE
+#ifdef INSTITUTE_PARK
+    globalMap.setGeometry(grid_map::Length(400.0, 300.0), mapResolution, grid_map::Position(12.0, 65.0)); // ***Check the position numbers***
+#endif // INSTUTUTE_PARK
     //gridMapAddLayers(0, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
     gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMap);
-    ROS_DEBUG("after global map add layers");
+    writeSatMapIntoGlobalMap();
     globalMapPathHazardsPolygon.setFrameId(globalMap.getFrameId());
 
     searchLocalMap.setFrameId("map");
@@ -212,14 +244,14 @@ MapManager::MapManager()
     ROS_DEBUG("after global map publish");
 }
 
-bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res)
+bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res) // need to test
 {
     res.ROIList = regionsOfInterest;
     ROS_INFO("sent ROI");
     return true;
 }
 
-bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res)
+bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res) // need to add more features
 {
     if(req.setSearchedROI) regionsOfInterest.at(req.numSearchedROI).searched = req.searchedROIState;
     if(req.addNewROI)
@@ -230,13 +262,13 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
     return true;
 }
 
-bool MapManager::mapROI(messages::ROIGridMap::Request &req, messages::ROIGridMap::Response &res)
+bool MapManager::mapROI(messages::ROIGridMap::Request &req, messages::ROIGridMap::Response &res) // probably delete
 {
     //res.map = // retreive map segment based on ROI index
     return true;
 }
 
-bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot_control::SearchMap::Response &res)
+bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot_control::SearchMap::Response &res) // tested
 {
     if(req.createMap && !req.deleteMap)
     {
@@ -254,8 +286,10 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
+                ROS_INFO("searchLocalMapCoord: x = %f; y = %f",searchLocalMapCoord[0], searchLocalMapCoord[1]);
                 ROIX = searchLocalMapCoord[0]*cos(DEG2RAD*searchLocalMapToROIAngle)-searchLocalMapCoord[1]*sin(DEG2RAD*searchLocalMapToROIAngle);
                 ROIY = searchLocalMapCoord[0]*sin(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*cos(DEG2RAD*searchLocalMapToROIAngle);
+                ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
                 {
                     searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = ROIKeyframe.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)), searchLocalMapCoord);
@@ -266,6 +300,8 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                     searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(k)), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
                 }
             }
+            grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
+            searchLocalMapPub.publish(searchLocalMapMsg);
         }
     }
     else if(req.deleteMap && !req.createMap)
@@ -276,7 +312,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
     return true;
 }
 
-bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res)
+bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // need to test
 {
     globalMapPathHazardsPolygon.removeVertices();
     res.numHazards = 0;
@@ -311,7 +347,7 @@ bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Re
     return true;
 }
 
-bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res)
+bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res) // need to test
 {
     if(searchLocalMapExists)
     {
@@ -321,7 +357,7 @@ bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Reques
     else return false;
 }
 
-void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)
+void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested
 {
     ++keyframeCallbackSerialNum;
     keyframes = *msg;
@@ -369,19 +405,19 @@ void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg)
     globalMapPub.publish(globalMapMsg);
 }
 
-void MapManager::globalPoseCallback(const messages::RobotPose::ConstPtr &msg)
+void MapManager::globalPoseCallback(const messages::RobotPose::ConstPtr &msg) // need to implement hsm to publish this
 {
     globalPose = *msg;
     currentROIMsg.currentROINum = globalMap.atPosition(layerToString(_roiNum),grid_map::Position(globalPose.x, globalPose.y));
     currentROIPub.publish(currentROIMsg);
 }
 
-void MapManager::keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr &msg)
+void MapManager::keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr &msg) // need to implement output in SLAM for this
 {
     keyframeRelPose = *msg;
 }
 
-void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr &msg)
+void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr &msg) // need to figure out how the sample prob update works
 {
     cvSamplesFoundMsg = *msg;
     if(searchLocalMapExists/* && (keyframeRelPose.keyframeIndex == currentROIMsg.currentROINum)*/) // Do we want this condition?
@@ -391,15 +427,49 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
     }
 }
 
-void MapManager::resetGlobalMapLayers(int startIndex, int endIndex)
+void MapManager::resetGlobalMapLayers(int startIndex, int endIndex) // tested?
 {
     for(int i=startIndex; i<=endIndex; i++) globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
 }
 
-void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map)
+void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map) // tested
 {
     for(int i=layerStartIndex; i<=layerEndIndex; i++)
     {
         map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);;
+    }
+}
+
+void MapManager::rotateCoord(float &origX, float &origY, float &newX, float &newY, float &angle) // needs tested
+{
+    newX = origX*cos(DEG2RAD*angle)-origY*sin(DEG2RAD*angle);
+    newY = origX*sin(DEG2RAD*angle)+origY*cos(DEG2RAD*angle);
+}
+
+void MapManager::writeSatMapIntoGlobalMap() // needs tested
+{
+    // Slope
+    for(int i=0; i<slopeNumRows; i++)
+    {
+        for(int j=0; j<slopeNumCols; j++)
+        {
+            satMapToGlobalMapPos[0] = (float)(j*slopeMapRes+slopeMapRes/2.0) - slopeMapStartE;
+            satMapToGlobalMapPos[1] = (float)(i*slopeMapRes+slopeMapRes/2.0) - slopeMapStartS;
+            if(globalMap.isInside(satMapToGlobalMapPos)) globalMap.atPosition(layerToString(_slope), satMapToGlobalMapPos) = slopeMap[i][j];
+        }
+    }
+    // Driveability
+    for(int i=0; i<slopeNumRows; i++)
+    {
+        for(int j=0; j<slopeNumCols; j++)
+        {
+            satMapToGlobalMapPos[0] = (float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartE;
+            satMapToGlobalMapPos[1] = (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartS;
+            if(globalMap.isInside(satMapToGlobalMapPos))
+            {
+                if(slopeMap[i][j]==1) globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_impassable;
+                else globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_noObject;
+            }
+        }
     }
 }

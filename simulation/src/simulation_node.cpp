@@ -9,6 +9,7 @@
 #include <messages/CVSearchCmd.h>
 #include <messages/CVSamplesFound.h>
 #include <messages/KeyframeList.h>
+#include <messages/CreateROIKeyframe.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <robot_control/map_layers.h>
@@ -16,6 +17,7 @@
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
+bool createROIKeyframeCallback(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res);
 void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map);
 void publishKeyframeList();
 
@@ -43,6 +45,7 @@ int main(int argc, char** argv)
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
     keyframeListPub = nh.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1);
     ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
+    ros::ServiceServer createROIKeyframeServ = nh.advertiseService("/slam/keyframesnode/createroikeyframe", createROIKeyframeCallback);
     messages::NavFilterOut navMsgOut;
     messages::GrabberFeedback grabberMsgOut;
     messages::nb1_to_i7_msg nb1MsgOut;
@@ -128,6 +131,20 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
     }
     cvSamplesFoundPub.publish(cvSamplesFoundMsgOut);
     ros::spinOnce();
+    return true;
+}
+
+bool createROIKeyframeCallback(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res)
+{
+    keyframe.add(layerToString(_driveability), 0.0);
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, 30.0)) = 1;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(50.0, 0.0)) = 2;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, -30.0)) = 2;
+    grid_map::GridMapRosConverter::toMessage(keyframe, res.keyframe.map);
+    res.keyframe.x = robotSim.xPos;
+    res.keyframe.y = robotSim.yPos;
+    res.keyframe.heading = robotSim.heading;
+    res.keyframe.associatedROI = req.roiIndex;
     return true;
 }
 
