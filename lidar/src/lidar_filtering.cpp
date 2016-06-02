@@ -181,6 +181,10 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 void LidarFilter::doMathMapping()
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud3 (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud4 (new pcl::PointCloud<pcl::PointXYZ>);
 	*cloud = _input_cloud;
 
 	ROS_INFO("\n*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
@@ -193,6 +197,12 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZ>::Ptr ground_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr local_map (new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr test (new pcl::PointCloud<pcl::PointXYZ>);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr part1 (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr part2 (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr part3 (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr part4 (new pcl::PointCloud<pcl::PointXYZ>);
+    
 	pcl::PointIndicesPtr ground (new pcl::PointIndices);
 	pcl::PointCloud<pcl::PointXYZ> new_point;
 	new_point.width  = (2*map_range)*(2*map_range);
@@ -227,6 +237,47 @@ void LidarFilter::doMathMapping()
 	pass.setFilterFieldName("z");
 	pass.setFilterLimits(-1.5,threshold_tree_height);
 	pass.filter(*cloud);
+	
+	// remove 10x10 m area the behind the lidar (the pole) in order to increase the accuracy of ICP
+	pass.setInputCloud(cloud);
+	pass.setFilterFieldName("x");
+	pass.setFilterLimits(-map_range,map_range);
+	pass.filter(*cloud1);
+	pass.setInputCloud(cloud1);
+	pass.setFilterFieldName("y");
+	pass.setFilterLimits(5,map_range);
+	pass.filter(*cloud1);
+	
+    pass.setInputCloud(cloud);
+	pass.setFilterFieldName("x");
+	pass.setFilterLimits(-map_range,-5);
+	pass.filter(*cloud2);
+	pass.setInputCloud(cloud2);
+	pass.setFilterFieldName("y");
+	pass.setFilterLimits(-5,5);
+	pass.filter(*cloud2);
+	
+	pass.setInputCloud(cloud);
+	pass.setFilterFieldName("x");
+	pass.setFilterLimits(5,map_range);
+	pass.filter(*cloud3);
+	pass.setInputCloud(cloud3);
+	pass.setFilterFieldName("y");
+	pass.setFilterLimits(-5,5);
+	pass.filter(*cloud3);
+	
+	pass.setInputCloud(cloud);
+	pass.setFilterFieldName("x");
+	pass.setFilterLimits(-map_range,map_range);
+	pass.filter(*cloud4);
+	pass.setInputCloud(cloud4);
+	pass.setFilterFieldName("y");
+	pass.setFilterLimits(-map_range,5);
+	pass.filter(*cloud4);
+	
+	*cloud = *cloud1 + *cloud2;
+	*cloud = *cloud + *cloud3;
+	*cloud = *cloud + *cloud4;
 	//ROS_INFO("Regional cloud has %i points", cloud->points.size());
 
 
