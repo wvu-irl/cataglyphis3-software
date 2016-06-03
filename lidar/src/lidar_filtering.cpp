@@ -146,7 +146,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.y_mean.push_back(_local_grid_map[i][1]);
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
-	    msg.ground_adjacent.push_back(1); //this needs to be updated
+	    msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
 	}
 
 	//forward relavent navigation information
@@ -341,6 +341,7 @@ void LidarFilter::doMathMapping()
 	// BUILD LOCAL MAP, THE CURRENT ALGORITHM IS VERY UN-EFFECTIVE, NEED TO IMPROVE LATER
 	std::vector<float> point;
 	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
+	std::vector<std::vector<float> > local_grid_map_temp;
 	int index = 0;
 	_local_grid_map.clear();
 	for (int i = 0; i< object_filtered->points.size(); i++)
@@ -375,26 +376,33 @@ void LidarFilter::doMathMapping()
 	        variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
 	    }
 	    variance_z = sqrt(variance_z);
+
+	    // switch the coordinate of the LIDAR // need to check again
+	    float temp_holder = 0.0;
+        average_z = -average_z;
+        temp_holder = average_x;
+        average_x = average_y;
+        average_y = temp_holder;
+    	point.push_back(average_x);
+        point.push_back(average_y);
+        point.push_back(average_z);
+        point.push_back(variance_z);
 	    if (total_x || total_y || total_z)
 	    {
-	        // switch the coordinate of the LIDAR
-	        float temp_holder = 0.0;
-	        average_z = -average_z;
-	        temp_holder = average_x;
-	        average_x = average_y;
-	        average_y = temp_holder;
-	        point.push_back(average_x);
-	        point.push_back(average_y);
-	        point.push_back(average_z);
-	        point.push_back(variance_z);
-	        _local_grid_map.push_back(point);
-	        point.clear();
+	    	point.push_back(1); // 1 means is occupied while 0 means is empty
 	    }
+	    else
+	    {
+	    	point.push_back(0);
+	    }
+	    local_grid_map_temp.push_back(point);
+	    point.clear();
+	    	    
 	    //print out points
-	    if (total_x || total_y || total_z)
-	    {
-	        std::cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
-	    }
+	    //if (total_x || total_y || total_z)
+	    //{
+	    //    std::cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
+	    //}
 	    total_x = 0;
 	    total_y = 0;
 	    total_z = 0;
@@ -403,7 +411,49 @@ void LidarFilter::doMathMapping()
 	    average_z = 0;
 	    variance_z = 0;
 	}
-
+	// evaluate if the point is on the edge or not
+	int adjacent_counter = 0;
+	for (int i = 0; i < local_grid_map_temp.size(); i++)
+	{
+		float threshold_x = local_grid_map_temp[i][0];
+		float threshold_y = local_grid_map_temp[i][1];
+		if(local_grid_map_temp[i][4] == 1) // this point must be occupied in the first place
+		{
+			for (int j = 0; j < local_grid_map_temp.size(); i++)
+			{
+				if(j != i) // not the same point
+				{
+					if(local_grid_map_temp[j][0] > floor(threshold_x)-1 && local_grid_map_temp[j][0] < ceil(threshold_x)+1 && local_grid_map_temp[j][1] > floor(threshold_y)-1 && local_grid_map_temp[j][1] < ceil(threshold_y)+1) //within 9 ceils block
+					{
+						if(local_grid_map_temp[j][4] == 1)
+							adjacent_counter = adjacent_counter + 1;
+					}
+				}
+				if (adjacent_counter > 4) // if more than 4 out of 8 neighbors are occupied, then it is a non-ground adjacent point
+				{
+					local_grid_map_temp[i].push_back(0); // 0 means is non-ground adjacent while 1 mean is ground adjacent
+				}
+				else
+				{
+					local_grid_map_temp[i].push_back(1);
+				}
+				adjacent_counter = 0;
+				threshold_x = 0.0;
+				threshold_y = 0.0;
+			}
+		}
+		else
+		{
+			local_grid_map_temp[i].push_back(0); // push back 0 to hold the place
+		}
+	}
+	for (int i = 0; i < local_grid_map_temp.size(); i++)
+	{
+		if(local_grid_map_temp[i][4] == 1) // if this grid is occupied
+		{
+			_local_grid_map.push_back(local_grid_map_temp[i]);
+		}
+	}
 	_object_filtered = *object_filtered;
 }
 
