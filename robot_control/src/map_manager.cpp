@@ -219,7 +219,7 @@ MapManager::MapManager()
 
     globalMap.setFrameId("map");
 #ifdef EVANSDALE
-    globalMap.setGeometry(grid_map::Length(200.0, 100.0), mapResolution, grid_map::Position(59.643, 25.834));
+    globalMap.setGeometry(grid_map::Length(200.0, 100.0), mapResolution, grid_map::Position(66.667, 17.143));
 #endif // EVANSDALE
 #ifdef INSTITUTE_PARK
     globalMap.setGeometry(grid_map::Length(400.0, 300.0), mapResolution, grid_map::Position(12.0, 65.0)); // ***Check the position numbers***
@@ -427,7 +427,7 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
     }
 }
 
-void MapManager::resetGlobalMapLayers(int startIndex, int endIndex) // tested?
+void MapManager::resetGlobalMapLayers(int startIndex, int endIndex) // tested
 {
     for(int i=startIndex; i<=endIndex; i++) globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
 }
@@ -436,7 +436,8 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
 {
     for(int i=layerStartIndex; i<=layerEndIndex; i++)
     {
-        map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);;
+        if(static_cast<MAP_LAYERS_T>(i)==_driveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
     }
 }
 
@@ -446,7 +447,7 @@ void MapManager::rotateCoord(float &origX, float &origY, float &newX, float &new
     newY = origX*sin(DEG2RAD*angle)+origY*cos(DEG2RAD*angle);
 }
 
-void MapManager::writeSatMapIntoGlobalMap() // needs tested
+void MapManager::writeSatMapIntoGlobalMap() // tested
 {
     // Slope
     for(int i=0; i<slopeNumRows; i++)
@@ -455,7 +456,7 @@ void MapManager::writeSatMapIntoGlobalMap() // needs tested
         {
             satMapToGlobalMapPos[0] = (float)(j*slopeMapRes+slopeMapRes/2.0) - slopeMapStartE;
             satMapToGlobalMapPos[1] = (float)(i*slopeMapRes+slopeMapRes/2.0) - slopeMapStartS;
-            if(globalMap.isInside(satMapToGlobalMapPos)) globalMap.atPosition(layerToString(_slope), satMapToGlobalMapPos) = slopeMap[i][j];
+            if(globalMap.isInside(satMapToGlobalMapPos)) globalMap.atPosition(layerToString(_slope), satMapToGlobalMapPos) = slopeMap[i][j]; // *** Got to figure out if this is correct
         }
     }
     // Driveability
@@ -467,7 +468,7 @@ void MapManager::writeSatMapIntoGlobalMap() // needs tested
             satMapToGlobalMapPos[1] = (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartS;
             if(globalMap.isInside(satMapToGlobalMapPos))
             {
-                if(slopeMap[i][j]==1) globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_impassable;
+                if(driveabilityMap[i][j]==1) globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_impassable;
                 else globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_noObject;
             }
         }
