@@ -57,7 +57,7 @@ public:
 	void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map);
 	void donutSmash(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos);
 	void addFoundSamples(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos, float heading);
-	void rotateCoord(float &origX, float &origY, float &newX, float &newY, float &angle);
+	void rotateCoord(float origX, float origY, float &newX, float &newY, float angle);
 	void writeSatMapIntoGlobalMap();
 	// Members
 	ros::NodeHandle nh;

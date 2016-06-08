@@ -244,7 +244,7 @@ MapManager::MapManager()
     ROS_DEBUG("after global map publish");
 }
 
-bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res) // need to test
+bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res) // tested
 {
     res.ROIList = regionsOfInterest;
     ROS_INFO("sent ROI");
@@ -312,7 +312,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
     return true;
 }
 
-bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // need to test
+bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // need to test, need to add north angle transform
 {
     globalMapPathHazardsPolygon.removeVertices();
     res.numHazards = 0;
@@ -330,6 +330,7 @@ bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Re
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(1));
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(2));
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(3));
+    ROS_INFO("angle = %f",globalMapPathHazardsPolygonHeading);
     for(grid_map::PolygonIterator it(globalMap, globalMapPathHazardsPolygon); !it.isPastEnd(); ++it)
     {
         globalMapPathHazardValue = globalMap.at(layerToString(_driveability), *it);
@@ -339,15 +340,16 @@ bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Re
             globalMap.getPosition(*it, globalMapPathHazardPosition);
             res.hazardList.push_back(messages::DriveabilityHazards());
             res.hazardList.at(res.numHazards-1).type = (int)globalMapPathHazardValue;
-            res.hazardList.at(res.numHazards-1).localX = globalMapPathHazardPosition[0];
-            res.hazardList.at(res.numHazards-1).localY = globalMapPathHazardPosition[1];
+            res.hazardList.at(res.numHazards-1).localX = globalMapPathHazardPosition[0] - req.xStart;
+            res.hazardList.at(res.numHazards-1).localY = globalMapPathHazardPosition[1] - req.yStart;
+            rotateCoord(res.hazardList.at(res.numHazards-1).localX,res.hazardList.at(res.numHazards-1).localY, res.hazardList.at(res.numHazards-1).localX, res.hazardList.at(res.numHazards-1).localY, RAD2DEG*globalMapPathHazardsPolygonHeading);
             res.hazardList.at(res.numHazards-1).height = globalMap.at(layerToString(_objectHeight), *it);
         }
     }
     return true;
 }
 
-bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res) // need to test
+bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res) // need to test, need to add north angle transform
 {
     if(searchLocalMapExists)
     {
@@ -357,7 +359,7 @@ bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Reques
     else return false;
 }
 
-void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested
+void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested, need to add north angle transform
 {
     ++keyframeCallbackSerialNum;
     keyframes = *msg;
@@ -441,7 +443,7 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
     }
 }
 
-void MapManager::rotateCoord(float &origX, float &origY, float &newX, float &newY, float &angle) // needs tested
+void MapManager::rotateCoord(float origX, float origY, float &newX, float &newY, float angle) // needs tested
 {
     newX = origX*cos(DEG2RAD*angle)-origY*sin(DEG2RAD*angle);
     newY = origX*sin(DEG2RAD*angle)+origY*cos(DEG2RAD*angle);
