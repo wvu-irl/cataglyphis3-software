@@ -6,7 +6,6 @@
 #include <robot_control/ModifyROI.h>
 #include <robot_control/CurrentROI.h>
 #include <robot_control/SearchMap.h>
-#include <messages/ROIGridMap.h>
 #include <messages/KeyframeList.h>
 #include <messages/RobotPose.h>
 #include <messages/SLAMPoseOut.h>
@@ -45,7 +44,6 @@ public:
 	MapManager(); // Constructor
 	bool listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res);
 	bool modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res);
-	bool mapROI(messages::ROIGridMap::Request &req, messages::ROIGridMap::Response &res);
 	bool searchMapCallback(robot_control::SearchMap::Request &req, robot_control::SearchMap::Response &res);
 	bool globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res);
 	bool searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res);
@@ -57,13 +55,13 @@ public:
 	void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map);
 	void donutSmash(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos);
 	void addFoundSamples(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos, float heading);
-	void rotateCoord(float origX, float origY, float &newX, float &newY, float angle);
+	void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
+	void rotateCoord(double origX, double origY, double &newX, double &newY, double angleDeg);
 	void writeSatMapIntoGlobalMap();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;
 	ros::ServiceServer modROIServ;
-	ros::ServiceServer mapROIServ;
 	ros::ServiceServer searchMapServ;
 	ros::ServiceServer globalMapPathHazardsServ;
 	ros::ServiceServer searchLocalMapInfoServ;

@@ -79,7 +79,6 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    ExecAction.srv
    CVSearchCmd.srv
-   ROIGridMap.srv
    MapSegment.srv
    CreateROIKeyframe.srv
    SearchLocalMapInfo.srv

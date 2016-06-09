@@ -1,5 +1,5 @@
-float32 x
-float32 y
+float32 e
+float32 s
 float32 radialAxis
 float32 tangentialAxis
 int16 purpleProb
