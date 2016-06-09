@@ -262,7 +262,7 @@ private:
 	        }
 	        //print out points
 	        if (total_x || total_y || total_z)
-	            cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
+	            //cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
 	        total_x = 0;
 	        total_y = 0;
 	        total_z = 0;
@@ -381,15 +381,15 @@ private:
 	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
 	        {
 	        	cylinderWasDetected = true;
-	            ROS_INFO("cluster %i has fit the cylinder model with probability %f", i, seg.getProbability());
-	            // cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-	            //                                << coefficients_cylinder->values[1] << " "
-	            //                                << coefficients_cylinder->values[2] << " "
-	            //                                << coefficients_cylinder->values[3] << " "
-	            //                                << coefficients_cylinder->values[4] << " "
-	            //                                << coefficients_cylinder->values[5] << " "
-	            //                                << coefficients_cylinder->values[6] << endl;
-	            //cout << "Probability is " << seg.getProbability () << endl;
+	            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
+	             cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+	                                            << coefficients_cylinder->values[1] << " "
+	                                            << coefficients_cylinder->values[2] << " "
+	                                            << coefficients_cylinder->values[3] << " "
+	                                            << coefficients_cylinder->values[4] << " "
+	                                            << coefficients_cylinder->values[5] << " "
+	                                            << coefficients_cylinder->values[6] << endl;
+	            cout << "Probability is " << seg.getProbability () << endl;
 
 
 			float max_x = cloud_cylinder->points[0].x;

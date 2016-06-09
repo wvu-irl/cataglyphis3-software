@@ -37,6 +37,10 @@ LidarFilter::LidarFilter()
 	_homing_y = 0;
 	_homing_heading = 0;
 	_homing_found = false;
+
+	//clouds stitch
+	pcl::PointCloud<pcl::PointXYZ> piece_one;
+	pcl::PointCloud<pcl::PointXYZ> piece_two;
 }
 
 void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg)
@@ -130,6 +134,19 @@ bool LidarFilter::newPointCloudAvailable()
 	}
 }
 
+void LidarFilter::stitchClouds()
+{
+	if(_registration_counter % 2 == 1)
+	{
+		_piece_one = _input_cloud;
+	}
+	else if(_registration_counter % 2 == 0 && _registration_counter != 0) //stitch two clouds together
+	{
+		_piece_two = _input_cloud;
+		_input_cloud = _piece_one + _piece_two;
+	}
+}
+
 void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 {	
 	//clear message
@@ -187,6 +204,7 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud4 (new pcl::PointCloud<pcl::PointXYZ>);
 	*cloud = _input_cloud;
 
+
 	ROS_INFO("\n*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
 	ROS_INFO("Running callback function with %i points.",cloud->points.size());
 
@@ -224,7 +242,7 @@ void LidarFilter::doMathMapping()
 	// std::stringstream ss1;
 	// ss1 << "raw_cloud.pcd";
 	// pcl::io::savePCDFile( ss1.str(), *cloud);
-
+	
 	// PASS THROUGH FILTER
 	pcl::PassThrough<pcl::PointXYZ> pass;
 	pass.setInputCloud(cloud);
@@ -238,6 +256,7 @@ void LidarFilter::doMathMapping()
 	pass.setFilterLimits(-1.5,threshold_tree_height);
 	pass.filter(*cloud);
 	
+	/*
 	// remove 10x10 m area the behind the lidar (the pole) in order to increase the accuracy of ICP
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
@@ -279,7 +298,7 @@ void LidarFilter::doMathMapping()
 	*cloud = *cloud + *cloud3;
 	*cloud = *cloud + *cloud4;
 	//ROS_INFO("Regional cloud has %i points", cloud->points.size());
-
+	*/
 
 	// std::stringstream ss2;
 	// ss2 << "middle_1.pcd";
@@ -391,10 +410,10 @@ void LidarFilter::doMathMapping()
 	        point.clear();
 	    }
 	    //print out points
-	    if (total_x || total_y || total_z)
-	    {
-	        std::cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
-	    }
+	    //if (total_x || total_y || total_z)
+	    //{
+	    //    std::cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
+	    //}
 	    total_x = 0;
 	    total_y = 0;
 	    total_z = 0;
@@ -528,15 +547,15 @@ void LidarFilter::doMathHoming()
         if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
         {
         	cylinderWasDetected = true;
-            ROS_INFO("cluster %i has fit the cylinder model with probability %f", i, seg.getProbability());
-            // cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-            //                                << coefficients_cylinder->values[1] << " "
-            //                                << coefficients_cylinder->values[2] << " "
-            //                                << coefficients_cylinder->values[3] << " "
-            //                                << coefficients_cylinder->values[4] << " "
-            //                                << coefficients_cylinder->values[5] << " "
-            //                                << coefficients_cylinder->values[6] << endl;
-            //cout << "Probability is " << seg.getProbability () << endl;
+            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
+            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+                                            << coefficients_cylinder->values[1] << " "
+                                            << coefficients_cylinder->values[2] << " "
+                                            << coefficients_cylinder->values[3] << " "
+                                            << coefficients_cylinder->values[4] << " "
+                                            << coefficients_cylinder->values[5] << " "
+                                            << coefficients_cylinder->values[6] << endl;
+            cout << "Probability is " << seg.getProbability () << endl;
 
 
 			float max_x = cloud_cylinder->points[0].x;

@@ -63,6 +63,12 @@ public:
 	bool newPointCloudAvailable();
 	void packLocalMapMessage(messages::LocalMap &msg);
 	void packHomingMessage(messages::LidarFilterOut &msg);
+	void stitchClouds();
+	short int _navigation_filter_counter;
+	short int _navigation_filter_counter_prev;
+	short int _registration_counter;
+	short int _registration_counter_prev;
+
 private:
 	//navigation filter callback
 	float _navigation_filter_x;
@@ -70,8 +76,8 @@ private:
 	float _navigation_filter_roll;
 	float _navigation_filter_pitch;
 	float _navigation_filter_heading;
-	short int _navigation_filter_counter;
-	short int _navigation_filter_counter_prev;
+	//short int _navigation_filter_counter;
+	//short int _navigation_filter_counter_prev;
 
 	//transform points from lidar frame to robot body
 	Eigen::Matrix3f _R_tilt_robot_to_beacon; //robot to homing beacon rotation (pitch and roll rotation only)
@@ -79,10 +85,13 @@ private:
 
 	//registration callback
 	pcl::PointCloud<pcl::PointXYZ> _input_cloud;
-	short int _registration_counter;
-	short int _registration_counter_prev;
+	//short int _registration_counter;
+	//short int _registration_counter_prev;
 	bool _registration_new;
 
+	//stitch clouds function
+	pcl::PointCloud<pcl::PointXYZ> _piece_one;
+	pcl::PointCloud<pcl::PointXYZ> _piece_two;
 	//mapping function
 	const int map_range = 40; //size of local map is 20x20 m
 	const float grid_size = 1; // size of the local map grid
