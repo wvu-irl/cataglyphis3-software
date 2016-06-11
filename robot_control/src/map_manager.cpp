@@ -19,6 +19,7 @@ MapManager::MapManager()
     keyframeCallbackSerialNum = 0;
     searchLocalMapExists = false;
     globalMapPathHazardsVertices.resize(4);
+    previousNorthAngle = 0.0;
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.e = 8.0;
@@ -65,6 +66,7 @@ MapManager::MapManager()
     ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
+    northTransformROIs();
 
     // Temporary ROIs. Search in front of library
     /*ROI.e = 35.0826;
@@ -187,7 +189,8 @@ MapManager::MapManager()
     ROI.radialAxis = 20.0;
     ROI.tangentialAxis = 15.0;
     ROI.searched = false;
-    regionsOfInterest.push_back(ROI);*/
+    regionsOfInterest.push_back(ROI);
+    northTransformROIs();*/
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -216,15 +219,26 @@ MapManager::MapManager()
     ros::Duration(1.0).sleep();
     globalMapPub.publish(globalMapMsg);*/
 
+    ros::Duration(1).sleep();
+
     globalMap.setFrameId("map");
+    globalMapTemp.setFrameId("map");
 #ifdef EVANSDALE
-    globalMap.setGeometry(grid_map::Length(200.0, 100.0), mapResolution, grid_map::Position(66.667, 17.143));
+    globalMapSize[0] = 200.0;
+    globalMapSize[1] = 100.0;
+    globalMap.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(66.667, 17.143));
+    globalMapTemp.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(66.667, 17.143));
 #endif // EVANSDALE
 #ifdef INSTITUTE_PARK
-    globalMap.setGeometry(grid_map::Length(400.0, 300.0), mapResolution, grid_map::Position(12.0, 65.0)); // ***Check the position numbers***
+    globalMapSize[0] = 400.0;
+    globalMapSize[1] = 300.0;
+    globalMap.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(12.0, 65.0)); // ***Check the position numbers***
+    globalMapTemp.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(12.0, 65.0)); // ***Check the position numbers***
 #endif // INSTUTUTE_PARK
+    globalMapRowsCols = globalMap.getSize();
     //gridMapAddLayers(0, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
     gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMap);
+    gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMapTemp);
     writeSatMapIntoGlobalMap();
     globalMapPathHazardsPolygon.setFrameId(globalMap.getFrameId());
 
@@ -235,12 +249,11 @@ MapManager::MapManager()
     currentKeyframe.setFrameId("map");
     ROIKeyframe.setFrameId("map");
 
-    ros::Duration(3).sleep();
-    ROS_DEBUG("before global map toMsssage");
+    /*ROS_DEBUG("before global map toMsssage");
     grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
     ROS_DEBUG("after global map toMsssage");
     globalMapPub.publish(globalMapMsg);
-    ROS_DEBUG("after global map publish");
+    ROS_DEBUG("after global map publish");*/
 }
 
 bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res) // tested
@@ -306,7 +319,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
     return true;
 }
 
-bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // tested, need to add north angle transform
+bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // tested
 {
     globalMapPathHazardsPolygon.removeVertices();
     res.numHazards = 0;
@@ -352,7 +365,7 @@ bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Reques
     else return false;
 }
 
-void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested, need to add north angle transform
+void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested
 {
     ++keyframeCallbackSerialNum;
     keyframes = *msg;
@@ -363,7 +376,7 @@ void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) 
         keyframeHeading = keyframes.keyframeList.at(i).heading;
         keyframeXPos = keyframes.keyframeList.at(i).x;
         keyframeYPos = keyframes.keyframeList.at(i).y;
-        ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0,30.0)));
+        //ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0,30.0)));
         for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
         {
             currentKeyframe.getPosition(*it, keyframeCoord);
@@ -406,6 +419,11 @@ void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) 
 void MapManager::globalPoseCallback(const messages::RobotPose::ConstPtr &msg) // need to implement hsm to publish this
 {
     globalPose = *msg;
+    if(globalPose.northAngle != previousNorthAngle)
+    {
+        updateNorthTransformedMapData();
+        previousNorthAngle = globalPose.northAngle;
+    }
     currentROIMsg.currentROINum = globalMap.atPosition(layerToString(_roiNum),grid_map::Position(globalPose.x, globalPose.y));
     currentROIPub.publish(currentROIMsg);
 }
@@ -427,7 +445,11 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
 
 void MapManager::resetGlobalMapLayers(int startIndex, int endIndex) // tested
 {
-    for(int i=startIndex; i<=endIndex; i++) globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
+    for(int i=startIndex; i<=endIndex; i++)
+    {
+        if(static_cast<MAP_LAYERS_T>(i)==_driveability) globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        else globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
+    }
 }
 
 void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map) // tested
@@ -439,13 +461,13 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
     }
 }
 
-void MapManager::rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg) // this seems to work?
+void MapManager::rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg)
 {
     newX = origX*cos(DEG2RAD*angleDeg)+origY*sin(DEG2RAD*angleDeg);
     newY = -origX*sin(DEG2RAD*angleDeg)+origY*cos(DEG2RAD*angleDeg);
 }
 
-void MapManager::rotateCoord(double origX, double origY, double &newX, double &newY, double angleDeg) // ditto? ^^^
+void MapManager::rotateCoord(double origX, double origY, double &newX, double &newY, double angleDeg)
 {
     newX = origX*cos(DEG2RAD*angleDeg)+origY*sin(DEG2RAD*angleDeg);
     newY = -origX*sin(DEG2RAD*angleDeg)+origY*cos(DEG2RAD*angleDeg);
@@ -453,13 +475,15 @@ void MapManager::rotateCoord(double origX, double origY, double &newX, double &n
 
 void MapManager::writeSatMapIntoGlobalMap() // tested
 {
+    resetGlobalMapLayers((int)_slope, (int)_driveability);
     // Slope
     for(int i=0; i<slopeNumRows; i++)
     {
         for(int j=0; j<slopeNumCols; j++)
         {
-            satMapToGlobalMapPos[0] = (float)(j*slopeMapRes+slopeMapRes/2.0) - slopeMapStartE;
-            satMapToGlobalMapPos[1] = (float)(i*slopeMapRes+slopeMapRes/2.0) - slopeMapStartS;
+            rotateCoord((float)(j*slopeMapRes+slopeMapRes/2.0) - slopeMapStartE, (float)(i*slopeMapRes+slopeMapRes/2.0) - slopeMapStartS, satMapToGlobalMapPos[0], satMapToGlobalMapPos[1], globalPose.northAngle-90.0);
+            //satMapToGlobalMapPos[0] = (float)(j*slopeMapRes+slopeMapRes/2.0) - slopeMapStartE;
+            //satMapToGlobalMapPos[1] = (float)(i*slopeMapRes+slopeMapRes/2.0) - slopeMapStartS;
             if(globalMap.isInside(satMapToGlobalMapPos)) globalMap.atPosition(layerToString(_slope), satMapToGlobalMapPos) = slopeMap[i][j]; // *** Got to figure out if this is correct
         }
     }
@@ -468,8 +492,9 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
     {
         for(int j=0; j<slopeNumCols; j++)
         {
-            satMapToGlobalMapPos[0] = (float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartE;
-            satMapToGlobalMapPos[1] = (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartS;
+            rotateCoord((float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartE, (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartS, satMapToGlobalMapPos[0], satMapToGlobalMapPos[1], globalPose.northAngle-90.0);
+            //satMapToGlobalMapPos[0] = (float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartE;
+            //satMapToGlobalMapPos[1] = (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartS;
             if(globalMap.isInside(satMapToGlobalMapPos))
             {
                 if(driveabilityMap[i][j]==1) globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_impassable;
@@ -477,4 +502,203 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
             }
         }
     }
+    /*grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
+    globalMapPub.publish(globalMapMsg);
+    ros::Duration(3).sleep();*/
+    smoothDriveabilityLayer();
+    grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
+    globalMapPub.publish(globalMapMsg);
+}
+
+void MapManager::northTransformROIs() // needs tested
+{
+    for(int i=0; i<regionsOfInterest.size(); i++)
+    {
+        rotateCoord(regionsOfInterest.at(i).e, regionsOfInterest.at(i).s, regionsOfInterest.at(i).x, regionsOfInterest.at(i).y, globalPose.northAngle-90.0);
+    }
+}
+
+void MapManager::updateNorthTransformedMapData() // tested* ^^^
+{
+    writeSatMapIntoGlobalMap();
+    northTransformROIs();
+}
+
+void MapManager::smoothDriveabilityLayer() // tested
+{
+    float currentValue;
+    int sumNeighborsDifferentFromCurrentValue;
+    for(int i=0; i<globalMapRowsCols[0]; i++)
+    {
+        for(int j=0; j<globalMapRowsCols[1]; j++)
+        {
+            //ROS_INFO("i = %i; j = %i",i,j);
+            //ROS_INFO("rows = %i; cols = %i",globalMapRowsCols[0], globalMapRowsCols[1]);
+            sumNeighborsDifferentFromCurrentValue = 0;
+            currentValue = globalMap.get(layerToString(_driveability))(i,j);
+            if(((i-1)<0) && ((j-1)<0)) // top left corner
+            {
+                //ROS_INFO("top left corner");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j+1)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else if(((i+1)>=globalMapRowsCols[0]) && ((j-1)<0)) // bottom left corner
+            {
+                //ROS_INFO("bottom left corner");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j+1)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else if(((i-1)<0) && ((j+1)>=globalMapRowsCols[1])) // top right corner
+            {
+                //ROS_INFO("top right corner");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j-1)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else if(((i+1)>=globalMapRowsCols[0]) && ((j+1)>=globalMapRowsCols[1])) // bottom right corner
+            {
+                //ROS_INFO("bottom right corner");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j-1)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else if(((i-1)<0) && ((j-1)>=0) && ((j+1)<globalMapRowsCols[1])) // top edge
+            {
+                //ROS_INFO("top edge");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j-1)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j+1)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else if(((i+1)>=globalMapRowsCols[0]) && ((j-1)>=0) && ((j+1)<globalMapRowsCols[1])) // bottom edge
+            {
+                //ROS_INFO("bottom edge");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j-1)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j+1)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else if(((i-1)>=0) && ((i+1)<globalMapRowsCols[0]) && ((j-1)<0)) // left edge
+            {
+                //ROS_INFO("left edge");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j+1)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j+1)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else if(((i-1)>=0) && ((i+1)<globalMapRowsCols[0]) && ((j+1)>=globalMapRowsCols[1])) // right edge
+            {
+                //ROS_INFO("right edge");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j-1)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j-1)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+            else // internal
+            {
+                //ROS_INFO("internal");
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j-1)!=currentValue; // tl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j)!=currentValue; // tc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i-1,j+1)!=currentValue; // tr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j-1)!=currentValue; // ml
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i,j+1)!=currentValue; // mr
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j-1)!=currentValue; // bl
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j)!=currentValue; // bc
+                sumNeighborsDifferentFromCurrentValue += globalMap.get(layerToString(_driveability))(i+1,j+1)!=currentValue; // br
+                if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
+                {
+                    if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
+                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                }
+                else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
+            }
+        }
+    }
+    globalMap.addDataFrom(globalMapTemp, false, true, false, std::vector<std::string>(1,layerToString(_driveability)));
 }

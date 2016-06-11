@@ -58,6 +58,10 @@ public:
 	void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 	void rotateCoord(double origX, double origY, double &newX, double &newY, double angleDeg);
 	void writeSatMapIntoGlobalMap();
+	void northTransformROIs();
+	void updateNorthTransformedMapData();
+	void smoothDriveabilityLayer();
+	//void smoothNumericLayer();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;
@@ -79,6 +83,9 @@ public:
 	robot_control::ROI ROI;
 	std::vector<robot_control::ROI> regionsOfInterest;
 	grid_map::GridMap globalMap;
+	grid_map::Length globalMapSize;
+	grid_map::Size globalMapRowsCols;
+	grid_map::GridMap globalMapTemp;
 	grid_map::GridMap searchLocalMap;
 	int searchLocalMapROINum;
 	bool searchLocalMapExists;
@@ -88,6 +95,7 @@ public:
 	float globalMapPathHazardValue;
 	grid_map::Position globalMapPathHazardPosition;
 	messages::RobotPose globalPose;
+	float previousNorthAngle; // deg
 	messages::SLAMPoseOut keyframeRelPose;
 	messages::KeyframeList keyframes;
 	messages::CreateROIKeyframe createROIKeyframeSrv;
@@ -120,7 +128,8 @@ public:
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m
-	const float sampleProbPeak = 1000.0;
+	const float sampleProbPeak = 1.0;
+	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 };
 
 #endif // MAP_MANAGER_H
