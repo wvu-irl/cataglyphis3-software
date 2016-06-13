@@ -14,30 +14,39 @@
    <string>Form</string>
   </property>
   <widget class="QPushButton" name="begin_dead_reckoning_button">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>60</y>
+     <y>170</y>
      <width>111</width>
-     <height>51</height>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
-    <string>Begin Dead
-Reckoning</string>
+    <string>Begin
+Dead Reckoning</string>
    </property>
   </widget>
   <widget class="QPushButton" name="perform_bias_removal_button">
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>160</y>
+     <y>30</y>
      <width>111</width>
-     <height>41</height>
+     <height>61</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>19</pointsize>
+    </font>
+   </property>
    <property name="text">
-    <string>Perform Bias Removal</string>
+    <string>Perform
+Bias Removal</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="progressBar">
@@ -67,7 +76,7 @@ Reckoning</string>
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>132</width>
+     <width>136</width>
      <height>215</height>
     </rect>
    </property>
@@ -109,6 +118,9 @@ Reckoning</string>
         </property>
         <property name="decimals">
          <number>9</number>
+        </property>
+        <property name="minimum">
+         <double>-99.989999999999995</double>
         </property>
        </widget>
       </item>

@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_init_step_one_t {
-    QByteArrayData data[10];
-    char stringdata0[170];
+    QByteArrayData data[11];
+    char stringdata0[189];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -33,18 +33,19 @@ QT_MOC_LITERAL(0, 0, 13), // "init_step_one"
 QT_MOC_LITERAL(1, 14, 15), // "init_nav_filter"
 QT_MOC_LITERAL(2, 30, 0), // ""
 QT_MOC_LITERAL(3, 31, 26), // "messages::NavFilterControl"
-QT_MOC_LITERAL(4, 58, 7), // "navInit"
-QT_MOC_LITERAL(5, 66, 17), // "step_one_finished"
-QT_MOC_LITERAL(6, 84, 20), // "when_nav_init_return"
-QT_MOC_LITERAL(7, 105, 9), // "sucessful"
-QT_MOC_LITERAL(8, 115, 27), // "on_skip_init_button_clicked"
-QT_MOC_LITERAL(9, 143, 26) // "on_continue_button_clicked"
+QT_MOC_LITERAL(4, 58, 14), // "serviceRequest"
+QT_MOC_LITERAL(5, 73, 17), // "step_one_finished"
+QT_MOC_LITERAL(6, 91, 20), // "when_nav_init_return"
+QT_MOC_LITERAL(7, 112, 11), // "navResponse"
+QT_MOC_LITERAL(8, 124, 9), // "sucessful"
+QT_MOC_LITERAL(9, 134, 27), // "on_skip_init_button_clicked"
+QT_MOC_LITERAL(10, 162, 26) // "on_continue_button_clicked"
 
     },
     "init_step_one\0init_nav_filter\0\0"
-    "messages::NavFilterControl\0navInit\0"
+    "messages::NavFilterControl\0serviceRequest\0"
     "step_one_finished\0when_nav_init_return\0"
-    "sucessful\0on_skip_init_button_clicked\0"
+    "navResponse\0sucessful\0on_skip_init_button_clicked\0"
     "on_continue_button_clicked"
 };
 #undef QT_MOC_LITERAL
@@ -67,16 +68,16 @@ static const uint qt_meta_data_init_step_one[] = {
        5,    0,   42,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       6,    1,   43,    2, 0x0a /* Public */,
-       8,    0,   46,    2, 0x08 /* Private */,
-       9,    0,   47,    2, 0x08 /* Private */,
+       6,    2,   43,    2, 0x0a /* Public */,
+       9,    0,   48,    2, 0x08 /* Private */,
+      10,    0,   49,    2, 0x08 /* Private */,
 
  // signals: parameters
     QMetaType::Void, 0x80000000 | 3,    4,
     QMetaType::Void,
 
  // slots: parameters
-    QMetaType::Void, QMetaType::Bool,    7,
+    QMetaType::Void, 0x80000000 | 3, QMetaType::Bool,    7,    8,
     QMetaType::Void,
     QMetaType::Void,
 
@@ -89,9 +90,9 @@ void init_step_one::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _i
         init_step_one *_t = static_cast<init_step_one *>(_o);
         Q_UNUSED(_t)
         switch (_id) {
-        case 0: _t->init_nav_filter((*reinterpret_cast< const messages::NavFilterControl(*)>(_a[1]))); break;
+        case 0: _t->init_nav_filter((*reinterpret_cast< messages::NavFilterControl(*)>(_a[1]))); break;
         case 1: _t->step_one_finished(); break;
-        case 2: _t->when_nav_init_return((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 2: _t->when_nav_init_return((*reinterpret_cast< const messages::NavFilterControl(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
         case 3: _t->on_skip_init_button_clicked(); break;
         case 4: _t->on_continue_button_clicked(); break;
         default: ;
@@ -100,7 +101,7 @@ void init_step_one::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _i
         int *result = reinterpret_cast<int *>(_a[0]);
         void **func = reinterpret_cast<void **>(_a[1]);
         {
-            typedef void (init_step_one::*_t)(const messages::NavFilterControl );
+            typedef void (init_step_one::*_t)(messages::NavFilterControl );
             if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&init_step_one::init_nav_filter)) {
                 *result = 0;
             }
@@ -151,7 +152,7 @@ int init_step_one::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 }
 
 // SIGNAL 0
-void init_step_one::init_nav_filter(const messages::NavFilterControl _t1)
+void init_step_one::init_nav_filter(messages::NavFilterControl _t1)
 {
     void *_a[] = { Q_NULLPTR, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);

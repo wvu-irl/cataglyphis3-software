@@ -10,6 +10,7 @@
 #include "map_viewer.h"
 
 #define NUM_MSG_CALLBACK_THREADS 2
+#define CATAGLYPHIS_GUI_ID 3
 
 namespace Ui {
 class cataglyphis_gui;
