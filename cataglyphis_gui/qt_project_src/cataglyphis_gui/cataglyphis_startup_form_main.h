@@ -10,6 +10,7 @@
 
 #include <init_step_one.h>
 #include <bias_removal_form.h>
+#include <generic_error_dialog_form.h>
 
 #include <messages/NavFilterOut.h>
 #include <messages/NavFilterControl.h>

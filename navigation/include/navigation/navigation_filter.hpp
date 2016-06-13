@@ -9,6 +9,8 @@
 #include <messages/LidarFilterOut.h>
 #include <hsm/user_input_nav_act_class.h>
 
+#include <messages/NavFilterControl.h> //added for new User Interface -Matt G.
+
 class NavigationFilter
 {
 public:
@@ -17,9 +19,14 @@ public:
 	void update_time();
 	void waiting(User_Input_Nav_Act user_input_nav_act);
 	void forklift_drive(User_Input_Nav_Act user_input_nav_act);
-	void run(User_Input_Nav_Act user_input_nav_act);
+        void run(User_Input_Nav_Act user_input_nav_act);
+        //added for new User Interface -Matt G.
+        bool navFilterControlServiceCallback(messages::NavFilterControl::Request request, messages::NavFilterControl::Response response);
 	// Members
 	ros::NodeHandle nh;
+
+        ros::ServiceServer nav_control_server;
+        messages::NavFilterControl::Request latest_nav_control_request;
 
 	ros::Subscriber sub_exec;
 	bool pause_switch;
@@ -66,6 +73,9 @@ public:
 private:
 	void getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg);
 	void getLidarFilterOutCallback(const messages::LidarFilterOut::ConstPtr &msg);
+
+        //added for new User Interface -Matt G.
+        bool navFilterControlServiceCallback(messages::NavFilterControl::Request &request, messages::NavFilterControl::Response &response);
 };
 
 #endif // NAVIGATION_FILTER_H

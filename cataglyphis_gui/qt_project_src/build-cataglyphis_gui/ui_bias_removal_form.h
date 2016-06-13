@@ -67,10 +67,14 @@ public:
         bias_removal_form->resize(320, 258);
         begin_dead_reckoning_button = new QPushButton(bias_removal_form);
         begin_dead_reckoning_button->setObjectName(QStringLiteral("begin_dead_reckoning_button"));
-        begin_dead_reckoning_button->setGeometry(QRect(170, 60, 111, 51));
+        begin_dead_reckoning_button->setEnabled(false);
+        begin_dead_reckoning_button->setGeometry(QRect(170, 170, 111, 41));
         perform_bias_removal_button = new QPushButton(bias_removal_form);
         perform_bias_removal_button->setObjectName(QStringLiteral("perform_bias_removal_button"));
-        perform_bias_removal_button->setGeometry(QRect(170, 160, 111, 41));
+        perform_bias_removal_button->setGeometry(QRect(170, 30, 111, 61));
+        QFont font;
+        font.setPointSize(19);
+        perform_bias_removal_button->setFont(font);
         progressBar = new QProgressBar(bias_removal_form);
         progressBar->setObjectName(QStringLiteral("progressBar"));
         progressBar->setGeometry(QRect(10, 230, 301, 23));
@@ -315,9 +319,10 @@ public:
     void retranslateUi(QWidget *bias_removal_form)
     {
         bias_removal_form->setWindowTitle(QApplication::translate("bias_removal_form", "Form", 0));
-        begin_dead_reckoning_button->setText(QApplication::translate("bias_removal_form", "Begin Dead\n"
-"Reckoning", 0));
-        perform_bias_removal_button->setText(QApplication::translate("bias_removal_form", "Perform Bias Removal", 0));
+        begin_dead_reckoning_button->setText(QApplication::translate("bias_removal_form", "Begin\n"
+"Dead Reckoning", 0));
+        perform_bias_removal_button->setText(QApplication::translate("bias_removal_form", "Perform\n"
+"Bias Removal", 0));
         label->setText(QApplication::translate("bias_removal_form", "P1 Offset", 0));
         label_2->setText(QApplication::translate("bias_removal_form", "Q1 Offset", 0));
         label_3->setText(QApplication::translate("bias_removal_form", "R1 Offset", 0));

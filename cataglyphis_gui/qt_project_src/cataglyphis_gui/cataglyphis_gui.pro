@@ -12,14 +12,16 @@ TARGET = cataglyphis_gui
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
+SOURCES +=\
     cataglyphis_startup_form_main.cpp \
     map_viewer.cpp \
     window_selector.cpp \
     cataglyphis_gui.cpp \
     init_step_one.cpp \
     bias_removal_form.cpp \
-    ros_workers.cpp
+    ros_workers.cpp \
+    generic_error_dialog_form.cpp \
+    ../../src/cataglyphis_gui_node.cpp
 
 HEADERS  += \
     cataglyphis_startup_form_main.h \
@@ -28,7 +30,8 @@ HEADERS  += \
     cataglyphis_gui.h \
     init_step_one.h \
     bias_removal_form.h \
-    ros_workers.h
+    ros_workers.h \
+    generic_error_dialog_form.h
 
 FORMS    += \
     cataglyphis_startup_form_main.ui \
@@ -36,9 +39,15 @@ FORMS    += \
     window_selector.ui \
     cataglyphis_gui.ui \
     init_step_one.ui \
-    bias_removal_form.ui
+    bias_removal_form.ui \
+    generic_error_dialog_form.ui
 
 RESOURCES += \
     resources.qrc
 
 DISTFILES +=
+
+unix: CONFIG += link_pkgconfig
+unix: PKGCONFIG += roscpp
+
+unix: PKGCONFIG += roslib
