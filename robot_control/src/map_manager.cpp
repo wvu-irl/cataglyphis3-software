@@ -227,17 +227,22 @@ MapManager::MapManager()
 #ifdef EVANSDALE
     satMapSize[0] = 200.0;
     satMapSize[1] = 100.0;
-    globalMapOrigin[0] = 66.667;
-    globalMapOrigin[1] = 17.143;
+    //globalMapOrigin[0] = 66.667;
+    //globalMapOrigin[1] = 17.143;
+    globalMapOrigin[0] = 0.0;
+    globalMapOrigin[1] = 0.0;
 #endif // EVANSDALE
 #ifdef INSTITUTE_PARK
     satMapSize[0] = 400.0;
     satMapSize[1] = 300.0;
-    globalMapOrigin[0] = 12.0;
-    globalMapOrigin[1] = 65.0;
+    //globalMapOrigin[0] = 12.0;
+    //globalMapOrigin[1] = 65.0;
+    globalMapOrigin[0] = 0.0;
+    globalMapOrigin[1] = 0.0;
 #endif // INSTUTUTE_PARK
-    globalMapSize[0] = hypot(satMapSize[0],satMapSize[1]) + std::max(fabs(globalMapOrigin[0]),fabs(globalMapOrigin[1]));
-    globalMapSize[1] = globalMapSize[0];
+    calculateGlobalMapSize();
+    //globalMapSize[0] = hypot(satMapSize[0],satMapSize[1]) + std::max(fabs(globalMapOrigin[0]),fabs(globalMapOrigin[1]));
+    //globalMapSize[1] = globalMapSize[0];
     globalMap.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
     globalMapTemp.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
     globalMapRowsCols = globalMap.getSize();
@@ -562,7 +567,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -580,7 +585,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -598,7 +603,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -616,7 +621,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -634,7 +639,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -652,7 +657,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -670,7 +675,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -688,7 +693,7 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
@@ -706,11 +711,38 @@ void MapManager::smoothDriveabilityLayer() // tested
                 if(sumNeighborsDifferentFromCurrentValue >= smoothDriveabilityNumNeighborsToChangeValue)
                 {
                     if(currentValue==(float)_impassable) globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_noObject;
-                    //else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
+                    else globalMapTemp.get(layerToString(_driveability))(i,j) = (float)_impassable;
                 }
                 else globalMapTemp.get(layerToString(_driveability))(i,j) = currentValue;
             }
         }
     }
     globalMap.addDataFrom(globalMapTemp, false, true, false, std::vector<std::string>(1,layerToString(_driveability)));
+}
+
+void MapManager::calculateGlobalMapSize()
+{
+    float candidateSize;
+    float bestCandidateSize = 0.0;
+    candidateSize = hypot(satMapStartE, satMapStartS);
+    ROS_INFO("candidateSize = %f",candidateSize);
+    ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
+    if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
+    candidateSize = hypot(satMapStartE, satMapSize[1] - satMapStartS);
+    ROS_INFO("candidateSize = %f",candidateSize);
+    ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
+    if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapStartS);
+    ROS_INFO("candidateSize = %f",candidateSize);
+    ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
+    if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapSize[1] - satMapStartS);
+    ROS_INFO("candidateSize = %f",candidateSize);
+    ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
+    if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
+    ROS_INFO("candidateSize = %f",candidateSize);
+    ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
+    globalMapSize[0] = bestCandidateSize*2.0;
+    globalMapSize[1] = bestCandidateSize*2.0;
+    ROS_INFO("globalMapSize[0] = %f, [1] = %f",globalMapSize[0],globalMapSize[1]);
 }

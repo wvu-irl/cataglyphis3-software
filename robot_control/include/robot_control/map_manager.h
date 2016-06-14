@@ -62,6 +62,7 @@ public:
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
 	void smoothDriveabilityLayer();
+	void calculateGlobalMapSize();
 	//void smoothNumericLayer();
 	// Members
 	ros::NodeHandle nh;
