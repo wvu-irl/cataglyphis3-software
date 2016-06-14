@@ -410,8 +410,8 @@ void LidarFilter::doMathMapping()
 	    {
 	    	point.push_back(1); // 1 means is occupied while 0 means is empty
 	    }
-<<<<<<< HEAD
-=======
+// <<<<<<< HEAD
+// =======
 	    else
 	    {
 	    	point.push_back(0);
@@ -419,7 +419,7 @@ void LidarFilter::doMathMapping()
 	    local_grid_map_temp.push_back(point);
 	    point.clear();
 	    	    
->>>>>>> 7d243d3baa910e05d68dff65688eef97ef6283bb
+// >>>>>>> 7d243d3baa910e05d68dff65688eef97ef6283bb
 	    //print out points
 	    //if (total_x || total_y || total_z)
 	    //{
