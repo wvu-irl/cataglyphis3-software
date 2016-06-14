@@ -159,6 +159,7 @@ void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap 
 void publishKeyframeList()
 {
     keyframeListMsg.keyframeList.clear();
+    //keyframeListMsg.keyframeList.resize(1);
     keyframeListMsg.keyframeList.resize(2);
 
     keyframe.add(layerToString(_driveability), 0.0);

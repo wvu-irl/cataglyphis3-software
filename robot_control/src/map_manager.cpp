@@ -16,10 +16,11 @@ MapManager::MapManager()
     searchLocalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/searchlocalmapviz", 1);
     currentROIMsg.currentROINum = 0; // 0 means in no ROI
     searchLocalMapROINum = 0;
-    keyframeCallbackSerialNum = 0;
+    keyframeWriteIntoGlobalMapSerialNum = 0;
     searchLocalMapExists = false;
     globalMapPathHazardsVertices.resize(4);
-    previousNorthAngle = 0.0;
+    globalPose.northAngle = 90.0; // degrees. initial guess
+    previousNorthAngle = 0.0; // degrees. different than actual north angle to force update first time through
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.e = 8.0;
@@ -224,17 +225,21 @@ MapManager::MapManager()
     globalMap.setFrameId("map");
     globalMapTemp.setFrameId("map");
 #ifdef EVANSDALE
-    globalMapSize[0] = 200.0;
-    globalMapSize[1] = 100.0;
-    globalMap.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(66.667, 17.143));
-    globalMapTemp.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(66.667, 17.143));
+    satMapSize[0] = 200.0;
+    satMapSize[1] = 100.0;
+    globalMapOrigin[0] = 66.667;
+    globalMapOrigin[1] = 17.143;
 #endif // EVANSDALE
 #ifdef INSTITUTE_PARK
-    globalMapSize[0] = 400.0;
-    globalMapSize[1] = 300.0;
-    globalMap.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(12.0, 65.0)); // ***Check the position numbers***
-    globalMapTemp.setGeometry(grid_map::Length(hypot(globalMapSize[0],globalMapSize[1]), hypot(globalMapSize[0],globalMapSize[1])), mapResolution, grid_map::Position(12.0, 65.0)); // ***Check the position numbers***
+    satMapSize[0] = 400.0;
+    satMapSize[1] = 300.0;
+    globalMapOrigin[0] = 12.0;
+    globalMapOrigin[1] = 65.0;
 #endif // INSTUTUTE_PARK
+    globalMapSize[0] = hypot(satMapSize[0],satMapSize[1]) + std::max(fabs(globalMapOrigin[0]),fabs(globalMapOrigin[1]));
+    globalMapSize[1] = globalMapSize[0];
+    globalMap.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
+    globalMapTemp.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
     globalMapRowsCols = globalMap.getSize();
     //gridMapAddLayers(0, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
     gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMap);
@@ -367,53 +372,9 @@ bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Reques
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested
 {
-    ++keyframeCallbackSerialNum;
     keyframes = *msg;
-    resetGlobalMapLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX);
-    for(int i=0; i<keyframes.keyframeList.size(); i++)
-    {
-        grid_map::GridMapRosConverter::fromMessage(keyframes.keyframeList.at(i).map,currentKeyframe);
-        keyframeHeading = keyframes.keyframeList.at(i).heading;
-        keyframeXPos = keyframes.keyframeList.at(i).x;
-        keyframeYPos = keyframes.keyframeList.at(i).y;
-        //ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0,30.0)));
-        for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
-        {
-            currentKeyframe.getPosition(*it, keyframeCoord);
-            rotateCoord(keyframeCoord[0], keyframeCoord[1], globalTransformCoord[0], globalTransformCoord[1], keyframeHeading);
-            globalTransformCoord[0] += keyframeXPos;
-            globalTransformCoord[1] += keyframeYPos;
-            //globalTransformCoord[0] = keyframeCoord[0]*cos(DEG2RAD*keyframeHeading)+keyframeCoord[1]*sin(DEG2RAD*keyframeHeading)+keyframeXPos;
-            //globalTransformCoord[1] = -keyframeCoord[0]*sin(DEG2RAD*keyframeHeading)+keyframeCoord[1]*cos(DEG2RAD*keyframeHeading)+keyframeYPos;
-            if(globalMap.isInside(globalTransformCoord))
-            {
-                for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
-                {
-                    currentCellValue = globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord);
-                    possibleNewCellValue = currentKeyframe.at(layerToString(static_cast<MAP_LAYERS_T>(j)),*it);
-                    //if(j==(int)_driveability && possibleNewCellValue!=0.0) ROS_INFO("possibleNewCellValue = %f, currentCellValue = %f, currentSerialNum = %f, newSerialNum = %f",possibleNewCellValue, currentCellValue, globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord),(float)keyframeCallbackSerialNum);
-                    if((static_cast<MAP_LAYERS_T>(j)==_driveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
-                    {
-                        if((possibleNewCellValue > currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
-                            globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
-                    }
-                    else if(static_cast<MAP_LAYERS_T>(j)==_objectHeight)
-                    {
-                        if(currentKeyframe.at(layerToString(_driveability),*it) == _noObject) globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = 0;
-                        else
-                        {
-                            if((possibleNewCellValue < currentCellValue) || (globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) != (float)keyframeCallbackSerialNum))
-                                globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
-                        }
-                    }
-                }
-                globalMap.atPosition(layerToString(_keyframeCallbackSerialNum), globalTransformCoord) = (float)keyframeCallbackSerialNum;
-            }
-        }
-    }
-    ROS_INFO("globalMap.at = %f",globalMap.atPosition(layerToString(_driveability), grid_map::Position(50.0,45.0)));
-    grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
-    globalMapPub.publish(globalMapMsg);
+    writeSatMapIntoGlobalMap();
+    writeKeyframesIntoGlobalMap();
 }
 
 void MapManager::globalPoseCallback(const messages::RobotPose::ConstPtr &msg) // need to implement hsm to publish this
@@ -443,12 +404,12 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
     }
 }
 
-void MapManager::resetGlobalMapLayers(int startIndex, int endIndex) // tested
+void MapManager::gridMapResetLayers(int startIndex, int endIndex, grid_map::GridMap &map) // tested
 {
     for(int i=startIndex; i<=endIndex; i++)
     {
-        if(static_cast<MAP_LAYERS_T>(i)==_driveability) globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
-        else globalMap.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
+        if(static_cast<MAP_LAYERS_T>(i)==_driveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
     }
 }
 
@@ -475,15 +436,15 @@ void MapManager::rotateCoord(double origX, double origY, double &newX, double &n
 
 void MapManager::writeSatMapIntoGlobalMap() // tested
 {
-    resetGlobalMapLayers((int)_slope, (int)_driveability);
+    gridMapResetLayers((int)_slope, (int)_driveability, globalMap);
     // Slope
     for(int i=0; i<slopeNumRows; i++)
     {
         for(int j=0; j<slopeNumCols; j++)
         {
-            rotateCoord((float)(j*slopeMapRes+slopeMapRes/2.0) - slopeMapStartE, (float)(i*slopeMapRes+slopeMapRes/2.0) - slopeMapStartS, satMapToGlobalMapPos[0], satMapToGlobalMapPos[1], globalPose.northAngle-90.0);
-            //satMapToGlobalMapPos[0] = (float)(j*slopeMapRes+slopeMapRes/2.0) - slopeMapStartE;
-            //satMapToGlobalMapPos[1] = (float)(i*slopeMapRes+slopeMapRes/2.0) - slopeMapStartS;
+            rotateCoord((float)(j*slopeMapRes+slopeMapRes/2.0) - satMapStartE, (float)(i*slopeMapRes+slopeMapRes/2.0) - satMapStartS, satMapToGlobalMapPos[0], satMapToGlobalMapPos[1], globalPose.northAngle-90.0);
+            //satMapToGlobalMapPos[0] = (float)(j*slopeMapRes+slopeMapRes/2.0) - satMapStartE;
+            //satMapToGlobalMapPos[1] = (float)(i*slopeMapRes+slopeMapRes/2.0) - satMapStartS;
             if(globalMap.isInside(satMapToGlobalMapPos)) globalMap.atPosition(layerToString(_slope), satMapToGlobalMapPos) = slopeMap[i][j]; // *** Got to figure out if this is correct
         }
     }
@@ -492,9 +453,9 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
     {
         for(int j=0; j<slopeNumCols; j++)
         {
-            rotateCoord((float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartE, (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartS, satMapToGlobalMapPos[0], satMapToGlobalMapPos[1], globalPose.northAngle-90.0);
-            //satMapToGlobalMapPos[0] = (float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartE;
-            //satMapToGlobalMapPos[1] = (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - driveabilityMapStartS;
+            rotateCoord((float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - satMapStartE, (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - satMapStartS, satMapToGlobalMapPos[0], satMapToGlobalMapPos[1], globalPose.northAngle-90.0);
+            //satMapToGlobalMapPos[0] = (float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - satMapStartE;
+            //satMapToGlobalMapPos[1] = (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - satMapStartS;
             if(globalMap.isInside(satMapToGlobalMapPos))
             {
                 if(driveabilityMap[i][j]==1) globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_impassable;
@@ -510,6 +471,56 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
     globalMapPub.publish(globalMapMsg);
 }
 
+void MapManager::writeKeyframesIntoGlobalMap()
+{
+    ++keyframeWriteIntoGlobalMapSerialNum;
+    gridMapResetLayers(MAP_KEYFRAME_LAYERS_START_INDEX+1, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
+    for(int i=0; i<keyframes.keyframeList.size(); i++)
+    {
+        grid_map::GridMapRosConverter::fromMessage(keyframes.keyframeList.at(i).map,currentKeyframe);
+        keyframeHeading = keyframes.keyframeList.at(i).heading;
+        keyframeXPos = keyframes.keyframeList.at(i).x;
+        keyframeYPos = keyframes.keyframeList.at(i).y;
+        //ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0,30.0)));
+        for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
+        {
+            currentKeyframe.getPosition(*it, keyframeCoord);
+            rotateCoord(keyframeCoord[0], keyframeCoord[1], globalTransformCoord[0], globalTransformCoord[1], keyframeHeading);
+            globalTransformCoord[0] += keyframeXPos;
+            globalTransformCoord[1] += keyframeYPos;
+            //globalTransformCoord[0] = keyframeCoord[0]*cos(DEG2RAD*keyframeHeading)+keyframeCoord[1]*sin(DEG2RAD*keyframeHeading)+keyframeXPos;
+            //globalTransformCoord[1] = -keyframeCoord[0]*sin(DEG2RAD*keyframeHeading)+keyframeCoord[1]*cos(DEG2RAD*keyframeHeading)+keyframeYPos;
+            if(globalMap.isInside(globalTransformCoord))
+            {
+                for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
+                {
+                    currentCellValue = globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord);
+                    possibleNewCellValue = currentKeyframe.at(layerToString(static_cast<MAP_LAYERS_T>(j)),*it);
+                    //if(j==(int)_driveability && possibleNewCellValue!=0.0) ROS_INFO("possibleNewCellValue = %f, currentCellValue = %f, currentSerialNum = %f, newSerialNum = %f",possibleNewCellValue, currentCellValue, globalMap.atPosition(layerToString(_keyframeWriteIntoGlobalMapSerialNum), globalTransformCoord),(float)keyframeWriteIntoGlobalMapSerialNum);
+                    if((static_cast<MAP_LAYERS_T>(j)==_driveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
+                    {
+                        if((possibleNewCellValue > currentCellValue) || (globalMap.atPosition(layerToString(_keyframeWriteIntoGlobalMapSerialNum), globalTransformCoord) != (float)keyframeWriteIntoGlobalMapSerialNum))
+                            globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
+                    }
+                    else if(static_cast<MAP_LAYERS_T>(j)==_objectHeight)
+                    {
+                        if(currentKeyframe.at(layerToString(_driveability),*it) == _noObject) globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = 0;
+                        else
+                        {
+                            if((possibleNewCellValue < currentCellValue) || (globalMap.atPosition(layerToString(_keyframeWriteIntoGlobalMapSerialNum), globalTransformCoord) != (float)keyframeWriteIntoGlobalMapSerialNum))
+                                globalMap.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)),globalTransformCoord) = possibleNewCellValue;
+                        }
+                    }
+                }
+                globalMap.atPosition(layerToString(_keyframeWriteIntoGlobalMapSerialNum), globalTransformCoord) = (float)keyframeWriteIntoGlobalMapSerialNum;
+            }
+        }
+    }
+    //ROS_INFO("globalMap.at = %f",globalMap.atPosition(layerToString(_driveability), grid_map::Position(50.0,45.0)));
+    grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
+    globalMapPub.publish(globalMapMsg);
+}
+
 void MapManager::northTransformROIs() // needs tested
 {
     for(int i=0; i<regionsOfInterest.size(); i++)
@@ -521,6 +532,7 @@ void MapManager::northTransformROIs() // needs tested
 void MapManager::updateNorthTransformedMapData() // tested* ^^^
 {
     writeSatMapIntoGlobalMap();
+    writeKeyframesIntoGlobalMap();
     northTransformROIs();
 }
 

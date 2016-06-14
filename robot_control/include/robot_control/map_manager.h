@@ -51,13 +51,14 @@ public:
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
 	void cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr& msg);
-	void resetGlobalMapLayers(int startIndex, int endIndex);
+	void gridMapResetLayers(int startIndex, int endIndex, grid_map::GridMap& map);
 	void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map);
 	void donutSmash(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos);
 	void addFoundSamples(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos, float heading);
 	void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 	void rotateCoord(double origX, double origY, double &newX, double &newY, double angleDeg);
 	void writeSatMapIntoGlobalMap();
+	void writeKeyframesIntoGlobalMap();
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
 	void smoothDriveabilityLayer();
@@ -84,6 +85,7 @@ public:
 	std::vector<robot_control::ROI> regionsOfInterest;
 	grid_map::GridMap globalMap;
 	grid_map::Length globalMapSize;
+	grid_map::Length satMapSize;
 	grid_map::Size globalMapRowsCols;
 	grid_map::GridMap globalMapTemp;
 	grid_map::GridMap searchLocalMap;
@@ -102,7 +104,7 @@ public:
 	grid_map::GridMap currentKeyframe;
 	float currentCellValue;
 	float possibleNewCellValue;
-	unsigned int keyframeCallbackSerialNum;
+	unsigned int keyframeWriteIntoGlobalMapSerialNum;
 	grid_map::GridMap ROIKeyframe;
 	float sigmaROIX;
 	float sigmaROIY;
@@ -125,6 +127,7 @@ public:
 	//float globalYTransformPos;
 	robot_control::CurrentROI currentROIMsg;
 	messages::CVSamplesFound cvSamplesFoundMsg;
+	grid_map::Position globalMapOrigin;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m

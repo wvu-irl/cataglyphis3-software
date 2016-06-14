@@ -9,7 +9,7 @@
 #define MAP_SAMPLE_PROB_LAYERS_START_INDEX 4
 #define MAP_SAMPLE_PROB_LAYERS_END_INDEX 8
 enum MAP_LAYERS_T {_slope, _driveability, _objectHeight, _reflectivity, _purpleProb, _redProb, _blueProb, _silverProb, _brassProb,
-						 _roiNum, _keyframeCallbackSerialNum};
+						 _roiNum, _keyframeWriteIntoGlobalMapSerialNum};
 enum DRIVEABILITY_T {_noObject, _passableOverhang, _impassable};
 inline std::string layerToString(MAP_LAYERS_T layer)
 {
@@ -25,7 +25,7 @@ inline std::string layerToString(MAP_LAYERS_T layer)
 	case _silverProb: return "silverProb";
 	case _brassProb: return "brassProb";
 	case _roiNum: return "roiNum";
-	case _keyframeCallbackSerialNum: return "keyframeCallbackSerialNum";
+	case _keyframeWriteIntoGlobalMapSerialNum: return "keyframeWriteIntoGlobalMapSerialNum";
 	default: ROS_FATAL("layerToString: unknown layer type");
 	}
 }

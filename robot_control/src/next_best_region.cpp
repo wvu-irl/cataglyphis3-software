@@ -42,6 +42,7 @@ bool NextBestRegion::runProc()
             clearAndResizeWTT();
 			waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
 			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
+            waypointsToTravel.at(0).searchable = true;
             callIntermediateWaypoints();
 			//sendDriveGlobal(false, false);
 			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
