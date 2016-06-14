@@ -12,12 +12,14 @@ find_package(catkin REQUIRED
 	message_generation
 	messages
 	message_runtime
+	message_filters
 	pcl_conversions 
-  	pcl_ros 
+  	pcl_ros
+	eigen_conversions 
 )
 
 find_package(PCL 1.2 REQUIRED)
-
+find_package(Eigen3 REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -122,7 +124,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
  include_directories(include
 		     ${catkin_INCLUDE_DIRS}
-		     ${PCL_INCLUDE_DIRS})
+		     ${PCL_INCLUDE_DIRS}
+		     ${Eigen_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(slam
@@ -135,14 +138,14 @@ catkin_package(
 # add_dependencies(slam ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(keyframe_sub_node src/keyframe_sub.cpp)
+ add_executable(keyframe_node src/keyframe.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(slam_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(keyframe_sub_node
+ target_link_libraries(keyframe_node
    ${catkin_LIBRARIES}
  )
 
