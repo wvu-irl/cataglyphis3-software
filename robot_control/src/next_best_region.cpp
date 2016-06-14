@@ -42,7 +42,7 @@ bool NextBestRegion::runProc()
             clearAndResizeWTT();
 			waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
 			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
-            waypointsToTravel.at(0).searchable = true;
+            waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
 			//sendDriveGlobal(false, false);
 			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
@@ -63,6 +63,7 @@ bool NextBestRegion::runProc()
             clearAndResizeWTT();
             waypointsToTravel.at(0).x = 8.0;
             waypointsToTravel.at(0).y = 0.0;
+            waypointsToTravel.at(0).searchable = false;
             callIntermediateWaypoints();
 			sendDriveGlobal(false, false);
 			procsBeingExecuted[procType] = false;
@@ -74,8 +75,16 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
-		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
-        else state = _exec_;
+        if(waypointsToTravel.at(0).searchable)
+        {
+            if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
+            else state = _exec_;
+        }
+        else
+        {
+            if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+            else state = _exec_;
+        }
         break;
     case _interrupt_:
 		avoidLockout = false;
