@@ -14,31 +14,35 @@ bool NextBestRegion::runProc()
         if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
         else ROS_ERROR("regionsOfInterest service call unsuccessful");
 
-        // Loop through list and choose best region not yet visited
+		// Loop through list and choose best region not yet searched
         bestROIValue = 0;
         bestROINum = 0;
-        roiVisitedSum = 0;
-        for(int i=0; i < regionsOfInterestSrv.response.waypointArray.size(); i++)
+		roiSearchedSum = 0;
+		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
-            roiValue = (!regionsOfInterestSrv.response.waypointArray.at(i).visited)*
-                        (easyProbGain*regionsOfInterestSrv.response.waypointArray.at(i).easyProb +
-                        medProbGain*regionsOfInterestSrv.response.waypointArray.at(i).medProb +
-                        hardProbGain*regionsOfInterestSrv.response.waypointArray.at(i).hardProb -
-                        distanceGain*hypot(regionsOfInterestSrv.response.waypointArray.at(i).x - robotStatus.xPos,
-                                           regionsOfInterestSrv.response.waypointArray.at(i).y - robotStatus.yPos)/* -
-                        terrainGain*terrainHazard(i,j)*/) /
-                        (easyProbGain + medProbGain + hardProbGain);
+			roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*
+						(purpleProbGain*regionsOfInterestSrv.response.ROIList.at(i).purpleProb +
+						redProbGain*regionsOfInterestSrv.response.ROIList.at(i).redProb +
+						blueProbGain*regionsOfInterestSrv.response.ROIList.at(i).blueProb +
+						silverProbGain*regionsOfInterestSrv.response.ROIList.at(i).silverProb +
+						brassProbGain*regionsOfInterestSrv.response.ROIList.at(i).brassProb -
+						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
+										   regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos)/* -
+						terrainGain*terrainHazard(i,j)*/) /
+						(purpleProbGain + redProbGain + blueProbGain + silverProbGain + brassProbGain);
             ROS_DEBUG("!)!)!)!)!)!) roiValue = %i, roiNum = %i",roiValue, i);
-            ROS_DEBUG("visited = %i",regionsOfInterestSrv.response.waypointArray.at(i).visited);
+			ROS_DEBUG("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
-            roiVisitedSum += regionsOfInterestSrv.response.waypointArray.at(i).visited;
+			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
         }
-		if(roiVisitedSum < regionsOfInterestSrv.response.waypointArray.size()) // Temp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size()) // Temp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         {
             // Call service to drive to center of the chosen region
             numWaypointsToTravel = 1;
             clearAndResizeWTT();
-            waypointsToTravel.at(0) = regionsOfInterestSrv.response.waypointArray.at(bestROINum);
+			waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
+			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
+            waypointsToTravel.at(0).searchable = true;
             callIntermediateWaypoints();
 			//sendDriveGlobal(false, false);
 			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
@@ -46,11 +50,11 @@ bool NextBestRegion::runProc()
         }
 		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         {
-            for(int i=0; i<regionsOfInterestSrv.response.waypointArray.size(); i++)
+			for(int i=0; i<regionsOfInterestSrv.response.ROIList.size(); i++)
             {
-                modROISrv.request.setVisitedROI = true;
-                modROISrv.request.visitedROIState = false;
-                modROISrv.request.numVisitedROI = i;
+				modROISrv.request.setSearchedROI = true;
+				modROISrv.request.searchedROIState = false;
+				modROISrv.request.numSearchedROI = i;
                 modROISrv.request.addNewROI = false;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
@@ -84,9 +88,9 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         // ************************ THIS NEEDS TO GO SOMEWHERE ELSE LATER
-        modROISrv.request.setVisitedROI = true;
-        modROISrv.request.visitedROIState = true;
-        modROISrv.request.numVisitedROI = bestROINum;
+		modROISrv.request.setSearchedROI = true;
+		modROISrv.request.searchedROIState = true;
+		modROISrv.request.numSearchedROI = bestROINum;
         modROISrv.request.addNewROI = false;
         if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
         else ROS_ERROR("modify ROI service call unsuccessful");

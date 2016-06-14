@@ -72,7 +72,6 @@ public:
 	int j;
 	int bestJ;
 
-	robot_control::Waypoint currentLocation;
 	int numWaypointsToPlan;
 
 
