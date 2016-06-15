@@ -46,6 +46,7 @@ bool NextBestRegion::runProc()
             callIntermediateWaypoints();
 			//sendDriveGlobal(false, false);
 			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+            currentROIIndex = bestROINum;
             state = _exec_;
         }
 		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -93,6 +94,7 @@ bool NextBestRegion::runProc()
 		state = _exec_;
         break;
     case _finish_:
+        if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

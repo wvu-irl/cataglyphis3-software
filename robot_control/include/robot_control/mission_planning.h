@@ -7,7 +7,7 @@
 #include <messages/nb1_to_i7_msg.h>
 #include "avoid.h"
 #include "next_best_region.h"
-//#include "search_region.h"
+#//include "search_region.h"
 //#include "examine.h"
 #include "approach.h"
 #include "collect.h"
@@ -34,6 +34,7 @@ public:
 	const int loopRate = 20; // Hz
 	Avoid avoid;
 	NextBestRegion nextBestRegion;
+	//SearchRegion searchRegion;
 	Approach approach;
 	Collect collect;
 	ConfirmCollect confirmCollect;
