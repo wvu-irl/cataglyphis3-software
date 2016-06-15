@@ -102,6 +102,9 @@ protected:
 	double theta, diff_x, diff_y, sin_theta, cos_theta;
 	const double PI = 3.1415926;
 
+	//angle of cone blocking points from robot body (this need to be determined)
+	float b_theta; //angle of blocked points (this is constant)
+
 	//globe ICP pointcloud
 	// PointCloud refPointCloud;
 	// PointCloud readPointCloud;
@@ -136,6 +139,7 @@ protected:
 	// void set_Navfilter_data(float IMU_x, float IMU_y, float IMU_heading);
 	bool ICP_compute(int message_input_index, ICP_Result &icp_result);	//*************change return type to struct include tranformation matrix, from index, to index, overlap, true of false***********//
 	bool outside_rectangle(float rectangle_x, float rectangle_y);		//determine if the point is inside 2.24m rectangle
+	PointCloud remove_block_area(float b_x1, float b_y1, float b_heading1, float b_x0, float b_y0, float b_heading0, PointCloud before_remove_points);	//remove points blocks by masks in pre frame
 	bool ICP_varification(int ref_v_index, int read_v_index, matrix4f T, double &overlap);
 
 
@@ -172,6 +176,7 @@ void Keyframe::Initialization()
 
 	//parameters for points filter
 	edge_rectangle_filter = 2.24; //length of edgs of rectangle filter
+	b_theta = 30 * PI / 180; //angle of blocked points (translate to radian)
 
 	//initialize all vectors
 	LocalMap_All_s.clear();
@@ -331,7 +336,11 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 
 	*refPointCloudPtr = LocalMap_ICP_s[ref_index].ICP_cloudMsgIn;
 	ROS_INFO_STREAM("Start working......4  " << refPointCloudPtr->size());
-	*readPointCloudPtr = LocalMap_ICP_s[read_index].ICP_cloudMsgIn;
+	//remove points blocked in ref frame
+	PointCloud readPointCloud_rm;
+	readPointCloud_rm = remove_block_area(x1, y1, heading1, x0, y0, heading0, LocalMap_ICP_s[read_index].ICP_cloudMsgIn);
+	*readPointCloudPtr = readPointCloud_rm;
+
 	PointCloud Final;
 
 	icp.setInputSource(readPointCloudPtr);
@@ -357,7 +366,50 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 //**************************overload "=" ************************//
 
 //************************** points filter **********************//
+Keyframe::PointCloud Keyframe::remove_block_area(float b_x1, float b_y1, float b_heading1, float b_x0, float b_y0, float b_heading0, PointCloud before_remove_points)
+{
+	PointCloud after_remove_points;	//define return points
+	float phi = 90 * PI/ 180 - b_theta;
 
+	//change in position and heading (calculated from global coordinates
+	float rx, ry, rheading;
+	rx = b_x0 - b_x1;
+	ry = b_y0 - b_y1;
+	rheading = b_heading0 - b_heading1;
+
+	//Filter points blocked by robot body in previous position
+	float psi_p = rheading+phi; 
+	float psi_n = rheading-phi;
+
+	//generate sample point to find the correct side of boundary
+	float tempx = rx - (float)sin(rheading);
+	float tempy = ry + (float)cos(rheading);
+
+	//check side of boundary 1
+	int bp_side, bn_side;
+	if(tempy - ((float)tan(psi_p)*(tempx-rx)+(ry)) < 0)
+		bp_side = 1;
+	else
+		bp_side = -1; //equivalent to flipping greater than sign
+
+
+	//check side of boundary 2
+	if(tempy - ((float)tan(psi_n)*(tempx-rx)+(ry)) < 0)
+		bn_side = 1;
+	else
+		bn_side = -1; //equivalent to flipping greater than sign
+
+	for(int i = 0; i < before_remove_points.size(); i++)
+	{
+		if(bp_side * ( before_remove_points[i].y - ((float)tan(psi_p) * (before_remove_points[i].x - rx) + ry) ) < 0 || 
+			bn_side*( before_remove_points[i].y - ((float)tan(psi_n) * (before_remove_points[i].x-rx) + ry) ) > 0)
+
+			after_remove_points.push_back(pcl::PointXYZ(before_remove_points[i].x, before_remove_points[i].y, 0.0));	
+	}
+
+	return after_remove_points;
+
+}
 //************************** circle filter for points ***********//
 //determine if the point is inside 2.24m rectangle
 bool Keyframe::outside_rectangle(float rectangle_x, float rectangle_y)
@@ -368,6 +420,7 @@ bool Keyframe::outside_rectangle(float rectangle_x, float rectangle_y)
 		return false;
 	else
 		return true;
+
 }
 
 //********************varification**********************//
