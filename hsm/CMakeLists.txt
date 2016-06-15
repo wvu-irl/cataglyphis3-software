@@ -122,12 +122,13 @@ include_directories(
  add_library(user_input_nav_act_class src/user_input_nav_act_class.cpp)
  #add_library(HSM_Heartbeat src/HSM_Heartbeat.cpp)
  #add_library(HSM_Heartbeat_Monitor_class src/HSM_Heartbeat_Monitor_class.cpp)
+ add_library(robot_pose_monitor src/robot_pose_monitor.cpp)
 
 ## Declare a cpp executable
  #add_executable(TEST_DRIVER_HSM_Detector src/TEST_DRIVER_HSM_Detector.cpp src/HSM_Detector.cpp)
  #add_executable(TEST_DRIVER_Counter src/TEST_DRIVER_Counter.cpp src/Counter.cpp)
  #add_executable(TEST_DRIVER_Timer src/TEST_DRIVER_Timer.cpp src/Timer.cpp)
- #add_executable(HSM_Master_Executive src/HSM_Master_Executive_node.cpp)
+ add_executable(HSM_Master_Executive src/HSM_Master_Executive_node.cpp)
  add_executable(user_input_node src/user_input_node.cpp)
  #add_executable(info_node src/info_node.cpp)
  #add_executable(HSM_NB1_Executive src/HSM_NB1_Executive_node.cpp src/HSM_NB1_Monitor_class src/Counter)
@@ -141,8 +142,8 @@ include_directories(
  #add_dependencies(hsm_node hsm_generate_messages_cpp)
  #add_dependencies(TEST_DRIVER_HSM_Detector  hsm_generate_messages_cpp)
  #add_dependencies(TEST_DRIVER_HSM_Detector ${catkin_EXPORTED_TARGETS})
- #add_dependencies(HSM_Master_Executive ${catkin_EXPORTED_TARGETS})
- #add_dependencies(HSM_Master_Executive hsm_generate_messages_cpp)
+ add_dependencies(HSM_Master_Executive ${catkin_EXPORTED_TARGETS})
+ add_dependencies(HSM_Master_Executive hsm_generate_messages_cpp)
  add_dependencies(user_input_node ${catkin_EXPORTED_TARGETS})
  add_dependencies(user_input_node hsm_generate_messages_cpp robot_control_generate_messages_cpp navigation_generate_messages_cpp)
  #add_dependencies(HSM_NB1_Executive ${catkin_EXPORTED_TARGETS})
@@ -160,13 +161,15 @@ include_directories(
  #target_link_libraries(TEST_DRIVER_HSM_Detector ${catkin_LIBRARIES})
  #target_link_libraries(TEST_DRIVER_Counter ${catkin_LIBRARIES})
  #target_link_libraries(TEST_DRIVER_Timer ${catkin_LIBRARIES})
- #target_link_libraries(HSM_Master_Executive ${catkin_LIBRARIES}
+ target_link_libraries(HSM_Master_Executive ${catkin_LIBRARIES}
  #											Comm_Monitor_class
  #											Escape_Monitor_class
  #											Counter
  #											Timer
- #											HSM_Heartbeat_Monitor_class)
- #											
+ #											HSM_Heartbeat_Monitor_class
+ 											robot_pose_monitor
+ 											)
+ 
  target_link_libraries(user_input_node ${catkin_LIBRARIES})
  
  #target_link_libraries(info_node ${catkin_LIBRARIES})
