@@ -39,7 +39,8 @@
   <build_depend>messages</build_depend>
   <build_depend>message_runtime</build_depend>
   <build_depend>message_filters</build_depend>
-  <build_depend>pcl_conversions</build_depend>
+  <build_depend>message_generation</build_depend>
+  <!--build_depend>pcl_conversions</build_depend-->
   <build_depend>pcl_ros</build_depend>
   <build_depend>eigen_conversions</build_depend>
   <!-- Use buildtool_depend for build tool packages: -->
@@ -52,7 +53,8 @@
   <run_depend>messages</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>message_filters</run_depend>
-  <run_depend>pcl_conversions</run_depend>
+  <run_depend>message_generation</run_depend>
+  <!--run_depend>pcl_conversions</run_depend-->
   <run_depend>pcl_ros</run_depend>
   <run_depend>eigen_conversions</run_depend>
   <!-- Use test_depend for packages you need only for testing: -->

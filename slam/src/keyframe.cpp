@@ -9,9 +9,9 @@
 #include "pcl_ros/point_cloud.h"
 
 //PCL for icp
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-#include <pcl/common/transforms.h>	//for transform pointcloud using transformation matrix
+#include "pcl/point_types.h"
+#include "pcl/registration/icp.h"
+#include "pcl/common/transforms.h"	//for transform pointcloud using transformation matrix
 
 
 //eigen3 library
@@ -32,7 +32,7 @@ protected:
 	//define type
 	typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 	typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
-	typedef Eigen::Matrix<float, 4, 4> Matrix4f;
+	typedef Eigen::Matrix<float, 4, 4> matrix4f;
 
 	//define a struct for localmap messages, include whole information
 	typedef struct LocalMap_All
@@ -65,7 +65,7 @@ protected:
 	//define a struct for ICP result
 	typedef struct ICP_Result
 	{
-		Matrix4f transformation_matrix;
+		matrix4f transformation_matrix;
 		bool verification_result;
 		int from_index;
 		int to_index;
@@ -114,10 +114,10 @@ protected:
 	// PointCloud V_keyPointCloud;
 
 	//globe matrix
-	Matrix4f TreadToref;
-	Matrix4f TrefTomap;
-	Matrix4f TreadTomap;
-	Matrix4f guessT;
+	matrix4f TreadToref;
+	matrix4f TrefTomap;
+	matrix4f TreadTomap;
+	matrix4f guessT;
 
 	//lists of all maps
 	std::vector<LocalMap_All> LocalMap_All_s;
@@ -136,7 +136,7 @@ protected:
 	// void set_Navfilter_data(float IMU_x, float IMU_y, float IMU_heading);
 	bool ICP_compute(int message_input_index, ICP_Result &icp_result);	//*************change return type to struct include tranformation matrix, from index, to index, overlap, true of false***********//
 	bool outside_rectangle(float rectangle_x, float rectangle_y);		//determine if the point is inside 2.24m rectangle
-	bool ICP_varification(int ref_v_index, int read_v_index, Matrix4f T, double &overlap);
+	bool ICP_varification(int ref_v_index, int read_v_index, matrix4f T, double &overlap);
 
 
 
@@ -168,7 +168,7 @@ void Keyframe::Initialization()
 	distance_correspondence = 1.4; //maximum distance for finding correspondence points
 
 	//parameters for varification
-	ratio_height_varification = 0.5; 
+	ratio_height_varification = 0.3; 
 
 	//parameters for points filter
 	edge_rectangle_filter = 2.24; //length of edgs of rectangle filter
@@ -200,7 +200,6 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	if(LocalMapMsgIn.new_data) //if the localmap data is new, update
 	{
 
-
 		//************************************************************//
 		//store all information into vector LocalMap_All_s
 		LocalMap_All localmap_all; //initialize struct
@@ -215,7 +214,6 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		//localmap_all.ground_adjacent = LocalMapMsgIn.ground_adjacent;
 
 		LocalMap_All_s.push_back(localmap_all);
-
 
 		//************************************************************//
 		//store all ground adjacent central points in each localmap into vector LocalMap_ICP_s
@@ -244,7 +242,6 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		}
 		localmap_icp.ICP_cloudMsgIn = ICP_cloudMsgIn;
 		LocalMap_ICP_s.push_back(localmap_icp);
-
 		//************************************************************//
 		//store all cell information into vector LocalMap_Varification_s
 
@@ -256,15 +253,22 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 		LocalMap_Varification_s.push_back(localmap_varification);
 	
-		//when a new local map message come, messages_input_index add one
-		messages_input_index++;
+		
 
 
 	// 	//do ICP to get transformation matrix from read to reference
 		ICP_Result icp_result;
 		ICP_compute(messages_input_index, icp_result);
 
+		//*****************************debug***************************//
+		ROS_INFO_STREAM("Matrix:  \n" << icp_result.transformation_matrix);
+		ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
+		ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
+	
 	// 	//verify the transformation matrix from ICP using hight information
+
+		//when a new local map message come, messages_input_index add one
+		messages_input_index++;
 
 	}
 	
@@ -289,6 +293,18 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 
 	read_index = message_input_index;
 
+	//if reference frame and read frame are same frame, return indetity matrix
+	if(ref_index == read_index)
+	{
+		icp_result.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
+		icp_result.verification_result = true;
+		icp_result.from_index = read_index;
+		icp_result.to_index = ref_index;
+		icp_result.overlap = 1.0;
+
+		return true;
+	}
+
 	x0 = LocalMap_All_s[ref_index].x_filter;
 	y0 = LocalMap_All_s[ref_index].y_filter;
 	heading0 = LocalMap_All_s[ref_index].heading_filter;
@@ -312,7 +328,9 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 	guessT(3,0) = 0;                 guessT(3,1) = 0;                    guessT(3,2) = 0;  guessT(3,3) = 1;
 
 	//icp calculation
+
 	*refPointCloudPtr = LocalMap_ICP_s[ref_index].ICP_cloudMsgIn;
+	ROS_INFO_STREAM("Start working......4  " << refPointCloudPtr->size());
 	*readPointCloudPtr = LocalMap_ICP_s[read_index].ICP_cloudMsgIn;
 	PointCloud Final;
 
@@ -320,7 +338,7 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 	icp.setInputTarget(refPointCloudPtr);
 	icp.align(Final, guessT);
 
-	Matrix4f FinalTransformation;
+	matrix4f FinalTransformation;
 	FinalTransformation = icp.getFinalTransformation();
 
 	// return icp.getFinalTransformation(); //resutl of ICP
@@ -331,10 +349,6 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 	icp_result.from_index = read_index;
 	icp_result.to_index = ref_index;
 	icp_result.overlap = overlap;
-
-	//dynamically allocated pointers have to be deleted
-	// delete refPointCloudPtr;
-	// delete readPointCloudPtr;
 
 	return true;
 }
@@ -357,12 +371,12 @@ bool Keyframe::outside_rectangle(float rectangle_x, float rectangle_y)
 }
 
 //********************varification**********************//
-bool Keyframe::ICP_varification(int ref_v_index, int read_v_index, Matrix4f T, double &overlap)
+bool Keyframe::ICP_varification(int ref_v_index, int read_v_index, matrix4f T, double &overlap)
 {
 	//define pointer to get the points information
-	PointCloudPtr read_cloud (new pcl::PointCloud<pcl::PointXYZ> ());
-  	PointCloudPtr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ> ());
-	PointCloudPtr ref_cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+	PointCloudPtr read_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  	PointCloudPtr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	PointCloudPtr ref_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
   	*read_cloud = LocalMap_Varification_s[read_v_index].Varification_cloudMsgIn;
   	*ref_cloud = LocalMap_Varification_s[ref_v_index].Varification_cloudMsgIn;
@@ -394,11 +408,6 @@ bool Keyframe::ICP_varification(int ref_v_index, int read_v_index, Matrix4f T, d
   		if(read_z_value < ref_z_value + 3 * ref_var_z && read_z_value > ref_z_value - 3 * ref_var_z)
   			count++;
   	}
-
-  	//dynamically allocated pointers have to be deleted
-  	// delete read_cloud;
-  	// delete transformed_cloud;
-  	// delete ref_cloud;
 
   	if(count / (double) all_correspondences.size() > ratio_height_varification)
   		return true;

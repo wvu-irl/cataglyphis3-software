@@ -13,12 +13,12 @@ find_package(catkin REQUIRED
 	messages
 	message_runtime
 	message_filters
-	pcl_conversions 
+	#pcl_conversions 
   	pcl_ros
 	eigen_conversions 
 )
 
-find_package(PCL 1.2 REQUIRED)
+find_package(PCL 1.7 REQUIRED COMPONENTS common kdtree)
 find_package(Eigen3 REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -75,10 +75,10 @@ find_package(Eigen3 REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
+ generate_messages(
+   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
-# )
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -112,10 +112,21 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES slam
-#  CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS 
+	roscpp 
+	rosbag 
+	std_msgs
+	message_generation
+	messages
+	message_runtime
+	message_filters
+	#pcl_conversions 
+  	pcl_ros
+	eigen_conversions
 #  DEPENDS system_lib
 )
-
+add_definitions(${PCL_DEFINITIONS})
+add_definitions("-std=gnu++11")
 ###########
 ## Build ##
 ###########
@@ -147,6 +158,8 @@ catkin_package(
 ## Specify libraries to link a library or executable target against
  target_link_libraries(keyframe_node
    ${catkin_LIBRARIES}
+   ${PCL_LIBRARIES}
+   ${PCL_COMMON_LIBRARIES}
  )
 
 #############
