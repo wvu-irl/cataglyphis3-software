@@ -30,11 +30,13 @@ MissionPlanning::MissionPlanning()
     robotStatus.pauseSwitch = true;
     execDequeEmpty = true;
     avoidLockout = false;
+    roiKeyframed = false;
     execLastProcType = __depositSample__;
     execLastSerialNum = 99;
     collisionInterruptThresh = 1.0; // m
     avoid.reg(__avoid__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
+    //searchRegion.reg(__searchRegion__);
     approach.reg(__approach__);
     collect.reg(__collect__);
     confirmCollect.reg(__confirmCollect__);
@@ -44,6 +46,7 @@ MissionPlanning::MissionPlanning()
     depositSample.sendOpen(); // Make sure the grabber is open initially
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
+    currentROIIndex = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
         procsToExecute[i] = false;
@@ -184,13 +187,13 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute avoid");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !missionEnded) // Next Best Region
+        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !inSearchableRegion && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
         }
         calcNumProcsBeingExec_();
-        /*if(numProcsBeingExec==0 && ) // Search Region
+        /*if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && inSearchableRegion && !missionEnded) // Search Region
         {
 
         }
