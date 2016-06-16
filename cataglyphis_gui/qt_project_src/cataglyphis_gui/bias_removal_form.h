@@ -9,6 +9,8 @@
 
 #include <ros_workers.h>
 
+#define INIT_STEP2_ID 2
+
 namespace Ui {
 class bias_removal_form;
 }
@@ -19,6 +21,7 @@ class bias_removal_form : public QWidget
 
 signals:
     void start_bias_removal();
+    void start_dead_reckoning();
     void bias_removal_finished();
 
 public:
@@ -31,7 +34,8 @@ public:
 
 public slots:
 
-    void update_bias_removal_display(messages::NavFilterControl serviceResponse);
+    void update_bias_removal_display(messages::NavFilterControl serviceResponse,
+                                        bool wasSucessful);
 
 private slots:
     void on_begin_dead_reckoning_button_clicked();

@@ -416,6 +416,7 @@ void LidarFilter::doMathMapping()
 	    }
 	    local_grid_map_temp.push_back(point);
 	    point.clear();
+
 	    //print out points
 	    //if (total_x || total_y || total_z)
 	    //{

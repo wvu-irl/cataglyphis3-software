@@ -3,6 +3,7 @@ bool runBiasRemoval
 bool setNorthAngle
 float32 northAngle
 
+bool setSunnyDay
 bool sunnyDay
 
 bool beginForkliftDeadReckoning

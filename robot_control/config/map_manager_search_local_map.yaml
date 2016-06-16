@@ -1,0 +1,93 @@
+grid_map_topic: /control/mapmanager/searchlocalmapviz
+grid_map_visualizations:
+  - name: slope
+    type: occupancy_grid
+    params:
+     layer: slope
+     data_min: 0.0
+     data_max: 90.0
+  - name: driveability
+    type: occupancy_grid
+    params:
+     layer: driveability
+     data_min: 0.0
+     data_max: 2.0
+  - name: objectHeight
+    type: occupancy_grid
+    params:
+     layer: objectHeight
+     data_min: 0.0
+     data_max: 100.0
+  - name: reflectivity
+    type: occupancy_grid
+    params:
+     layer: reflectivity
+     data_min: 0.0
+     data_max: 100.0
+  - name: purpleProb
+    type: occupancy_grid
+    params:
+     layer: purpleProb
+     data_min: 0.0
+     data_max: 1000.0
+  - name: redProb
+    type: occupancy_grid
+    params:
+     layer: redProb
+     data_min: 0.0
+     data_max: 1000.0
+  - name: blueProb
+    type: occupancy_grid
+    params:
+     layer: blueProb
+     data_min: 0.0
+     data_max: 1000.0
+  - name: silverProb
+    type: occupancy_grid
+    params:
+     layer: silverProb
+     data_min: 0.0
+     data_max: 1000.0
+  - name: brassProb
+    type: occupancy_grid
+    params:
+     layer: brassProb
+     data_min: 0.0
+     data_max: 1000.0
+
+  - name: slopePC
+    type: point_cloud
+    params:
+     layer: slope
+  - name: driveabilityPC
+    type: point_cloud
+    params:
+     layer: driveability
+  - name: objectHeightPC
+    type: point_cloud
+    params:
+     layer: objectHeight
+  - name: reflectivityPC
+    type: point_cloud
+    params:
+     layer: reflectivity
+  - name: purpleProbPC
+    type: point_cloud
+    params:
+     layer: purpleProb
+  - name: redProbPC
+    type: point_cloud
+    params:
+     layer: redProb
+  - name: blueProbPC
+    type: point_cloud
+    params:
+     layer: blueProb
+  - name: silverProbPC
+    type: point_cloud
+    params:
+     layer: silverProb
+  - name: brassProbPC
+    type: point_cloud
+    params:
+     layer: brassProb

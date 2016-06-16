@@ -15,7 +15,7 @@ CXX           = g++
 DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 CXXFLAGS      = -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-INCPATH       = -I../cataglyphis_gui -I. -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. -I. -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++
+INCPATH       = -I../cataglyphis_gui -I. -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. -I. -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++
 QMAKE         = /opt/Qt5.5.1/5.5/gcc_64/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -36,7 +36,7 @@ DISTNAME      = cataglyphis_gui1.0.0
 DISTDIR = /home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/build-cataglyphis_gui/.tmp/cataglyphis_gui1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-O1 -Wl,-rpath,/opt/Qt5.5.1/5.5/gcc_64 -Wl,-rpath,/opt/Qt5.5.1/5.5/gcc_64/lib
-LIBS          = $(SUBLIBS) -L/opt/Qt5.5.1/5.5/gcc_64/lib -lQt5Widgets -L/usr/lib64 -lQt5Gui -lQt5Core -lGL -lpthread 
+LIBS          = $(SUBLIBS) -L/opt/ros/indigo/lib -lroscpp -l:/usr/lib/x86_64-linux-gnu/libboost_signals.so -l:/usr/lib/x86_64-linux-gnu/libboost_filesystem.so -lrosconsole -lrosconsole_log4cxx -lrosconsole_backend_interface -l:/usr/lib/liblog4cxx.so -l:/usr/lib/x86_64-linux-gnu/libboost_regex.so -lxmlrpcpp -lroscpp_serialization -lrostime -l:/usr/lib/x86_64-linux-gnu/libboost_date_time.so -lcpp_common -l:/usr/lib/x86_64-linux-gnu/libboost_system.so -l:/usr/lib/x86_64-linux-gnu/libboost_thread.so -l:/usr/lib/x86_64-linux-gnu/libpthread.so -l:/usr/lib/x86_64-linux-gnu/libconsole_bridge.so -lroslib -L/opt/Qt5.5.1/5.5/gcc_64/lib -lQt5Widgets -L/usr/lib64 -lQt5Gui -lQt5Core -lGL -lpthread 
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -48,29 +48,32 @@ OBJECTS_DIR   = ./
 
 ####### Files
 
-SOURCES       = ../cataglyphis_gui/main.cpp \
-		../cataglyphis_gui/cataglyphis_startup_form_main.cpp \
+SOURCES       = ../cataglyphis_gui/cataglyphis_startup_form_main.cpp \
 		../cataglyphis_gui/map_viewer.cpp \
 		../cataglyphis_gui/window_selector.cpp \
 		../cataglyphis_gui/cataglyphis_gui.cpp \
 		../cataglyphis_gui/init_step_one.cpp \
 		../cataglyphis_gui/bias_removal_form.cpp \
-		../cataglyphis_gui/ros_workers.cpp qrc_resources.cpp \
+		../cataglyphis_gui/ros_workers.cpp \
+		../cataglyphis_gui/generic_error_dialog_form.cpp \
+		../../src/cataglyphis_gui_node.cpp qrc_resources.cpp \
 		moc_cataglyphis_startup_form_main.cpp \
 		moc_map_viewer.cpp \
 		moc_window_selector.cpp \
 		moc_cataglyphis_gui.cpp \
 		moc_init_step_one.cpp \
 		moc_bias_removal_form.cpp \
-		moc_ros_workers.cpp
-OBJECTS       = main.o \
-		cataglyphis_startup_form_main.o \
+		moc_ros_workers.cpp \
+		moc_generic_error_dialog_form.cpp
+OBJECTS       = cataglyphis_startup_form_main.o \
 		map_viewer.o \
 		window_selector.o \
 		cataglyphis_gui.o \
 		init_step_one.o \
 		bias_removal_form.o \
 		ros_workers.o \
+		generic_error_dialog_form.o \
+		cataglyphis_gui_node.o \
 		qrc_resources.o \
 		moc_cataglyphis_startup_form_main.o \
 		moc_map_viewer.o \
@@ -78,7 +81,8 @@ OBJECTS       = main.o \
 		moc_cataglyphis_gui.o \
 		moc_init_step_one.o \
 		moc_bias_removal_form.o \
-		moc_ros_workers.o
+		moc_ros_workers.o \
+		moc_generic_error_dialog_form.o
 DIST          = /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/spec_pre.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/common/unix.conf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/common/linux.conf \
@@ -202,6 +206,7 @@ DIST          = /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/spec_pre.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/default_pre.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/resolve_config.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/default_post.prf \
+		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/link_pkgconfig.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/warn_on.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/qt.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/resources.prf \
@@ -219,14 +224,16 @@ DIST          = /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/spec_pre.prf \
 		../cataglyphis_gui/cataglyphis_gui.h \
 		../cataglyphis_gui/init_step_one.h \
 		../cataglyphis_gui/bias_removal_form.h \
-		../cataglyphis_gui/ros_workers.h ../cataglyphis_gui/main.cpp \
-		../cataglyphis_gui/cataglyphis_startup_form_main.cpp \
+		../cataglyphis_gui/ros_workers.h \
+		../cataglyphis_gui/generic_error_dialog_form.h ../cataglyphis_gui/cataglyphis_startup_form_main.cpp \
 		../cataglyphis_gui/map_viewer.cpp \
 		../cataglyphis_gui/window_selector.cpp \
 		../cataglyphis_gui/cataglyphis_gui.cpp \
 		../cataglyphis_gui/init_step_one.cpp \
 		../cataglyphis_gui/bias_removal_form.cpp \
-		../cataglyphis_gui/ros_workers.cpp
+		../cataglyphis_gui/ros_workers.cpp \
+		../cataglyphis_gui/generic_error_dialog_form.cpp \
+		../../src/cataglyphis_gui_node.cpp
 QMAKE_TARGET  = cataglyphis_gui
 DESTDIR       = #avoid trailing-slash linebreak
 TARGET        = cataglyphis_gui
@@ -254,7 +261,7 @@ first: all
 
 ####### Build rules
 
-$(TARGET): ui_cataglyphis_startup_form_main.h ui_map_viewer.h ui_window_selector.h ui_cataglyphis_gui.h ui_init_step_one.h ui_bias_removal_form.h $(OBJECTS)  
+$(TARGET): ui_cataglyphis_startup_form_main.h ui_map_viewer.h ui_window_selector.h ui_cataglyphis_gui.h ui_init_step_one.h ui_bias_removal_form.h ui_generic_error_dialog_form.h $(OBJECTS)  
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJCOMP) $(LIBS)
 
 Makefile: ../cataglyphis_gui/cataglyphis_gui.pro /opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++/qmake.conf /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/spec_pre.prf \
@@ -380,6 +387,7 @@ Makefile: ../cataglyphis_gui/cataglyphis_gui.pro /opt/Qt5.5.1/5.5/gcc_64/mkspecs
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/default_pre.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/resolve_config.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/default_post.prf \
+		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/link_pkgconfig.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/warn_on.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/qt.prf \
 		/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/resources.prf \
@@ -520,6 +528,7 @@ Makefile: ../cataglyphis_gui/cataglyphis_gui.pro /opt/Qt5.5.1/5.5/gcc_64/mkspecs
 /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/default_pre.prf:
 /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/resolve_config.prf:
 /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/default_post.prf:
+/opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/link_pkgconfig.prf:
 /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/warn_on.prf:
 /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/qt.prf:
 /opt/Qt5.5.1/5.5/gcc_64/mkspecs/features/resources.prf:
@@ -551,9 +560,9 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents ../cataglyphis_gui/resources.qrc $(DISTDIR)/
-	$(COPY_FILE) --parents ../cataglyphis_gui/cataglyphis_startup_form_main.h ../cataglyphis_gui/map_viewer.h ../cataglyphis_gui/window_selector.h ../cataglyphis_gui/cataglyphis_gui.h ../cataglyphis_gui/init_step_one.h ../cataglyphis_gui/bias_removal_form.h ../cataglyphis_gui/ros_workers.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../cataglyphis_gui/main.cpp ../cataglyphis_gui/cataglyphis_startup_form_main.cpp ../cataglyphis_gui/map_viewer.cpp ../cataglyphis_gui/window_selector.cpp ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/init_step_one.cpp ../cataglyphis_gui/bias_removal_form.cpp ../cataglyphis_gui/ros_workers.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../cataglyphis_gui/cataglyphis_startup_form_main.ui ../cataglyphis_gui/map_viewer.ui ../cataglyphis_gui/window_selector.ui ../cataglyphis_gui/cataglyphis_gui.ui ../cataglyphis_gui/init_step_one.ui ../cataglyphis_gui/bias_removal_form.ui $(DISTDIR)/
+	$(COPY_FILE) --parents ../cataglyphis_gui/cataglyphis_startup_form_main.h ../cataglyphis_gui/map_viewer.h ../cataglyphis_gui/window_selector.h ../cataglyphis_gui/cataglyphis_gui.h ../cataglyphis_gui/init_step_one.h ../cataglyphis_gui/bias_removal_form.h ../cataglyphis_gui/ros_workers.h ../cataglyphis_gui/generic_error_dialog_form.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../cataglyphis_gui/cataglyphis_startup_form_main.cpp ../cataglyphis_gui/map_viewer.cpp ../cataglyphis_gui/window_selector.cpp ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/init_step_one.cpp ../cataglyphis_gui/bias_removal_form.cpp ../cataglyphis_gui/ros_workers.cpp ../cataglyphis_gui/generic_error_dialog_form.cpp ../../src/cataglyphis_gui_node.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../cataglyphis_gui/cataglyphis_startup_form_main.ui ../cataglyphis_gui/map_viewer.ui ../cataglyphis_gui/window_selector.ui ../cataglyphis_gui/cataglyphis_gui.ui ../cataglyphis_gui/init_step_one.ui ../cataglyphis_gui/bias_removal_form.ui ../cataglyphis_gui/generic_error_dialog_form.ui $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -582,9 +591,9 @@ qrc_resources.cpp: ../cataglyphis_gui/resources.qrc \
 		../cataglyphis_gui/resources/pattern_test.jpg
 	/opt/Qt5.5.1/5.5/gcc_64/bin/rcc -name resources ../cataglyphis_gui/resources.qrc -o qrc_resources.cpp
 
-compiler_moc_header_make_all: moc_cataglyphis_startup_form_main.cpp moc_map_viewer.cpp moc_window_selector.cpp moc_cataglyphis_gui.cpp moc_init_step_one.cpp moc_bias_removal_form.cpp moc_ros_workers.cpp
+compiler_moc_header_make_all: moc_cataglyphis_startup_form_main.cpp moc_map_viewer.cpp moc_window_selector.cpp moc_cataglyphis_gui.cpp moc_init_step_one.cpp moc_bias_removal_form.cpp moc_ros_workers.cpp moc_generic_error_dialog_form.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_cataglyphis_startup_form_main.cpp moc_map_viewer.cpp moc_window_selector.cpp moc_cataglyphis_gui.cpp moc_init_step_one.cpp moc_bias_removal_form.cpp moc_ros_workers.cpp
+	-$(DEL_FILE) moc_cataglyphis_startup_form_main.cpp moc_map_viewer.cpp moc_window_selector.cpp moc_cataglyphis_gui.cpp moc_init_step_one.cpp moc_bias_removal_form.cpp moc_ros_workers.cpp moc_generic_error_dialog_form.cpp
 moc_cataglyphis_startup_form_main.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs.h \
@@ -689,12 +698,70 @@ moc_cataglyphis_startup_form_main.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/init_step_one.h \
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
 		../cataglyphis_gui/bias_removal_form.h \
+		../cataglyphis_gui/generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
 		../cataglyphis_gui/cataglyphis_startup_form_main.h
-	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/cataglyphis_startup_form_main.h -o moc_cataglyphis_startup_form_main.cpp
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/cataglyphis_startup_form_main.h -o moc_cataglyphis_startup_form_main.cpp
 
 moc_map_viewer.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
@@ -805,7 +872,7 @@ moc_map_viewer.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/QImage \
 		../cataglyphis_gui/map_viewer.h
-	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/map_viewer.h -o moc_map_viewer.cpp
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/map_viewer.h -o moc_map_viewer.cpp
 
 moc_window_selector.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDockWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdockwidget.h \
@@ -911,7 +978,7 @@ moc_window_selector.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDockWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		../cataglyphis_gui/window_selector.h
-	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/window_selector.h -o moc_window_selector.cpp
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/window_selector.h -o moc_window_selector.cpp
 
 moc_cataglyphis_gui.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QMainWindow \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qmainwindow.h \
@@ -1019,6 +1086,61 @@ moc_cataglyphis_gui.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QMainWindow \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QTabWidget \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/cataglyphis_startup_form_main.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
@@ -1027,6 +1149,9 @@ moc_cataglyphis_gui.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QMainWindow \
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
 		../cataglyphis_gui/bias_removal_form.h \
+		../cataglyphis_gui/generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
 		../cataglyphis_gui/map_viewer.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsScene \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
@@ -1035,7 +1160,7 @@ moc_cataglyphis_gui.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QMainWindow \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/QImage \
 		../cataglyphis_gui/cataglyphis_gui.h
-	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/cataglyphis_gui.h -o moc_cataglyphis_gui.cpp
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/cataglyphis_gui.h -o moc_cataglyphis_gui.cpp
 
 moc_init_step_one.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
@@ -1139,12 +1264,67 @@ moc_init_step_one.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
 		../cataglyphis_gui/init_step_one.h
-	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/init_step_one.h -o moc_init_step_one.cpp
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/init_step_one.h -o moc_init_step_one.cpp
 
 moc_bias_removal_form.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
@@ -1248,12 +1428,67 @@ moc_bias_removal_form.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
 		../cataglyphis_gui/bias_removal_form.h
-	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/bias_removal_form.h -o moc_bias_removal_form.cpp
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/bias_removal_form.h -o moc_bias_removal_form.cpp
 
 moc_ros_workers.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
@@ -1360,45 +1595,68 @@ moc_ros_workers.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/ros_workers.h
-	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/ros_workers.h -o moc_ros_workers.cpp
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/ros_workers.h -o moc_ros_workers.cpp
 
-compiler_moc_source_make_all:
-compiler_moc_source_clean:
-compiler_uic_make_all: ui_cataglyphis_startup_form_main.h ui_map_viewer.h ui_window_selector.h ui_cataglyphis_gui.h ui_init_step_one.h ui_bias_removal_form.h
-compiler_uic_clean:
-	-$(DEL_FILE) ui_cataglyphis_startup_form_main.h ui_map_viewer.h ui_window_selector.h ui_cataglyphis_gui.h ui_init_step_one.h ui_bias_removal_form.h
-ui_cataglyphis_startup_form_main.h: ../cataglyphis_gui/cataglyphis_startup_form_main.ui
-	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/cataglyphis_startup_form_main.ui -o ui_cataglyphis_startup_form_main.h
-
-ui_map_viewer.h: ../cataglyphis_gui/map_viewer.ui
-	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/map_viewer.ui -o ui_map_viewer.h
-
-ui_window_selector.h: ../cataglyphis_gui/window_selector.ui
-	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/window_selector.ui -o ui_window_selector.h
-
-ui_cataglyphis_gui.h: ../cataglyphis_gui/cataglyphis_gui.ui
-	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/cataglyphis_gui.ui -o ui_cataglyphis_gui.h
-
-ui_init_step_one.h: ../cataglyphis_gui/init_step_one.ui
-	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/init_step_one.ui -o ui_init_step_one.h
-
-ui_bias_removal_form.h: ../cataglyphis_gui/bias_removal_form.ui
-	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/bias_removal_form.ui -o ui_bias_removal_form.h
-
-compiler_yacc_decl_make_all:
-compiler_yacc_decl_clean:
-compiler_yacc_impl_make_all:
-compiler_yacc_impl_clean:
-compiler_lex_make_all:
-compiler_lex_clean:
-compiler_clean: compiler_rcc_clean compiler_moc_header_clean compiler_uic_clean 
-
-####### Compile
-
-main.o: ../cataglyphis_gui/main.cpp /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+moc_generic_error_dialog_form.cpp: /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qglobal.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qconfig.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfeatures.h \
@@ -1427,16 +1685,17 @@ main.o: ../cataglyphis_gui/main.cpp /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QA
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qglobalstatic.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmutex.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qnumeric.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs_win.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobject.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstring.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qchar.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qbytearray.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qrefcount.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qnamespace.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qarraydata.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstringbuilder.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobject.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs_impl.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qlist.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qalgorithms.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qiterator.h \
@@ -1451,17 +1710,11 @@ main.o: ../cataglyphis_gui/main.cpp /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QA
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcontainerfwd.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qisenum.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobject_impl.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs_win.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qpoint.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsize.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qcursor.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmargins.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpaintdevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qrect.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsize.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qpoint.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpalette.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qcolor.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qrgb.h \
@@ -1487,6 +1740,7 @@ main.o: ../cataglyphis_gui/main.cpp /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QA
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontmetrics.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontinfo.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qsizepolicy.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qcursor.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qkeysequence.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qevent.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qvariant.h \
@@ -1502,30 +1756,44 @@ main.o: ../cataglyphis_gui/main.cpp /opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QA
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
-		../cataglyphis_gui/cataglyphis_gui.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QMainWindow \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qmainwindow.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QTabWidget \
-		../cataglyphis_gui/cataglyphis_startup_form_main.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
-		../cataglyphis_gui/init_step_one.h \
-		../cataglyphis_gui/ros_workers.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
-		../cataglyphis_gui/bias_removal_form.h \
-		../cataglyphis_gui/map_viewer.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsScene \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/QImage
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../cataglyphis_gui/main.cpp
+		../cataglyphis_gui/generic_error_dialog_form.h
+	/opt/Qt5.5.1/5.5/gcc_64/bin/moc $(DEFINES) -I/opt/Qt5.5.1/5.5/gcc_64/mkspecs/linux-g++ -I/home/calypso-irl/cataglyphis_ws/src/cataglyphis_gui/qt_project_src/cataglyphis_gui -I/opt/ros/indigo/include -I/opt/Qt5.5.1/5.5/gcc_64/include -I/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets -I/opt/Qt5.5.1/5.5/gcc_64/include/QtGui -I/opt/Qt5.5.1/5.5/gcc_64/include/QtCore -I. ../cataglyphis_gui/generic_error_dialog_form.h -o moc_generic_error_dialog_form.cpp
+
+compiler_moc_source_make_all:
+compiler_moc_source_clean:
+compiler_uic_make_all: ui_cataglyphis_startup_form_main.h ui_map_viewer.h ui_window_selector.h ui_cataglyphis_gui.h ui_init_step_one.h ui_bias_removal_form.h ui_generic_error_dialog_form.h
+compiler_uic_clean:
+	-$(DEL_FILE) ui_cataglyphis_startup_form_main.h ui_map_viewer.h ui_window_selector.h ui_cataglyphis_gui.h ui_init_step_one.h ui_bias_removal_form.h ui_generic_error_dialog_form.h
+ui_cataglyphis_startup_form_main.h: ../cataglyphis_gui/cataglyphis_startup_form_main.ui
+	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/cataglyphis_startup_form_main.ui -o ui_cataglyphis_startup_form_main.h
+
+ui_map_viewer.h: ../cataglyphis_gui/map_viewer.ui
+	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/map_viewer.ui -o ui_map_viewer.h
+
+ui_window_selector.h: ../cataglyphis_gui/window_selector.ui
+	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/window_selector.ui -o ui_window_selector.h
+
+ui_cataglyphis_gui.h: ../cataglyphis_gui/cataglyphis_gui.ui
+	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/cataglyphis_gui.ui -o ui_cataglyphis_gui.h
+
+ui_init_step_one.h: ../cataglyphis_gui/init_step_one.ui
+	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/init_step_one.ui -o ui_init_step_one.h
+
+ui_bias_removal_form.h: ../cataglyphis_gui/bias_removal_form.ui
+	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/bias_removal_form.ui -o ui_bias_removal_form.h
+
+ui_generic_error_dialog_form.h: ../cataglyphis_gui/generic_error_dialog_form.ui
+	/opt/Qt5.5.1/5.5/gcc_64/bin/uic ../cataglyphis_gui/generic_error_dialog_form.ui -o ui_generic_error_dialog_form.h
+
+compiler_yacc_decl_make_all:
+compiler_yacc_decl_clean:
+compiler_yacc_impl_make_all:
+compiler_yacc_impl_clean:
+compiler_lex_make_all:
+compiler_lex_clean:
+compiler_clean: compiler_rcc_clean compiler_moc_header_clean compiler_uic_clean 
+
+####### Compile
 
 cataglyphis_startup_form_main.o: ../cataglyphis_gui/cataglyphis_startup_form_main.cpp ../cataglyphis_gui/cataglyphis_startup_form_main.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
@@ -1632,10 +1900,68 @@ cataglyphis_startup_form_main.o: ../cataglyphis_gui/cataglyphis_startup_form_mai
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/init_step_one.h \
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
 		../cataglyphis_gui/bias_removal_form.h \
+		../cataglyphis_gui/generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
 		ui_cataglyphis_startup_form_main.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
@@ -2087,6 +2413,61 @@ cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cat
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QTabWidget \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/cataglyphis_startup_form_main.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
@@ -2095,6 +2476,9 @@ cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cat
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
 		../cataglyphis_gui/bias_removal_form.h \
+		../cataglyphis_gui/generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
 		../cataglyphis_gui/map_viewer.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsScene \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
@@ -2248,6 +2632,61 @@ init_step_one.o: ../cataglyphis_gui/init_step_one.cpp ../cataglyphis_gui/init_st
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
@@ -2406,6 +2845,61 @@ bias_removal_form.o: ../cataglyphis_gui/bias_removal_form.cpp ../cataglyphis_gui
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
 		../cataglyphis_gui/ros_workers.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
@@ -2567,8 +3061,407 @@ ros_workers.o: ../cataglyphis_gui/ros_workers.cpp ../cataglyphis_gui/ros_workers
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
+		/opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ros_workers.o ../cataglyphis_gui/ros_workers.cpp
+
+generic_error_dialog_form.o: ../cataglyphis_gui/generic_error_dialog_form.cpp ../cataglyphis_gui/generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qglobal.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qconfig.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfeatures.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsystemdetection.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qprocessordetection.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcompilerdetection.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qtypeinfo.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qtypetraits.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsysinfo.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qlogging.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qflags.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qbasicatomic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qgenericatomic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_cxx11.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_gcc.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_msvc.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_armv7.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_armv6.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_armv5.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_ia64.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_mips.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_x86.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_unix.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qglobalstatic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmutex.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qnumeric.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs_win.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobject.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstring.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qchar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qbytearray.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qrefcount.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qarraydata.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstringbuilder.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qlist.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qalgorithms.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qiterator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qbytearraylist.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstringlist.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregexp.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstringmatcher.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreevent.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qscopedpointer.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmetatype.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qvarlengtharray.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcontainerfwd.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qisenum.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobject_impl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmargins.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpaintdevice.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qrect.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsize.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qpoint.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpalette.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qcolor.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qrgb.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qbrush.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qpair.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qvector.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qmatrix.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpolygon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qregion.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qdatastream.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qiodevice.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qline.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtransform.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpainterpath.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qimage.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpixelformat.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpixmap.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsharedpointer.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qshareddata.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qhash.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfont.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontmetrics.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontinfo.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qsizepolicy.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qcursor.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qkeysequence.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qevent.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qvariant.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmap.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qdebug.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qtextstream.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qlocale.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qset.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcontiguouscache.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qurl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qurlquery.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfile.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		ui_generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qaction.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qactiongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialogButtonBox \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialogbuttonbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QFrame \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QPlainTextEdit \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qplaintextedit.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtextedit.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextdocument.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextcursor.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextformat.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qabstracttextdocumentlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qglyphrun.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qrawfont.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontdatabase.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o generic_error_dialog_form.o ../cataglyphis_gui/generic_error_dialog_form.cpp
+
+cataglyphis_gui_node.o: ../../src/cataglyphis_gui_node.cpp /opt/ros/indigo/include/ros/ros.h \
+		/opt/ros/indigo/include/ros/time.h \
+		/opt/ros/indigo/include/ros/platform.h \
+		/opt/ros/indigo/include/ros/exception.h \
+		/opt/ros/indigo/include/ros/duration.h \
+		/opt/ros/indigo/include/ros/rostime_decl.h \
+		/opt/ros/indigo/include/ros/macros.h \
+		/opt/ros/indigo/include/ros/rate.h \
+		/opt/ros/indigo/include/ros/console.h \
+		/opt/ros/indigo/include/ros/console_backend.h \
+		/opt/ros/indigo/include/rosconsole/macros_generated.h \
+		/opt/ros/indigo/include/ros/assert.h \
+		/opt/ros/indigo/include/ros/static_assert.h \
+		/opt/ros/indigo/include/ros/common.h \
+		/opt/ros/indigo/include/ros/forwards.h \
+		/opt/ros/indigo/include/ros/exceptions.h \
+		/opt/ros/indigo/include/ros/datatypes.h \
+		/opt/ros/indigo/include/ros/serialized_message.h \
+		/opt/ros/indigo/include/ros/roscpp_serialization_macros.h \
+		/opt/ros/indigo/include/ros/types.h \
+		/opt/ros/indigo/include/ros/node_handle.h \
+		/opt/ros/indigo/include/ros/publisher.h \
+		/opt/ros/indigo/include/ros/message.h \
+		/opt/ros/indigo/include/ros/serialization.h \
+		/opt/ros/indigo/include/ros/message_traits.h \
+		/opt/ros/indigo/include/ros/message_forward.h \
+		/opt/ros/indigo/include/ros/builtin_message_traits.h \
+		/opt/ros/indigo/include/ros/subscriber.h \
+		/opt/ros/indigo/include/ros/subscription_callback_helper.h \
+		/opt/ros/indigo/include/ros/parameter_adapter.h \
+		/opt/ros/indigo/include/ros/message_event.h \
+		/opt/ros/indigo/include/ros/service_server.h \
+		/opt/ros/indigo/include/ros/service_client.h \
+		/opt/ros/indigo/include/ros/service_traits.h \
+		/opt/ros/indigo/include/ros/timer.h \
+		/opt/ros/indigo/include/ros/timer_options.h \
+		/opt/ros/indigo/include/ros/wall_timer.h \
+		/opt/ros/indigo/include/ros/wall_timer_options.h \
+		/opt/ros/indigo/include/ros/advertise_options.h \
+		/opt/ros/indigo/include/ros/advertise_service_options.h \
+		/opt/ros/indigo/include/ros/service_callback_helper.h \
+		/opt/ros/indigo/include/ros/subscribe_options.h \
+		/opt/ros/indigo/include/ros/transport_hints.h \
+		/opt/ros/indigo/include/ros/service_client_options.h \
+		/opt/ros/indigo/include/ros/spinner.h \
+		/opt/ros/indigo/include/ros/init.h \
+		/opt/ros/indigo/include/XmlRpcValue.h \
+		/opt/ros/indigo/include/XmlRpcDecl.h \
+		/opt/ros/indigo/include/ros/single_subscriber_publisher.h \
+		/opt/ros/indigo/include/ros/service.h \
+		/opt/ros/indigo/include/ros/names.h \
+		/opt/ros/indigo/include/ros/master.h \
+		/opt/ros/indigo/include/ros/this_node.h \
+		/opt/ros/indigo/include/ros/param.h \
+		/opt/ros/indigo/include/ros/topic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qglobal.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qconfig.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfeatures.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsystemdetection.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qprocessordetection.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcompilerdetection.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qtypeinfo.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qtypetraits.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsysinfo.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qlogging.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qflags.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qbasicatomic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qgenericatomic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_cxx11.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_gcc.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_msvc.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_armv7.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_armv6.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_armv5.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_ia64.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_mips.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_x86.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qatomic_unix.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qglobalstatic.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmutex.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qnumeric.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstring.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qchar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qbytearray.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qrefcount.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qarraydata.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstringbuilder.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobject.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qlist.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qalgorithms.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qiterator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qbytearraylist.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstringlist.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregexp.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qstringmatcher.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreevent.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qscopedpointer.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmetatype.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qvarlengtharray.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcontainerfwd.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qisenum.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qobject_impl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qwindowdefs_win.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qpoint.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsize.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qcursor.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmargins.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpaintdevice.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qrect.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpalette.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qcolor.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qrgb.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qbrush.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qpair.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qvector.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qmatrix.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpolygon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qregion.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qdatastream.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qiodevice.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qline.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtransform.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpainterpath.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qimage.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpixelformat.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpixmap.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsharedpointer.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qshareddata.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qhash.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfont.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontmetrics.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontinfo.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qsizepolicy.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qkeysequence.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qevent.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qvariant.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qmap.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qdebug.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qtextstream.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qlocale.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qset.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcontiguouscache.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qurl.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qurlquery.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfile.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		../cataglyphis_gui/cataglyphis_gui.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QMainWindow \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qmainwindow.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QTabWidget \
+		../cataglyphis_gui/cataglyphis_startup_form_main.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QWidget \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
+		../cataglyphis_gui/init_step_one.h \
+		../cataglyphis_gui/ros_workers.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
+		../cataglyphis_gui/bias_removal_form.h \
+		../cataglyphis_gui/generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
+		../cataglyphis_gui/map_viewer.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsScene \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/QImage
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o cataglyphis_gui_node.o ../../src/cataglyphis_gui_node.cpp
 
 qrc_resources.o: qrc_resources.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_resources.o qrc_resources.cpp
@@ -2593,6 +3486,9 @@ moc_bias_removal_form.o: moc_bias_removal_form.cpp
 
 moc_ros_workers.o: moc_ros_workers.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_ros_workers.o moc_ros_workers.cpp
+
+moc_generic_error_dialog_form.o: moc_generic_error_dialog_form.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_generic_error_dialog_form.o moc_generic_error_dialog_form.cpp
 
 ####### Install
 

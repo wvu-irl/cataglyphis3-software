@@ -2,7 +2,6 @@
 
 MissionPlanning::MissionPlanning()
 {
-	woiClient = nh.serviceClient<robot_control::WaypointsOfInterest>("/control/mapmanager/waypointsofinterest");
     execActionClient = nh.serviceClient<messages::ExecAction>("control/exec/actionin");
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
     ExecActionEndedSub = nh.subscribe<messages::ExecActionEnded>("control/exec/actionended", 1, &MissionPlanning::ExecActionEndedCallback_, this);
@@ -13,9 +12,6 @@ MissionPlanning::MissionPlanning()
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
     execInfoSub = nh.subscribe<messages::ExecInfo>("control/exec/info", 1, &MissionPlanning::execInfoCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
-	woiSrv.request.easyThresh = 0;
-	woiSrv.request.medThresh = 0;
-	woiSrv.request.hardThresh = 0;
     collisionInterruptTrigger = false;
     inSearchableRegion = false;
     possessingSample = false;
@@ -34,11 +30,13 @@ MissionPlanning::MissionPlanning()
     robotStatus.pauseSwitch = true;
     execDequeEmpty = true;
     avoidLockout = false;
+    roiKeyframed = false;
     execLastProcType = __depositSample__;
     execLastSerialNum = 99;
     collisionInterruptThresh = 1.0; // m
     avoid.reg(__avoid__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
+    //searchRegion.reg(__searchRegion__);
     approach.reg(__approach__);
     collect.reg(__collect__);
     confirmCollect.reg(__confirmCollect__);
@@ -48,6 +46,7 @@ MissionPlanning::MissionPlanning()
     depositSample.sendOpen(); // Make sure the grabber is open initially
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
+    currentROIIndex = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
         procsToExecute[i] = false;
@@ -188,13 +187,13 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute avoid");
         }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !missionEnded) // Next Best Region
+        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !inSearchableRegion && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
         }
         calcNumProcsBeingExec_();
-        /*if(numProcsBeingExec==0 && ) // Search Region
+        /*if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && inSearchableRegion && !missionEnded) // Search Region
         {
 
         }

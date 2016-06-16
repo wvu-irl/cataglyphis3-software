@@ -8,6 +8,8 @@
 
 #include <ros_workers.h>
 
+#define INIT_STEP1_ID 1
+
 namespace Ui {
 class init_step_one;
 }
@@ -17,7 +19,7 @@ class init_step_one : public QWidget
     Q_OBJECT
 
 signals:
-    void init_nav_filter(const messages::NavFilterControl navInit);
+    void init_nav_filter(messages::NavFilterControl serviceRequest);
     void step_one_finished();
 
 public:
@@ -29,7 +31,8 @@ public:
     boost::shared_ptr<Ui::init_step_one> ui;
 
 public slots:
-    void when_nav_init_return(bool sucessful);
+    void when_nav_init_return(const messages::NavFilterControl navResponse,
+                                bool sucessful);
 
 private slots:
 

@@ -27,6 +27,18 @@ cataglyphis_startup_form_main::cataglyphis_startup_form_main(QWidget *parent,
     //no need to schedule deletion of rosWorker as the boost pointer automatically does
     //connect(&rosWorkerThread, &QThread::finished, rosWorker.get(), &QObject::deleteLater);
 
+    stepOneTab = boost::shared_ptr<init_step_one>(new init_step_one(ui->input_tabber, rosWorker));
+    stepOneTab->hide();
+    stepTwoTab = boost::shared_ptr<bias_removal_form>(new bias_removal_form(ui->input_tabber, rosWorker));
+    stepTwoTab->hide();
+    connect(stepOneTab.get(), &init_step_one::step_one_finished,
+                this, &cataglyphis_startup_form_main::step_one_returned);
+    connect(stepTwoTab.get(), &bias_removal_form::bias_removal_finished,
+                this, &cataglyphis_startup_form_main::step_two_returned);
+
+    generic_error_dialog_form test;
+    test.show();
+
     rosWorkerThread.start();
 }
 
@@ -55,13 +67,6 @@ void cataglyphis_startup_form_main::on_start_up_button_clicked()
 
     //emit start_bias_removal();
 
-    stepOneTab = boost::shared_ptr<init_step_one>(new init_step_one(ui->input_tabber, rosWorker));
-
-    stepTwoTab = boost::shared_ptr<bias_removal_form>(new bias_removal_form(ui->input_tabber, rosWorker));
-    connect(stepOneTab.get(), &init_step_one::step_one_finished,
-                this, &cataglyphis_startup_form_main::step_one_returned);
-    connect(stepTwoTab.get(), &bias_removal_form::bias_removal_finished,
-                this, &cataglyphis_startup_form_main::step_two_returned);
     ui->input_tabber->addTab(stepOneTab.get(), "Nav Init");
 }
 

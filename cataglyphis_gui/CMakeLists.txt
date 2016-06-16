@@ -165,12 +165,14 @@ add_library(map_viewer                          qt_project_src/cataglyphis_gui/m
 add_library(init_step_one                       qt_project_src/cataglyphis_gui/init_step_one.cpp)
 add_library(bias_removal_form                   qt_project_src/cataglyphis_gui/bias_removal_form.cpp)
 
+add_library(generic_error_dialog_form           qt_project_src/cataglyphis_gui/generic_error_dialog_form.cpp)
+
 #add_library(moc_cataglyphis_gui                 qt_project_src/build-cataglyphis_gui/moc_cataglyphis_gui.cpp)
 #add_library(moc_cataglyphis_startup_form_main   qt_project_src/build-cataglyphis_gui/moc_cataglyphis_startup_form_main.cpp)
 #add_library(moc_init_step_one                   qt_project_src/build-cataglyphis_gui/moc_init_step_one.cpp)
 #add_library(moc_map_viewer                      qt_project_src/build-cataglyphis_gui/moc_map_viewer.cpp)
 #add_library(moc_generic_error_dialog            qt_project_src/build-cataglyphis_gui/moc_generic_error_dialog.cpp)
-add_library(moc_ros_workers                  qt_project_src/build-cataglyphis_gui/moc_ros_workers.cpp)
+add_library(moc_ros_workers                     qt_project_src/build-cataglyphis_gui/moc_ros_workers.cpp)
 
 add_library(gui_resources                       qt_project_src/build-cataglyphis_gui/qrc_resources.cpp)
 
@@ -190,6 +192,7 @@ target_link_libraries(cataglyphis_gui_node
 
     cataglyphis_gui
     cataglyphis_startup_form_main
+    generic_error_dialog_form
     init_step_one
     bias_removal_form
     map_viewer
