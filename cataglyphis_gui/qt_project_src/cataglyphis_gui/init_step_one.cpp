@@ -18,7 +18,6 @@ init_step_one::~init_step_one()
     //delete ui;
 }
 
-
 void init_step_one::on_skip_init_button_clicked()
 {
     ROS_DEBUG("init_step_one:: skip init clicked");
@@ -28,10 +27,15 @@ void init_step_one::on_skip_init_button_clicked()
 void init_step_one::on_continue_button_clicked()
 {
     ROS_DEBUG("init_step_one:: continue init clicked");
+    navInitService.request.northAngle = ui->input_NA_spinbox->value();
+    navInitService.request.setNorthAngle = true;
+    navInitService.request.sunnyDay = ui->sunny_day_checkbox->isChecked();
+    navInitService.request.setSunnyDay = true;
     emit init_nav_filter(navInitService);
 }
 
-void init_step_one::when_nav_init_return(bool sucessful)
+void init_step_one::when_nav_init_return(const messages::NavFilterControl navResponse,
+                                            bool sucessful)
 {
     if(sucessful)
     {

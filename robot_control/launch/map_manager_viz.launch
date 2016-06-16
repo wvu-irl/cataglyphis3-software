@@ -1,9 +1,0 @@
-<launch>
-  <node
-  	pkg="grid_map_visualization"
-  	type="grid_map_visualization"
-  	name="grid_map_visualization"
-  	output="screen">
-    <rosparam command="load" file="$(find robot_control)/config/map_manager_demo.yaml" />
-  </node>
-</launch>

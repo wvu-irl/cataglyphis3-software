@@ -37,6 +37,10 @@ LidarFilter::LidarFilter()
 	_homing_y = 0;
 	_homing_heading = 0;
 	_homing_found = false;
+
+	//clouds stitch
+	pcl::PointCloud<pcl::PointXYZ> piece_one;
+	pcl::PointCloud<pcl::PointXYZ> piece_two;
 }
 
 void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg)
@@ -130,6 +134,19 @@ bool LidarFilter::newPointCloudAvailable()
 	}
 }
 
+void LidarFilter::stitchClouds()
+{
+	if(_registration_counter % 2 == 1)
+	{
+		_piece_one = _input_cloud;
+	}
+	else if(_registration_counter % 2 == 0 && _registration_counter != 0) //stitch two clouds together
+	{
+		_piece_two = _input_cloud;
+		_input_cloud = _piece_one + _piece_two;
+	}
+}
+
 void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 {	
 	//clear message
@@ -146,7 +163,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.y_mean.push_back(_local_grid_map[i][1]);
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
-	    msg.ground_adjacent.push_back(1); //this needs to be updated
+	    msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
 	}
 
 	//forward relavent navigation information
@@ -187,6 +204,7 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud4 (new pcl::PointCloud<pcl::PointXYZ>);
 	*cloud = _input_cloud;
 
+
 	ROS_INFO("\n*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
 	ROS_INFO("Running callback function with %i points.",cloud->points.size());
 
@@ -212,7 +230,7 @@ void LidarFilter::doMathMapping()
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
 	ground_point.points.resize (ground_point.width * ground_point.height);
-
+	//ROS_INFO("1");
 	// THESE ARE FOR CYLINDER DETECTION
 	
 	
@@ -224,7 +242,7 @@ void LidarFilter::doMathMapping()
 	// std::stringstream ss1;
 	// ss1 << "raw_cloud.pcd";
 	// pcl::io::savePCDFile( ss1.str(), *cloud);
-
+	
 	// PASS THROUGH FILTER
 	pcl::PassThrough<pcl::PointXYZ> pass;
 	pass.setInputCloud(cloud);
@@ -238,6 +256,7 @@ void LidarFilter::doMathMapping()
 	pass.setFilterLimits(-1.5,threshold_tree_height);
 	pass.filter(*cloud);
 	
+	/*
 	// remove 10x10 m area the behind the lidar (the pole) in order to increase the accuracy of ICP
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
@@ -279,7 +298,7 @@ void LidarFilter::doMathMapping()
 	*cloud = *cloud + *cloud3;
 	*cloud = *cloud + *cloud4;
 	//ROS_INFO("Regional cloud has %i points", cloud->points.size());
-
+	*/
 
 	// std::stringstream ss2;
 	// ss2 << "middle_1.pcd";
@@ -302,7 +321,7 @@ void LidarFilter::doMathMapping()
 	extract.setIndices (ground);
 	extract.filter (*ground_filtered);
 	*/
-
+	//ROS_INFO("2");
 	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
 	pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
 	// Create the segmentation object
@@ -329,7 +348,7 @@ void LidarFilter::doMathMapping()
 	// std::stringstream ss3;
 	// ss3 << "ground.pcd";
 	// pcl::io::savePCDFile( ss3.str(), *ground_filtered);
-
+	//ROS_INFO("3");
 	// EXTRACT NON-GROUND RETURNS
 	*object_filtered_projection = *object_filtered;
 	// PROJECTION, MAY NEED TO MODIFY THE ALGORITHM LATER
@@ -341,6 +360,7 @@ void LidarFilter::doMathMapping()
 	// BUILD LOCAL MAP, THE CURRENT ALGORITHM IS VERY UN-EFFECTIVE, NEED TO IMPROVE LATER
 	std::vector<float> point;
 	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
+	std::vector<std::vector<float> > local_grid_map_temp;
 	int index = 0;
 	_local_grid_map.clear();
 	for (int i = 0; i< object_filtered->points.size(); i++)
@@ -375,26 +395,33 @@ void LidarFilter::doMathMapping()
 	        variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
 	    }
 	    variance_z = sqrt(variance_z);
+
+	    // switch the coordinate of the LIDAR // need to check again
+	    float temp_holder = 0.0;
+        average_z = -average_z;
+        temp_holder = average_x;
+        average_x = average_y;
+        average_y = temp_holder;
+    	point.push_back(average_x);
+        point.push_back(average_y);
+        point.push_back(average_z);
+        point.push_back(variance_z);
 	    if (total_x || total_y || total_z)
 	    {
-	        // switch the coordinate of the LIDAR
-	        float temp_holder = 0.0;
-	        average_z = -average_z;
-	        temp_holder = average_x;
-	        average_x = average_y;
-	        average_y = temp_holder;
-	        point.push_back(average_x);
-	        point.push_back(average_y);
-	        point.push_back(average_z);
-	        point.push_back(variance_z);
-	        _local_grid_map.push_back(point);
-	        point.clear();
+	    	point.push_back(1); // 1 means is occupied while 0 means is empty
 	    }
+	    else
+	    {
+	    	point.push_back(0);
+	    }
+	    local_grid_map_temp.push_back(point);
+	    point.clear();
+
 	    //print out points
-	    if (total_x || total_y || total_z)
-	    {
-	        std::cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
-	    }
+	    //if (total_x || total_y || total_z)
+	    //{
+	    //    std::cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
+	    //}
 	    total_x = 0;
 	    total_y = 0;
 	    total_z = 0;
@@ -403,8 +430,55 @@ void LidarFilter::doMathMapping()
 	    average_z = 0;
 	    variance_z = 0;
 	}
-
+	//ROS_INFO("4");
+	/*
+	// evaluate if the point is on the edge or not
+	int adjacent_counter = 0;
+	for (int i = 0; i < local_grid_map_temp.size(); i++)
+	{
+		float threshold_x = local_grid_map_temp[i][0];
+		float threshold_y = local_grid_map_temp[i][1];
+		if(local_grid_map_temp[i][4] == 1) // this point must be occupied in the first place
+		{
+			for (int j = 0; j < local_grid_map_temp.size(); i++)
+			{
+				if(j != i) // not the same point
+				{
+					if(local_grid_map_temp[j][0] > floor(threshold_x)-1 && local_grid_map_temp[j][0] < ceil(threshold_x)+1 && local_grid_map_temp[j][1] > floor(threshold_y)-1 && local_grid_map_temp[j][1] < ceil(threshold_y)+1) //within 9 ceils block
+					{
+						if(local_grid_map_temp[j][4] == 1)
+							adjacent_counter = adjacent_counter + 1;
+					}
+				}
+				if (adjacent_counter > 4) // if more than 4 out of 8 neighbors are occupied, then it is a non-ground adjacent point
+				{
+					local_grid_map_temp[i].push_back(0); // 0 means is non-ground adjacent while 1 mean is ground adjacent
+				}
+				else
+				{
+					local_grid_map_temp[i].push_back(1);
+				}
+				adjacent_counter = 0;
+				threshold_x = 0.0;
+				threshold_y = 0.0;
+			}
+		}
+		else
+		{
+			local_grid_map_temp[i].push_back(0); // push back 0 to hold the place
+		}
+	}
+	for (int i = 0; i < local_grid_map_temp.size(); i++)
+	{
+		if(local_grid_map_temp[i][4] == 1) // if this grid is occupied
+		{
+			_local_grid_map.push_back(local_grid_map_temp[i]);
+		}
+	}
+	*/
+	//ROS_INFO("5");
 	_object_filtered = *object_filtered;
+	//ROS_INFO("6");
 }
 
 void LidarFilter::doMathHoming()
@@ -528,15 +602,15 @@ void LidarFilter::doMathHoming()
         if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
         {
         	cylinderWasDetected = true;
-            ROS_INFO("cluster %i has fit the cylinder model with probability %f", i, seg.getProbability());
-            // cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-            //                                << coefficients_cylinder->values[1] << " "
-            //                                << coefficients_cylinder->values[2] << " "
-            //                                << coefficients_cylinder->values[3] << " "
-            //                                << coefficients_cylinder->values[4] << " "
-            //                                << coefficients_cylinder->values[5] << " "
-            //                                << coefficients_cylinder->values[6] << endl;
-            //cout << "Probability is " << seg.getProbability () << endl;
+            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
+            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+                                            << coefficients_cylinder->values[1] << " "
+                                            << coefficients_cylinder->values[2] << " "
+                                            << coefficients_cylinder->values[3] << " "
+                                            << coefficients_cylinder->values[4] << " "
+                                            << coefficients_cylinder->values[5] << " "
+                                            << coefficients_cylinder->values[6] << endl;
+            cout << "Probability is " << seg.getProbability () << endl;
 
 
 			float max_x = cloud_cylinder->points[0].x;

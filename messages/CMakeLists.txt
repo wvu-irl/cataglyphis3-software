@@ -61,6 +61,11 @@ find_package(catkin REQUIRED COMPONENTS
    CVSamplesFound.msg
    Keyframe.msg
    KeyframeList.msg
+   LidarFilterOut.msg
+   CollisionOut.msg
+   SLAMPoseOut.msg
+   RobotPose.msg
+   DriveabilityHazards.msg
    #added for Comm port, remove
    nb1_to_i7_msg.msg
    nb2_3_to_i7_msg.msg
@@ -77,9 +82,11 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    ExecAction.srv
    CVSearchCmd.srv
-   ROIGridMap.srv
    MapSegment.srv
    NavFilterControl.srv
+   CreateROIKeyframe.srv
+   SearchLocalMapInfo.srv
+   GlobalMapPathHazards.srv
  )
 
 ## Generate actions in the 'action' folder

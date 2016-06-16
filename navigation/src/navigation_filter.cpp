@@ -2,6 +2,7 @@
 
 NavigationFilter::NavigationFilter()
 {
+    //this probably shouldn't be subscribing to "topicname" -Matt G.
 	sub_exec = nh.subscribe("/topicname", 1, &NavigationFilter::getExecInfoCallback, this);
 	pause_switch = false;
 	stopFlag = false;
@@ -18,6 +19,18 @@ NavigationFilter::NavigationFilter()
 	encoders.set_wheel_radius(0.2286/2);
 	encoders.set_counts_per_revolution(4476.16*1.062);
 	current_time = ros::Time::now().toSec();
+
+    //added for new User Interface -Matt G.
+    std::string tempServiceName = "";
+    if(!(ros::param::get("NavControlServiceName", tempServiceName)))
+    {
+        //if the parameter does not exist, use this default one
+        tempServiceName = "/nav/nav_filter_control_service";
+    }
+    nav_control_server = nh.advertiseService(tempServiceName,
+                                                &NavigationFilter::navFilterControlServiceCallback,
+                                                    this);
+
 }
 
 void NavigationFilter::update_time()
@@ -28,7 +41,9 @@ void NavigationFilter::update_time()
 
 void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 {
-	if (user_input_nav_act.bias_removal_forklift!=1)
+    if (user_input_nav_act.bias_removal_forklift!=1
+            && !(latest_nav_control_request.runBiasRemoval)
+            )
 	{
 		first_pass = true;
 		ROS_INFO("user_input_nav_act.bias_removal_forklift!=1");
@@ -68,7 +83,9 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 				filter.collect_accelerometer_data(imu.ax, imu.ay, imu.az);
 			}
 		}
-		if (user_input_nav_act.bias_removal_forklift==1)
+        if (user_input_nav_act.bias_removal_forklift==1
+                || latest_nav_control_request.runBiasRemoval
+                )
 		{
 			if (imu.p1_values.size() > 500 && collected_gyro1_data!=true)
 			{
@@ -125,7 +142,10 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 			}
 		}
 	}
-	if (user_input_nav_act.bias_removal_forklift==1 && collected_gyro_data)
+    if ((user_input_nav_act.bias_removal_forklift==1
+         || latest_nav_control_request.runBiasRemoval
+         )
+            && collected_gyro_data)
 	{
 		nav_status_output = 1;
 	}
@@ -133,9 +153,11 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 	{
 		nav_status_output = 0;
 	}
-	ROS_INFO("collected_gyro_data = %f \n", collected_gyro_data);
+    ROS_INFO("collected_gyro_data = %d \n", collected_gyro_data);
 	imu.set_prev_counters();
-	if(user_input_nav_act.begin_dead_reckoning==1) 
+    if(user_input_nav_act.begin_dead_reckoning==1
+            || latest_nav_control_request.beginForkliftDeadReckoning
+            )
 	{
 		state = _forklift_drive;
 		init_filter.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
@@ -596,4 +618,22 @@ void NavigationFilter::getLidarFilterOutCallback(const messages::LidarFilterOut:
 	this->homing_y = msg->homing_y;
 	this->homing_heading = msg->homing_heading;
 	this->homing_found = msg->homing_found;
+}
+
+//added for new User Interface -Matt G.
+bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterControl::Request &request, messages::NavFilterControl::Response &response)
+{
+    this->latest_nav_control_request = request;
+    response.p1Offset = imu.p1_offset;
+    response.q1Offset = imu.q1_offset;
+    response.r1Offset = imu.r1_offset;
+
+    response.p2Offset = imu.p2_offset;
+    response.q2Offset = imu.q2_offset;
+    response.r2Offset = imu.r2_offset;
+
+    response.p3Offset = imu.p3_offset;
+    response.q3Offset = imu.q3_offset;
+    response.r3Offset = imu.r3_offset;
+    return true;
 }
