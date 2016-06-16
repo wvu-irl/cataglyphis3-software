@@ -230,7 +230,7 @@ void LidarFilter::doMathMapping()
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
 	ground_point.points.resize (ground_point.width * ground_point.height);
-
+	//ROS_INFO("1");
 	// THESE ARE FOR CYLINDER DETECTION
 	
 	
@@ -321,7 +321,7 @@ void LidarFilter::doMathMapping()
 	extract.setIndices (ground);
 	extract.filter (*ground_filtered);
 	*/
-
+	//ROS_INFO("2");
 	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
 	pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
 	// Create the segmentation object
@@ -348,7 +348,7 @@ void LidarFilter::doMathMapping()
 	// std::stringstream ss3;
 	// ss3 << "ground.pcd";
 	// pcl::io::savePCDFile( ss3.str(), *ground_filtered);
-
+	//ROS_INFO("3");
 	// EXTRACT NON-GROUND RETURNS
 	*object_filtered_projection = *object_filtered;
 	// PROJECTION, MAY NEED TO MODIFY THE ALGORITHM LATER
@@ -410,16 +410,12 @@ void LidarFilter::doMathMapping()
 	    {
 	    	point.push_back(1); // 1 means is occupied while 0 means is empty
 	    }
-<<<<<<< HEAD
-=======
 	    else
 	    {
 	    	point.push_back(0);
 	    }
 	    local_grid_map_temp.push_back(point);
 	    point.clear();
-	    	    
->>>>>>> 7d243d3baa910e05d68dff65688eef97ef6283bb
 	    //print out points
 	    //if (total_x || total_y || total_z)
 	    //{
@@ -433,6 +429,8 @@ void LidarFilter::doMathMapping()
 	    average_z = 0;
 	    variance_z = 0;
 	}
+	//ROS_INFO("4");
+	/*
 	// evaluate if the point is on the edge or not
 	int adjacent_counter = 0;
 	for (int i = 0; i < local_grid_map_temp.size(); i++)
@@ -476,7 +474,10 @@ void LidarFilter::doMathMapping()
 			_local_grid_map.push_back(local_grid_map_temp[i]);
 		}
 	}
+	*/
+	//ROS_INFO("5");
 	_object_filtered = *object_filtered;
+	//ROS_INFO("6");
 }
 
 void LidarFilter::doMathHoming()

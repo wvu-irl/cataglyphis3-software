@@ -92,6 +92,7 @@ private:
 	//stitch clouds function
 	pcl::PointCloud<pcl::PointXYZ> _piece_one;
 	pcl::PointCloud<pcl::PointXYZ> _piece_two;
+
 	//mapping function
 	const int map_range = 40; //size of local map is 20x20 m
 	const float grid_size = 1; // size of the local map grid

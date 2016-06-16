@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	LidarFilter lidar_filter;
 	messages::LidarFilterOut msg_LidarFilterOut;
 	messages::LocalMap msg_LocalMap;
-	bool low_sampling_freq = true; //set to true if we are using 5 Hz sampling frequency
+	bool low_sampling_freq = false; //set to true if we are using 5 Hz sampling frequency
 
 	while(ros::ok())
 	{
