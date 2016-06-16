@@ -116,7 +116,7 @@ private:
 	float _homing_heading = 0;
 	bool _homing_found = 0;
 
-
+	//callback functions
 	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg);
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud);
 };

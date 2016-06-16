@@ -11,13 +11,13 @@ int main(int argc, char **argv)
 	LidarFilter lidar_filter;
 	messages::LidarFilterOut msg_LidarFilterOut;
 	messages::LocalMap msg_LocalMap;
-	bool low_sampling_freq = false; //set to true if we are using 5 Hz sampling frequency
+	bool low_sampling_freq = true; //set to true if we are using 5 Hz sampling frequency
 
 	while(ros::ok())
 	{
 		if(lidar_filter.newPointCloudAvailable())
 		{
-			if (low_sampling_freq = true)
+			if (low_sampling_freq == true)
 			{
 				lidar_filter.stitchClouds();
 				if(lidar_filter._registration_counter % 2 == 0 && lidar_filter._registration_counter != 0)
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 					lidar_filter.packHomingMessage(msg_LidarFilterOut);
 				}
 			}
-			else if(low_sampling_freq = false)
+			else if(low_sampling_freq == false)
 			{
 				lidar_filter.doMathMapping();
 				lidar_filter.doMathHoming();

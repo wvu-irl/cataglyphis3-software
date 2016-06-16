@@ -47,9 +47,9 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 {
 	_navigation_filter_x = msg->x_position; //meters
 	_navigation_filter_y = msg->y_position; //meters
-	_navigation_filter_roll = msg->roll; //radians
-	_navigation_filter_pitch = msg->pitch; //radians
-	_navigation_filter_heading = msg->heading; //radians
+	_navigation_filter_roll = msg->roll*3.14159265/180.0; //radians
+	_navigation_filter_pitch = msg->pitch*3.14159265/180.0; //radians
+	_navigation_filter_heading = msg->heading*3.14159265/180.0; //radians
 	_navigation_filter_counter = _navigation_filter_counter + 1;
 
 	//roll rotation using navigation data
@@ -59,12 +59,23 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_R_roll(0,2) = 0;
 	_R_roll(1,0) = 0;
 	_R_roll(1,1) = cos(_navigation_filter_roll);
-	_R_roll(1,2) = sin(_navigation_filter_roll);
+	_R_roll(1,2) = -sin(_navigation_filter_roll);
 	_R_roll(2,0) = 0;
-	_R_roll(2,1) = -sin(_navigation_filter_roll);
+	_R_roll(2,1) = sin(_navigation_filter_roll);
 	_R_roll(2,2) = cos(_navigation_filter_roll);
 
+	// _R_roll(0,0) = 1;
+	// _R_roll(0,1) = 0;
+	// _R_roll(0,2) = 0;
+	// _R_roll(1,0) = 0;
+	// _R_roll(1,1) = 1;
+	// _R_roll(1,2) = 0;
+	// _R_roll(2,0) = 0;
+	// _R_roll(2,1) = 0;
+	// _R_roll(2,2) = 1;
+
 	//pitch rotation using navigation data
+	std::cout << "_navigation_filter_pitch = " << _navigation_filter_pitch << std::endl;
 	Eigen::Matrix3f _R_pitch;
 	_R_pitch(0,0) = cos(_navigation_filter_pitch);
 	_R_pitch(0,1) = 0;
@@ -75,6 +86,16 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_R_pitch(2,0) = sin(_navigation_filter_pitch);
 	_R_pitch(2,1) = 0;
 	_R_pitch(2,2) = cos(_navigation_filter_pitch);
+
+	// _R_pitch(0,0) = 1;
+	// _R_pitch(0,1) = 0;
+	// _R_pitch(0,2) = 0;
+	// _R_pitch(1,0) = 0;
+	// _R_pitch(1,1) = 1;
+	// _R_pitch(1,2) = 0;
+	// _R_pitch(2,0) = 0;
+	// _R_pitch(2,1) = 0;
+	// _R_pitch(2,2) = 1;
 
 	//rotation from lidar to robot body frame (rotation)
 	_R_tilt_robot_to_beacon = _R_roll*_R_pitch;
@@ -144,6 +165,10 @@ void LidarFilter::stitchClouds()
 	{
 		_piece_two = _input_cloud;
 		_input_cloud = _piece_one + _piece_two;
+
+		// std::stringstream ss;
+		// ss << "tilt_compensation.pcd";
+		// pcl::io::savePCDFile(ss.str(),_input_cloud);
 	}
 }
 
