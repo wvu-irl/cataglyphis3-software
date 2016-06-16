@@ -20,6 +20,10 @@
 //message files
 #include "messages/LocalMap.h"
 
+//headfile for testing
+#include <pcl/io/pcd_io.h>	//save pcd file
+#include <time.h>	// show calculation time
+
 class Keyframe
 {
 public:
@@ -96,10 +100,7 @@ protected:
 	float y_IMU;
 	float heading_IMU;
 
-	//local x, y, heading for calculating guessT
-	float x0, y0, heading0;
-	float x1, y1, heading1;
-	double theta, diff_x, diff_y, sin_theta, cos_theta;
+
 	const double PI = 3.1415926;
 
 	//angle of cone blocking points from robot body (this need to be determined)
@@ -135,12 +136,19 @@ protected:
 	int read_index;
 	int key_index;
 
+	//time definition
+	clock_t start, finish;
+	double totaltime;
+
 	void getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn);
 	// void set_Navfilter_data(float IMU_x, float IMU_y, float IMU_heading);
-	bool ICP_compute(int message_input_index, ICP_Result &icp_result);	//*************change return type to struct include tranformation matrix, from index, to index, overlap, true of false***********//
+	ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index);	//*************change return type to struct include tranformation matrix, from index, to index, overlap, true of false***********//
 	bool outside_rectangle(float rectangle_x, float rectangle_y);		//determine if the point is inside 2.24m rectangle
 	PointCloud remove_block_area(float b_x1, float b_y1, float b_heading1, float b_x0, float b_y0, float b_heading0, PointCloud before_remove_points);	//remove points blocks by masks in pre frame
 	bool ICP_varification(int ref_v_index, int read_v_index, matrix4f T, double &overlap);
+
+
+
 
 
 
@@ -176,7 +184,7 @@ void Keyframe::Initialization()
 
 	//parameters for points filter
 	edge_rectangle_filter = 2.24; //length of edgs of rectangle filter
-	b_theta = 30 * PI / 180; //angle of blocked points (translate to radian)
+	b_theta = 10 * PI / 180; //angle of blocked points (translate to radian)
 
 	//initialize all vectors
 	LocalMap_All_s.clear();
@@ -201,9 +209,13 @@ void Keyframe::Initialization()
 
 
 void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
-{
+{	
+	//timer, debug
+	start = clock();
+	
 	if(LocalMapMsgIn.new_data) //if the localmap data is new, update
 	{
+		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Get data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 
 		//************************************************************//
 		//store all information into vector LocalMap_All_s
@@ -258,65 +270,83 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 		LocalMap_Varification_s.push_back(localmap_varification);
 	
+		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
+
+		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Decide ICP frame sequence !!  important>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
+
 		
 
+		//if keyframe update, reset the reference frame as the new keyframe
+		if(ref_index != key_index)
+		{
+			ref_index = key_index;
 
-	// 	//do ICP to get transformation matrix from read to reference
+			// TrefTomap = TreadTomap;
+		}
+
+		read_index = messages_input_index;
+
+
+
+		//do ICP to get transformation matrix from read to reference
 		ICP_Result icp_result;
-		ICP_compute(messages_input_index, icp_result);
-
+		icp_result = ICP_compute(ref_index, read_index);
+		
+		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
+		//***************************timer*************************//
+		finish = clock();
+		totaltime = (double)(finish - start) / CLOCKS_PER_SEC;
+		
 		//*****************************debug***************************//
 		ROS_INFO_STREAM("Matrix:  \n" << icp_result.transformation_matrix);
 		ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
 		ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
+		ROS_INFO_STREAM("time: " << totaltime << "s");
 	
 	// 	//verify the transformation matrix from ICP using hight information
 
 		//when a new local map message come, messages_input_index add one
 		messages_input_index++;
 
+
 	}
 	
 }
 
 //**************************ICP calculation**********************//
-bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
+Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index)
 {
 	double overlap;
 	bool verification_result;
-	//ICP_Result icp_result;
+	ICP_Result icp_result;
 
 	PointCloudPtr refPointCloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudPtr readPointCloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
-	//if keyframe update, reset the reference frame as the new keyframe
-	if(ref_index != key_index)
-	{
-		ref_index = key_index;
-
-		// TrefTomap = TreadTomap;
-	}
-
-	read_index = message_input_index;
+	
+	//local x, y, heading for calculating guessT
+	float x0, y0, heading0;
+	float x1, y1, heading1;
+	double theta, diff_x, diff_y, sin_theta, cos_theta;
 
 	//if reference frame and read frame are same frame, return indetity matrix
-	if(ref_index == read_index)
+	if(ICP_ref_index == ICP_read_index)
 	{
 		icp_result.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
 		icp_result.verification_result = true;
-		icp_result.from_index = read_index;
-		icp_result.to_index = ref_index;
+		icp_result.from_index = ICP_read_index;
+		icp_result.to_index = ICP_ref_index;
 		icp_result.overlap = 1.0;
 
-		return true;
+		return icp_result;
 	}
 
-	x0 = LocalMap_All_s[ref_index].x_filter;
-	y0 = LocalMap_All_s[ref_index].y_filter;
-	heading0 = LocalMap_All_s[ref_index].heading_filter;
+	x0 = LocalMap_All_s[ICP_ref_index].x_filter;
+	y0 = LocalMap_All_s[ICP_ref_index].y_filter;
+	heading0 = LocalMap_All_s[ICP_ref_index].heading_filter;
 
-	x1 = LocalMap_All_s[read_index].x_filter;
-	y1 = LocalMap_All_s[read_index].y_filter;
-	heading1 = LocalMap_All_s[read_index].heading_filter;
+	x1 = LocalMap_All_s[ICP_read_index].x_filter;
+	y1 = LocalMap_All_s[ICP_read_index].y_filter;
+	heading1 = LocalMap_All_s[ICP_read_index].heading_filter;
 
 	//using Nav filter data to calculate guess transformation matrix
 	theta = heading1 - heading0;
@@ -334,12 +364,21 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 
 	//icp calculation
 
-	*refPointCloudPtr = LocalMap_ICP_s[ref_index].ICP_cloudMsgIn;
+	
 	ROS_INFO_STREAM("Start working......4  " << refPointCloudPtr->size());
-	//remove points blocked in ref frame
+	//remove points blocked in ref frame and read frame
 	PointCloud readPointCloud_rm;
-	readPointCloud_rm = remove_block_area(x1, y1, heading1, x0, y0, heading0, LocalMap_ICP_s[read_index].ICP_cloudMsgIn);
+	PointCloud refPointCloud_rm;
+	readPointCloud_rm = remove_block_area(x1, y1, heading1, x0, y0, heading0, LocalMap_ICP_s[ICP_read_index].ICP_cloudMsgIn);
+	refPointCloud_rm = remove_block_area(x0, y0, heading0, x1, y1, heading1, LocalMap_ICP_s[ICP_ref_index].ICP_cloudMsgIn);
 	*readPointCloudPtr = readPointCloud_rm;
+	*refPointCloudPtr = refPointCloud_rm;
+	//save pcd for debug
+	pcl::io::savePCDFileASCII ("readPointCloud_rm.pcd", readPointCloud_rm);
+	pcl::io::savePCDFileASCII ("readPointCloud.pcd", LocalMap_ICP_s[ICP_read_index].ICP_cloudMsgIn);
+
+	pcl::io::savePCDFileASCII ("refPointCloud_rm.pcd", refPointCloud_rm);
+	pcl::io::savePCDFileASCII ("refPointCloud.pcd", LocalMap_ICP_s[ICP_ref_index].ICP_cloudMsgIn);
 
 	PointCloud Final;
 
@@ -351,15 +390,15 @@ bool Keyframe::ICP_compute(int message_input_index, ICP_Result &icp_result)
 	FinalTransformation = icp.getFinalTransformation();
 
 	// return icp.getFinalTransformation(); //resutl of ICP
-	verification_result = ICP_varification(ref_index, read_index, FinalTransformation, overlap);
+	verification_result = ICP_varification(ICP_ref_index, ICP_read_index, FinalTransformation, overlap);
 
 	icp_result.transformation_matrix = icp.getFinalTransformation();
 	icp_result.verification_result = verification_result;
-	icp_result.from_index = read_index;
-	icp_result.to_index = ref_index;
+	icp_result.from_index = ICP_read_index;
+	icp_result.to_index = ICP_ref_index;
 	icp_result.overlap = overlap;
 
-	return true;
+	return icp_result;
 }
 
 
@@ -402,7 +441,7 @@ Keyframe::PointCloud Keyframe::remove_block_area(float b_x1, float b_y1, float b
 	for(int i = 0; i < before_remove_points.size(); i++)
 	{
 		if(bp_side * ( before_remove_points[i].y - ((float)tan(psi_p) * (before_remove_points[i].x - rx) + ry) ) < 0 || 
-			bn_side*( before_remove_points[i].y - ((float)tan(psi_n) * (before_remove_points[i].x-rx) + ry) ) > 0)
+			bn_side*( before_remove_points[i].y - ((float)tan(psi_n) * (before_remove_points[i].x-rx) + ry) ) < 0)
 
 			after_remove_points.push_back(pcl::PointXYZ(before_remove_points[i].x, before_remove_points[i].y, 0.0));	
 	}
@@ -458,9 +497,12 @@ bool Keyframe::ICP_varification(int ref_v_index, int read_v_index, matrix4f T, d
   		read_z_value = LocalMap_Varification_s[read_v_index].z_mean[all_correspondences[i].index_query];
   		ref_z_value = LocalMap_Varification_s[ref_v_index].z_mean[all_correspondences[i].index_match];
   		ref_var_z = LocalMap_Varification_s[ref_v_index].var_z[all_correspondences[i].index_match];
+  		
   		if(read_z_value < ref_z_value + 3 * ref_var_z && read_z_value > ref_z_value - 3 * ref_var_z)
   			count++;
   	}
+  	ROS_INFO_STREAM("height are same: "<< count);
+  	ROS_INFO_STREAM("all correspondence: " << all_correspondences.size());
 
   	if(count / (double) all_correspondences.size() > ratio_height_varification)
   		return true;
