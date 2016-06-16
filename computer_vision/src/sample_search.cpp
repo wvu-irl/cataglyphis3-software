@@ -103,7 +103,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 	//call classifier servver
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 50;
+	imageProbabilitiesSrv.request.imgSize = 150;
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
