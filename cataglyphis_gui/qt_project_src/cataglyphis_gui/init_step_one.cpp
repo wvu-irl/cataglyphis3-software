@@ -42,5 +42,8 @@ void init_step_one::when_nav_init_return(const messages::NavFilterControl navRes
         ROS_DEBUG("init_step_one:: Nav Init Sucessful");
         emit step_one_finished();
     }
-    ROS_WARN("init_step_one:: Nav Init FAILED! skip step to move on");
+    else
+    {
+        ROS_WARN("init_step_one:: Nav Init FAILED! skip step to move on");
+    }
 }

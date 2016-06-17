@@ -25,6 +25,12 @@
      <height>41</height>
     </rect>
    </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="text">
     <string>Begin
 Dead Reckoning</string>
@@ -38,6 +44,12 @@ Dead Reckoning</string>
      <width>111</width>
      <height>61</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="font">
     <font>
@@ -57,6 +69,12 @@ Bias Removal</string>
      <width>301</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="value">
     <number>0</number>
@@ -80,13 +98,22 @@ Bias Removal</string>
      <height>215</height>
     </rect>
    </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QFormLayout" name="formLayout">
       <item row="0" column="0">
        <widget class="QLabel" name="label">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -99,7 +126,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="p1_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -131,7 +158,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_2">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -144,7 +171,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="q1_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -164,6 +191,9 @@ Bias Removal</string>
         <property name="decimals">
          <number>9</number>
         </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
+        </property>
        </widget>
       </item>
      </layout>
@@ -173,7 +203,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_3">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -186,7 +216,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="r1_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -206,6 +236,9 @@ Bias Removal</string>
         <property name="decimals">
          <number>9</number>
         </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
+        </property>
        </widget>
       </item>
      </layout>
@@ -215,7 +248,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_4">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -228,7 +261,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="p2_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -248,6 +281,9 @@ Bias Removal</string>
         <property name="decimals">
          <number>9</number>
         </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
+        </property>
        </widget>
       </item>
      </layout>
@@ -257,7 +293,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_5">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -270,7 +306,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="q2_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -290,6 +326,9 @@ Bias Removal</string>
         <property name="decimals">
          <number>9</number>
         </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
+        </property>
        </widget>
       </item>
      </layout>
@@ -299,7 +338,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_6">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -312,7 +351,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="r2_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -332,6 +371,9 @@ Bias Removal</string>
         <property name="decimals">
          <number>9</number>
         </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
+        </property>
        </widget>
       </item>
      </layout>
@@ -341,7 +383,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_7">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -354,7 +396,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="p3_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -374,6 +416,9 @@ Bias Removal</string>
         <property name="decimals">
          <number>9</number>
         </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
+        </property>
        </widget>
       </item>
      </layout>
@@ -383,7 +428,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_8">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -396,7 +441,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="q3_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -416,6 +461,9 @@ Bias Removal</string>
         <property name="decimals">
          <number>9</number>
         </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
+        </property>
        </widget>
       </item>
      </layout>
@@ -425,7 +473,7 @@ Bias Removal</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_9">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -438,7 +486,7 @@ Bias Removal</string>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="r3_offset_spinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -457,6 +505,9 @@ Bias Removal</string>
         </property>
         <property name="decimals">
          <number>9</number>
+        </property>
+        <property name="minimum">
+         <double>-99.000000000000000</double>
         </property>
        </widget>
       </item>

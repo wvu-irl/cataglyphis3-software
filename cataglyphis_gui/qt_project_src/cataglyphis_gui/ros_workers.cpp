@@ -21,13 +21,13 @@ void ros_workers::run_nav_service(messages::NavFilterControl serviceRequest,
         }
         else
         {
-            ROS_DEBUG("ros_workers::run_nav_service:: Nav Service Call Failure!");
+            ROS_WARN("ros_workers::run_nav_service:: Nav Service Call Failure!");
         }
     }
     else
     {
-        ROS_DEBUG("ros_workers::run_nav_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_workers::run_nav_service:: Nav Service Does not Exist!");
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
     }
@@ -56,7 +56,7 @@ void ros_workers::run_nav_init_service(messages::NavFilterControl serviceRequest
     else
     {
         ROS_WARN("ros_workers::nav_init_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
     }
@@ -86,7 +86,7 @@ void ros_workers::run_bias_removal_service()
     else
     {
         ROS_WARN("ros_workers::bias_removal_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
         navControl.response.p1Offset = NAN;
@@ -127,7 +127,7 @@ void ros_workers::run_start_dead_reckoning_service()
     else
     {
         ROS_WARN("ros_workers::dead_reckoning_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
         navControl.response.p1Offset = NAN;

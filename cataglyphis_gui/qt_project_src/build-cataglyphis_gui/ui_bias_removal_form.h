@@ -69,15 +69,27 @@ public:
         begin_dead_reckoning_button->setObjectName(QStringLiteral("begin_dead_reckoning_button"));
         begin_dead_reckoning_button->setEnabled(false);
         begin_dead_reckoning_button->setGeometry(QRect(170, 170, 111, 41));
+        QSizePolicy sizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(begin_dead_reckoning_button->sizePolicy().hasHeightForWidth());
+        begin_dead_reckoning_button->setSizePolicy(sizePolicy);
         perform_bias_removal_button = new QPushButton(bias_removal_form);
         perform_bias_removal_button->setObjectName(QStringLiteral("perform_bias_removal_button"));
         perform_bias_removal_button->setGeometry(QRect(170, 30, 111, 61));
+        sizePolicy.setHeightForWidth(perform_bias_removal_button->sizePolicy().hasHeightForWidth());
+        perform_bias_removal_button->setSizePolicy(sizePolicy);
         QFont font;
         font.setPointSize(19);
         perform_bias_removal_button->setFont(font);
         progressBar = new QProgressBar(bias_removal_form);
         progressBar->setObjectName(QStringLiteral("progressBar"));
         progressBar->setGeometry(QRect(10, 230, 301, 23));
+        QSizePolicy sizePolicy1(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(progressBar->sizePolicy().hasHeightForWidth());
+        progressBar->setSizePolicy(sizePolicy1);
         progressBar->setValue(0);
         progressBar->setTextVisible(false);
         progressBar->setOrientation(Qt::Horizontal);
@@ -85,6 +97,8 @@ public:
         layoutWidget = new QWidget(bias_removal_form);
         layoutWidget->setObjectName(QStringLiteral("layoutWidget"));
         layoutWidget->setGeometry(QRect(10, 10, 136, 215));
+        sizePolicy.setHeightForWidth(layoutWidget->sizePolicy().hasHeightForWidth());
+        layoutWidget->setSizePolicy(sizePolicy);
         verticalLayout = new QVBoxLayout(layoutWidget);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
@@ -92,9 +106,7 @@ public:
         formLayout->setObjectName(QStringLiteral("formLayout"));
         label = new QLabel(layoutWidget);
         label->setObjectName(QStringLiteral("label"));
-        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        sizePolicy.setHorizontalStretch(0);
-        sizePolicy.setVerticalStretch(0);
+        label->setEnabled(true);
         sizePolicy.setHeightForWidth(label->sizePolicy().hasHeightForWidth());
         label->setSizePolicy(sizePolicy);
 
@@ -102,11 +114,8 @@ public:
 
         p1_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         p1_offset_spinbox->setObjectName(QStringLiteral("p1_offset_spinbox"));
-        QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Fixed);
-        sizePolicy1.setHorizontalStretch(0);
-        sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(p1_offset_spinbox->sizePolicy().hasHeightForWidth());
-        p1_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(p1_offset_spinbox->sizePolicy().hasHeightForWidth());
+        p1_offset_spinbox->setSizePolicy(sizePolicy);
         p1_offset_spinbox->setFrame(true);
         p1_offset_spinbox->setAlignment(Qt::AlignCenter);
         p1_offset_spinbox->setReadOnly(true);
@@ -130,13 +139,14 @@ public:
 
         q1_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         q1_offset_spinbox->setObjectName(QStringLiteral("q1_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(q1_offset_spinbox->sizePolicy().hasHeightForWidth());
-        q1_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(q1_offset_spinbox->sizePolicy().hasHeightForWidth());
+        q1_offset_spinbox->setSizePolicy(sizePolicy);
         q1_offset_spinbox->setFrame(true);
         q1_offset_spinbox->setAlignment(Qt::AlignCenter);
         q1_offset_spinbox->setReadOnly(true);
         q1_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         q1_offset_spinbox->setDecimals(9);
+        q1_offset_spinbox->setMinimum(-99);
 
         formLayout_2->setWidget(0, QFormLayout::FieldRole, q1_offset_spinbox);
 
@@ -154,13 +164,14 @@ public:
 
         r1_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         r1_offset_spinbox->setObjectName(QStringLiteral("r1_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(r1_offset_spinbox->sizePolicy().hasHeightForWidth());
-        r1_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(r1_offset_spinbox->sizePolicy().hasHeightForWidth());
+        r1_offset_spinbox->setSizePolicy(sizePolicy);
         r1_offset_spinbox->setFrame(true);
         r1_offset_spinbox->setAlignment(Qt::AlignCenter);
         r1_offset_spinbox->setReadOnly(true);
         r1_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         r1_offset_spinbox->setDecimals(9);
+        r1_offset_spinbox->setMinimum(-99);
 
         formLayout_3->setWidget(0, QFormLayout::FieldRole, r1_offset_spinbox);
 
@@ -178,13 +189,14 @@ public:
 
         p2_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         p2_offset_spinbox->setObjectName(QStringLiteral("p2_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(p2_offset_spinbox->sizePolicy().hasHeightForWidth());
-        p2_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(p2_offset_spinbox->sizePolicy().hasHeightForWidth());
+        p2_offset_spinbox->setSizePolicy(sizePolicy);
         p2_offset_spinbox->setFrame(true);
         p2_offset_spinbox->setAlignment(Qt::AlignCenter);
         p2_offset_spinbox->setReadOnly(true);
         p2_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         p2_offset_spinbox->setDecimals(9);
+        p2_offset_spinbox->setMinimum(-99);
 
         formLayout_4->setWidget(0, QFormLayout::FieldRole, p2_offset_spinbox);
 
@@ -202,13 +214,14 @@ public:
 
         q2_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         q2_offset_spinbox->setObjectName(QStringLiteral("q2_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(q2_offset_spinbox->sizePolicy().hasHeightForWidth());
-        q2_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(q2_offset_spinbox->sizePolicy().hasHeightForWidth());
+        q2_offset_spinbox->setSizePolicy(sizePolicy);
         q2_offset_spinbox->setFrame(true);
         q2_offset_spinbox->setAlignment(Qt::AlignCenter);
         q2_offset_spinbox->setReadOnly(true);
         q2_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         q2_offset_spinbox->setDecimals(9);
+        q2_offset_spinbox->setMinimum(-99);
 
         formLayout_5->setWidget(0, QFormLayout::FieldRole, q2_offset_spinbox);
 
@@ -226,13 +239,14 @@ public:
 
         r2_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         r2_offset_spinbox->setObjectName(QStringLiteral("r2_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(r2_offset_spinbox->sizePolicy().hasHeightForWidth());
-        r2_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(r2_offset_spinbox->sizePolicy().hasHeightForWidth());
+        r2_offset_spinbox->setSizePolicy(sizePolicy);
         r2_offset_spinbox->setFrame(true);
         r2_offset_spinbox->setAlignment(Qt::AlignCenter);
         r2_offset_spinbox->setReadOnly(true);
         r2_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         r2_offset_spinbox->setDecimals(9);
+        r2_offset_spinbox->setMinimum(-99);
 
         formLayout_6->setWidget(0, QFormLayout::FieldRole, r2_offset_spinbox);
 
@@ -250,13 +264,14 @@ public:
 
         p3_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         p3_offset_spinbox->setObjectName(QStringLiteral("p3_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(p3_offset_spinbox->sizePolicy().hasHeightForWidth());
-        p3_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(p3_offset_spinbox->sizePolicy().hasHeightForWidth());
+        p3_offset_spinbox->setSizePolicy(sizePolicy);
         p3_offset_spinbox->setFrame(true);
         p3_offset_spinbox->setAlignment(Qt::AlignCenter);
         p3_offset_spinbox->setReadOnly(true);
         p3_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         p3_offset_spinbox->setDecimals(9);
+        p3_offset_spinbox->setMinimum(-99);
 
         formLayout_7->setWidget(0, QFormLayout::FieldRole, p3_offset_spinbox);
 
@@ -274,13 +289,14 @@ public:
 
         q3_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         q3_offset_spinbox->setObjectName(QStringLiteral("q3_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(q3_offset_spinbox->sizePolicy().hasHeightForWidth());
-        q3_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(q3_offset_spinbox->sizePolicy().hasHeightForWidth());
+        q3_offset_spinbox->setSizePolicy(sizePolicy);
         q3_offset_spinbox->setFrame(true);
         q3_offset_spinbox->setAlignment(Qt::AlignCenter);
         q3_offset_spinbox->setReadOnly(true);
         q3_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         q3_offset_spinbox->setDecimals(9);
+        q3_offset_spinbox->setMinimum(-99);
 
         formLayout_8->setWidget(0, QFormLayout::FieldRole, q3_offset_spinbox);
 
@@ -298,13 +314,14 @@ public:
 
         r3_offset_spinbox = new QDoubleSpinBox(layoutWidget);
         r3_offset_spinbox->setObjectName(QStringLiteral("r3_offset_spinbox"));
-        sizePolicy1.setHeightForWidth(r3_offset_spinbox->sizePolicy().hasHeightForWidth());
-        r3_offset_spinbox->setSizePolicy(sizePolicy1);
+        sizePolicy.setHeightForWidth(r3_offset_spinbox->sizePolicy().hasHeightForWidth());
+        r3_offset_spinbox->setSizePolicy(sizePolicy);
         r3_offset_spinbox->setFrame(true);
         r3_offset_spinbox->setAlignment(Qt::AlignCenter);
         r3_offset_spinbox->setReadOnly(true);
         r3_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         r3_offset_spinbox->setDecimals(9);
+        r3_offset_spinbox->setMinimum(-99);
 
         formLayout_9->setWidget(0, QFormLayout::FieldRole, r3_offset_spinbox);
 

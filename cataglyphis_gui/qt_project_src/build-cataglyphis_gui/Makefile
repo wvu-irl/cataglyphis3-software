@@ -12,7 +12,7 @@ MAKEFILE      = Makefile
 
 CC            = gcc
 CXX           = g++
-DEFINES       = -DSTATIC -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
+DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 CXXFLAGS      = -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 INCPATH       = -I../cataglyphis_gui -I. -isystem /opt/ros/indigo/include -I/home/calypso-irl/Downloads/qt-everywhere-opensource-src-5.5.1/qtbase/include -I/home/calypso-irl/Downloads/qt-everywhere-opensource-src-5.5.1/qtbase/include/QtWidgets -I/home/calypso-irl/Downloads/qt-everywhere-opensource-src-5.5.1/qtbase/include/QtGui -I/home/calypso-irl/Downloads/qt-everywhere-opensource-src-5.5.1/qtbase/include/QtCore -I. -I. -I/home/calypso-irl/Downloads/qt-everywhere-opensource-src-5.5.1/qtbase/mkspecs/linux-g++

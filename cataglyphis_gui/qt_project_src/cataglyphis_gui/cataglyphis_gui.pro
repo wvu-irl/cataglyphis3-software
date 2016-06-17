@@ -11,12 +11,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = cataglyphis_gui
 TEMPLATE = app
 
-CONFIG += static
-static {
-    CONFIG += static
-    DEFINES += STATIC
-    message("Static Build.")
-}
+#CONFIG += static
+#static {
+#    CONFIG += static
+#    DEFINES += STATIC
+#    message("Static Build.")
+#}
 
 SOURCES +=\
     cataglyphis_startup_form_main.cpp \
