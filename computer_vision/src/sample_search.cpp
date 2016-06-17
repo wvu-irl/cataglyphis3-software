@@ -28,7 +28,7 @@ void SampleSearch::createFileForImageData()
 
 std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int v)
 {
-	//transform pixels to center of image
+	//transform pixels to coordinate system centered around the image
 	u = u - G_IMAGE_WIDTH/2;
 	v = v - G_IMAGE_HEIGHT/2;
 
@@ -89,6 +89,9 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std:
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
 	//call segmentation server
+	gettimeofday(&this->localTimer, NULL);
+    double startSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
 	segmentImageSrv.request.camera = true;
 	segmentImageSrv.request.path = "";
 	if(segmentImageClient.call(segmentImageSrv))
@@ -101,7 +104,14 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return false;
 	}
 
+	gettimeofday(&this->localTimer, NULL);  
+    double endSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
+
 	//call classifier servver
+	gettimeofday(&this->localTimer, NULL);
+    double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 	imageProbabilitiesSrv.request.imgSize = 150;
 	if(classifierClient.call(imageProbabilitiesSrv))
@@ -114,7 +124,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return false;
 	}
 
+	gettimeofday(&this->localTimer, NULL);  
+    double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for segmentation service: %f", endClassifierTime - startClassifierTime);
+
 	//save image, blobs, and blob info if > 0.2 probability of being a sample
+	//TODO: move saving the blobs/images into a function and add an option to do this
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	int save_image_flag = 0;
 	int copy_original_cols = 0;
@@ -150,8 +165,8 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
             G_outputInfoFile << "," << copy_original_rows; //height of origional image
             G_outputInfoFile << "," << segmentImageSrv.response.coordinates[i*2]; //center of object x
             G_outputInfoFile << "," << segmentImageSrv.response.coordinates[i*2+1]; //center of obejct y
-            G_outputInfoFile << "," << image_copy_from_blob.cols*0.5; //origional width of segment
-            G_outputInfoFile << "," << image_copy_from_blob.rows*0.5; //origional height of segment
+            G_outputInfoFile << "," << image_copy_from_blob.cols*0.5; //origional width of segment, NOTE: this needs to be changed if segmentation class changes
+            G_outputInfoFile << "," << image_copy_from_blob.rows*0.5; //origional height of segment, NOTE: this needs to be changed if segmentation class changes
             G_outputInfoFile << "," << image_copy_from_blob.cols; //expanded width of segment
             G_outputInfoFile << "," << image_copy_from_blob.rows; //expanded height of segment
             G_outputInfoFile << std::endl; //end line for each blob
@@ -160,7 +175,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	}
 	G_image_index++;
 
-	//draw samples and non samples on image
+	//draw samples and nonsamples on image (the should always be done, this should not be an option)
 	std::vector<int> binary;
 	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
 	{
@@ -176,6 +191,9 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	drawResultsOnImage(binary, segmentImageSrv.response.coordinates);
 
 	//calculate the position of each sample
+	gettimeofday(&this->localTimer, NULL);
+    double startSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
 	std::vector<double> position;
 	messages::CVSampleProps sampleProps;
 	searchForSamplesMsgOut.sampleList.clear();
@@ -193,6 +211,10 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
 		}
 	}
+
+	gettimeofday(&this->localTimer, NULL);  
+    double endSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for segmentation service: %f", endSampleLocalizationTime - startSampleLocalizationTime);
 
 	//publish results of search
     searchForSamplesMsgOut.procType = req.procType;
