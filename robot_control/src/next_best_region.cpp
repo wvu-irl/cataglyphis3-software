@@ -13,7 +13,6 @@ bool NextBestRegion::runProc()
         // Request info about regions
         if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
         else ROS_ERROR("regionsOfInterest service call unsuccessful");
-
 		// Loop through list and choose best region not yet searched
         bestROIValue = 0;
         bestROINum = 0;
@@ -47,6 +46,7 @@ bool NextBestRegion::runProc()
 			//sendDriveGlobal(false, false);
 			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             currentROIIndex = bestROINum;
+            allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
             state = _exec_;
         }
 		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
