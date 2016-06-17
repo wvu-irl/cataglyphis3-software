@@ -8,10 +8,18 @@
 #include <messages/CollisionOut.h>
 #include <messages/CVSearchCmd.h>
 #include <messages/CVSamplesFound.h>
+#include <messages/KeyframeList.h>
+#include <messages/CreateROIKeyframe.h>
+#include <grid_map_ros/grid_map_ros.hpp>
+#include <grid_map_msgs/GridMap.h>
+#include <robot_control/map_layers.h>
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
+bool createROIKeyframeCallback(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res);
+void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map);
+void publishKeyframeList();
 
 ros::Publisher cvSamplesFoundPub;
 messages::ActuatorOut actuatorCmd;
@@ -20,6 +28,9 @@ messages::CVSamplesFound cvSamplesFoundMsgOut;
 RobotSim robotSim(0.0, 0.0, 0.0,20);
 bool cvFindSample = false;
 messages::CVSampleProps cvSampleProps;
+messages::KeyframeList keyframeListMsg;
+grid_map::GridMap keyframe;
+ros::Publisher keyframeListPub;
 
 int main(int argc, char** argv)
 {
@@ -32,7 +43,9 @@ int main(int argc, char** argv)
     ros::Publisher nb1Pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
     ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
+    keyframeListPub = nh.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1);
     ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
+    ros::ServiceServer createROIKeyframeServ = nh.advertiseService("/slam/keyframesnode/createroikeyframe", createROIKeyframeCallback);
     messages::NavFilterOut navMsgOut;
     messages::GrabberFeedback grabberMsgOut;
     messages::nb1_to_i7_msg nb1MsgOut;
@@ -45,13 +58,18 @@ int main(int argc, char** argv)
     actuatorCmd.grabber_stop_cmd = 0;
     actuatorCmd.slide_pos_cmd = 1000;
     actuatorCmd.drop_pos_cmd = -1000;
+
+    keyframe.setFrameId("map");
+    keyframe.setGeometry(grid_map::Length(150.0, 150.0), 1.0, grid_map::Position(0.0, 0.0));
+    gridMapAddLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX, keyframe);
+
     ros::Rate loopRate(20);
     while(ros::ok())
     {
         linV = linVGain*(actuatorCmd.fl_speed_cmd + actuatorCmd.fr_speed_cmd + actuatorCmd.ml_speed_cmd + actuatorCmd.mr_speed_cmd + actuatorCmd.bl_speed_cmd + actuatorCmd.br_speed_cmd);
         angV = angVGain*(actuatorCmd.fl_speed_cmd - actuatorCmd.fr_speed_cmd + actuatorCmd.ml_speed_cmd - actuatorCmd.mr_speed_cmd + actuatorCmd.bl_speed_cmd - actuatorCmd.br_speed_cmd);
-        ROS_DEBUG("linV: %f",linV);
-        ROS_DEBUG("angV: %f",angV);
+        //ROS_DEBUG("linV: %f",linV);
+        //ROS_DEBUG("angV: %f",angV);
         robotSim.drive(linV, angV);
         robotSim.runGrabber(actuatorCmd.slide_pos_cmd, actuatorCmd.drop_pos_cmd, actuatorCmd.grabber_stop_cmd, actuatorCmd.grabber_stop_cmd);
         navMsgOut.x_position = robotSim.xPos;
@@ -99,6 +117,7 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     cvSampleProps.distance = msg->cvDistance;
     cvSampleProps.bearing = msg->cvBearing;
     cvSampleProps.confidence = msg->cvConfidence;
+    if(msg->pubKeyframeList) publishKeyframeList();
 }
 
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
@@ -113,4 +132,53 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
     cvSamplesFoundPub.publish(cvSamplesFoundMsgOut);
     ros::spinOnce();
     return true;
+}
+
+bool createROIKeyframeCallback(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res)
+{
+    keyframe.add(layerToString(_driveability), 0.0);
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, 30.0)) = 1;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(50.0, 0.0)) = 2;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, -30.0)) = 2;
+    grid_map::GridMapRosConverter::toMessage(keyframe, res.keyframe.map);
+    res.keyframe.x = robotSim.xPos;
+    res.keyframe.y = robotSim.yPos;
+    res.keyframe.heading = robotSim.heading;
+    res.keyframe.associatedROI = req.roiIndex;
+    return true;
+}
+
+void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map)
+{
+    for(int i=layerStartIndex; i<=layerEndIndex; i++)
+    {
+        map.add(layerToString(static_cast<MAP_LAYERS_T>(i)));
+    }
+}
+
+void publishKeyframeList()
+{
+    keyframeListMsg.keyframeList.clear();
+    //keyframeListMsg.keyframeList.resize(1);
+    keyframeListMsg.keyframeList.resize(2);
+
+    keyframe.add(layerToString(_driveability), 0.0);
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, 30.0)) = 1;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(50.0, 0.0)) = 2;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, -30.0)) = 2;
+    grid_map::GridMapRosConverter::toMessage(keyframe, keyframeListMsg.keyframeList.at(0).map);
+    keyframeListMsg.keyframeList.at(0).x = 20.0;
+    keyframeListMsg.keyframeList.at(0).y = 15.0;
+    keyframeListMsg.keyframeList.at(0).heading = 0.0;
+
+    keyframe.add(layerToString(_driveability), 0.0);
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, 30.0)) = 1;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(50.0, 0.0)) = 2;
+    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, -30.0)) = 2;
+    grid_map::GridMapRosConverter::toMessage(keyframe, keyframeListMsg.keyframeList.at(1).map);
+    keyframeListMsg.keyframeList.at(1).x = 20.0;
+    keyframeListMsg.keyframeList.at(1).y = 15.0;
+    keyframeListMsg.keyframeList.at(1).heading = 45.0;
+
+    keyframeListPub.publish(keyframeListMsg);
 }

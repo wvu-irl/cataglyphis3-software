@@ -1,0 +1,8 @@
+float32 xStart
+float32 yStart
+float32 xEnd
+float32 yEnd
+float32 width
+---
+uint32 numHazards
+DriveabilityHazards[] hazardList

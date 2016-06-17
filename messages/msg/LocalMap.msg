@@ -6,5 +6,6 @@ bool[] ground_adjacent
 float32 x_filter
 float32 y_filter
 float32 heading_filter
+bool turnFlag
 bool new_data
 

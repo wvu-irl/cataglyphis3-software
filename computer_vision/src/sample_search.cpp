@@ -103,6 +103,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 	//call classifier servver
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+	imageProbabilitiesSrv.request.imgSize = 150;
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
@@ -113,9 +114,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return false;
 	}
 
-	//save blobs with at least 0.2 probability of being a sample and the corresponding image
+	//save image, blobs, and blob info if > 0.2 probability of being a sample
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	int save_image_flag = 0;
+	int copy_original_cols = 0;
+	int copy_original_rows = 0;
 	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
 	{
 		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.2)
@@ -128,6 +131,8 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 				boost::filesystem::path copy_from_full(P.string() + "/data/images/input_image.jpg");
 				boost::filesystem::path copy_to_full( G_data_folder_full_images.string() + "/" + G_blob_image_name);
 				cv::Mat image_copy_from_full = cv::imread(copy_from_full.string());
+				copy_original_cols = image_copy_from_full.cols;
+				copy_original_rows = image_copy_from_full.rows;
 				cv::imwrite(copy_to_full.string(),image_copy_from_full);
 			}
 
@@ -141,14 +146,14 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		    G_outputInfoFile.open(G_info_filename.c_str()); //open the file
             G_outputInfoFile << "img" + patch::to_string(G_image_index) + "_blob" + patch::to_string(i) + "_" + G_data_folder_name + ".jpg"; //name of blob image
             G_outputInfoFile << "," << G_data_folder_name + "/full/" + G_blob_image_name; //folder containing full image
-            // G_outputInfoFile << "," << copy_origional.cols; //width of origional image
-            // G_outputInfoFile << "," << copy_origional.rows; //height of origional image
-            // G_outputInfoFile << "," << (rectangles[i].tl().x+rectangles[i].br().x)/2; //center of object x
-            // G_outputInfoFile << "," << (rectangles[i].tl().y+rectangles[i].br().y)/2; //center of obejct y
-            // G_outputInfoFile << "," << rectangles[i].width; //origional width of segment
-            // G_outputInfoFile << "," << rectangles[i].height; //origional height of segment
-            // G_outputInfoFile << "," << extended_rect.width; //expanded width of segment
-            // G_outputInfoFile << "," << extended_rect.height; //expanded height of segment
+            G_outputInfoFile << "," << copy_original_cols; //width of origional image
+            G_outputInfoFile << "," << copy_original_rows; //height of origional image
+            G_outputInfoFile << "," << segmentImageSrv.response.coordinates[i*2]; //center of object x
+            G_outputInfoFile << "," << segmentImageSrv.response.coordinates[i*2+1]; //center of obejct y
+            G_outputInfoFile << "," << image_copy_from_blob.cols*0.5; //origional width of segment
+            G_outputInfoFile << "," << image_copy_from_blob.rows*0.5; //origional height of segment
+            G_outputInfoFile << "," << image_copy_from_blob.cols; //expanded width of segment
+            G_outputInfoFile << "," << image_copy_from_blob.rows; //expanded height of segment
             G_outputInfoFile << std::endl; //end line for each blob
 		    G_outputInfoFile.close(); //close the file (must include this in the case the program crashes)
 		}

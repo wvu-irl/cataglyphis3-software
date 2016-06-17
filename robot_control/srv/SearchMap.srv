@@ -1,0 +1,4 @@
+bool createMap
+int32 roiIndex
+bool deleteMap
+---
