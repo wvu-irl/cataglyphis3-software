@@ -10,11 +10,11 @@ int Segmentation::setCalibration()
     //TODO: develop a function to generate this image interactively then save to file
     //then this function will just load an image instead of generate an image
 
-    //generate mask for boundary
+    //generate mask for boundary (area of image too far from robot)
     cv::Mat boundaryMask = cv::Mat::zeros(5792,5792,CV_8U);
     int cx = boundaryMask.cols/2;
     int cy = boundaryMask.rows/2;
-    int radius = 0.825*5792/2;
+    int radius = 0.975*5792/2;
     for(int i=0; i<boundaryMask.cols; i++)
     {
         for(int j=0; j<boundaryMask.rows; j++)
@@ -29,11 +29,11 @@ int Segmentation::setCalibration()
     }
     
 
-    //generate mask for robot
+    //generate mask for area over the robot
     cv::Mat robotMask = cv::Mat::zeros(5792,5792,CV_8U);
-    int leftLimit = 2100;
-    int rightLimit = 3700;
-    int frontLimit = 2150;
+    int leftLimit = 1900;
+    int rightLimit = 3900;
+    int frontLimit = 1900;
     for(int i=0; i<robotMask.cols; i++)
     {
         for(int j=0; j<robotMask.rows; j++)
@@ -55,8 +55,8 @@ int Segmentation::setCalibration()
     cv::threshold(calibrationRGB,displayMask,0,255,0);
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
     cv::imwrite(P.string() + "/data/images/calibration_mask.jpg",displayMask);
-    // cv::Mat image = cv::imread(P.string() + "/samples.jpg");   
 
+    // cv::Mat image = cv::imread(P.string() + "/data/images/input_image.jpg");   
     // cv::Mat blendMask;
     // cv::threshold(calibrationRGB,blendMask,0,100,1);
     // cv::Mat blended = cv::Mat::zeros(5792,5792,CV_8U);
@@ -69,6 +69,7 @@ int Segmentation::setCalibration()
     // cv::imshow("blended", blended);
     // cv::waitKey(0);
     // cv::destroyAllWindows();
+
     return 1;
 }
 
@@ -153,7 +154,8 @@ void Segmentation::assign_colors(cv::Mat& I, uchar*** &lut)
     }
 }
 
-//find rectangles for blobs in segmented image TODO: this function definitely doesn't work right, needs fixed.
+//find rectangles for blobs in segmented image 
+//TODO: this function definitely doesn't work right, needs fixed/recoded.
 std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
 {
     // takes in a masked image (black and white) and returns a list of possible objects (blobs) in the scene
@@ -226,7 +228,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 350 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 350 )
         {
         	//ignore blob
-        	ROS_INFO("ignoring blob (for size) %i",i);
+        	ROS_INFO("ignoring blob (size) %i",i);
         	continue;
         }
 
@@ -234,7 +236,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         if( ratio > 2.5/1.0 || ratio < 1.0/2.5 )
         {
             //ignore blob
-            ROS_INFO("ignoring blob (for ratio) %i",i);
+            ROS_INFO("ignoring blob (ratio) %i",i);
             continue;
         }
 
@@ -248,14 +250,14 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         float yCoordPixels = (boundingBoxonBlob.x+boundingBoxonBlob.width/2 - imageWidth/2);
         float distanceFromCenterOfImageInPixels = sqrt(xCoordPixels*xCoordPixels + yCoordPixels*yCoordPixels);
         float segmentAreaInPixels = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)*(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
-        ROS_INFO("distance from center, area, object number = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
+        ROS_INFO("distance, area, index = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
         tempCounter++;
         if( distanceFromCenterOfImageInPixels > 2000 )
         {
             if(segmentAreaInPixels < 750)
             {
                 //ignore blob
-                ROS_INFO("ignoring blob (for near area thresh) %i",i);
+                ROS_INFO("ignoring (near area thresh) %i",i);
                 continue;
             }
         }
@@ -264,7 +266,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
             if(segmentAreaInPixels < 1000)
             {
                 //ignore blob
-                ROS_INFO("ignoring blob (for far area thresh) %i",i);
+                ROS_INFO("ignoring (far area thresh) %i",i);
                 continue;              
             }
         }

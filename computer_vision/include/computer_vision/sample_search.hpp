@@ -18,6 +18,8 @@
 
 class SampleSearch
 {
+private:
+	struct timeval localTimer;
 public:
 	// Methods
 	SampleSearch(); // Constructor
