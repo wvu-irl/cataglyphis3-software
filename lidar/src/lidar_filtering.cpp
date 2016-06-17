@@ -12,6 +12,10 @@ LidarFilter::LidarFilter()
 	_navigation_filter_counter_prev = 0;
 	_sub_navigation = _nh.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &LidarFilter::navigationFilterCallback, this);
 
+	//ExecInfo callback initialization
+	_execinfo_turnflag = false;
+	_sub_execinfo = _nh.subscribe("control/exec/info", 1, &LidarFilter::rexrcinforCallback, this);
+
 	//rotation from robot to homing beacon (pitch and roll rotation only)
 	_R_tilt_robot_to_beacon = Eigen::Matrix3f::Identity();
 
@@ -99,6 +103,11 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 
 	//rotation from lidar to robot body frame (rotation)
 	_R_tilt_robot_to_beacon = _R_roll*_R_pitch;
+}
+
+void LidarFilter::rexrcinforCallback(const messages::ExecInfo::ConstPtr &exec_msg)
+{
+	_execinfo_turnflag = exec_msg->turnFlag;
 }
 
 void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
@@ -189,6 +198,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
+	    ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
 	//forward relavent navigation information
@@ -196,8 +206,13 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	msg.y_filter = this->_navigation_filter_y;
 	msg.heading_filter = this->_navigation_filter_heading;
 
+	//forward relavent turing flag information
+	msg.turnFlag = this->_execinfo_turnflag;
+
 	//flag the data as new
 	msg.new_data = _registration_new;
+
+	//ROS_INFO_STREAM("pointcloud size: " << msg.x_mean.size() );
 }
 
 void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
@@ -439,7 +454,7 @@ void LidarFilter::doMathMapping()
 	    {
 	    	point.push_back(0);
 	    }
-	    local_grid_map_temp.push_back(point);
+	    _local_grid_map.push_back(point);
 	    point.clear();
 
 	    //print out points
@@ -500,10 +515,11 @@ void LidarFilter::doMathMapping()
 			_local_grid_map.push_back(local_grid_map_temp[i]);
 		}
 	}
-	*/
+	
 	//ROS_INFO("5");
 	_object_filtered = *object_filtered;
 	//ROS_INFO("6");
+	*/
 }
 
 void LidarFilter::doMathHoming()

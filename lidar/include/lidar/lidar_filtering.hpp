@@ -43,6 +43,9 @@
 #include <armadillo>
 #include <messages/LidarFilterOut.h>
 #include <messages/NavFilterOut.h>
+
+#include <messages/ExecInfo.h>
+
 #include <messages/LocalMap.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
@@ -56,6 +59,9 @@ public:
 	// Members
 	ros::NodeHandle _nh;
 	ros::Subscriber _sub_navigation;
+
+	ros::Subscriber _sub_execinfo;
+
 	ros::Subscriber _sub_velodyne;
 	void doMathMapping();
 	void doMathHoming();
@@ -78,6 +84,9 @@ private:
 	float _navigation_filter_heading;
 	//short int _navigation_filter_counter;
 	//short int _navigation_filter_counter_prev;
+
+	//ExecInfo callback
+	bool _execinfo_turnflag;
 
 	//transform points from lidar frame to robot body
 	Eigen::Matrix3f _R_tilt_robot_to_beacon; //robot to homing beacon rotation (pitch and roll rotation only)
@@ -119,6 +128,8 @@ private:
 	//callback functions
 	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg);
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud);
+
+	void rexrcinforCallback(const messages::ExecInfo::ConstPtr &exec_msg);
 };
 
 #endif // LIDAR_FILTERING_H
