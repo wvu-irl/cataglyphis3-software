@@ -197,7 +197,8 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.y_mean.push_back(_local_grid_map[i][1]);
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
-	    msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
+	    //msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
+	    msg.ground_adjacent.push_back(0);
 	    ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
@@ -436,6 +437,22 @@ void LidarFilter::doMathMapping()
 	    }
 	    variance_z = sqrt(variance_z);
 
+	    if (total_x || total_y || total_z)
+	    {
+	        // switch the coordinate of the LIDAR
+	        float temp_holder = 0.0;
+	        average_z = -average_z;
+	        temp_holder = average_x;
+	        average_x = average_y;
+	        average_y = temp_holder;
+	        point.push_back(average_x);
+	        point.push_back(average_y);
+	        point.push_back(average_z);
+	        point.push_back(variance_z);
+	        _local_grid_map.push_back(point);
+	        point.clear();
+	    }
+	    /* //need to check for the point adjacent
 	    // switch the coordinate of the LIDAR // need to check again
 	    float temp_holder = 0.0;
         average_z = -average_z;
@@ -454,8 +471,10 @@ void LidarFilter::doMathMapping()
 	    {
 	    	point.push_back(0);
 	    }
-	    _local_grid_map.push_back(point);
+	    _local_grid_map_temp.push_back(point);
 	    point.clear();
+	    */
+	    
 
 	    //print out points
 	    //if (total_x || total_y || total_z)
@@ -515,11 +534,12 @@ void LidarFilter::doMathMapping()
 			_local_grid_map.push_back(local_grid_map_temp[i]);
 		}
 	}
+	*/
 	
+
 	//ROS_INFO("5");
 	_object_filtered = *object_filtered;
 	//ROS_INFO("6");
-	*/
 }
 
 void LidarFilter::doMathHoming()
