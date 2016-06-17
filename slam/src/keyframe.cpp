@@ -50,6 +50,8 @@ protected:
 		float x_filter;
 		float y_filter;
 		float heading_filter;
+
+		bool turnFlag;
 	}LocalMap_All;
 
 	//define a struct for localmap messages, include all central points x, y, for ICP calculation
@@ -75,6 +77,16 @@ protected:
 		int to_index;
 		double overlap;
 	}ICP_Result;
+
+	//define a struct for keyframe information
+	typedef struct Keyframe_info
+	{
+		PointCloud keyframe_cloud;
+
+		float x_key;
+		float y_key;
+		float heading_key;
+	}Keyframe_info;
 
 	ros::NodeHandle node;
 
@@ -121,12 +133,18 @@ protected:
 	matrix4f TreadToref;
 	matrix4f TrefTomap;
 	matrix4f TreadTomap;
+	matrix4f TkeyTomap;
 	matrix4f guessT;
+
 
 	//lists of all maps
 	std::vector<LocalMap_All> LocalMap_All_s;
 	std::vector<LocalMap_ICP> LocalMap_ICP_s;
 	std::vector<LocalMap_Varification> LocalMap_Varification_s;
+	std::vector<Keyframe_info> KeyframeMap_s;
+
+	//lists of all tranformation matrix
+	std::vector<matrix4f> TreadToprekey_s;
 
 	//count input index
 	int messages_input_index;
@@ -136,7 +154,14 @@ protected:
 	int read_index;
 	int key_index;
 
-	//time definition
+	//condition for generating a new keyframe
+	double threshold_overlap;
+	double threshold_mindistance;
+	double threshold_maxdistance;
+
+
+
+	//timer definition
 	clock_t start, finish;
 	double totaltime;
 
@@ -186,10 +211,19 @@ void Keyframe::Initialization()
 	edge_rectangle_filter = 2.24; //length of edgs of rectangle filter
 	b_theta = 10 * PI / 180; //angle of blocked points (translate to radian)
 
+	//parameters for generating a new keyframe
+	threshold_overlap = 0.5; //overlap less than threshold will generate a new keyframe
+	threshold_mindistance = 10; //distance between current frame and previous keyframe less than the threshold, it will not generate a new keyframe
+	threshold_maxdistance = 20; //distance between current frame and previous keyframe bigger than the threshold, it will generate a new keyframe
+
+
 	//initialize all vectors
 	LocalMap_All_s.clear();
 	LocalMap_ICP_s.clear();
 	LocalMap_Varification_s.clear();
+	KeyframeMap_s.clear();
+
+	TreadToprekey_s.clear();
 
 	//index for ICP calculation
 	messages_input_index = 0;
@@ -201,6 +235,7 @@ void Keyframe::Initialization()
 	TreadToref = Eigen::Matrix<float, 4, 4>::Identity();
 	TrefTomap = Eigen::Matrix<float, 4, 4>::Identity();
 	TreadTomap = Eigen::Matrix<float, 4, 4>::Identity();
+	TkeyTomap = Eigen::Matrix<float, 4, 4>::Identity();
 	guessT = Eigen::Matrix<float, 4, 4>::Identity();
 
 
@@ -214,7 +249,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	start = clock();
 	
 	if(LocalMapMsgIn.new_data) //if the localmap data is new, update
-	{
+	{	ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
 		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Get data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 
 		//************************************************************//
@@ -228,9 +263,11 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		localmap_all.x_filter = LocalMapMsgIn.x_filter;
 		localmap_all.y_filter = LocalMapMsgIn.y_filter;
 		localmap_all.heading_filter = LocalMapMsgIn.heading_filter;
+		localmap_all.turnFlag = LocalMapMsgIn.turnFlag;
 		//localmap_all.ground_adjacent = LocalMapMsgIn.ground_adjacent;
 
 		LocalMap_All_s.push_back(localmap_all);
+		// ROS_INFO_STREAM("Start working......1  " << LocalMap_All_s[0].x_mean.size());
 
 		//************************************************************//
 		//store all ground adjacent central points in each localmap into vector LocalMap_ICP_s
@@ -269,44 +306,109 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		localmap_varification.var_z = LocalMapMsgIn.var_z;
 
 		LocalMap_Varification_s.push_back(localmap_varification);
+		// ROS_INFO_STREAM("Start working......2  " << LocalMap_Varification_s[0].Varification_cloudMsgIn.size());
 	
 		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 
 		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Decide ICP frame sequence !!  important>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 
+		//!!!make sure the robot is not turning, if the robot is turning, then do nothing
+		if(!LocalMap_All_s[messages_input_index].turnFlag)
+		{	
+			//ref_index will be 0 all time
+			read_index = messages_input_index;
+
+
+			// ROS_INFO_STREAM("Start working......3  " << LocalMap_ICP_s[read_index].ICP_cloudMsgIn.size());
+			//do ICP to get transformation matrix from read to reference
+			ICP_Result icp_result;
+			icp_result = ICP_compute(ref_index, read_index);
+
+			//conditions for generating a new keyframe, overlap, verification, distance
+			//calculate distance between current frame and previous keyframe
+			double distance;
+			matrix4f TreadToprekey;
+
+			TreadToprekey = icp_result.transformation_matrix;
+			TreadToprekey_s.push_back(TreadToprekey);	//save all transformation between frame to previous keyframe in one time find a new keyframe
+			distance = sqrt(TreadToprekey(0,3)*TreadToprekey(0,3) + TreadToprekey(1,3)*TreadToprekey(1,3) + TreadToprekey(2,3)*TreadToprekey(2,3));
+
+			if((distance > threshold_mindistance) && 
+				(icp_result.overlap < threshold_overlap || !icp_result.verification_result || distance > threshold_maxdistance))
+			{
+				key_index = read_index - 1;	//the previous frame will be as a keyframe
+
+				//get position of the keyframe in globe coordinate, map will be the fix frame (0, 0, 0) (x, y, heading)
+				TkeyTomap = TreadToprekey_s[TreadToprekey_s.size() - 2] * TkeyTomap;	//transformation from current keyframe to map 
+
+				double keyPoseOutheading = 0.0;
+
+				if (TkeyTomap(0,0) != 0)
+					keyPoseOutheading = atan2(-TkeyTomap(0,1), TkeyTomap(0,0)) * 180.0 / PI;
+				else if (TkeyTomap(0,1) == 1)
+					keyPoseOutheading = 90.0;
+				else if (TkeyTomap(0,1) == -1)
+					keyPoseOutheading = -90.0;
+
+				Keyframe_info keyframe_info;
+
+				keyframe_info.x_key = TkeyTomap(0,3);
+				keyframe_info.y_key = TkeyTomap(1,3);
+				keyframe_info.heading_key = keyPoseOutheading;
+
+				//get point cloud of the keyframe
+				keyframe_info.keyframe_cloud = LocalMap_Varification_s[key_index].Varification_cloudMsgIn;
+
+				//store keyframe information into keyframe list
+				KeyframeMap_s.push_back(keyframe_info);
+
+				//after generating a new keyframe, clean all map data for free storage
+				//keep all information about the keyframe
+				localmap_all = LocalMap_All_s[key_index];
+				localmap_icp = LocalMap_ICP_s[key_index];
+				localmap_varification = LocalMap_Varification_s[key_index];
+
+				//clean all data
+				LocalMap_All_s.clear();
+				LocalMap_ICP_s.clear();
+				LocalMap_Varification_s.clear();
+				TreadToprekey_s.clear();
+
+				//restore the keyframe information as the initial data for next keyframe 
+				LocalMap_All_s.push_back(localmap_all);
+				LocalMap_ICP_s.push_back(localmap_icp);
+				LocalMap_Varification_s.push_back(localmap_varification);
+
+				//reset all index 
+				messages_input_index = 0;
+
+			}
 		
+			//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
+			//***************************timer*************************//
+			finish = clock();
+			totaltime = (double)(finish - start) / CLOCKS_PER_SEC;
+		
+			//*****************************debug***************************//
 
-		//if keyframe update, reset the reference frame as the new keyframe
-		if(ref_index != key_index)
-		{
-			ref_index = key_index;
+			ROS_INFO_STREAM("Matrix:  \n" << icp_result.transformation_matrix);
+			ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
+			ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
+			ROS_INFO_STREAM("time: " << totaltime << "s");
 
-			// TrefTomap = TreadTomap;
+			if(KeyframeMap_s.size() != 0)
+			{
+				ROS_INFO_STREAM("number of keyframe:  \n" << KeyframeMap_s.size());
+				ROS_INFO_STREAM("x_key of keyframe:  \n" << KeyframeMap_s[KeyframeMap_s.size()-1].x_key);
+			}
+	
 		}
 
-		read_index = messages_input_index;
-
-
-
-		//do ICP to get transformation matrix from read to reference
-		ICP_Result icp_result;
-		icp_result = ICP_compute(ref_index, read_index);
 		
-		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
-		//***************************timer*************************//
-		finish = clock();
-		totaltime = (double)(finish - start) / CLOCKS_PER_SEC;
-		
-		//*****************************debug***************************//
-		ROS_INFO_STREAM("Matrix:  \n" << icp_result.transformation_matrix);
-		ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
-		ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
-		ROS_INFO_STREAM("time: " << totaltime << "s");
-	
-	// 	//verify the transformation matrix from ICP using hight information
 
 		//when a new local map message come, messages_input_index add one
 		messages_input_index++;
+
 
 
 	}
@@ -401,8 +503,6 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	return icp_result;
 }
 
-
-//**************************overload "=" ************************//
 
 //************************** points filter **********************//
 Keyframe::PointCloud Keyframe::remove_block_area(float b_x1, float b_y1, float b_heading1, float b_x0, float b_y0, float b_heading0, PointCloud before_remove_points)
