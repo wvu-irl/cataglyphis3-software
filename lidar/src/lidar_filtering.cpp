@@ -490,7 +490,7 @@ void LidarFilter::doMathMapping()
 	    variance_z = 0;
 	}
 	//ROS_INFO("4");
-	
+	/*
 	// evaluate if the point is on the edge or not
 	int adjacent_counter = 0;
 	for (int i = 0; i < local_grid_map_temp.size(); i++)
@@ -534,6 +534,7 @@ void LidarFilter::doMathMapping()
 			_local_grid_map.push_back(local_grid_map_temp[i]);
 		}
 	}
+	*/
 	
 
 	//ROS_INFO("5");
