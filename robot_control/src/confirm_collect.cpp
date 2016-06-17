@@ -31,6 +31,7 @@ bool ConfirmCollect::runProc()
 			if(noSampleOnGround)
 			{
 				confirmedPossession = true;
+                inSearchableRegion = false;
 				state = _finish_;
 			}
 			else

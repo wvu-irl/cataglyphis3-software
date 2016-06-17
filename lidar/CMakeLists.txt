@@ -113,7 +113,7 @@ catkin_package(
 
 #add_definitions("-std=gnu++11")
 add_definitions(${PCL_DEFINITIONS})
-
+add_definitions("-std=gnu++11")
 ###########
 ## Build ##
 ###########
@@ -132,9 +132,28 @@ link_directories(
 )
 
 ## Declare a C++ library
-# add_library(lidar
-#   src/${PROJECT_NAME}/lidar.cpp
-# )
+add_library(lidar_filtering src/lidar_filtering.cpp) 
+target_link_libraries(lidar_filtering 
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+  ${PCL_IO_LIBRARIES}
+  armadillo
+  lapack
+  blas
+)
+
+add_library(collision_detection src/collision_detection.cpp) 
+target_link_libraries(collision_detection 
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+  ${PCL_IO_LIBRARIES}
+  armadillo
+  lapack
+  blas
+)
+
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -143,14 +162,18 @@ link_directories(
 
 ## Declare a C++ executable
 add_executable(lidar_filtering_node src/lidar_filtering_node.cpp)
+add_executable(lidar_filtering_node_updated src/lidar_filtering_node_updated.cpp)
 add_executable(collision_detection_node src/collision_detection_node.cpp)
+add_executable(collision_detection_node_updated src/collision_detection_node_updated.cpp)
 
 ## Add cmake target dependencies of the executable
 add_dependencies(lidar_filtering_node lidar_generate_messages_cpp)
+add_dependencies(lidar_filtering_node_updated lidar_generate_messages_cpp)
 add_dependencies(collision_detection_node lidar_generate_messages_cpp)
+add_dependencies(collision_detection_node_updated lidar_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(lidar_filtering_node 
+target_link_libraries(lidar_filtering_node 
  	${catkin_LIBRARIES}
  	${PCL_LIBRARIES}
 	${PCL_COMMON_LIBRARIES}
@@ -160,8 +183,24 @@ add_dependencies(collision_detection_node lidar_generate_messages_cpp)
 	blas
  )
 
-  target_link_libraries(collision_detection_node 
+target_link_libraries(lidar_filtering_node_updated 
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${PCL_COMMON_LIBRARIES}
+  ${PCL_IO_LIBRARIES}
+  armadillo
+  lapack
+  blas
+  lidar_filtering
+ )
+
+target_link_libraries(collision_detection_node 
  	${catkin_LIBRARIES}
+ )
+
+target_link_libraries(collision_detection_node_updated 
+ 	${catkin_LIBRARIES}
+ 	collision_detection
  )
 
 #############

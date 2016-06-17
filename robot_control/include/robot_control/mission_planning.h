@@ -7,7 +7,7 @@
 #include <messages/nb1_to_i7_msg.h>
 #include "avoid.h"
 #include "next_best_region.h"
-//#include "search_region.h"
+#//include "search_region.h"
 //#include "examine.h"
 #include "approach.h"
 #include "collect.h"
@@ -34,6 +34,7 @@ public:
 	const int loopRate = 20; // Hz
 	Avoid avoid;
 	NextBestRegion nextBestRegion;
+	//SearchRegion searchRegion;
 	Approach approach;
 	Collect collect;
 	ConfirmCollect confirmCollect;
@@ -41,43 +42,9 @@ public:
 	DepositApproach depositApproach;
 	DepositSample depositSample;
     Pause pause;
-	std::vector<int> value;
-	int computedValue;
-	int valueSum;
-	std::vector<int> valueNormalized;
-	int valueNormalizedSum;
-	int valueNormalizedFloor;
-	int randomValue;
-	int largestNormalizedValue;
-	std::vector<int> notVisited;
-	int notVisitedSum;
-	arma::Mat<int> pheromone;
-	arma::Mat<int> distance;
-	arma::Mat<int> terrainHazard;
-	const int easyProbGain = 750;
-	int includeEasy;
-	const int medProbGain = 850;
-	int includeMed;
-	const int hardProbGain = 950;
-	int includeHard;
-	const int pheromoneGain = 500;
-	const int distanceGain = 500;
-	const int terrainGain = 700;
-	const int pheroDepoGain = 800;
-	const int pheroDecayValue = 10;
-	const int initialPheromone = 500;
-	const int maxAntNum = 100;
-	int antNum;
-	int i;
-	int j;
-	int bestJ;
-
-	robot_control::Waypoint currentLocation;
-	int numWaypointsToPlan;
 
 
-	std::vector<robot_control::Waypoint> waypointsToPlan;
-	int bestPheromone;
+
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
 	unsigned int numProcsBeingExec;
@@ -100,7 +67,6 @@ private:
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
-	void antColony_();
 	void calcNumProcsBeingExec_();
 	void updateSampleFlags_();
 

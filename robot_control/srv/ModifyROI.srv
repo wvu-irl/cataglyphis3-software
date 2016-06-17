@@ -1,7 +1,6 @@
-bool setVisitedROI
-bool visitedROIState
-uint32 numVisitedROI
+bool setSearchedROI
+bool searchedROIState
+uint32 numSearchedROI
 bool addNewROI
-Waypoint newROI
-float32 diameterNewROI
+ROI newROI
 ---

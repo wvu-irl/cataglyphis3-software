@@ -212,6 +212,7 @@ private:
 		std::vector<float> point;
 	    std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
 	    int index = 0;
+	    local_grid_map.clear();
 	    for (int i = 0; i< object_filtered->points.size(); i++)
 	    {
 	        point.push_back(object_filtered->points[i].x);
@@ -249,7 +250,7 @@ private:
 	            // switch the coordinate of the LIDAR
 	            float temp_holder = 0.0;
 	            average_z = -average_z;
-	            average_x = temp_holder;
+	            temp_holder = average_x;
 	            average_x = average_y;
 	            average_y = temp_holder;
 	            point.push_back(average_x);
@@ -261,7 +262,7 @@ private:
 	        }
 	        //print out points
 	        if (total_x || total_y || total_z)
-	            cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
+	            //cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
 	        total_x = 0;
 	        total_y = 0;
 	        total_z = 0;
@@ -273,9 +274,9 @@ private:
 
 		// THE local_grid HAS ALL INFO, NEED TO PUBLISH IT
 		//TRANSFER POINTCLOUD TO POINTCLOUD2
-		pcl::PCLPointCloud2 tmp_cloud;
-		pcl::toPCLPointCloud2(*object_filtered_projection,tmp_cloud);
-		pcl_conversions::fromPCL(tmp_cloud, local_map_SLAM);
+		// pcl::PCLPointCloud2 tmp_cloud;
+		// pcl::toPCLPointCloud2(*object_filtered_projection,tmp_cloud);
+		// pcl_conversions::fromPCL(tmp_cloud, local_map_SLAM);
 
 		// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
 		// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
@@ -380,15 +381,15 @@ private:
 	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
 	        {
 	        	cylinderWasDetected = true;
-	            ROS_INFO("cluster %i has fit the cylinder model with probability %f", i, seg.getProbability());
-	            // cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-	            //                                << coefficients_cylinder->values[1] << " "
-	            //                                << coefficients_cylinder->values[2] << " "
-	            //                                << coefficients_cylinder->values[3] << " "
-	            //                                << coefficients_cylinder->values[4] << " "
-	            //                                << coefficients_cylinder->values[5] << " "
-	            //                                << coefficients_cylinder->values[6] << endl;
-	            //cout << "Probability is " << seg.getProbability () << endl;
+	            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
+	             cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+	                                            << coefficients_cylinder->values[1] << " "
+	                                            << coefficients_cylinder->values[2] << " "
+	                                            << coefficients_cylinder->values[3] << " "
+	                                            << coefficients_cylinder->values[4] << " "
+	                                            << coefficients_cylinder->values[5] << " "
+	                                            << coefficients_cylinder->values[6] << endl;
+	            cout << "Probability is " << seg.getProbability () << endl;
 
 
 			float max_x = cloud_cylinder->points[0].x;
@@ -709,12 +710,12 @@ public:
 	std::vector<float> var_z;
 	std::vector<bool> ground_adjacent;
 	std::vector<std::vector<float> > local_grid_map;
-	float copied_robot_x;
-	float copied_robot_y;
-	float copied_robot_heading;
+	// float copied_robot_x;
+	// float copied_robot_y;
+	// float copied_robot_heading;
 	
 	
-	sensor_msgs::PointCloud2 local_map_SLAM;
+	// sensor_msgs::PointCloud2 local_map_SLAM;
 	Registration()
 	{
 		sub_laser = nn.subscribe("/velodyne_points", 1, &Registration::registrationCallback, this);
@@ -779,9 +780,9 @@ int main(int argc, char **argv)
 			    msg_LocalMap.var_z.push_back(registration.local_grid_map[i][3]);
 			    msg_LocalMap.ground_adjacent.push_back(1);
 			}
-			msg_LocalMap.x_filter = registration.copied_robot_x;
-			msg_LocalMap.y_filter = registration.copied_robot_y;
-			msg_LocalMap.heading_filter = registration.copied_robot_heading;
+			msg_LocalMap.x_filter = registration.robot_x;
+			msg_LocalMap.y_filter = registration.robot_y;
+			msg_LocalMap.heading_filter = registration.robot_heading;
 			msg_LocalMap.new_data = true;
 		}
 		else

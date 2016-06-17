@@ -60,6 +60,10 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
 #include <armadillo>
+#include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 //using namespace std;
 //using namespace pcl;
@@ -69,11 +73,11 @@ const float DEG2RAD = PI/180;
 const float RAD2DEG = 180/PI;
 
 float corridor_width = 1.5; // Width of the virtual corridor
-float corridor_length = 5.5; // Length of the virtual corridor, THE CLOSEST DECTECTION IS ~2.8 M
+float corridor_length = 10.0; // Length of the virtual corridor, THE CLOSEST DECTECTION IS ~2.8 M
 float x_shift = 0.0;
-float y_shirt = 0.0;
-float lidar_height = 0.75; // height of the lidar sensor
-float safe_envelope_angle = DEG2RAD*40; //safe envelope angle size
+float y_shift = 0.0;
+float lidar_height = 0.76; // height of the lidar sensor
+float safe_envelope_angle = DEG2RAD*15; //safe envelope angle size
 int point_trigger_threshold = 5; // how many points that will trigger the avoid alarm
 
 //subscribe to state machine info
@@ -122,21 +126,22 @@ private:
 			//do ground removal on points in virtual corridor
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); // The raw point cloud from the LIDAR
 			*cloud = input_cloud;
-
+/*
 			pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::PointIndicesPtr ground (new pcl::PointIndices);
 
-			 pcl::PassThrough<pcl::PointXYZ> pass;
-			 pass.setInputCloud(cloud);
-			 pass.setFilterFieldName("x");
-			 pass.setFilterLimits(x_shift - corridor_width,x_shift + corridor_width); 
-			 pass.filter(*cloud);
-			 pass.setInputCloud(cloud);
-			 pass.setFilterFieldName("y");
-			 pass.setFilterLimits(y_shirt + 0.35,y_shirt + corridor_length);
-			 pass.filter(*cloud);
-			 ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
+            pcl::PassThrough<pcl::PointXYZ> pass;
+            pass.setInputCloud(cloud);
+            pass.setFilterFieldName("y");
+            pass.setFilterLimits(y_shift - corridor_width,y_shift + corridor_width); 
+            pass.filter(*cloud);
+            pass.setInputCloud(cloud);
+            pass.setFilterFieldName("x");
+            pass.setFilterLimits(x_shift, x_shift + corridor_length);
+            pass.filter(*cloud);
+            //ROS_INFO("Virtual corridor has %i points.", cloud->points.size());
 
 			
 			// // //use rough ground removal, method A: rough 
@@ -181,8 +186,96 @@ private:
 			extract.filter (*ground_filtered);
 			extract.setNegative (true);
 			extract.filter (*object_filtered);
-			// B: end
+			//ROS_INFO("OBJECT FOUND BY LAYER 2, SIZE IS %i points.", object_filtered->points.size());
 
+			
+			// Statistical outlier removal
+            pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+            sor.setInputCloud(object_filtered);
+            sor.setMeanK(5);
+            sor.setStddevMulThresh(1.0);
+            sor.filter(*object_filtered);
+            //ROS_INFO("OBJECT FOUND BY LAYER 2 after statistical removal, SIZE IS %i points.", object_filtered->points.size());
+            
+            // Creating the KdTree object for the search method of the extraction
+            pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>); //for clustering
+            tree->setInputCloud (object_filtered);
+
+            std::vector<pcl::PointIndices> cluster_indices;
+            pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+            ec.setClusterTolerance (0.3); // 
+            ec.setMinClusterSize (3);   // 100-200 when the cylinder is 6 meters away
+            ec.setMaxClusterSize (500);
+            ec.setSearchMethod (tree);
+            ec.setInputCloud (object_filtered);
+            ec.extract (cluster_indices);
+
+            std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> points_cluster;
+            for (int i=0;i<cluster_indices.size ();i++)
+            {
+              points_cluster.push_back(cloud_middle);
+            }
+			
+			int j = 0;
+
+            for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
+            {
+              //points_cluster[j]= new pcl::PointCloud<pcl::PointXYZ>(); 
+              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+              for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+              cloud_cluster->points.push_back (object_filtered->points[*pit]); //*
+              cloud_cluster->width = cloud_cluster->points.size ();
+              cloud_cluster->height = 1;
+              cloud_cluster->is_dense = true;
+
+              //std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size () << " data points." << std::endl;
+              points_cluster[j] = cloud_cluster;
+              j++;
+            }
+            
+            if(points_cluster.size() == 1)
+            {
+                //ROS_INFO("There is only 1 object in the region.");
+                // Calculate the center and size, determine which way to go and aovid it
+                Eigen::Vector4f centroid;
+	            pcl::compute3DCentroid(*(points_cluster[0]), centroid);
+	            if(centroid[1] < 0)
+	            {
+	                //ROS_INFO("LARGEST COLLISION ON RIGHT FROM LAYER 2");
+	            }
+	            else
+	            {
+	                //ROS_INFO("LARGEST COLLISION ON LEFT FROM LAYER 2");
+	            }
+            }
+            else if(points_cluster.size() == 2)
+            {
+                //ROS_INFO("There are only 2 objects in the region.");
+				// Eigen::Vector4f centroid1, centroid2;
+				// pcl::compute3DCentroid(*(points_cluster[0]), centroid1);
+				// pcl::compute3DCentroid(*(points_cluster[1]), centroid2);
+				// if(centroid1 < 0 && centroid2 < 0) // both on right
+				// {
+				//     ROS_INFO("LARGEST COLLISION ON RIGHT FROM LAYER 2");
+				// }
+				// elseif(centroid1 > 0 && centroid2 > 0) // both on left
+				// {
+				//     ROS_INFO("LARGEST COLLISION ON LEFT FROM LAYER 2");
+				// }
+				// else // one on left, one on right
+				// {
+				//     //
+				//     ROS_INFO("COLLISION ON BOTH SIDE FROM LAYER 2");
+				// }
+                
+            }
+            else
+            {
+                //ROS_INFO("There are %i objects in the region.", points_cluster.size());
+                // 
+            }
+			// B: end
+*/
 			//check for collision
 			int collision_point_counter = 0;
 			int collision_left_counter = 0;
@@ -192,34 +285,26 @@ private:
 			{
 				//cout << "x,y,z =" << cloud->points[i].x << ", " << cloud->points[i].y << ", " << cloud->points[i].z << endl;
 				//CHECK IF POINT IN CORRIDOR
-				if(cloud->points[i].y > 0 && cloud->points[i].x < 1.5 && cloud->points[i].x > -1.5 && cloud->points[i].y < 5)
+
+				if(cloud->points[i].x > 0 && cloud->points[i].y < 1 && cloud->points[i].y > -1 && cloud->points[i].x < 5)
 				{
+					//cout << cloud->points[i].x << " " << cloud->points[i].z << " " << fabs(atan2(cloud->points[i].z,cloud->points[i].x))*RAD2DEG << " " << safe_envelope_angle << endl;
 					// CHECK IF THE POINT IS OUTSIDE OF THE SAFE ENVELOPE
-					if((abs(lidar_height + cloud->points[i].z)/cloud->points[i].x) > tan(safe_envelope_angle))
+					if(fabs(atan2( (lidar_height + cloud->points[i].z),cloud->points[i].x )) > safe_envelope_angle )
+					//if(cloud->points[i].z > -0.2 && cloud->points[i].z  < 0.2)
 					{
+						//cout << "x,y,z =" << cloud->points[i].x << ", " << cloud->points[i].y << ", " << cloud->points[i].z << endl;
 						// NEED TO AVOID
 						collision_point_counter++;
-						if(cloud->points[i].x<0)
-						{
-							collision_left_counter++;
-						}
-						else
+						if(cloud->points[i].y<0)
 						{
 							collision_right_counter++;
 						}
+						else
+						{
+							collision_left_counter++;
+						}
 					} 
-				}
-				else if (cloud->points[i].y > 0 && cloud->points[i].y < 1)
-				{
-				    collision_point_counter++;
-					if(cloud->points[i].x<0)
-					{
-						collision_left_counter++;
-					}
-					else
-					{
-						collision_right_counter++;
-					}
 				}
 			}
 
@@ -228,12 +313,12 @@ private:
 				if(collision_left_counter > collision_right_counter)
 				{
 					collision=1;
-					ROS_INFO("LARGEST COLLISION ON RIGHT");
+					ROS_INFO("LARGEST COLLISION ON LEFT");
 				}
 				else
 				{
 					collision=2;
-					ROS_INFO("LARGEST COLLISION ON LEFT");				
+					ROS_INFO("LARGEST COLLISION ON RIGHT");				
 				}
 			}
 			else
@@ -241,6 +326,9 @@ private:
 				collision=0;
 				ROS_INFO("No Collision...");
 			}
+			collision_point_counter = 0;
+			collision_left_counter = 0;
+			collision_right_counter = 0;
 		}
 		else
 		{

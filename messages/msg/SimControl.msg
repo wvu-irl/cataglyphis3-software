@@ -12,3 +12,4 @@ int32 cvType
 float32 cvDistance
 float32 cvBearing
 int32 cvConfidence
+bool pubKeyframeList
