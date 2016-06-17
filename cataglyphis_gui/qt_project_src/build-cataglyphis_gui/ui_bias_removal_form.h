@@ -84,7 +84,7 @@ public:
         progressBar->setInvertedAppearance(false);
         layoutWidget = new QWidget(bias_removal_form);
         layoutWidget->setObjectName(QStringLiteral("layoutWidget"));
-        layoutWidget->setGeometry(QRect(10, 10, 132, 215));
+        layoutWidget->setGeometry(QRect(10, 10, 136, 215));
         verticalLayout = new QVBoxLayout(layoutWidget);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
@@ -112,6 +112,7 @@ public:
         p1_offset_spinbox->setReadOnly(true);
         p1_offset_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
         p1_offset_spinbox->setDecimals(9);
+        p1_offset_spinbox->setMinimum(-99.99);
 
         formLayout->setWidget(0, QFormLayout::FieldRole, p1_offset_spinbox);
 
