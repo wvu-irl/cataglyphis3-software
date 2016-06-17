@@ -84,6 +84,7 @@ public:
 	static float expectedSampleDistance;
 	static float expectedSampleAngle;
 	static messages::CVSampleProps highestConfSample;
+	static float allocatedROITime; // sec
 	const int sampleConfidenceGain = 1000;
 	const int sampleDistanceToExpectedGain = 1000000;
 };
@@ -139,5 +140,6 @@ float MissionPlanningProcessShare::angleToTurn;
 float MissionPlanningProcessShare::expectedSampleDistance;
 float MissionPlanningProcessShare::expectedSampleAngle;
 messages::CVSampleProps MissionPlanningProcessShare::highestConfSample;
+float MissionPlanningProcessShare::allocatedROITime;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H
