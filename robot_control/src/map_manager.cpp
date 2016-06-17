@@ -7,6 +7,7 @@ MapManager::MapManager()
     searchMapServ = nh.advertiseService("/control/mapmanager/searchlocalmap", &MapManager::searchMapCallback, this);
     globalMapPathHazardsServ = nh.advertiseService("/control/mapmanager/globalmappathhazards", &MapManager::globalMapPathHazardsCallback, this);
     searchLocalMapInfoServ = nh.advertiseService("/control/mapmanager/searchlocalmapinfo", &MapManager::searchLocalMapInfoCallback, this);
+    randomSearchWaypointsServ = nh.advertiseService("/control/mapmanager/randomsearchwaypoints", &MapManager::randomSearchWaypointsCallback, this);
     createROIKeyframeClient = nh.serviceClient<messages::CreateROIKeyframe>("/slam/keyframesnode/createroikeyframe");
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, &MapManager::keyframesCallback, this);
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
@@ -373,6 +374,60 @@ bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Reques
         return true;
     }
     else return false;
+}
+
+bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoints::Request &req, robot_control::RandomSearchWaypoints::Response &res)
+{
+    if(searchLocalMapExists)
+    {
+        randomWaypointsNumSampleTypes = 0;
+        randomWaypointsNumSampleTypes += req.includeCached;
+        randomWaypointsNumSampleTypes += req.includePurple;
+        randomWaypointsNumSampleTypes += req.includeRed;
+        randomWaypointsNumSampleTypes += req.includeBlue;
+        randomWaypointsNumSampleTypes += req.includeSilver;
+        randomWaypointsNumSampleTypes += req.includeBrass;
+        searchLocalMapNumPoints = searchLocalMap.getSize()[0]*searchLocalMap.getSize()[1];
+        possibleRandomWaypointValues.resize(searchLocalMapNumPoints);
+        res.waypointList.resize(req.numSeachWaypoints);
+        possibleRandomWaypointValuesSum = 0;
+        for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
+        {
+            possibleRandomWaypointValues.at(it.getLinearIndex()) = 0.0;
+            if(req.includeCached) possibleRandomWaypointValues.at(it.getLinearIndex()) += searchLocalMap.at(layerToString(_cachedProb),*it);
+            if(req.includePurple) possibleRandomWaypointValues.at(it.getLinearIndex()) += searchLocalMap.at(layerToString(_purpleProb),*it);
+            if(req.includeRed) possibleRandomWaypointValues.at(it.getLinearIndex()) += searchLocalMap.at(layerToString(_redProb),*it);
+            if(req.includeBlue) possibleRandomWaypointValues.at(it.getLinearIndex()) += searchLocalMap.at(layerToString(_blueProb),*it);
+            if(req.includeSilver) possibleRandomWaypointValues.at(it.getLinearIndex()) += searchLocalMap.at(layerToString(_silverProb),*it);
+            if(req.includeBrass) possibleRandomWaypointValues.at(it.getLinearIndex()) += searchLocalMap.at(layerToString(_brassProb),*it);
+            possibleRandomWaypointValues.at(it.getLinearIndex()) /= randomWaypointsNumSampleTypes;
+            possibleRandomWaypointValuesSum += possibleRandomWaypointValues.at(it.getLinearIndex());
+        }
+        for(int i=0; i<searchLocalMapNumPoints; i++)
+        {
+            possibleRandomWaypointValuesNormalized.at(i) = possibleRandomWaypointValues.at(i)/possibleRandomWaypointValuesSum;
+        }
+        randomValueFloor = 0.0;
+        numRandomWaypointsSelected = 0;
+        for(int i=0; i<searchLocalMapNumPoints; i++)
+        {
+            randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+            if((randomValue >= randomValueFloor) && (randomValue < (randomValueFloor + possibleRandomWaypointValuesNormalized.at(i))))
+            {
+                candidateRandomWaypointIndex = i;
+                numRandomWaypointsSelected++;
+                break;
+            }
+            else randomValueFloor += possibleRandomWaypointValuesNormalized.at(i);
+        }
+        if(numRandomWaypointsSelected>1)
+        {
+
+        }
+
+    }
+    else return false;
+    return true;
 }
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested
