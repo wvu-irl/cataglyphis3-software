@@ -24,19 +24,16 @@ int main(int argc, char **argv)
 				{
 					lidar_filter.doMathMapping();
 					lidar_filter.doMathHoming();
-					lidar_filter.packLocalMapMessage(msg_LocalMap);
-					lidar_filter.packHomingMessage(msg_LidarFilterOut);
 				}
 			}
 			else if(low_sampling_freq == false)
 			{
 				lidar_filter.doMathMapping();
 				lidar_filter.doMathHoming();
-				lidar_filter.packLocalMapMessage(msg_LocalMap);
-				lidar_filter.packHomingMessage(msg_LidarFilterOut);
 			}
 		}
-
+		lidar_filter.packLocalMapMessage(msg_LocalMap);
+		lidar_filter.packHomingMessage(msg_LidarFilterOut);
 		lidar_filter.setPreviousCounters();
 
 		pub_lidar.publish(msg_LidarFilterOut);

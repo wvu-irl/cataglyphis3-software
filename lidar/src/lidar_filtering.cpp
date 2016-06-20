@@ -198,8 +198,8 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    //msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
-	    msg.ground_adjacent.push_back(0);
-	    ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
+	    msg.ground_adjacent.push_back(1);
+	    // ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
 	//forward relavent navigation information
