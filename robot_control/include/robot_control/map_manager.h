@@ -6,6 +6,7 @@
 #include <robot_control/ModifyROI.h>
 #include <robot_control/CurrentROI.h>
 #include <robot_control/SearchMap.h>
+#include <robot_control/RandomSearchWaypoints.h>
 #include <messages/KeyframeList.h>
 #include <messages/RobotPose.h>
 #include <messages/SLAMPoseOut.h>
@@ -47,6 +48,7 @@ public:
 	bool searchMapCallback(robot_control::SearchMap::Request &req, robot_control::SearchMap::Response &res);
 	bool globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res);
 	bool searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res);
+	bool randomSearchWaypointsCallback(robot_control::RandomSearchWaypoints::Request &req, robot_control::RandomSearchWaypoints::Response &res);
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
@@ -71,6 +73,7 @@ public:
 	ros::ServiceServer searchMapServ;
 	ros::ServiceServer globalMapPathHazardsServ;
 	ros::ServiceServer searchLocalMapInfoServ;
+	ros::ServiceServer randomSearchWaypointsServ;
 	ros::ServiceClient createROIKeyframeClient;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
@@ -129,6 +132,16 @@ public:
 	robot_control::CurrentROI currentROIMsg;
 	messages::CVSamplesFound cvSamplesFoundMsg;
 	grid_map::Position globalMapOrigin;
+	std::vector<float> possibleRandomWaypointValues;
+	float possibleRandomWaypointValuesSum;
+	std::vector<float> possibleRandomWaypointValuesNormalized;
+	grid_map::Position randomWaypointPosition;
+	int randomWaypointsNumSampleTypes;
+	float randomValue;
+	float randomValueFloor;
+	int searchLocalMapNumPoints;
+	int candidateRandomWaypointIndex;
+	int numRandomWaypointsSelected;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m

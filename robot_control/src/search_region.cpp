@@ -44,7 +44,7 @@ bool SearchRegion::runProc()
 		{
 			numWaypointsToTravel = numRandomWaypoints; // Set number of waypoints to choose
 			numWaypointsToPlan = numRandomWaypoints+1; // Number to plan path through is one more, because it includes the starting location
-			// Select random waypoint locations based on sample prob distro on search local map
+			chooseRandomWaypoints_(); // Select random waypoint locations based on sample prob distro on search local map
 			// Add current location as last entry in waypointsToPlan
 			clearAndResizeWTT(); // waypointsToPlan minus the current location will get written into waypointsToTravel. Clear and resize to accomodate
 			antColony_(); // Plan path through waypoints with ant colongy optimization algorithm
