@@ -322,20 +322,27 @@ void LidarFilter::doMathMapping()
 	//Notes: The current algorithm is very un-effective, need to improve later
 	//Notes: PLEASE COMMENT THIS SECTION
 
+	//define variables used in this section
 	std::vector<float> point;
 	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
 	std::vector<std::vector<float> > local_grid_map_temp;
 	int index = 0;
 	_local_grid_map.clear();
+
+	//grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
 	for (int i = 0; i< object_filtered->points.size(); i++)
 	{
 	    point.push_back(object_filtered->points[i].x);
 	    point.push_back(object_filtered->points[i].y);
 	    point.push_back(object_filtered->points[i].z);
+
+	    //the index checks which gird a point belongs to 
 	    index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
 	    grid_map_cells[index].push_back(point);
 	    point.clear();
 	}
+
+	//define variables used to calculate mean x y z and variance of z
 	float total_x = 0;
 	float total_y = 0;
 	float total_z = 0;
@@ -343,6 +350,8 @@ void LidarFilter::doMathMapping()
 	float average_y = 0;
 	float average_z = 0;
 	float variance_z = 0;
+
+	//do the calculation
 	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
 	{
 	    for (int j = 0; j < grid_map_cells[i].size(); j++)
@@ -510,7 +519,7 @@ void LidarFilter::doMathHoming()
     			min_z_pre = points_cluster[i]->points[ii].z;
     		}
     	}
-    	
+
     	if(abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
     	{
     		ne.setSearchMethod (tree2);
