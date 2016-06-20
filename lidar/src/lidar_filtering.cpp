@@ -68,6 +68,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_R_roll(2,1) = sin(_navigation_filter_roll);
 	_R_roll(2,2) = cos(_navigation_filter_roll);
 
+	//set roll transformation to identity for testing
 	// _R_roll(0,0) = 1;
 	// _R_roll(0,1) = 0;
 	// _R_roll(0,2) = 0;
@@ -90,6 +91,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_R_pitch(2,1) = 0;
 	_R_pitch(2,2) = cos(_navigation_filter_pitch);
 
+	//set pitch transformation to identity for testing
 	// _R_pitch(0,0) = 1;
 	// _R_pitch(0,1) = 0;
 	// _R_pitch(0,2) = 0;
@@ -173,10 +175,6 @@ void LidarFilter::stitchClouds()
 	{
 		_piece_two = _input_cloud;
 		_input_cloud = _piece_one + _piece_two;
-
-		// std::stringstream ss;
-		// ss << "tilt_compensation.pcd";
-		// pcl::io::savePCDFile(ss.str(),_input_cloud);
 	}
 }
 
@@ -237,44 +235,30 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 
 void LidarFilter::doMathMapping()
 {
+	//copy point cloud to local variable
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud3 (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud4 (new pcl::PointCloud<pcl::PointXYZ>);
 	*cloud = _input_cloud;
 
-
-	ROS_INFO("\n*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
+	ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
 	ROS_INFO("Running callback function with %i points.",cloud->points.size());
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr grid_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr ground_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr local_map (new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr test (new pcl::PointCloud<pcl::PointXYZ>);
+	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	//-*-*-*-*-*-*-*-*FILTER POINTS FOR BUILDING LOCAL MAP-*-*-*-*-*-*-*-*-*
+	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr part1 (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr part2 (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr part3 (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr part4 (new pcl::PointCloud<pcl::PointXYZ>);
-    
-	pcl::PointIndicesPtr ground (new pcl::PointIndices);
+	//add comment here (what does this do??)
 	pcl::PointCloud<pcl::PointXYZ> new_point;
 	new_point.width  = (2*map_range)*(2*map_range);
 	new_point.height = 1;
 	new_point.points.resize (new_point.width * new_point.height);
+
+	//add comment here (what does this do??)
 	pcl::PointCloud<pcl::PointXYZ> ground_point;
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
 	ground_point.points.resize (ground_point.width * ground_point.height);
-
-	// THESE ARE FOR CYLINDER DETECTION
-	//pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
 	
-	// PASS THROUGH FILTER
+	//remove points based on hard thresholds (too far, too high, too low)
 	pcl::PassThrough<pcl::PointXYZ> pass;
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
@@ -287,110 +271,57 @@ void LidarFilter::doMathMapping()
 	pass.setFilterLimits(-1*threshold_tree_height,1.5); //positive z is down, negative z is up
 	pass.filter(*cloud);
 
+	//save point cloud after hard thresholds
 	// std::stringstream ss1;
 	// ss1 << "ss1.pcd";
 	// pcl::io::savePCDFile( ss1.str(), *cloud);
 
-	/*
-	// remove 10x10 m area the behind the lidar (the pole) in order to increase the accuracy of ICP
-	pass.setInputCloud(cloud);
-	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-map_range,map_range);
-	pass.filter(*cloud1);
-	pass.setInputCloud(cloud1);
-	pass.setFilterFieldName("y");
-	pass.setFilterLimits(5,map_range);
-	pass.filter(*cloud1);
-	
-    pass.setInputCloud(cloud);
-	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-map_range,-5);
-	pass.filter(*cloud2);
-	pass.setInputCloud(cloud2);
-	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-5,5);
-	pass.filter(*cloud2);
-	
-	pass.setInputCloud(cloud);
-	pass.setFilterFieldName("x");
-	pass.setFilterLimits(5,map_range);
-	pass.filter(*cloud3);
-	pass.setInputCloud(cloud3);
-	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-5,5);
-	pass.filter(*cloud3);
-	
-	pass.setInputCloud(cloud);
-	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-map_range,map_range);
-	pass.filter(*cloud4);
-	pass.setInputCloud(cloud4);
-	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-map_range,5);
-	pass.filter(*cloud4);
-	
-	*cloud = *cloud1 + *cloud2;
-	*cloud = *cloud + *cloud3;
-	*cloud = *cloud + *cloud4;
-	//ROS_INFO("Regional cloud has %i points", cloud->points.size());
-	*/
-
-	// std::stringstream ss2;
-	// ss2 << "middle_1.pcd";
-	// pcl::io::savePCDFile( ss2.str(), *cloud);
-
-	/*
-	// CREATE THE FILTERING OBJECT
-	pcl::ApproximateProgressiveMorphologicalFilter<pcl::PointXYZ> pmf;
-	pmf.setInputCloud (cloud);
-	pmf.setMaxWindowSize (20);
-	pmf.setSlope (1.0f);
-	pmf.setInitialDistance (0.5f);
-	pmf.setMaxDistance (1.5f);
-	//cout << "Cell size is " << pmf.getCellSize() << endl;
-	pmf.extract (ground->indices);
-
-	// CREATE THE FILTERING OBJECT
-	pcl::ExtractIndices<pcl::PointXYZ> extract;
-	extract.setInputCloud (cloud);
-	extract.setIndices (ground);
-	extract.filter (*ground_filtered);
-	*/
-	//ROS_INFO("2");
-	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
-	pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-	// Create the segmentation object
+	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
 	pcl::SACSegmentation<pcl::PointXYZ> seg_plane;
-	// Optional
-	seg_plane.setOptimizeCoefficients (true);
-	// Mandatory
+	seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
-	seg_plane.setMaxIterations (1000);
-	seg_plane.setDistanceThreshold (0.15); //Ground detection threshold parameter
+	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
+	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
+
+	//segment the points fitted to the plane using ransac
+	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ()); //what is this? (coefficients for fitted plane?)
+	pcl::PointIndices::Ptr inliers (new pcl::PointIndices ()); //what is this? (inliers for points that fit the plane?)
 	seg_plane.segment (*inliers, *coefficients);
+
+	//seperate the ground points and the points above the ground (object points)
 	pcl::ExtractIndices<pcl::PointXYZ> extract;
 	extract.setInputCloud (cloud);
 	extract.setIndices (inliers);
+
 	extract.setNegative (false);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 	extract.filter (*ground_filtered);
+
 	extract.setNegative (true);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 	extract.filter (*object_filtered);
 
+	//save point cloud after ground removal
 	// std::stringstream ss2;
 	// ss2 << "ss2.pcd";
 	// pcl::io::savePCDFile( ss2.str(), *object_filtered);
 
-	// EXTRACT NON-GROUND RETURNS
+	//project points on the xy plane
+	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZ>);
 	*object_filtered_projection = *object_filtered;
-	// PROJECTION, MAY NEED TO MODIFY THE ALGORITHM LATER
 	for (int i=0; i<object_filtered->points.size(); i++)
 	{
-	  object_filtered_projection->points[i].z=0;
+		object_filtered_projection->points[i].z=0;
 	}
 
-	// BUILD LOCAL MAP, THE CURRENT ALGORITHM IS VERY UN-EFFECTIVE, NEED TO IMPROVE LATER
+	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	//Notes: The current algorithm is very un-effective, need to improve later
+	//Notes: PLEASE COMMENT THIS SECTION
+
 	std::vector<float> point;
 	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
 	std::vector<std::vector<float> > local_grid_map_temp;
@@ -429,111 +360,29 @@ void LidarFilter::doMathMapping()
 	    }
 	    variance_z = sqrt(variance_z);
 
-	    if (total_x || total_y || total_z)
+	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
 	    {
-	        // switch the coordinate of the LIDAR
-	        float temp_holder = 0.0;
-	        average_z = -average_z;
-	        temp_holder = average_x;
-	        average_x = average_y;
-	        average_y = temp_holder;
+	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
+	        point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
 	        point.push_back(average_x);
 	        point.push_back(average_y);
 	        point.push_back(average_z);
 	        point.push_back(variance_z);
 	        _local_grid_map.push_back(point);
-	        point.clear();
 	    }
-	    //std::cout << "_local_grid_map.size() = " << _local_grid_map.size() << std::endl;
 
-	    /* //need to check for the point adjacent
-	    // switch the coordinate of the LIDAR // need to check again
-	    float temp_holder = 0.0;
-        average_z = -average_z;
-        temp_holder = average_x;
-        average_x = average_y;
-        average_y = temp_holder;
-    	point.push_back(average_x);
-        point.push_back(average_y);
-        point.push_back(average_z);
-        point.push_back(variance_z);
-	    if (total_x || total_y || total_z)
-	    {
-	    	point.push_back(1); // 1 means is occupied while 0 means is empty
-	    }
-	    else
-	    {
-	    	point.push_back(0);
-	    }
-	    _local_grid_map_temp.push_back(point);
-	    point.clear();
-	    */
-	    
-
-	    //print out points
-	    //if (total_x || total_y || total_z)
-	    //{
-	    //    std::cout << average_x << " " << average_y << " " << average_z << " " << variance_z <<  endl;
-	    //}
-	    total_x = 0;
-	    total_y = 0;
-	    total_z = 0;
-	    average_x = 0;
-	    average_y = 0;
-	    average_z = 0;
-	    variance_z = 0;
+	    //why are these being set to 0 after they are already used?
+	    // total_x = 0;
+	    // total_y = 0;
+	    // total_z = 0;
+	    // average_x = 0;
+	    // average_y = 0;
+	    // average_z = 0;
+	    // variance_z = 0;
 	}
-	//ROS_INFO("4");
-	/*
-	// evaluate if the point is on the edge or not
-	int adjacent_counter = 0;
-	for (int i = 0; i < local_grid_map_temp.size(); i++)
-	{
-		float threshold_x = local_grid_map_temp[i][0];
-		float threshold_y = local_grid_map_temp[i][1];
-		if(local_grid_map_temp[i][4] == 1) // this point must be occupied in the first place
-		{
-			for (int j = 0; j < local_grid_map_temp.size(); i++)
-			{
-				if(j != i) // not the same point
-				{
-					if(local_grid_map_temp[j][0] > floor(threshold_x)-1 && local_grid_map_temp[j][0] < ceil(threshold_x)+1 && local_grid_map_temp[j][1] > floor(threshold_y)-1 && local_grid_map_temp[j][1] < ceil(threshold_y)+1) //within 9 ceils block
-					{
-						if(local_grid_map_temp[j][4] == 1)
-							adjacent_counter = adjacent_counter + 1;
-					}
-				}
-				if (adjacent_counter > 4) // if more than 4 out of 8 neighbors are occupied, then it is a non-ground adjacent point
-				{
-					local_grid_map_temp[i].push_back(0); // 0 means is non-ground adjacent while 1 mean is ground adjacent
-				}
-				else
-				{
-					local_grid_map_temp[i].push_back(1);
-				}
-				adjacent_counter = 0;
-				threshold_x = 0.0;
-				threshold_y = 0.0;
-			}
-		}
-		else
-		{
-			local_grid_map_temp[i].push_back(0); // push back 0 to hold the place
-		}
-	}
-	for (int i = 0; i < local_grid_map_temp.size(); i++)
-	{
-		if(local_grid_map_temp[i][4] == 1) // if this grid is occupied
-		{
-			_local_grid_map.push_back(local_grid_map_temp[i]);
-		}
-	}
-	*/
 	
-
-	//ROS_INFO("5");
-	_object_filtered = *object_filtered;
-	//ROS_INFO("6");
+	//copy filtered point cloud after hard thresholding and ground removal
+	_object_filtered = *object_filtered; 
 }
 
 void LidarFilter::doMathHoming()
