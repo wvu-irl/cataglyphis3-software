@@ -1,5 +1,13 @@
 //this programe is used for generating keyframe list
 
+//all keyframe information will be in three vectors
+//keyframeMaps contains two pointcloud, for icp and verification
+//vertex contains all position of keyframe, x, y, heading
+//edges contains all transformation matrix between keyframes
+
+//if g2o changes positon of vertex, I should update TkeyTomap !!!!
+
+
 #include "math.h"
 //include ros head file
 #include "ros/ros.h"
@@ -12,6 +20,7 @@
 #include "pcl/point_types.h"
 #include "pcl/registration/icp.h"
 #include "pcl/common/transforms.h"	//for transform pointcloud using transformation matrix
+#include "pcl/kdtree/kdtree_flann.h"	//using kdtree to find k nearest neighbor
 
 
 //eigen3 library
@@ -60,13 +69,13 @@ protected:
 		PointCloud ICP_cloudMsgIn;
 	}LocalMap_ICP;
 
-	//define a struct for localmap messages. include all information in cells, x, y, z, var_z, for varification
-	typedef struct LocalMap_Varification
+	//define a struct for localmap messages. include all information in cells, x, y, z, var_z, for verification
+	typedef struct LocalMap_Verification
 	{
-		PointCloud Varification_cloudMsgIn;
+		PointCloud Verification_cloudMsgIn;
 		std::vector<float> z_mean;
 		std::vector<float> var_z;
-	}LocalMap_Varification;
+	}LocalMap_Verification;
 
 	//define a struct for ICP result
 	typedef struct ICP_Result
@@ -79,14 +88,28 @@ protected:
 	}ICP_Result;
 
 	//define a struct for keyframe information
-	typedef struct Keyframe_info
+	typedef struct Keyframe_Pointcloud
 	{
-		PointCloud keyframe_cloud;
+		PointCloud keyframe_icp_cloud;
+		PointCloud keyframe_verification_cloud;
 
-		float x_key;
-		float y_key;
-		float heading_key;
-	}Keyframe_info;
+	}Keyframe_Pointcloud;
+
+	//define a struct for transformation matrix, include from index and to index
+	typedef struct Transformation_Matrix
+	{
+		matrix4f transformation_matrix;
+		int from_index;
+		int to_index;
+	}Transformation_Matrix;
+
+	//define a struct for position
+	typedef struct Position
+	{
+		float x;
+		float y;
+		float heading;
+	}Position;
 
 	ros::NodeHandle node;
 
@@ -102,10 +125,14 @@ protected:
 	//define correspondence finder
 	pcl::registration::CorrespondenceEstimation<pcl::PointXYZ, pcl::PointXYZ> est;
 
+	//define KdTree for find k nearest neighbor
+	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+
 	//parameters
 	double distance_correspondence;	//maximum distance for finding a correspondence point
 	float edge_rectangle_filter;
-	double ratio_height_varification;
+	double ratio_height_verification;
+	int neighbor_number;	//K nearest neighbor to calculate transformation matrix 
 
 	//globe nav_filter data;
 	float x_IMU;
@@ -140,11 +167,18 @@ protected:
 	//lists of all maps
 	std::vector<LocalMap_All> LocalMap_All_s;
 	std::vector<LocalMap_ICP> LocalMap_ICP_s;
-	std::vector<LocalMap_Varification> LocalMap_Varification_s;
-	std::vector<Keyframe_info> KeyframeMap_s;
+	std::vector<LocalMap_Verification> LocalMap_Verification_s;
+	std::vector<Keyframe_Pointcloud> KeyframeMap_s;
 
 	//lists of all tranformation matrix
-	std::vector<matrix4f> TreadToprekey_s;
+	std::vector<Transformation_Matrix> TreadToprekey_s;
+
+	//list of vertex in pointcloudXYZ datatype
+	PointCloud Vertex_pointcloud;
+
+	//lists of Vertex and Edges for g2o
+	std::vector<Position> Vertex;
+	std::vector<Transformation_Matrix> Edges;
 
 	//count input index
 	int messages_input_index;
@@ -159,6 +193,9 @@ protected:
 	double threshold_mindistance;
 	double threshold_maxdistance;
 
+	//condition for doing g2o
+	double threshold_g2odistance;
+	bool trigger_g2o;
 
 
 	//timer definition
@@ -167,10 +204,10 @@ protected:
 
 	void getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn);
 	// void set_Navfilter_data(float IMU_x, float IMU_y, float IMU_heading);
-	ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index);	//*************change return type to struct include tranformation matrix, from index, to index, overlap, true of false***********//
+	ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index, int PointDataType);	//*************change return type to struct include tranformation matrix, from index, to index, overlap, true of false***********//
 	bool outside_rectangle(float rectangle_x, float rectangle_y);		//determine if the point is inside 2.24m rectangle
 	PointCloud remove_block_area(float b_x1, float b_y1, float b_heading1, float b_x0, float b_y0, float b_heading0, PointCloud before_remove_points);	//remove points blocks by masks in pre frame
-	bool ICP_varification(int ref_v_index, int read_v_index, matrix4f T, double &overlap);
+	bool ICP_verification(int ref_v_index, int read_v_index, matrix4f T, double &overlap, int PointDataType);
 
 
 
@@ -204,8 +241,8 @@ void Keyframe::Initialization()
 	//parameters for correspondence
 	distance_correspondence = 1.4; //maximum distance for finding correspondence points
 
-	//parameters for varification
-	ratio_height_varification = 0.3; 
+	//parameters for verification
+	ratio_height_verification = 0.01; 
 
 	//parameters for points filter
 	edge_rectangle_filter = 2.24; //length of edgs of rectangle filter
@@ -213,17 +250,28 @@ void Keyframe::Initialization()
 
 	//parameters for generating a new keyframe
 	threshold_overlap = 0.5; //overlap less than threshold will generate a new keyframe
-	threshold_mindistance = 10; //distance between current frame and previous keyframe less than the threshold, it will not generate a new keyframe
+	threshold_mindistance = 5; //distance between current frame and previous keyframe less than the threshold, it will not generate a new keyframe
 	threshold_maxdistance = 20; //distance between current frame and previous keyframe bigger than the threshold, it will generate a new keyframe
+
+	//parameter for k nearest neighbor
+	neighbor_number = 5; //find 5 nearest neighbor to build edge, include the search point and the previous keyframe
+
+	//parameter for g2o min distance
+	threshold_g2odistance = 8; //if the distance between current keyframe and nearest neighbor keyframe is less than 8 meter, do g2o
+	trigger_g2o = false;
 
 
 	//initialize all vectors
 	LocalMap_All_s.clear();
 	LocalMap_ICP_s.clear();
-	LocalMap_Varification_s.clear();
+	LocalMap_Verification_s.clear();
 	KeyframeMap_s.clear();
+	Vertex_pointcloud.clear();
 
 	TreadToprekey_s.clear();
+
+	Vertex.clear();
+	Edges.clear();
 
 	//index for ICP calculation
 	messages_input_index = 0;
@@ -275,8 +323,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		PointCloud ICP_cloudMsgIn; //save ground adjance central points
 		ICP_cloudMsgIn.clear();
 
-		PointCloud Varification_cloudMsgIn;	//save all central points
-		Varification_cloudMsgIn.clear();
+		PointCloud Verification_cloudMsgIn;	//save all central points
+		Verification_cloudMsgIn.clear();
 
 		LocalMap_ICP localmap_icp;
 
@@ -291,22 +339,22 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 					ICP_cloudMsgIn.push_back (pcl::PointXYZ(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i], 0));
 				}
 
-				Varification_cloudMsgIn.push_back(pcl::PointXYZ(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i], 0)); // save all central points for varification
+				Verification_cloudMsgIn.push_back(pcl::PointXYZ(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i], 0)); // save all central points for verification
 			}
 		}
 		localmap_icp.ICP_cloudMsgIn = ICP_cloudMsgIn;
 		LocalMap_ICP_s.push_back(localmap_icp);
 		//************************************************************//
-		//store all cell information into vector LocalMap_Varification_s
+		//store all cell information into vector LocalMap_Verification_s
 
-		LocalMap_Varification localmap_varification;
+		LocalMap_Verification localmap_verification;
 
-		localmap_varification.Varification_cloudMsgIn = Varification_cloudMsgIn;
-		localmap_varification.z_mean = LocalMapMsgIn.z_mean;
-		localmap_varification.var_z = LocalMapMsgIn.var_z;
+		localmap_verification.Verification_cloudMsgIn = Verification_cloudMsgIn;
+		localmap_verification.z_mean = LocalMapMsgIn.z_mean;
+		localmap_verification.var_z = LocalMapMsgIn.var_z;
 
-		LocalMap_Varification_s.push_back(localmap_varification);
-		// ROS_INFO_STREAM("Start working......2  " << LocalMap_Varification_s[0].Varification_cloudMsgIn.size());
+		LocalMap_Verification_s.push_back(localmap_verification);
+		// ROS_INFO_STREAM("Start working......2  " << LocalMap_Verification_s[0].Verification_cloudMsgIn.size());
 	
 		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 
@@ -322,24 +370,33 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			// ROS_INFO_STREAM("Start working......3  " << LocalMap_ICP_s[read_index].ICP_cloudMsgIn.size());
 			//do ICP to get transformation matrix from read to reference
 			ICP_Result icp_result;
-			icp_result = ICP_compute(ref_index, read_index);
+			icp_result = ICP_compute(ref_index, read_index, 0);
 
 			//conditions for generating a new keyframe, overlap, verification, distance
 			//calculate distance between current frame and previous keyframe
 			double distance;
-			matrix4f TreadToprekey;
+			Transformation_Matrix TreadToprekey;
 
-			TreadToprekey = icp_result.transformation_matrix;
+			TreadToprekey.transformation_matrix = icp_result.transformation_matrix;
+			TreadToprekey.from_index = icp_result.from_index;
+			TreadToprekey.to_index = icp_result.to_index;
 			TreadToprekey_s.push_back(TreadToprekey);	//save all transformation between frame to previous keyframe in one time find a new keyframe
-			distance = sqrt(TreadToprekey(0,3)*TreadToprekey(0,3) + TreadToprekey(1,3)*TreadToprekey(1,3) + TreadToprekey(2,3)*TreadToprekey(2,3));
-
+			distance = sqrt(TreadToprekey.transformation_matrix(0,3)*TreadToprekey.transformation_matrix(0,3) 
+				+ TreadToprekey.transformation_matrix(1,3)*TreadToprekey.transformation_matrix(1,3) 
+				+ TreadToprekey.transformation_matrix(2,3)*TreadToprekey.transformation_matrix(2,3));
+			ROS_INFO_STREAM("Start working......4  " << distance);
 			if((distance > threshold_mindistance) && 
 				(icp_result.overlap < threshold_overlap || !icp_result.verification_result || distance > threshold_maxdistance))
 			{
+				Keyframe_Pointcloud keyframe_pointcloud;
+				Position position;
+				Transformation_Matrix edges;
+
 				key_index = read_index - 1;	//the previous frame will be as a keyframe
 
+
 				//get position of the keyframe in globe coordinate, map will be the fix frame (0, 0, 0) (x, y, heading)
-				TkeyTomap = TreadToprekey_s[TreadToprekey_s.size() - 2] * TkeyTomap;	//transformation from current keyframe to map 
+				TkeyTomap = TreadToprekey_s[TreadToprekey_s.size() - 2].transformation_matrix * TkeyTomap;	//transformation from current keyframe to map 
 
 				double keyPoseOutheading = 0.0;
 
@@ -350,39 +407,124 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				else if (TkeyTomap(0,1) == -1)
 					keyPoseOutheading = -90.0;
 
-				Keyframe_info keyframe_info;
+				position.x = TkeyTomap(0,3);
+				position.y = TkeyTomap(1,3);
+				position.heading = keyPoseOutheading;
 
-				keyframe_info.x_key = TkeyTomap(0,3);
-				keyframe_info.y_key = TkeyTomap(1,3);
-				keyframe_info.heading_key = keyPoseOutheading;
+				//store keyframe position into vertex 
+				Vertex.push_back(position);
+				//store keyframe position into vertex in pointcloudXYZ datatype
+				Vertex_pointcloud.push_back(pcl::PointXYZ(position.x, position.y, 0.0));
 
-				//get point cloud of the keyframe
-				keyframe_info.keyframe_cloud = LocalMap_Varification_s[key_index].Varification_cloudMsgIn;
+				//get point cloud of the keyframe, save icp pointcloud and verification pointcloud
+				keyframe_pointcloud.keyframe_icp_cloud = LocalMap_ICP_s[key_index].ICP_cloudMsgIn;
+				keyframe_pointcloud.keyframe_verification_cloud = LocalMap_Verification_s[key_index].Verification_cloudMsgIn;
 
-				//store keyframe information into keyframe list
-				KeyframeMap_s.push_back(keyframe_info);
+				//store keyframe point cloud into keyframe maps
+				KeyframeMap_s.push_back(keyframe_pointcloud);
+
+				//get transformation between keyframe and previous keyframe, map is not a keyframe, so the first keyframe will be the keyframe next to map
+				if(KeyframeMap_s.size() > 1)	//if only have one keyframe, we don't have transformation matrix
+				{
+					edges.transformation_matrix = TreadToprekey_s[TreadToprekey_s.size() - 2].transformation_matrix;
+					edges.from_index = TreadToprekey_s[TreadToprekey_s.size() - 2].from_index;
+					edges.to_index = TreadToprekey_s[TreadToprekey_s.size() - 2].to_index;
+
+					//store transformation between keyframe and previous keyframe into edges
+					Edges.push_back(edges);
+				}
+
+
+				//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<find k nearest neighbor>>>>>>>>>>>>>>>>>>>>>>>>>>//
+				// if(KeyframMap_s.size() > neighbor_number)	//make sure there is enough point for search
+				// {
+					pcl::PointXYZ searchPoint;	//set the last vertex be the search point
+					searchPoint.x = Vertex[Vertex.size() - 1].x;
+					searchPoint.y = Vertex[Vertex.size() - 1].y;
+					searchPoint.z = 0.0;
+
+					pcl::PointCloud<pcl::PointXYZ>::Ptr Vertex_pointcloud_Ptr (new pcl::PointCloud<pcl::PointXYZ>);
+					*Vertex_pointcloud_Ptr = Vertex_pointcloud;	//set the input cloud include the search point and the previous keyframe
+
+					kdtree.setInputCloud(Vertex_pointcloud_Ptr);
+
+					std::vector<int> pointIdxNKNSearch(neighbor_number);
+					std::vector<float> pointNKNSquaredDistance(neighbor_number);
+					pointIdxNKNSearch.clear();
+					pointNKNSquaredDistance.clear();
+
+					if(kdtree.nearestKSearch (searchPoint, neighbor_number, pointIdxNKNSearch, pointNKNSquaredDistance) > 0)	//find nearest neighbor
+					{	ROS_INFO_STREAM("Start working......5  " << kdtree.nearestKSearch (searchPoint, neighbor_number, pointIdxNKNSearch, pointNKNSquaredDistance));
+						for(int i = 0; i < pointIdxNKNSearch.size(); i++)
+						{
+							if(pointIdxNKNSearch[i] != Vertex.size() - 1 && pointIdxNKNSearch[i] != Vertex.size() - 2)	//the current keyframe does not need to do ICP with itself and previous keyframe
+							{
+								//do ICP between k nearest neighbor keyframe to get edges
+								icp_result = ICP_compute(pointIdxNKNSearch[i], Vertex.size() - 1, 1);
+								ROS_INFO_STREAM("Start working......6  " << "overlap: " << icp_result.overlap << " "<<icp_result.verification_result);
+
+								if(icp_result.verification_result)
+								{
+									edges.transformation_matrix = icp_result.transformation_matrix;
+									edges.from_index = icp_result.from_index;
+									edges.to_index = icp_result.to_index;
+
+									//store transformation between keyframes into edges
+									Edges.push_back(edges);
+								
+
+									//check the distance between current keyframe and nearest neighbor keyframe, and if the distance is less than threshold, do g2o
+									if(pointNKNSquaredDistance[i] < threshold_g2odistance)
+									{
+										distance = sqrt(icp_result.transformation_matrix(0,3)*icp_result.transformation_matrix(0,3) + 
+											icp_result.transformation_matrix(1,3)*icp_result.transformation_matrix(1,3) + 
+											icp_result.transformation_matrix(2,3)*icp_result.transformation_matrix(2,3));	//using ICP result to verification the distance
+
+										if(distance < threshold_g2odistance)
+											trigger_g2o = true; //do g2o
+
+									}
+								}
+
+							}
+						}
+					}
+
+					
+
+
+				// }	
+				
+
+
+
+
 
 				//after generating a new keyframe, clean all map data for free storage
 				//keep all information about the keyframe
 				localmap_all = LocalMap_All_s[key_index];
 				localmap_icp = LocalMap_ICP_s[key_index];
-				localmap_varification = LocalMap_Varification_s[key_index];
+				localmap_verification = LocalMap_Verification_s[key_index];
 
 				//clean all data
 				LocalMap_All_s.clear();
 				LocalMap_ICP_s.clear();
-				LocalMap_Varification_s.clear();
+				LocalMap_Verification_s.clear();
 				TreadToprekey_s.clear();
 
 				//restore the keyframe information as the initial data for next keyframe 
 				LocalMap_All_s.push_back(localmap_all);
 				LocalMap_ICP_s.push_back(localmap_icp);
-				LocalMap_Varification_s.push_back(localmap_varification);
+				LocalMap_Verification_s.push_back(localmap_verification);
 
 				//reset all index 
 				messages_input_index = 0;
 
 			}
+
+			ROS_INFO_STREAM("trigger_g2o: " << trigger_g2o);
+					// if(trigger_g2o = true)
+					// 	trigger_g2o = false;
 		
 			//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 			//***************************timer*************************//
@@ -391,15 +533,15 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		
 			//*****************************debug***************************//
 
-			ROS_INFO_STREAM("Matrix:  \n" << icp_result.transformation_matrix);
-			ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
-			ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
+			// ROS_INFO_STREAM("Matrix:  \n" << icp_result.transformation_matrix);
+			// ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
+			// ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
 			ROS_INFO_STREAM("time: " << totaltime << "s");
 
 			if(KeyframeMap_s.size() != 0)
 			{
-				ROS_INFO_STREAM("number of keyframe:  \n" << KeyframeMap_s.size());
-				ROS_INFO_STREAM("x_key of keyframe:  \n" << KeyframeMap_s[KeyframeMap_s.size()-1].x_key);
+				ROS_INFO_STREAM("number of keyframe:  " << KeyframeMap_s.size());
+				// ROS_INFO_STREAM("x_key of keyframe:  \n" << KeyframeMap_s[KeyframeMap_s.size()-1].x_key);
 			}
 	
 		}
@@ -416,7 +558,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 }
 
 //**************************ICP calculation**********************//
-Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index)
+//PointDataType: 0: frame to pre keyframe, 1: keyframe to keyframe
+Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index, int PointDataType)
 {
 	double overlap;
 	bool verification_result;
@@ -441,14 +584,26 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 
 		return icp_result;
 	}
+	if(PointDataType == 0)	//data from imu for calculate frame to pre keyframe
+	{
+		x0 = LocalMap_All_s[ICP_ref_index].x_filter;
+		y0 = LocalMap_All_s[ICP_ref_index].y_filter;
+		heading0 = LocalMap_All_s[ICP_ref_index].heading_filter;
 
-	x0 = LocalMap_All_s[ICP_ref_index].x_filter;
-	y0 = LocalMap_All_s[ICP_ref_index].y_filter;
-	heading0 = LocalMap_All_s[ICP_ref_index].heading_filter;
+		x1 = LocalMap_All_s[ICP_read_index].x_filter;
+		y1 = LocalMap_All_s[ICP_read_index].y_filter;
+		heading1 = LocalMap_All_s[ICP_read_index].heading_filter;
+	}
+	else if(PointDataType == 1)	//data from keyframe position
+	{
+		x0 = Vertex[ICP_ref_index].x;
+		y0 = Vertex[ICP_ref_index].y;
+		heading0 = Vertex[ICP_ref_index].heading;
 
-	x1 = LocalMap_All_s[ICP_read_index].x_filter;
-	y1 = LocalMap_All_s[ICP_read_index].y_filter;
-	heading1 = LocalMap_All_s[ICP_read_index].heading_filter;
+		x1 = Vertex[ICP_read_index].x;
+		y1 = Vertex[ICP_read_index].y;
+		heading1 = Vertex[ICP_read_index].heading;
+	}
 
 	//using Nav filter data to calculate guess transformation matrix
 	theta = heading1 - heading0;
@@ -467,12 +622,21 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	//icp calculation
 
 	
-	ROS_INFO_STREAM("Start working......4  " << refPointCloudPtr->size());
+	// ROS_INFO_STREAM("Start working......4  " << refPointCloudPtr->size());
 	//remove points blocked in ref frame and read frame
 	PointCloud readPointCloud_rm;
 	PointCloud refPointCloud_rm;
-	readPointCloud_rm = remove_block_area(x1, y1, heading1, x0, y0, heading0, LocalMap_ICP_s[ICP_read_index].ICP_cloudMsgIn);
-	refPointCloud_rm = remove_block_area(x0, y0, heading0, x1, y1, heading1, LocalMap_ICP_s[ICP_ref_index].ICP_cloudMsgIn);
+
+	if(PointDataType == 0)	//data from orginal localmap
+	{
+		readPointCloud_rm = remove_block_area(x1, y1, heading1, x0, y0, heading0, LocalMap_ICP_s[ICP_read_index].ICP_cloudMsgIn);
+		refPointCloud_rm = remove_block_area(x0, y0, heading0, x1, y1, heading1, LocalMap_ICP_s[ICP_ref_index].ICP_cloudMsgIn);
+	}
+	else if(PointDataType == 1)	//data from keyframe
+	{
+		readPointCloud_rm = remove_block_area(x1, y1, heading1, x0, y0, heading0, KeyframeMap_s[ICP_read_index].keyframe_icp_cloud);
+		refPointCloud_rm = remove_block_area(x0, y0, heading0, x1, y1, heading1, KeyframeMap_s[ICP_ref_index].keyframe_icp_cloud);
+	}
 	*readPointCloudPtr = readPointCloud_rm;
 	*refPointCloudPtr = refPointCloud_rm;
 	//save pcd for debug
@@ -492,7 +656,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	FinalTransformation = icp.getFinalTransformation();
 
 	// return icp.getFinalTransformation(); //resutl of ICP
-	verification_result = ICP_varification(ICP_ref_index, ICP_read_index, FinalTransformation, overlap);
+	verification_result = ICP_verification(ICP_ref_index, ICP_read_index, FinalTransformation, overlap, PointDataType);
 
 	icp_result.transformation_matrix = icp.getFinalTransformation();
 	icp_result.verification_result = verification_result;
@@ -562,17 +726,24 @@ bool Keyframe::outside_rectangle(float rectangle_x, float rectangle_y)
 
 }
 
-//********************varification**********************//
-bool Keyframe::ICP_varification(int ref_v_index, int read_v_index, matrix4f T, double &overlap)
+//********************verification**********************//
+bool Keyframe::ICP_verification(int ref_v_index, int read_v_index, matrix4f T, double &overlap, int PointDataType)
 {
 	//define pointer to get the points information
 	PointCloudPtr read_cloud (new pcl::PointCloud<pcl::PointXYZ>);
   	PointCloudPtr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudPtr ref_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
-  	*read_cloud = LocalMap_Varification_s[read_v_index].Varification_cloudMsgIn;
-  	*ref_cloud = LocalMap_Varification_s[ref_v_index].Varification_cloudMsgIn;
-
+	if(PointDataType == 0)	//data from orginal localmap
+	{
+  		*read_cloud = LocalMap_Verification_s[read_v_index].Verification_cloudMsgIn;
+  		*ref_cloud = LocalMap_Verification_s[ref_v_index].Verification_cloudMsgIn;
+	}
+	else if(PointDataType == 1)	//data from keyframe
+	{
+		*read_cloud = KeyframeMap_s[read_v_index].keyframe_verification_cloud;
+  		*ref_cloud = KeyframeMap_s[ref_v_index].keyframe_verification_cloud;
+	}
 	//using transformation matrix transfer read_points to the same coordinate as ref_points
   	pcl::transformPointCloud (*read_cloud, *transformed_cloud, T);
 
@@ -594,9 +765,9 @@ bool Keyframe::ICP_varification(int ref_v_index, int read_v_index, matrix4f T, d
   	int count = 0;
   	for(int i = 0; i < all_correspondences.size(); i++)
   	{
-  		read_z_value = LocalMap_Varification_s[read_v_index].z_mean[all_correspondences[i].index_query];
-  		ref_z_value = LocalMap_Varification_s[ref_v_index].z_mean[all_correspondences[i].index_match];
-  		ref_var_z = LocalMap_Varification_s[ref_v_index].var_z[all_correspondences[i].index_match];
+  		read_z_value = LocalMap_Verification_s[read_v_index].z_mean[all_correspondences[i].index_query];
+  		ref_z_value = LocalMap_Verification_s[ref_v_index].z_mean[all_correspondences[i].index_match];
+  		ref_var_z = LocalMap_Verification_s[ref_v_index].var_z[all_correspondences[i].index_match];
   		
   		if(read_z_value < ref_z_value + 3 * ref_var_z && read_z_value > ref_z_value - 3 * ref_var_z)
   			count++;
@@ -604,7 +775,7 @@ bool Keyframe::ICP_varification(int ref_v_index, int read_v_index, matrix4f T, d
   	ROS_INFO_STREAM("height are same: "<< count);
   	ROS_INFO_STREAM("all correspondence: " << all_correspondences.size());
 
-  	if(count / (double) all_correspondences.size() > ratio_height_varification)
+  	if(count / (double) all_correspondences.size() > ratio_height_verification)
   		return true;
   	else
   		return false;
