@@ -195,7 +195,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    //msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
-	    msg.ground_adjacent.push_back(0);
+	    msg.ground_adjacent.push_back(1);
 	    //ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
@@ -246,13 +246,13 @@ void LidarFilter::doMathMapping()
 	//-*-*-*-*-*-*-*-*FILTER POINTS FOR BUILDING LOCAL MAP-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
-	//add comment here (what does this do??)
+	//define a new point cloud with the size of grid map size (1x1 m grid) for object
 	pcl::PointCloud<pcl::PointXYZ> new_point;
 	new_point.width  = (2*map_range)*(2*map_range);
 	new_point.height = 1;
 	new_point.points.resize (new_point.width * new_point.height);
 
-	//add comment here (what does this do??)
+	//define a new point cloud with the size of grid map size (1x1 m grid) for ground points
 	pcl::PointCloud<pcl::PointXYZ> ground_point;
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
@@ -360,6 +360,7 @@ void LidarFilter::doMathMapping()
 	    }
 	    variance_z = sqrt(variance_z);
 
+	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
 	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
 	    {
 	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
@@ -371,14 +372,6 @@ void LidarFilter::doMathMapping()
 	        _local_grid_map.push_back(point);
 	    }
 
-	    //why are these being set to 0 after they are already used?
-	    // total_x = 0;
-	    // total_y = 0;
-	    // total_z = 0;
-	    // average_x = 0;
-	    // average_y = 0;
-	    // average_z = 0;
-	    // variance_z = 0;
 	}
 	
 	//copy filtered point cloud after hard thresholding and ground removal
@@ -395,7 +388,7 @@ void LidarFilter::doMathHoming()
 	pcl::PassThrough<pcl::PointXYZ> pass;
 	pass.setInputCloud(object_filtered);
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(-1.5,3); 
+    pass.setFilterLimits(-5,5); 
     pass.filter(*object_filtered);
     pass.setInputCloud(object_filtered);
     pass.setFilterFieldName("x");
@@ -475,100 +468,148 @@ void LidarFilter::doMathHoming()
 
     for (int i=0; i<points_cluster.size(); i++)
     {
-        ne.setSearchMethod (tree2);
-        ne.setInputCloud (points_cluster[i]);
-        ne.setKSearch (25);
-        ne.compute (*cloud_normals);
+    	// pre-check if that particular cluser fit the general requirement
+    	float max_x_pre = 0;
+    	float min_x_pre = 0;
+    	float max_y_pre = 0;
+    	float min_y_pre = 0;
+    	float max_z_pre = 0;
+    	float min_z_pre = 0;
 
-        //ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
+    	max_x_pre = points_cluster[i]->points[0].x;
+    	min_x_pre = points_cluster[i]->points[0].x;
+    	max_y_pre = points_cluster[i]->points[0].y;
+    	min_y_pre = points_cluster[i]->points[0].y;
+    	max_z_pre = points_cluster[i]->points[0].z;
+    	min_z_pre = points_cluster[i]->points[0].z;
 
-        // CREATE THE SEGMENTATION OBJECT FOR CYLINDER SEGMENTATION AND SET ALL THE PARAMETERS
-        seg.setOptimizeCoefficients (true);
-        seg.setModelType (pcl::SACMODEL_CYLINDER);
-        seg.setMethodType (pcl::SAC_RANSAC);
-        seg.setNormalDistanceWeight (0.01);
-        seg.setMaxIterations (1000);
-        seg.setDistanceThreshold (0.05);
-        seg.setRadiusLimits (0.14,0.17);
-        seg.setInputCloud (points_cluster[i]);
-        seg.setInputNormals (cloud_normals);
+    	for (int ii=0; ii<points_cluster[i]->points.size();ii++)
+    	{
+    		if(points_cluster[i]->points[ii].x > max_x_pre)
+    		{
+    			max_x_pre = points_cluster[i]->points[ii].x;
+    		}
+    		if(points_cluster[i]->points[ii].x < min_x_pre)
+    		{
+    			min_x_pre = points_cluster[i]->points[ii].x;
+    		}
+    		if(points_cluster[i]->points[ii].y > max_y_pre)
+    		{
+    			max_y_pre = points_cluster[i]->points[ii].y;
+    		}
+    		if(points_cluster[i]->points[ii].y < min_y_pre)
+    		{
+    			min_y_pre = points_cluster[i]->points[ii].y;
+    		}
+    		if(points_cluster[i]->points[ii].z > max_z_pre)
+    		{
+    			max_z_pre = points_cluster[i]->points[ii].z;
+    		}
+    		if(points_cluster[i]->points[ii].z < min_z_pre)
+    		{
+    			min_z_pre = points_cluster[i]->points[ii].z;
+    		}
+    	}
+    	
+    	if(abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
+    	{
+    		ne.setSearchMethod (tree2);
+	        ne.setInputCloud (points_cluster[i]);
+	        ne.setKSearch (25);
+	        ne.compute (*cloud_normals);
 
-        // OBTAIN THE CYLINDER INLIERS AND COEFFICIENTS
-        seg.segment (*inliers_cylinder, *coefficients_cylinder);
-        extract.setInputCloud (points_cluster[i]);
-        extract.setIndices (inliers_cylinder);
-        extract.setNegative (false);
-        extract.filter (*cloud_cylinder);
-        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
+	        //ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
 
-        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
-        cylinder current_cylinder;
-        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
-        {
-        	cylinderWasDetected = true;
-            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
-            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-                                            << coefficients_cylinder->values[1] << " "
-                                            << coefficients_cylinder->values[2] << " "
-                                            << coefficients_cylinder->values[3] << " "
-                                            << coefficients_cylinder->values[4] << " "
-                                            << coefficients_cylinder->values[5] << " "
-                                            << coefficients_cylinder->values[6] << endl;
-            cout << "Probability is " << seg.getProbability () << endl;
+	        // CREATE THE SEGMENTATION OBJECT FOR CYLINDER SEGMENTATION AND SET ALL THE PARAMETERS
+	        seg.setOptimizeCoefficients (true);
+	        seg.setModelType (pcl::SACMODEL_CYLINDER);
+	        seg.setMethodType (pcl::SAC_RANSAC);
+	        seg.setNormalDistanceWeight (0.01);
+	        seg.setMaxIterations (1000);
+	        seg.setDistanceThreshold (0.05);
+	        seg.setRadiusLimits (0.14,0.17);
+	        seg.setInputCloud (points_cluster[i]);
+	        seg.setInputNormals (cloud_normals);
+
+	        // OBTAIN THE CYLINDER INLIERS AND COEFFICIENTS
+	        seg.segment (*inliers_cylinder, *coefficients_cylinder);
+	        extract.setInputCloud (points_cluster[i]);
+	        extract.setIndices (inliers_cylinder);
+	        extract.setNegative (false);
+	        extract.filter (*cloud_cylinder);
+	        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
+
+	        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
+	        cylinder current_cylinder;
+	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
+	        {
+	        	cylinderWasDetected = true;
+	            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
+	            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+	                                            << coefficients_cylinder->values[1] << " "
+	                                            << coefficients_cylinder->values[2] << " "
+	                                            << coefficients_cylinder->values[3] << " "
+	                                            << coefficients_cylinder->values[4] << " "
+	                                            << coefficients_cylinder->values[5] << " "
+	                                            << coefficients_cylinder->values[6] << endl;
+	            cout << "Probability is " << seg.getProbability () << endl;
 
 
-			float max_x = cloud_cylinder->points[0].x;
-			float max_y = cloud_cylinder->points[0].y;
-			float min_x = cloud_cylinder->points[0].x;
-			float min_y = cloud_cylinder->points[0].y;
-			for (int jj=1; jj<cloud_cylinder->points.size();jj++)
-			{
-				if(cloud_cylinder->points[jj].x > max_x)
-				    max_x = cloud_cylinder->points[jj].x;
-				if(cloud_cylinder->points[jj].y > max_y)
-				    max_y = cloud_cylinder->points[jj].y;
-				if(cloud_cylinder->points[jj].x < min_x)
-				    min_x = cloud_cylinder->points[jj].x;
-				if(cloud_cylinder->points[jj].y < min_y)
-				    min_y = cloud_cylinder->points[jj].y;
-		    }
-			if(abs(max_x-min_x)<0.6 && abs(max_y-min_y)<0.6)
-			{
-				current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
-				current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
-				current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
-				current_cylinder.axis_direction(0,0) =  (double)coefficients_cylinder->values[3];
-				current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
-				current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
-				current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
-		    	
-				current_cylinder.points.zeros(3,cloud_cylinder->points.size());
-				for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
+				float max_x = cloud_cylinder->points[0].x;
+				float max_y = cloud_cylinder->points[0].y;
+				float min_x = cloud_cylinder->points[0].x;
+				float min_y = cloud_cylinder->points[0].y;
+				for (int jj=1; jj<cloud_cylinder->points.size();jj++)
 				{
-					current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
-					current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
-					current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
-
-					if(stopSavingDataToFile==false)
+					if(cloud_cylinder->points[jj].x > max_x)
+					    max_x = cloud_cylinder->points[jj].x;
+					if(cloud_cylinder->points[jj].y > max_y)
+					    max_y = cloud_cylinder->points[jj].y;
+					if(cloud_cylinder->points[jj].x < min_x)
+					    min_x = cloud_cylinder->points[jj].x;
+					if(cloud_cylinder->points[jj].y < min_y)
+					    min_y = cloud_cylinder->points[jj].y;
+			    }
+				if(abs(max_x-min_x)<0.6 && abs(max_y-min_y)<0.6)
+				{
+					current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
+					current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
+					current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
+					current_cylinder.axis_direction(0,0) =  (double)coefficients_cylinder->values[3];
+					current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
+					current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
+					current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
+			    	
+					current_cylinder.points.zeros(3,cloud_cylinder->points.size());
+					for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
 					{
-						// outputFile << current_cylinder.points(0,jj) << ",";
-						// outputFile << current_cylinder.points(1,jj) << ",";
-						// outputFile << current_cylinder.points(2,jj) << ",";
-						// outputFile << i << ","; //cylinder number
-						// outputFile << current_cylinder.point_in_space(0,0) << ",";
-						// outputFile << current_cylinder.point_in_space(1,0) << ",";
-						// outputFile << current_cylinder.point_in_space(2,0) << ",";
-						// outputFile << current_cylinder.axis_direction(0,0) << ",";
-						// outputFile << current_cylinder.axis_direction(1,0) << ",";
-						// outputFile << current_cylinder.axis_direction(2,0) << ",";
-						// outputFile << current_cylinder.raius_estimate(0,0);
-						// outputFile << std::endl;   		
+						current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
+						current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
+						current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
+
+						if(stopSavingDataToFile==false)
+						{
+							// outputFile << current_cylinder.points(0,jj) << ",";
+							// outputFile << current_cylinder.points(1,jj) << ",";
+							// outputFile << current_cylinder.points(2,jj) << ",";
+							// outputFile << i << ","; //cylinder number
+							// outputFile << current_cylinder.point_in_space(0,0) << ",";
+							// outputFile << current_cylinder.point_in_space(1,0) << ",";
+							// outputFile << current_cylinder.point_in_space(2,0) << ",";
+							// outputFile << current_cylinder.axis_direction(0,0) << ",";
+							// outputFile << current_cylinder.axis_direction(1,0) << ",";
+							// outputFile << current_cylinder.axis_direction(2,0) << ",";
+							// outputFile << current_cylinder.raius_estimate(0,0);
+							// outputFile << std::endl;   		
+						}
 					}
+					//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
+					cylinders.push_back(current_cylinder);
 				}
-				//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
-				cylinders.push_back(current_cylinder);
-			}
-        }
+	        }
+    	}
+
+        
     }
 
     //begin homing detection from cylinders
