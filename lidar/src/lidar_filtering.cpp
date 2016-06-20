@@ -79,7 +79,6 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	// _R_roll(2,2) = 1;
 
 	//pitch rotation using navigation data
-	std::cout << "_navigation_filter_pitch = " << _navigation_filter_pitch << std::endl;
 	Eigen::Matrix3f _R_pitch;
 	_R_pitch(0,0) = cos(_navigation_filter_pitch);
 	_R_pitch(0,1) = 0;
@@ -188,7 +187,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	msg.y_mean.clear();
 	msg.z_mean.clear();
 	msg.var_z.clear();
-	msg.ground_adjacent.clear();
+	msg.ground_adjacent.clear(); 
 
 	//populate local map
 	for(int i=0; i<_local_grid_map.size(); i++)
@@ -198,8 +197,8 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    //msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
-	    msg.ground_adjacent.push_back(1);
-	    // ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
+	    msg.ground_adjacent.push_back(0);
+	    //ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
 	//forward relavent navigation information
@@ -271,18 +270,9 @@ void LidarFilter::doMathMapping()
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
 	ground_point.points.resize (ground_point.width * ground_point.height);
-	//ROS_INFO("1");
-	// THESE ARE FOR CYLINDER DETECTION
-	
-	
-	
-	//pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
-	
-	
 
-	// std::stringstream ss1;
-	// ss1 << "raw_cloud.pcd";
-	// pcl::io::savePCDFile( ss1.str(), *cloud);
+	// THESE ARE FOR CYLINDER DETECTION
+	//pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
 	
 	// PASS THROUGH FILTER
 	pcl::PassThrough<pcl::PointXYZ> pass;
@@ -294,9 +284,13 @@ void LidarFilter::doMathMapping()
 	pass.setFilterLimits(-map_range,map_range);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("z");
-	pass.setFilterLimits(-1.5,threshold_tree_height);
+	pass.setFilterLimits(-1*threshold_tree_height,1.5); //positive z is down, negative z is up
 	pass.filter(*cloud);
-	
+
+	// std::stringstream ss1;
+	// ss1 << "ss1.pcd";
+	// pcl::io::savePCDFile( ss1.str(), *cloud);
+
 	/*
 	// remove 10x10 m area the behind the lidar (the pole) in order to increase the accuracy of ICP
 	pass.setInputCloud(cloud);
@@ -384,12 +378,10 @@ void LidarFilter::doMathMapping()
 	extract.setNegative (true);
 	extract.filter (*object_filtered);
 
+	// std::stringstream ss2;
+	// ss2 << "ss2.pcd";
+	// pcl::io::savePCDFile( ss2.str(), *object_filtered);
 
-
-	// std::stringstream ss3;
-	// ss3 << "ground.pcd";
-	// pcl::io::savePCDFile( ss3.str(), *ground_filtered);
-	//ROS_INFO("3");
 	// EXTRACT NON-GROUND RETURNS
 	*object_filtered_projection = *object_filtered;
 	// PROJECTION, MAY NEED TO MODIFY THE ALGORITHM LATER
@@ -452,6 +444,8 @@ void LidarFilter::doMathMapping()
 	        _local_grid_map.push_back(point);
 	        point.clear();
 	    }
+	    //std::cout << "_local_grid_map.size() = " << _local_grid_map.size() << std::endl;
+
 	    /* //need to check for the point adjacent
 	    // switch the coordinate of the LIDAR // need to check again
 	    float temp_holder = 0.0;
@@ -616,10 +610,10 @@ void LidarFilter::doMathHoming()
     //ROS_INFO("%i clusters extracted from scan.", points_cluster.size());
     static bool stopSavingDataToFile = false;
     bool cylinderWasDetected = false;
-	std::ofstream outputFile;
+	// std::ofstream outputFile;
 	if(stopSavingDataToFile==false)
 	{
-		outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
+		//outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
 	}
 
 	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
@@ -708,18 +702,18 @@ void LidarFilter::doMathHoming()
 
 					if(stopSavingDataToFile==false)
 					{
-						outputFile << current_cylinder.points(0,jj) << ",";
-						outputFile << current_cylinder.points(1,jj) << ",";
-						outputFile << current_cylinder.points(2,jj) << ",";
-						outputFile << i << ","; //cylinder number
-						outputFile << current_cylinder.point_in_space(0,0) << ",";
-						outputFile << current_cylinder.point_in_space(1,0) << ",";
-						outputFile << current_cylinder.point_in_space(2,0) << ",";
-						outputFile << current_cylinder.axis_direction(0,0) << ",";
-						outputFile << current_cylinder.axis_direction(1,0) << ",";
-						outputFile << current_cylinder.axis_direction(2,0) << ",";
-						outputFile << current_cylinder.raius_estimate(0,0);
-						outputFile << std::endl;   		
+						// outputFile << current_cylinder.points(0,jj) << ",";
+						// outputFile << current_cylinder.points(1,jj) << ",";
+						// outputFile << current_cylinder.points(2,jj) << ",";
+						// outputFile << i << ","; //cylinder number
+						// outputFile << current_cylinder.point_in_space(0,0) << ",";
+						// outputFile << current_cylinder.point_in_space(1,0) << ",";
+						// outputFile << current_cylinder.point_in_space(2,0) << ",";
+						// outputFile << current_cylinder.axis_direction(0,0) << ",";
+						// outputFile << current_cylinder.axis_direction(1,0) << ",";
+						// outputFile << current_cylinder.axis_direction(2,0) << ",";
+						// outputFile << current_cylinder.raius_estimate(0,0);
+						// outputFile << std::endl;   		
 					}
 				}
 				//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
@@ -960,12 +954,12 @@ void LidarFilter::doMathHoming()
 
 		if(stopSavingDataToFile==false && _homing_found==true)
 		{
-			outputFile.close();
+			// outputFile.close();
 			stopSavingDataToFile=true; 
 		}
 		else
 		{
-			outputFile.close();
+			// outputFile.close();
 		}
 	}
 }
