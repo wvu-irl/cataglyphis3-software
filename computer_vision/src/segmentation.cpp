@@ -320,8 +320,11 @@ std::vector<int> Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectang
 bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, computer_vision::SegmentImage::Response &res)
 {
     ROS_INFO("calling segmentations service...");
+   /*
+        LOAD IMAGE FROM CAMERA OR FILE
+    */
 	cv::Mat image_file;
-	if(req.camera==true)
+	if(req.live==true) //capture image from camera
 	{
 		if(capture.capture_image()!=1)
 		{
@@ -337,18 +340,23 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
             }
 		}
 	}
-	else if(req.camera==false)
+	else if(req.live==false) //load camera image from file
 	{
 		image_file = cv::imread(req.path);
 		if(!image_file.data)
 		{
-			ROS_ERROR("Error! Must enter valid path to image in request.");
+			ROS_ERROR("Error! Must enter valid path to image (camera) in request.");
 			return false;
 		}
+        if(image_file.cols!=5792 || image_file.rows!=5792)
+        {
+            ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for (image) segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
+            return false;
+        }   
 	}
 	else
 	{
-		ROS_ERROR("Must request to use camera (true) or path to image (false).");
+		ROS_ERROR("Invalid request to segmentImageSrv.");
 		return false;
 	}
 	cv::Mat image_file_copy = image_file.clone();
@@ -384,7 +392,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
 	std::vector<cv::Mat> channels(3);
 	split(image_file, channels);
-	//cv::multiply(channels[0],cv::Scalar(255),channels[0]);
+    //cv::multiply(channels[0],cv::Scalar(255),channels[0]);
     cv::multiply(channels[0],calibrationMask,channels[0]);
     cv::imwrite(P.string() + "/data/images/segmented.jpg",channels[0].clone());
 
@@ -402,6 +410,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
     dilate(channels[0], channels[0], dilateElement);
     dilate(channels[0], channels[0], dilateElement);
+
     cv::imwrite(P.string() + "/data/images/morphed.jpg",channels[0].clone());
 
     //t = (get_wall_time() - t)*1000;

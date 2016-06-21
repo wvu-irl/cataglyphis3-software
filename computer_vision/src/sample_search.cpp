@@ -86,57 +86,16 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std:
 	imwrite(P.string() + "/data/images/output_image.jpg", src);
 }
 
-bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
+//NOTE: This function may not write the blob info to the file correctly... Needs to be verified...
+void SampleSearch::saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, const std::vector<int> &coordinates)
 {
-	//call segmentation server
-	gettimeofday(&this->localTimer, NULL);
-    double startSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-
-	segmentImageSrv.request.camera = true;
-	segmentImageSrv.request.path = "";
-	if(segmentImageClient.call(segmentImageSrv))
-	{
-		ROS_INFO("segmentImageSrv call successful!");
-	}
-	else
-	{
-		ROS_ERROR("Error! Failed to call service SegmentImage!");
-		return false;
-	}
-
-	gettimeofday(&this->localTimer, NULL);  
-    double endSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-    ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
-
-	//call classifier servver
-	gettimeofday(&this->localTimer, NULL);
-    double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-
-	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 150;
-	if(classifierClient.call(imageProbabilitiesSrv))
-	{
-		ROS_INFO("imageProbabilitiesSrv call successful!");
-	}
-	else
-	{
-		ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-		return false;
-	}
-
-	gettimeofday(&this->localTimer, NULL);  
-    double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-    ROS_INFO("Time taken in seconds for segmentation service: %f", endClassifierTime - startClassifierTime);
-
-	//save image, blobs, and blob info if > 0.2 probability of being a sample
-	//TODO: move saving the blobs/images into a function and add an option to do this
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	int save_image_flag = 0;
 	int copy_original_cols = 0;
 	int copy_original_rows = 0;
-	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
+	for(int i=0; i<probabilities.size(); i++)
 	{
-		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.2)
+		if(probabilities[i]>0.2) //save blobs with probability above 0.2
 		{
 		    //write full image to file
 			if(save_image_flag==0) //only save full image once
@@ -163,8 +122,8 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
             G_outputInfoFile << "," << G_data_folder_name + "/full/" + G_blob_image_name; //folder containing full image
             G_outputInfoFile << "," << copy_original_cols; //width of origional image
             G_outputInfoFile << "," << copy_original_rows; //height of origional image
-            G_outputInfoFile << "," << segmentImageSrv.response.coordinates[i*2]; //center of object x
-            G_outputInfoFile << "," << segmentImageSrv.response.coordinates[i*2+1]; //center of obejct y
+            G_outputInfoFile << "," << coordinates[i*2]; //center of object x
+            G_outputInfoFile << "," << coordinates[i*2+1]; //center of obejct y
             G_outputInfoFile << "," << image_copy_from_blob.cols*0.5; //origional width of segment, NOTE: this needs to be changed if segmentation class changes
             G_outputInfoFile << "," << image_copy_from_blob.rows*0.5; //origional height of segment, NOTE: this needs to be changed if segmentation class changes
             G_outputInfoFile << "," << image_copy_from_blob.cols; //expanded width of segment
@@ -174,8 +133,72 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		}
 	}
 	G_image_index++;
+}
 
-	//draw samples and nonsamples on image (the should always be done, this should not be an option)
+bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
+{
+	/*
+		Call segmentation server
+	*/
+	gettimeofday(&this->localTimer, NULL);
+    double startSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
+	segmentImageSrv.request.live = req.live;
+	segmentImageSrv.request.path = req.path;
+	if(segmentImageClient.call(segmentImageSrv))
+	{
+		ROS_INFO("segmentImageSrv call successful!");
+	}
+	else
+	{
+		ROS_ERROR("Error! Failed to call service SegmentImage!");
+		return false;
+	}
+
+	gettimeofday(&this->localTimer, NULL);  
+    double endSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
+
+	/*
+		Call classifier server
+	*/
+	gettimeofday(&this->localTimer, NULL);
+    double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
+	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+	imageProbabilitiesSrv.request.imgSize = 150; //50 will do 50x50 classifier, 150 will do 150x150 classifier
+	if(classifierClient.call(imageProbabilitiesSrv))
+	{
+		ROS_INFO("imageProbabilitiesSrv call successful!");
+	}
+	else
+	{
+		ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+		return false;
+	}
+
+	gettimeofday(&this->localTimer, NULL);  
+    double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for segmentation service: %f", endClassifierTime - startClassifierTime);
+
+	/*
+		Save image, blobs, and blob info if > 0.2 probability of being a sample
+	*/
+	gettimeofday(&this->localTimer, NULL);
+    double startSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
+	saveLowAndHighProbabilityBlobs(imageProbabilitiesSrv.response.responseProbabilities, segmentImageSrv.response.coordinates);
+
+	gettimeofday(&this->localTimer, NULL);  
+    double endSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for segmentation service: %f", endSaveBlobsTime - startSaveBlobsTime);
+
+	/*
+		Draw samples and nonsamples on image (the should always be done, this should not be an option)
+	*/
+	gettimeofday(&this->localTimer, NULL);
+    double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
 	std::vector<int> binary;
 	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
 	{
@@ -190,7 +213,13 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	}
 	drawResultsOnImage(binary, segmentImageSrv.response.coordinates);
 
-	//calculate the position of each sample
+	gettimeofday(&this->localTimer, NULL);  
+    double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for segmentation service: %f", endDrawTime - startDrawTime);
+
+	/*
+		Calculate the position of each sample
+	*/
 	gettimeofday(&this->localTimer, NULL);
     double startSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
@@ -203,7 +232,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		{
 			position.clear();
 			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[i*2], segmentImageSrv.response.coordinates[i*2+1]);
-			ROS_INFO("sample(%i) relative polar position = %f, %f", i, position[0], position[1]);
+			//ROS_INFO("sample(%i) relative polar position = %f, %f", i, position[0], position[1]);
 			sampleProps.type = i;
 			sampleProps.distance = position[0];
 			sampleProps.bearing = position[1];
@@ -216,7 +245,9 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     double endSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for segmentation service: %f", endSampleLocalizationTime - startSampleLocalizationTime);
 
-	//publish results of search
+	/*
+		Publish results of search
+	*/
     searchForSamplesMsgOut.procType = req.procType;
     searchForSamplesMsgOut.serialNum = req.serialNum;
     searchForSamplesPub.publish(searchForSamplesMsgOut);

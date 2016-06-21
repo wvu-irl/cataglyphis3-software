@@ -27,6 +27,7 @@ public:
 	void createFolderForImageData();
 	void createFileForImageData();
 	void drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &coordinates);
+	void saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, const std::vector<int> &coordinates);
 	std::vector<double> calculateFlatGroundPositionOfPixel(int u, int v);
 	// Members
 	ros::NodeHandle nh;

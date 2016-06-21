@@ -1,4 +1,4 @@
-bool camera
+bool live
 string path
 ---
 int32[] coordinates
