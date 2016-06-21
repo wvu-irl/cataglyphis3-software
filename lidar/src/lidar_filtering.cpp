@@ -319,8 +319,6 @@ void LidarFilter::doMathMapping()
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	//Notes: The current algorithm is very un-effective, need to improve later
-	//Notes: PLEASE COMMENT THIS SECTION
 
 	//define variables used in this section
 	std::vector<float> point;
@@ -413,24 +411,25 @@ void LidarFilter::doMathHoming()
 	// ss << "file.pcd";
 	// pcl::io::savePCDFile( ss.str(), *object_filtered);
 
-    // CREATING THE KDTREE OBJECT OFR THE SEARCH METHOD OF THE EXTRACTION
+    // CREATING THE KDTREE OBJECT FOR THE SEARCH METHOD OF THE EXTRACTION
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>); //for clustering
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
     tree->setInputCloud (object_filtered);
-
     //cout << "0" << endl;
-
+    
+    //use the euclidean clustering method to put points into different clusters based on their relative distance
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance (0.3); // 
-    ec.setMinClusterSize (50);
-    ec.setMaxClusterSize (5000);
+    ec.setClusterTolerance (0.3); // distance threshold
+    ec.setMinClusterSize (50); //minial size to generate a cluster 
+    ec.setMaxClusterSize (5000); //max size
     ec.setSearchMethod (tree);
-    ec.setInputCloud (object_filtered);
+    ec.setInputCloud (object_filtered); //use the points after ground removal 
     ec.extract (cluster_indices);
 
     //cout << "1" << endl;
-
+    
+    //generate empty clouds to hold previous cluster
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZ>);
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> points_cluster;
     for (int ii=0;ii<cluster_indices.size ();ii++)
@@ -439,7 +438,8 @@ void LidarFilter::doMathHoming()
     }
     
 	    //cout << "2" << endl;
-
+	    
+    //put above clusters into differnt point clouds
     int j = 0;
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
     {
@@ -455,6 +455,8 @@ void LidarFilter::doMathHoming()
         j++;
     }
 
+    //from here is the cylinder detection method 
+    //input data is previous clusters
     std::vector<cylinder> cylinders;
     cylinders.clear();
     //loop through clusters
@@ -466,7 +468,8 @@ void LidarFilter::doMathHoming()
 	{
 		//outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
 	}
-
+	
+	//parameters need to run the cylinder detection algorithm
 	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
 	pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg;
@@ -519,12 +522,13 @@ void LidarFilter::doMathHoming()
     			min_z_pre = points_cluster[i]->points[ii].z;
     		}
     	}
-
+	
+	//pre check to filter out some obvious false detection
     	if(abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
     	{
     		ne.setSearchMethod (tree2);
 	        ne.setInputCloud (points_cluster[i]);
-	        ne.setKSearch (25);
+	        ne.setKSearch (25); //use 25 nearest points to run the algorithm
 	        ne.compute (*cloud_normals);
 
 	        //ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
