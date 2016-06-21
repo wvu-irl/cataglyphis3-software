@@ -335,7 +335,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 			image_file = capture.image_Mat;
             if(image_file.cols!=5792 || image_file.rows!=5792)
             {
-                ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
+                ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for (live) segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
                 return false;
             }
 		}
@@ -345,7 +345,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 		image_file = cv::imread(req.path);
 		if(!image_file.data)
 		{
-			ROS_ERROR("Error! Must enter valid path to image (camera) in request.");
+			ROS_ERROR("Error! Must enter valid path to image in request.");
 			return false;
 		}
         if(image_file.cols!=5792 || image_file.rows!=5792)
