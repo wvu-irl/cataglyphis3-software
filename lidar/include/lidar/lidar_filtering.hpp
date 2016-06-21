@@ -93,21 +93,21 @@ private:
 	Eigen::Matrix3f _R_lidar_to_robot; //lidar body from to robot body frame (rotation)
 
 	//registration callback
-	pcl::PointCloud<pcl::PointXYZ> _input_cloud;
+	pcl::PointCloud<pcl::PointXYZI> _input_cloud;
 	//short int _registration_counter;
 	//short int _registration_counter_prev;
 	bool _registration_new;
 
 	//stitch clouds function
-	pcl::PointCloud<pcl::PointXYZ> _piece_one;
-	pcl::PointCloud<pcl::PointXYZ> _piece_two;
+	pcl::PointCloud<pcl::PointXYZI> _piece_one;
+	pcl::PointCloud<pcl::PointXYZI> _piece_two;
 
 	//mapping function
 	const int map_range = 40; //size of local map is 20x20 m
 	const float grid_size = 1; // size of the local map grid
 	const float threshold_tree_height = 10.0; // above which the points will be disgarded
 	std::vector<std::vector<float> > _local_grid_map;
-	pcl::PointCloud<pcl::PointXYZ> _object_filtered;
+	pcl::PointCloud<pcl::PointXYZI> _object_filtered;
 
 	//homing function
 	struct cylinder
@@ -127,7 +127,7 @@ private:
 
 	//callback functions
 	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg);
-	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud);
+	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 
 	void rexrcinforCallback(const messages::ExecInfo::ConstPtr &exec_msg);
 };

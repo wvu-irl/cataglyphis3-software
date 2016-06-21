@@ -96,27 +96,27 @@ class Registration
 private:
 	ros::NodeHandle nn;
 	ros::Subscriber sub_laser;
-	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
+	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 	{
 
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
             *cloud = input_cloud;
         ROS_INFO("\n*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
 	    ROS_INFO("Running callback function with %i points.",cloud->points.size());
 		
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZ>);
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr grid_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr ground_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr local_map (new pcl::PointCloud<pcl::PointXYZ>);
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr test (new pcl::PointCloud<pcl::PointXYZ>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZI>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr grid_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr ground_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr local_map (new pcl::PointCloud<pcl::PointXYZI>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr test (new pcl::PointCloud<pcl::PointXYZI>);
 	    pcl::PointIndicesPtr ground (new pcl::PointIndices);
-	    pcl::PointCloud<pcl::PointXYZ> new_point;
+	    pcl::PointCloud<pcl::PointXYZI> new_point;
 	    new_point.width  = (2*map_range)*(2*map_range);
 	    new_point.height = 1;
 	    new_point.points.resize (new_point.width * new_point.height);
-	    pcl::PointCloud<pcl::PointXYZ> ground_point;
+	    pcl::PointCloud<pcl::PointXYZI> ground_point;
 	    ground_point.width  = (2*map_range)*(2*map_range);
 	    ground_point.height = 1;
 	    ground_point.points.resize (ground_point.width * ground_point.height);
@@ -124,12 +124,12 @@ private:
 	    // THESE ARE FOR CYLINDER DETECTION
 	    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
 	    pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
-	    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZ>);
+	    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
 	    pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
     	//pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
-    	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
-    	pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg;
-    	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZ> ());
+    	pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
+    	pcl::SACSegmentationFromNormals<pcl::PointXYZI, pcl::Normal> seg;
+    	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZI> ());
 
 		// std::stringstream ss1;
 		// ss1 << "raw_cloud.pcd";
@@ -137,7 +137,7 @@ private:
 
 		
 	    // PASS THROUGH FILTER
-	    pcl::PassThrough<pcl::PointXYZ> pass;
+	    pcl::PassThrough<pcl::PointXYZI> pass;
 		pass.setInputCloud(cloud);
 	    pass.setFilterFieldName("x");
 	    pass.setFilterLimits(-map_range,map_range);
@@ -176,7 +176,7 @@ private:
 	    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
 	    pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
 	    // Create the segmentation object
-	    pcl::SACSegmentation<pcl::PointXYZ> seg_plane;
+	    pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
 	    // Optional
 	    seg_plane.setOptimizeCoefficients (true);
 	    // Mandatory
@@ -186,7 +186,7 @@ private:
 	    seg_plane.setDistanceThreshold (0.15); //Ground detection threshold parameter
 	    seg_plane.setInputCloud (cloud); //was raw_cloud
 	    seg_plane.segment (*inliers, *coefficients);
-	    pcl::ExtractIndices<pcl::PointXYZ> extract;
+	    pcl::ExtractIndices<pcl::PointXYZI> extract;
 	    extract.setInputCloud (cloud);
 	    extract.setIndices (inliers);
 	    extract.setNegative (false);
@@ -299,14 +299,14 @@ private:
 		// pcl::io::savePCDFile( ss.str(), *object_filtered);
 
 	    // CREATING THE KDTREE OBJECT OFR THE SEARCH METHOD OF THE EXTRACTION
-	    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>); //for clustering
-	    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
+	    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>); //for clustering
+	    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZI> ());
 	    tree->setInputCloud (object_filtered);
 
 	    //cout << "0" << endl;
 
 	    std::vector<pcl::PointIndices> cluster_indices;
-	    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+	    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
 	    ec.setClusterTolerance (0.3); // 
 	    ec.setMinClusterSize (50);
 	    ec.setMaxClusterSize (5000);
@@ -316,7 +316,7 @@ private:
 
 	    //cout << "1" << endl;
 
-	    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> points_cluster;
+	    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
 	    for (int ii=0;ii<cluster_indices.size ();ii++)
 	    {
 	        points_cluster.push_back(cloud_middle);
@@ -327,7 +327,7 @@ private:
 	    int j = 0;
 	    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
 	    {
-	        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+	        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
 	        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
 	        cloud_cluster->points.push_back (object_filtered->points[*pit]); //*
 	        cloud_cluster->width = cloud_cluster->points.size ();
