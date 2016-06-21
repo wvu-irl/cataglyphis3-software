@@ -64,7 +64,7 @@ private:
 	Eigen::Matrix3f _R_lidar_to_robot; //lidar body from to robot body frame (rotation)
 
 	//registration callback
-	pcl::PointCloud<pcl::PointXYZ> _input_cloud;
+	pcl::PointCloud<pcl::PointXYZI> _input_cloud;
 	short int _registration_counter;
 	short int _registration_counter_prev;
 	bool _registration_new;
@@ -79,7 +79,7 @@ private:
 	//collision output
 	short int _collision_status;
 
-	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud);
+	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 };
 
 #endif // COLLISION_DETECTION_H

@@ -116,7 +116,7 @@ private:
 	RobotControlSubscriber robot_control;
 	int counter = 0;
 
-	void registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
+	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 	{
 		//check for collisions
 		if(robot_control.check_for_collisions==1) 
@@ -124,7 +124,7 @@ private:
 			//function trim laser down to only points in virtual corridor
 
 			//do ground removal on points in virtual corridor
-			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); // The raw point cloud from the LIDAR
+			pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>); // The raw point cloud from the LIDAR
 			*cloud = input_cloud;
 /*
 			pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);

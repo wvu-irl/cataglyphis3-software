@@ -43,8 +43,8 @@ LidarFilter::LidarFilter()
 	_homing_found = false;
 
 	//clouds stitch
-	pcl::PointCloud<pcl::PointXYZ> piece_one;
-	pcl::PointCloud<pcl::PointXYZ> piece_two;
+	pcl::PointCloud<pcl::PointXYZI> piece_one;
+	pcl::PointCloud<pcl::PointXYZI> piece_two;
 }
 
 void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg)
@@ -111,9 +111,9 @@ void LidarFilter::rexrcinforCallback(const messages::ExecInfo::ConstPtr &exec_ms
 	_execinfo_turnflag = exec_msg->turnFlag;
 }
 
-void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
+void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
-	pcl::PointCloud<pcl::PointXYZ> temp_cloud = input_cloud;
+	pcl::PointCloud<pcl::PointXYZI> temp_cloud = input_cloud;
     _registration_counter = _registration_counter + 1;
 
     //calculate rotation from lidar to robot body then compensate for the robot tilt
@@ -236,7 +236,7 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 void LidarFilter::doMathMapping()
 {
 	//copy point cloud to local variable
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
 	*cloud = _input_cloud;
 
 	ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
@@ -247,19 +247,19 @@ void LidarFilter::doMathMapping()
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 	//define a new point cloud with the size of grid map size (1x1 m grid) for object
-	pcl::PointCloud<pcl::PointXYZ> new_point;
+	pcl::PointCloud<pcl::PointXYZI> new_point;
 	new_point.width  = (2*map_range)*(2*map_range);
 	new_point.height = 1;
 	new_point.points.resize (new_point.width * new_point.height);
 
 	//define a new point cloud with the size of grid map size (1x1 m grid) for ground points
-	pcl::PointCloud<pcl::PointXYZ> ground_point;
+	pcl::PointCloud<pcl::PointXYZI> ground_point;
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
 	ground_point.points.resize (ground_point.width * ground_point.height);
 	
 	//remove points based on hard thresholds (too far, too high, too low)
-	pcl::PassThrough<pcl::PointXYZ> pass;
+	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
 	pass.setFilterLimits(-map_range,map_range);
@@ -277,7 +277,7 @@ void LidarFilter::doMathMapping()
 	// pcl::io::savePCDFile( ss1.str(), *cloud);
 
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
-	pcl::SACSegmentation<pcl::PointXYZ> seg_plane;
+	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
 	seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
@@ -291,16 +291,16 @@ void LidarFilter::doMathMapping()
 	seg_plane.segment (*inliers, *coefficients);
 
 	//seperate the ground points and the points above the ground (object points)
-	pcl::ExtractIndices<pcl::PointXYZ> extract;
+	pcl::ExtractIndices<pcl::PointXYZI> extract;
 	extract.setInputCloud (cloud);
 	extract.setIndices (inliers);
 
 	extract.setNegative (false);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*ground_filtered);
 
 	extract.setNegative (true);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
 	//save point cloud after ground removal
@@ -309,7 +309,7 @@ void LidarFilter::doMathMapping()
 	// pcl::io::savePCDFile( ss2.str(), *object_filtered);
 
 	//project points on the xy plane
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZI>);
 	*object_filtered_projection = *object_filtered;
 	for (int i=0; i<object_filtered->points.size(); i++)
 	{
@@ -387,12 +387,12 @@ void LidarFilter::doMathMapping()
 
 void LidarFilter::doMathHoming()
 {
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	*object_filtered= _object_filtered;
 
 	// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
 	// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
-	pcl::PassThrough<pcl::PointXYZ> pass;
+	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(object_filtered);
     pass.setFilterFieldName("z");
     pass.setFilterLimits(-5,5); 
@@ -412,14 +412,14 @@ void LidarFilter::doMathHoming()
 	// pcl::io::savePCDFile( ss.str(), *object_filtered);
 
     // CREATING THE KDTREE OBJECT FOR THE SEARCH METHOD OF THE EXTRACTION
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>); //for clustering
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>); //for clustering
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZI> ());
     tree->setInputCloud (object_filtered);
     //cout << "0" << endl;
     
     //use the euclidean clustering method to put points into different clusters based on their relative distance
     std::vector<pcl::PointIndices> cluster_indices;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
     ec.setClusterTolerance (0.3); // distance threshold
     ec.setMinClusterSize (50); //minial size to generate a cluster 
     ec.setMaxClusterSize (5000); //max size
@@ -430,8 +430,8 @@ void LidarFilter::doMathHoming()
     //cout << "1" << endl;
     
     //generate empty clouds to hold previous cluster
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZ>);
-    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> points_cluster;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
     for (int ii=0;ii<cluster_indices.size ();ii++)
     {
         points_cluster.push_back(cloud_middle);
@@ -443,7 +443,7 @@ void LidarFilter::doMathHoming()
     int j = 0;
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
     {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
         {
         	cloud_cluster->points.push_back (object_filtered->points[*pit]);
@@ -470,13 +470,13 @@ void LidarFilter::doMathHoming()
 	}
 	
 	//parameters need to run the cylinder detection algorithm
-	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+	pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
-	pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg;
+	pcl::SACSegmentationFromNormals<pcl::PointXYZI, pcl::Normal> seg;
 	pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
 	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
-	pcl::ExtractIndices<pcl::PointXYZ> extract;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZ> ());
+	pcl::ExtractIndices<pcl::PointXYZI> extract;
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZI> ());
 
     for (int i=0; i<points_cluster.size(); i++)
     {
