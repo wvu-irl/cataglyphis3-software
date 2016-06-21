@@ -6,7 +6,7 @@ bool brass
 bool confirm
 bool save
 bool live
-bool path
+string path
 uint8 procType
 uint32 serialNum
 ---
