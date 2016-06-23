@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(slam)
 
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -20,9 +21,10 @@ find_package(catkin REQUIRED
 
 find_package(PCL 1.7 REQUIRED COMPONENTS common kdtree)
 find_package(Eigen3 REQUIRED)
+find_package(G2O REQUIRED)
+find_package(CSparse REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -136,13 +138,14 @@ add_definitions("-std=gnu++11")
  include_directories(include
 		     ${catkin_INCLUDE_DIRS}
 		     ${PCL_INCLUDE_DIRS}
-		     ${Eigen_INCLUDE_DIRS})
+		     ${Eigen_INCLUDE_DIRS}
+		     ${CSPARSE_INCLUDE_DIR})
 
 ## Declare a C++ library
 # add_library(slam
 #   src/${PROJECT_NAME}/slam.cpp
 # )
-
+SET(G2O_LIBS g2o_cli g2o_ext_freeglut_minimal g2o_simulator g2o_solver_slam2d_linear g2o_types_icp g2o_types_slam2d g2o_core g2o_interface g2o_solver_csparse g2o_solver_structure_only g2o_types_sba g2o_types_slam3d g2o_csparse_extension g2o_opengl_helper g2o_solver_dense g2o_stuff g2o_types_sclam2d g2o_parser g2o_solver_pcg g2o_types_data g2o_types_sim3 cxsparse )
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -160,6 +163,7 @@ add_definitions("-std=gnu++11")
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${PCL_COMMON_LIBRARIES}
+   ${G2O_LIBS}
  )
 
 #############
