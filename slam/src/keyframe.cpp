@@ -7,6 +7,8 @@
 
 //if g2o changes positon of vertex, I should update TkeyTomap !!!!
 
+//g2o information matrix need to change, different weight
+
 
 #include "math.h"
 //include ros head file
@@ -207,6 +209,9 @@ protected:
 	bool trigger_g2o;
 	int maxiteration;
 
+	//definition for publish
+	std::vector<PointCloud> Keyframe_Pointcloud_pub;
+
 
 	//timer definition
 	clock_t start, finish;
@@ -221,6 +226,7 @@ protected:
 	double TransformationMatrix_to_angle(matrix4f matrix);
 	matrix4f angle_to_TransformationMatrix(double diff_x, double diff_y,double theta);
 	bool Do_g2o(std::vector<Position> &Vertex, std::vector<Transformation_Matrix> &Edges);
+	void Pcak_Keyframe_message();
 
 
 
@@ -282,6 +288,7 @@ void Keyframe::Initialization()
 	LocalMap_Verification_s.clear();
 	KeyframeMap_s.clear();
 	Vertex_pointcloud.clear();
+	Keyframe_Pointcloud_pub.clear();
 
 	TreadToprekey_s.clear();
 
@@ -312,7 +319,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	start = clock();
 	
 	if(LocalMapMsgIn.new_data) //if the localmap data is new, update
-	{	ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
+	{	
+		// ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
 		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Get data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 
 		//************************************************************//
@@ -384,6 +392,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 			// ROS_INFO_STREAM("Start working......3  " << LocalMap_ICP_s[read_index].ICP_cloudMsgIn.size());
 			//do ICP to get transformation matrix from read to reference
+
 			ICP_Result icp_result;
 			icp_result = ICP_compute(ref_index, read_index, 0);
 
@@ -432,80 +441,73 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				KeyframeMap_s.push_back(keyframe_pointcloud);
 
 				//get transformation between keyframe and previous keyframe, map is not a keyframe, so the first keyframe will be the keyframe next to map
-				if(KeyframeMap_s.size() > 1)	//if only have one keyframe, we don't have transformation matrix
+				if(Vertex.size() > 1)	//if only have one keyframe, we don't have transformation matrix
 				{
 					edges.transformation_matrix = TreadToprekey_s[TreadToprekey_s.size() - 2].transformation_matrix;
-					edges.from_index = TreadToprekey_s[TreadToprekey_s.size() - 2].from_index;
-					edges.to_index = TreadToprekey_s[TreadToprekey_s.size() - 2].to_index;
-
-					//store transformation between keyframe and previous keyframe into edges
+					edges.from_index = Vertex.size() - 1;
+					edges.to_index = Vertex.size() - 2;
+					//store transformation between current keyframe and previous keyframe into edges
 					Edges.push_back(edges);
 				}
 
 
 				//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<find k nearest neighbor>>>>>>>>>>>>>>>>>>>>>>>>>>//
-				// if(KeyframMap_s.size() > neighbor_number)	//make sure there is enough point for search
-				// {
-					pcl::PointXYZ searchPoint;	//set the last vertex be the search point
-					searchPoint.x = Vertex[Vertex.size() - 1].x;
-					searchPoint.y = Vertex[Vertex.size() - 1].y;
-					searchPoint.z = 0.0;
 
-					pcl::PointCloud<pcl::PointXYZ>::Ptr Vertex_pointcloud_Ptr (new pcl::PointCloud<pcl::PointXYZ>);
-					*Vertex_pointcloud_Ptr = Vertex_pointcloud;	//set the input cloud include the search point and the previous keyframe
+				pcl::PointXYZ searchPoint;	//set the last vertex be the search point
+				searchPoint.x = Vertex[Vertex.size() - 1].x;
+				searchPoint.y = Vertex[Vertex.size() - 1].y;
+				searchPoint.z = 0.0;
 
-					kdtree.setInputCloud(Vertex_pointcloud_Ptr);
+				pcl::PointCloud<pcl::PointXYZ>::Ptr Vertex_pointcloud_Ptr (new pcl::PointCloud<pcl::PointXYZ>);
+				*Vertex_pointcloud_Ptr = Vertex_pointcloud;	//set the input cloud include the search point and the previous keyframe
 
-					std::vector<int> pointIdxNKNSearch(neighbor_number);
-					std::vector<float> pointNKNSquaredDistance(neighbor_number);
-					pointIdxNKNSearch.clear();
-					pointNKNSquaredDistance.clear();
+				kdtree.setInputCloud(Vertex_pointcloud_Ptr);
 
-					if(kdtree.nearestKSearch (searchPoint, neighbor_number, pointIdxNKNSearch, pointNKNSquaredDistance) > 0)	//find nearest neighbor
-					{	ROS_INFO_STREAM("Start working......5  " << kdtree.nearestKSearch (searchPoint, neighbor_number, pointIdxNKNSearch, pointNKNSquaredDistance));
-						for(int i = 0; i < pointIdxNKNSearch.size(); i++)
+				std::vector<int> pointIdxNKNSearch(neighbor_number);
+				std::vector<float> pointNKNSquaredDistance(neighbor_number);
+				pointIdxNKNSearch.clear();
+				pointNKNSquaredDistance.clear();
+
+				if(kdtree.nearestKSearch (searchPoint, neighbor_number, pointIdxNKNSearch, pointNKNSquaredDistance) > 0)	//find nearest neighbor
+				{	ROS_INFO_STREAM("Start working......5  " << kdtree.nearestKSearch (searchPoint, neighbor_number, pointIdxNKNSearch, pointNKNSquaredDistance));
+					for(int i = 0; i < pointIdxNKNSearch.size(); i++)
+					{
+						if(pointIdxNKNSearch[i] != Vertex.size() - 1 && pointIdxNKNSearch[i] != Vertex.size() - 2)	//the current keyframe does not need to do ICP with itself and previous keyframe
 						{
-							if(pointIdxNKNSearch[i] != Vertex.size() - 1 && pointIdxNKNSearch[i] != Vertex.size() - 2)	//the current keyframe does not need to do ICP with itself and previous keyframe
+							//do ICP between k nearest neighbor keyframe to get edges
+							icp_result = ICP_compute(pointIdxNKNSearch[i], Vertex.size() - 1, 1);
+							ROS_INFO_STREAM("Start working......6  " << "overlap: " << icp_result.overlap << " "<<icp_result.verification_result);
+
+							if(icp_result.verification_result)
 							{
-								//do ICP between k nearest neighbor keyframe to get edges
-								icp_result = ICP_compute(pointIdxNKNSearch[i], Vertex.size() - 1, 1);
-								ROS_INFO_STREAM("Start working......6  " << "overlap: " << icp_result.overlap << " "<<icp_result.verification_result);
+								edges.transformation_matrix = icp_result.transformation_matrix;
+								edges.from_index = icp_result.from_index;
+								edges.to_index = icp_result.to_index;
 
-								if(icp_result.verification_result)
-								{
-									edges.transformation_matrix = icp_result.transformation_matrix;
-									edges.from_index = icp_result.from_index;
-									edges.to_index = icp_result.to_index;
-
-									//store transformation between keyframes into edges
-									Edges.push_back(edges);
+								//store transformation between keyframes into edges
+								Edges.push_back(edges);
 								
 
-									//check the distance between current keyframe and nearest neighbor keyframe, and if the distance is less than threshold, do g2o
-									if(pointNKNSquaredDistance[i] < threshold_g2odistance)
-									{
-										distance = sqrt(icp_result.transformation_matrix(0,3)*icp_result.transformation_matrix(0,3) + 
+								//check the distance between current keyframe and nearest neighbor keyframe, and if the distance is less than threshold, do g2o
+								if(pointNKNSquaredDistance[i] < threshold_g2odistance)
+								{
+									distance = sqrt(icp_result.transformation_matrix(0,3)*icp_result.transformation_matrix(0,3) + 
 											icp_result.transformation_matrix(1,3)*icp_result.transformation_matrix(1,3) + 
 											icp_result.transformation_matrix(2,3)*icp_result.transformation_matrix(2,3));	//using ICP result to verification the distance
 
-										if(distance < threshold_g2odistance)
-											trigger_g2o = Do_g2o(Vertex, Edges); //do g2o
-
-									}
+									if(distance < threshold_g2odistance)
+										trigger_g2o = Do_g2o(Vertex, Edges); //do g2o
 								}
-
 							}
+
 						}
 					}
-
-					
-
-
-				// }	
-				
+				}
 
 
 
+				//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<pack keyframe message>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//	
+				Pcak_Keyframe_message();
 
 
 				//after generating a new keyframe, clean all map data for free storage
@@ -530,7 +532,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 			}
 
-			ROS_INFO_STREAM("trigger_g2o: " << trigger_g2o);
+			// ROS_INFO_STREAM("trigger_g2o: " << trigger_g2o);
 					// if(trigger_g2o = true)
 					// 	trigger_g2o = false;
 		
@@ -629,6 +631,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	// Matrix(3,0) = 0;                 Matrix(3,1) = 0;                    Matrix(3,2) = 0;  Matrix(3,3) = 1;
 
 	guessT = angle_to_TransformationMatrix(diff_x, diff_y, theta);
+	
 
 
 	//icp calculation
@@ -764,6 +767,8 @@ bool Keyframe::ICP_verification(int ref_v_index, int read_v_index, matrix4f T, d
   	est.setInputTarget (ref_cloud);
 
   	pcl::Correspondences all_correspondences;
+	ROS_INFO_STREAM("Start working......5  " << ref_cloud->size());
+	ROS_INFO_STREAM("Start working......6  " << transformed_cloud->size());
 
   	est.determineCorrespondences (all_correspondences, distance_correspondence);
 
@@ -820,6 +825,7 @@ bool Keyframe::Do_g2o(std::vector<Position> &Vertex, std::vector<Transformation_
 
 	//add edge
 	std::vector<g2o::EdgeSE2*> edges;	//for reading edge data
+	edges.clear();
 	for(int i = 0; i < Edges.size(); i++)
 	{
 		double theta = TransformationMatrix_to_angle(Edges[i].transformation_matrix);	//get angle from transformation, angle in radian
@@ -912,6 +918,40 @@ Keyframe::matrix4f Keyframe::angle_to_TransformationMatrix(double diff_x, double
 	Matrix(3,0) = 0;                 Matrix(3,1) = 0;                    Matrix(3,2) = 0;  Matrix(3,3) = 1;
 
 	return Matrix;
+}
+
+void Keyframe::Pcak_Keyframe_message()
+{
+	//transfer all keyframe points to globe coordination
+	//define pointer to get the points information
+	PointCloudPtr read_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  	PointCloudPtr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	//if g2o worked, then update TkeyTomap
+	if(trigger_g2o)
+	{
+		for(int i = 0; i < Vertex.size(); i++)
+		{
+			*read_cloud = KeyframeMap_s[i].keyframe_verification_cloud;	
+			//using transformation matrix transfer read_points to the same coordinate as ref_points
+  			pcl::transformPointCloud (*read_cloud, *transformed_cloud, angle_to_TransformationMatrix(Vertex[i].x, Vertex[i].y,Vertex[i].heading));
+			Keyframe_Pointcloud_pub[i] = *transformed_cloud;
+		}
+		TkeyTomap = angle_to_TransformationMatrix(Vertex[Vertex.size() - 1].x, Vertex[Vertex.size() - 1].y,Vertex[Vertex.size() - 1].heading);
+
+		trigger_g2o = false;	//reset trigger_g2o
+	}
+	else
+	{
+		//regular update without g2o work
+		*read_cloud = KeyframeMap_s[KeyframeMap_s.size() - 1].keyframe_verification_cloud;	
+		//using transformation matrix transfer read_points to the same coordinate as ref_points
+  		pcl::transformPointCloud (*read_cloud, *transformed_cloud, TkeyTomap);
+  				
+  		Keyframe_Pointcloud_pub.push_back(*transformed_cloud);
+	}
+
+	//publish updated keyframes
+	// ......
 }
 int main(int argc, char **argv)
 {
