@@ -30,6 +30,7 @@
 
 //message files
 #include "messages/LocalMap.h"
+#include "slam/TkeyTomap_msg.h"
 
 //g2o library
 #include "g2o/core/sparse_optimizer.h"
@@ -126,6 +127,7 @@ protected:
 
 	//publish 
 	ros::Publisher keyframePub;
+	ros::Publisher TkeyTomapPub;
 
 	//subscribe
 	ros::Subscriber localmapSub;
@@ -243,7 +245,8 @@ Keyframe::Keyframe()
 	//topic initialization
 	localmapSub = node.subscribe("/lidar/lidarfilteringnode/localmap", 1, &Keyframe::getlocalmapcallback, this);
 
-	// keyframePub = node.advertise<message::Keyframe>("/slam/keyframe", 1, true); //need to change the message file
+	// keyframePub = node.advertise<messages::Keyframe>("/slam/keyframe", 1, true); //need to change the message file
+	TkeyTomapPub = node.advertise<slam::TkeyTomap_msg>("/slam/TkeyTomap_msg", 1, true);
 }
 
 void Keyframe::Initialization()
@@ -508,6 +511,15 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 				//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<pack keyframe message>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//	
 				Pcak_Keyframe_message();
+
+				//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<publish TkeyTomap message>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
+				slam::TkeyTomap_msg tkeytomap_msg; 
+				
+				tkeytomap_msg.x = TkeyTomap(0,3);
+				tkeytomap_msg.y = TkeyTomap(1,3);
+				tkeytomap_msg.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+
+				TkeyTomapPub.publish(tkeytomap_msg);
 
 
 				//after generating a new keyframe, clean all map data for free storage

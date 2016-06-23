@@ -56,11 +56,10 @@ find_package(CSparse REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   TkeyTomap_msg.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -153,6 +152,7 @@ SET(G2O_LIBS g2o_cli g2o_ext_freeglut_minimal g2o_simulator g2o_solver_slam2d_li
 
 ## Declare a C++ executable
  add_executable(keyframe_node src/keyframe.cpp)
+ add_executable(localization_node src/localization.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -164,6 +164,12 @@ SET(G2O_LIBS g2o_cli g2o_ext_freeglut_minimal g2o_simulator g2o_solver_slam2d_li
    ${PCL_LIBRARIES}
    ${PCL_COMMON_LIBRARIES}
    ${G2O_LIBS}
+ )
+
+ target_link_libraries(localization_node
+   ${catkin_LIBRARIES}
+   ${PCL_LIBRARIES}
+   ${PCL_COMMON_LIBRARIES}
  )
 
 #############
