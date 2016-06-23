@@ -129,7 +129,7 @@ private:
 	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg);
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 
-	void rexrcinforCallback(const messages::ExecInfo::ConstPtr &exec_msg);
+	void execinforCallback(const messages::ExecInfo::ConstPtr &exec_msg);
 };
 
 #endif // LIDAR_FILTERING_H

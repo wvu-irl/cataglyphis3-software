@@ -14,7 +14,7 @@ LidarFilter::LidarFilter()
 
 	//ExecInfo callback initialization
 	_execinfo_turnflag = false;
-	_sub_execinfo = _nh.subscribe("control/exec/info", 1, &LidarFilter::rexrcinforCallback, this);
+	_sub_execinfo = _nh.subscribe("control/exec/info", 1, &LidarFilter::execinforCallback, this);
 
 	//rotation from robot to homing beacon (pitch and roll rotation only)
 	_R_tilt_robot_to_beacon = Eigen::Matrix3f::Identity();
@@ -106,7 +106,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_R_tilt_robot_to_beacon = _R_roll*_R_pitch;
 }
 
-void LidarFilter::rexrcinforCallback(const messages::ExecInfo::ConstPtr &exec_msg)
+void LidarFilter::execinforCallback(const messages::ExecInfo::ConstPtr &exec_msg)
 {
 	_execinfo_turnflag = exec_msg->turnFlag;
 }
@@ -196,9 +196,8 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    //msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
 	    msg.ground_adjacent.push_back(1);
-	    //ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
-	}
 
+	}
 	//forward relavent navigation information
 	msg.x_filter = this->_navigation_filter_x;
 	msg.y_filter = this->_navigation_filter_y;
@@ -209,8 +208,6 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 
 	//flag the data as new
 	msg.new_data = _registration_new;
-
-	//ROS_INFO_STREAM("pointcloud size: " << msg.x_mean.size() );
 }
 
 void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
@@ -340,18 +337,20 @@ void LidarFilter::doMathMapping()
 	    point.clear();
 	}
 
-	//define variables used to calculate mean x y z and variance of z
-	float total_x = 0;
-	float total_y = 0;
-	float total_z = 0;
-	float average_x = 0;
-	float average_y = 0;
-	float average_z = 0;
-	float variance_z = 0;
+
 
 	//do the calculation
 	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
 	{
+		//define variables used to calculate mean x y z and variance of z
+		float total_x = 0;
+		float total_y = 0;
+		float total_z = 0;
+		float average_x = 0;
+		float average_y = 0;
+		float average_z = 0;
+		float variance_z = 0;
+
 	    for (int j = 0; j < grid_map_cells[i].size(); j++)
 	    {
 	        total_x += grid_map_cells[i][j][0];
