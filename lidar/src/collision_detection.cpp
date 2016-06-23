@@ -23,9 +23,9 @@ CollisionDetection::CollisionDetection()
 	_collision_status = 0;
 }
 
-void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
+void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
-	pcl::PointCloud<pcl::PointXYZ> temp_cloud = input_cloud;
+	pcl::PointCloud<pcl::PointXYZI> temp_cloud = input_cloud;
     _registration_counter = _registration_counter + 1;
 
     //create 4x4 transformation with 0 translation
@@ -82,7 +82,7 @@ void CollisionDetection::packCollisionMessage(messages::CollisionOut &msg)
 int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 {
 	//reference point cloud for processing
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
 	*cloud = _input_cloud;
 
 	//check for collision points

@@ -43,8 +43,8 @@ LidarFilter::LidarFilter()
 	_homing_found = false;
 
 	//clouds stitch
-	pcl::PointCloud<pcl::PointXYZ> piece_one;
-	pcl::PointCloud<pcl::PointXYZ> piece_two;
+	pcl::PointCloud<pcl::PointXYZI> piece_one;
+	pcl::PointCloud<pcl::PointXYZI> piece_two;
 }
 
 void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg)
@@ -111,9 +111,9 @@ void LidarFilter::rexrcinforCallback(const messages::ExecInfo::ConstPtr &exec_ms
 	_execinfo_turnflag = exec_msg->turnFlag;
 }
 
-void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZ> const &input_cloud)
+void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
-	pcl::PointCloud<pcl::PointXYZ> temp_cloud = input_cloud;
+	pcl::PointCloud<pcl::PointXYZI> temp_cloud = input_cloud;
     _registration_counter = _registration_counter + 1;
 
     //calculate rotation from lidar to robot body then compensate for the robot tilt
@@ -195,7 +195,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	    msg.z_mean.push_back(_local_grid_map[i][2]);
 	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    //msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
-	    msg.ground_adjacent.push_back(0);
+	    msg.ground_adjacent.push_back(1);
 	    //ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
@@ -236,7 +236,7 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 void LidarFilter::doMathMapping()
 {
 	//copy point cloud to local variable
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
 	*cloud = _input_cloud;
 
 	ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
@@ -246,20 +246,20 @@ void LidarFilter::doMathMapping()
 	//-*-*-*-*-*-*-*-*FILTER POINTS FOR BUILDING LOCAL MAP-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
-	//add comment here (what does this do??)
-	pcl::PointCloud<pcl::PointXYZ> new_point;
+	//define a new point cloud with the size of grid map size (1x1 m grid) for object
+	pcl::PointCloud<pcl::PointXYZI> new_point;
 	new_point.width  = (2*map_range)*(2*map_range);
 	new_point.height = 1;
 	new_point.points.resize (new_point.width * new_point.height);
 
-	//add comment here (what does this do??)
-	pcl::PointCloud<pcl::PointXYZ> ground_point;
+	//define a new point cloud with the size of grid map size (1x1 m grid) for ground points
+	pcl::PointCloud<pcl::PointXYZI> ground_point;
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
 	ground_point.points.resize (ground_point.width * ground_point.height);
 	
 	//remove points based on hard thresholds (too far, too high, too low)
-	pcl::PassThrough<pcl::PointXYZ> pass;
+	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
 	pass.setFilterLimits(-map_range,map_range);
@@ -277,7 +277,7 @@ void LidarFilter::doMathMapping()
 	// pcl::io::savePCDFile( ss1.str(), *cloud);
 
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
-	pcl::SACSegmentation<pcl::PointXYZ> seg_plane;
+	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
 	seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
@@ -291,16 +291,16 @@ void LidarFilter::doMathMapping()
 	seg_plane.segment (*inliers, *coefficients);
 
 	//seperate the ground points and the points above the ground (object points)
-	pcl::ExtractIndices<pcl::PointXYZ> extract;
+	pcl::ExtractIndices<pcl::PointXYZI> extract;
 	extract.setInputCloud (cloud);
 	extract.setIndices (inliers);
 
 	extract.setNegative (false);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*ground_filtered);
 
 	extract.setNegative (true);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
 	//save point cloud after ground removal
@@ -309,7 +309,7 @@ void LidarFilter::doMathMapping()
 	// pcl::io::savePCDFile( ss2.str(), *object_filtered);
 
 	//project points on the xy plane
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZI>);
 	*object_filtered_projection = *object_filtered;
 	for (int i=0; i<object_filtered->points.size(); i++)
 	{
@@ -319,23 +319,28 @@ void LidarFilter::doMathMapping()
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	//Notes: The current algorithm is very un-effective, need to improve later
-	//Notes: PLEASE COMMENT THIS SECTION
 
+	//define variables used in this section
 	std::vector<float> point;
 	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
 	std::vector<std::vector<float> > local_grid_map_temp;
 	int index = 0;
 	_local_grid_map.clear();
+
+	//grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
 	for (int i = 0; i< object_filtered->points.size(); i++)
 	{
 	    point.push_back(object_filtered->points[i].x);
 	    point.push_back(object_filtered->points[i].y);
 	    point.push_back(object_filtered->points[i].z);
+
+	    //the index checks which gird a point belongs to 
 	    index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
 	    grid_map_cells[index].push_back(point);
 	    point.clear();
 	}
+
+	//define variables used to calculate mean x y z and variance of z
 	float total_x = 0;
 	float total_y = 0;
 	float total_z = 0;
@@ -343,6 +348,8 @@ void LidarFilter::doMathMapping()
 	float average_y = 0;
 	float average_z = 0;
 	float variance_z = 0;
+
+	//do the calculation
 	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
 	{
 	    for (int j = 0; j < grid_map_cells[i].size(); j++)
@@ -360,6 +367,7 @@ void LidarFilter::doMathMapping()
 	    }
 	    variance_z = sqrt(variance_z);
 
+	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
 	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
 	    {
 	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
@@ -371,14 +379,6 @@ void LidarFilter::doMathMapping()
 	        _local_grid_map.push_back(point);
 	    }
 
-	    //why are these being set to 0 after they are already used?
-	    // total_x = 0;
-	    // total_y = 0;
-	    // total_z = 0;
-	    // average_x = 0;
-	    // average_y = 0;
-	    // average_z = 0;
-	    // variance_z = 0;
 	}
 	
 	//copy filtered point cloud after hard thresholding and ground removal
@@ -387,15 +387,15 @@ void LidarFilter::doMathMapping()
 
 void LidarFilter::doMathHoming()
 {
-	pcl::PointCloud<pcl::PointXYZ>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	*object_filtered= _object_filtered;
 
 	// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
 	// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
-	pcl::PassThrough<pcl::PointXYZ> pass;
+	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(object_filtered);
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(-1.5,3); 
+    pass.setFilterLimits(-5,5); 
     pass.filter(*object_filtered);
     pass.setInputCloud(object_filtered);
     pass.setFilterFieldName("x");
@@ -411,37 +411,39 @@ void LidarFilter::doMathHoming()
 	// ss << "file.pcd";
 	// pcl::io::savePCDFile( ss.str(), *object_filtered);
 
-    // CREATING THE KDTREE OBJECT OFR THE SEARCH METHOD OF THE EXTRACTION
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>); //for clustering
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZ> ());
+    // CREATING THE KDTREE OBJECT FOR THE SEARCH METHOD OF THE EXTRACTION
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>); //for clustering
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZI> ());
     tree->setInputCloud (object_filtered);
-
     //cout << "0" << endl;
-
+    
+    //use the euclidean clustering method to put points into different clusters based on their relative distance
     std::vector<pcl::PointIndices> cluster_indices;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance (0.3); // 
-    ec.setMinClusterSize (50);
-    ec.setMaxClusterSize (5000);
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+    ec.setClusterTolerance (0.3); // distance threshold
+    ec.setMinClusterSize (50); //minial size to generate a cluster 
+    ec.setMaxClusterSize (5000); //max size
     ec.setSearchMethod (tree);
-    ec.setInputCloud (object_filtered);
+    ec.setInputCloud (object_filtered); //use the points after ground removal 
     ec.extract (cluster_indices);
 
     //cout << "1" << endl;
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZ>);
-    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> points_cluster;
+    
+    //generate empty clouds to hold previous cluster
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
     for (int ii=0;ii<cluster_indices.size ();ii++)
     {
         points_cluster.push_back(cloud_middle);
     }
     
 	    //cout << "2" << endl;
-
+	    
+    //put above clusters into differnt point clouds
     int j = 0;
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
     {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
         {
         	cloud_cluster->points.push_back (object_filtered->points[*pit]);
@@ -453,6 +455,8 @@ void LidarFilter::doMathHoming()
         j++;
     }
 
+    //from here is the cylinder detection method 
+    //input data is previous clusters
     std::vector<cylinder> cylinders;
     cylinders.clear();
     //loop through clusters
@@ -464,111 +468,161 @@ void LidarFilter::doMathHoming()
 	{
 		//outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
 	}
-
-	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+	
+	//parameters need to run the cylinder detection algorithm
+	pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
-	pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg;
+	pcl::SACSegmentationFromNormals<pcl::PointXYZI, pcl::Normal> seg;
 	pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
 	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
-	pcl::ExtractIndices<pcl::PointXYZ> extract;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZ> ());
+	pcl::ExtractIndices<pcl::PointXYZI> extract;
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZI> ());
 
     for (int i=0; i<points_cluster.size(); i++)
     {
-        ne.setSearchMethod (tree2);
-        ne.setInputCloud (points_cluster[i]);
-        ne.setKSearch (25);
-        ne.compute (*cloud_normals);
+    	// pre-check if that particular cluser fit the general requirement
+    	float max_x_pre = 0;
+    	float min_x_pre = 0;
+    	float max_y_pre = 0;
+    	float min_y_pre = 0;
+    	float max_z_pre = 0;
+    	float min_z_pre = 0;
 
-        //ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
+    	max_x_pre = points_cluster[i]->points[0].x;
+    	min_x_pre = points_cluster[i]->points[0].x;
+    	max_y_pre = points_cluster[i]->points[0].y;
+    	min_y_pre = points_cluster[i]->points[0].y;
+    	max_z_pre = points_cluster[i]->points[0].z;
+    	min_z_pre = points_cluster[i]->points[0].z;
 
-        // CREATE THE SEGMENTATION OBJECT FOR CYLINDER SEGMENTATION AND SET ALL THE PARAMETERS
-        seg.setOptimizeCoefficients (true);
-        seg.setModelType (pcl::SACMODEL_CYLINDER);
-        seg.setMethodType (pcl::SAC_RANSAC);
-        seg.setNormalDistanceWeight (0.01);
-        seg.setMaxIterations (1000);
-        seg.setDistanceThreshold (0.05);
-        seg.setRadiusLimits (0.14,0.17);
-        seg.setInputCloud (points_cluster[i]);
-        seg.setInputNormals (cloud_normals);
+    	for (int ii=0; ii<points_cluster[i]->points.size();ii++)
+    	{
+    		if(points_cluster[i]->points[ii].x > max_x_pre)
+    		{
+    			max_x_pre = points_cluster[i]->points[ii].x;
+    		}
+    		if(points_cluster[i]->points[ii].x < min_x_pre)
+    		{
+    			min_x_pre = points_cluster[i]->points[ii].x;
+    		}
+    		if(points_cluster[i]->points[ii].y > max_y_pre)
+    		{
+    			max_y_pre = points_cluster[i]->points[ii].y;
+    		}
+    		if(points_cluster[i]->points[ii].y < min_y_pre)
+    		{
+    			min_y_pre = points_cluster[i]->points[ii].y;
+    		}
+    		if(points_cluster[i]->points[ii].z > max_z_pre)
+    		{
+    			max_z_pre = points_cluster[i]->points[ii].z;
+    		}
+    		if(points_cluster[i]->points[ii].z < min_z_pre)
+    		{
+    			min_z_pre = points_cluster[i]->points[ii].z;
+    		}
+    	}
+	
+	//pre check to filter out some obvious false detection
+    	if(abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
+    	{
+    		ne.setSearchMethod (tree2);
+	        ne.setInputCloud (points_cluster[i]);
+	        ne.setKSearch (25); //use 25 nearest points to run the algorithm
+	        ne.compute (*cloud_normals);
 
-        // OBTAIN THE CYLINDER INLIERS AND COEFFICIENTS
-        seg.segment (*inliers_cylinder, *coefficients_cylinder);
-        extract.setInputCloud (points_cluster[i]);
-        extract.setIndices (inliers_cylinder);
-        extract.setNegative (false);
-        extract.filter (*cloud_cylinder);
-        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
+	        //ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
 
-        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
-        cylinder current_cylinder;
-        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
-        {
-        	cylinderWasDetected = true;
-            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
-            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-                                            << coefficients_cylinder->values[1] << " "
-                                            << coefficients_cylinder->values[2] << " "
-                                            << coefficients_cylinder->values[3] << " "
-                                            << coefficients_cylinder->values[4] << " "
-                                            << coefficients_cylinder->values[5] << " "
-                                            << coefficients_cylinder->values[6] << endl;
-            cout << "Probability is " << seg.getProbability () << endl;
+	        // CREATE THE SEGMENTATION OBJECT FOR CYLINDER SEGMENTATION AND SET ALL THE PARAMETERS
+	        seg.setOptimizeCoefficients (true);
+	        seg.setModelType (pcl::SACMODEL_CYLINDER);
+	        seg.setMethodType (pcl::SAC_RANSAC);
+	        seg.setNormalDistanceWeight (0.01);
+	        seg.setMaxIterations (1000);
+	        seg.setDistanceThreshold (0.05);
+	        seg.setRadiusLimits (0.14,0.17);
+	        seg.setInputCloud (points_cluster[i]);
+	        seg.setInputNormals (cloud_normals);
+
+	        // OBTAIN THE CYLINDER INLIERS AND COEFFICIENTS
+	        seg.segment (*inliers_cylinder, *coefficients_cylinder);
+	        extract.setInputCloud (points_cluster[i]);
+	        extract.setIndices (inliers_cylinder);
+	        extract.setNegative (false);
+	        extract.filter (*cloud_cylinder);
+	        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
+
+	        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
+	        cylinder current_cylinder;
+	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
+	        {
+	        	cylinderWasDetected = true;
+	            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
+	            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+	                                            << coefficients_cylinder->values[1] << " "
+	                                            << coefficients_cylinder->values[2] << " "
+	                                            << coefficients_cylinder->values[3] << " "
+	                                            << coefficients_cylinder->values[4] << " "
+	                                            << coefficients_cylinder->values[5] << " "
+	                                            << coefficients_cylinder->values[6] << endl;
+	            cout << "Probability is " << seg.getProbability () << endl;
 
 
-			float max_x = cloud_cylinder->points[0].x;
-			float max_y = cloud_cylinder->points[0].y;
-			float min_x = cloud_cylinder->points[0].x;
-			float min_y = cloud_cylinder->points[0].y;
-			for (int jj=1; jj<cloud_cylinder->points.size();jj++)
-			{
-				if(cloud_cylinder->points[jj].x > max_x)
-				    max_x = cloud_cylinder->points[jj].x;
-				if(cloud_cylinder->points[jj].y > max_y)
-				    max_y = cloud_cylinder->points[jj].y;
-				if(cloud_cylinder->points[jj].x < min_x)
-				    min_x = cloud_cylinder->points[jj].x;
-				if(cloud_cylinder->points[jj].y < min_y)
-				    min_y = cloud_cylinder->points[jj].y;
-		    }
-			if(abs(max_x-min_x)<0.6 && abs(max_y-min_y)<0.6)
-			{
-				current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
-				current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
-				current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
-				current_cylinder.axis_direction(0,0) =  (double)coefficients_cylinder->values[3];
-				current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
-				current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
-				current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
-		    	
-				current_cylinder.points.zeros(3,cloud_cylinder->points.size());
-				for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
+				float max_x = cloud_cylinder->points[0].x;
+				float max_y = cloud_cylinder->points[0].y;
+				float min_x = cloud_cylinder->points[0].x;
+				float min_y = cloud_cylinder->points[0].y;
+				for (int jj=1; jj<cloud_cylinder->points.size();jj++)
 				{
-					current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
-					current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
-					current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
-
-					if(stopSavingDataToFile==false)
+					if(cloud_cylinder->points[jj].x > max_x)
+					    max_x = cloud_cylinder->points[jj].x;
+					if(cloud_cylinder->points[jj].y > max_y)
+					    max_y = cloud_cylinder->points[jj].y;
+					if(cloud_cylinder->points[jj].x < min_x)
+					    min_x = cloud_cylinder->points[jj].x;
+					if(cloud_cylinder->points[jj].y < min_y)
+					    min_y = cloud_cylinder->points[jj].y;
+			    }
+				if(abs(max_x-min_x)<0.6 && abs(max_y-min_y)<0.6)
+				{
+					current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
+					current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
+					current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
+					current_cylinder.axis_direction(0,0) =  (double)coefficients_cylinder->values[3];
+					current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
+					current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
+					current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
+			    	
+					current_cylinder.points.zeros(3,cloud_cylinder->points.size());
+					for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
 					{
-						// outputFile << current_cylinder.points(0,jj) << ",";
-						// outputFile << current_cylinder.points(1,jj) << ",";
-						// outputFile << current_cylinder.points(2,jj) << ",";
-						// outputFile << i << ","; //cylinder number
-						// outputFile << current_cylinder.point_in_space(0,0) << ",";
-						// outputFile << current_cylinder.point_in_space(1,0) << ",";
-						// outputFile << current_cylinder.point_in_space(2,0) << ",";
-						// outputFile << current_cylinder.axis_direction(0,0) << ",";
-						// outputFile << current_cylinder.axis_direction(1,0) << ",";
-						// outputFile << current_cylinder.axis_direction(2,0) << ",";
-						// outputFile << current_cylinder.raius_estimate(0,0);
-						// outputFile << std::endl;   		
+						current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
+						current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
+						current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
+
+						if(stopSavingDataToFile==false)
+						{
+							// outputFile << current_cylinder.points(0,jj) << ",";
+							// outputFile << current_cylinder.points(1,jj) << ",";
+							// outputFile << current_cylinder.points(2,jj) << ",";
+							// outputFile << i << ","; //cylinder number
+							// outputFile << current_cylinder.point_in_space(0,0) << ",";
+							// outputFile << current_cylinder.point_in_space(1,0) << ",";
+							// outputFile << current_cylinder.point_in_space(2,0) << ",";
+							// outputFile << current_cylinder.axis_direction(0,0) << ",";
+							// outputFile << current_cylinder.axis_direction(1,0) << ",";
+							// outputFile << current_cylinder.axis_direction(2,0) << ",";
+							// outputFile << current_cylinder.raius_estimate(0,0);
+							// outputFile << std::endl;   		
+						}
 					}
+					//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
+					cylinders.push_back(current_cylinder);
 				}
-				//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
-				cylinders.push_back(current_cylinder);
-			}
-        }
+	        }
+    	}
+
+        
     }
 
     //begin homing detection from cylinders
