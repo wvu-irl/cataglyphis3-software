@@ -7,6 +7,7 @@
 #include <robot_control/IntermediateWaypoints.h>
 #include <robot_control/ModifyROI.h>
 #include <robot_control/SearchMap.h>
+#include <robot_control/RandomSearchWaypoints.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
 #include <messages/ExecAction.h>
@@ -40,16 +41,18 @@ public:
     static robot_control::IntermediateWaypoints intermediateWaypointsSrv;
     static ros::ServiceClient reqROIClient;
     static robot_control::RegionsOfInterest regionsOfInterestSrv;
+	static ros::ServiceClient modROIClient;
+	static robot_control::ModifyROI modROISrv;
 	static ros::ServiceClient searchMapClient;
 	static robot_control::SearchMap searchMapSrv;
+	static ros::ServiceClient randomSearchWaypointsClient;
+	static robot_control::RandomSearchWaypoints randomSearchWaypointsSrv;
     static RobotStatus robotStatus;
     static std::vector<robot_control::Waypoint> waypointsToTravel;
     static int numWaypointsToTravel;
     static bool execDequeEmpty;
     static PROC_TYPES_T execLastProcType;
     static unsigned int execLastSerialNum;
-    static ros::ServiceClient modROIClient;
-    static robot_control::ModifyROI modROISrv;
 	static messages::CollisionOut collisionMsg;
 	static float collisionInterruptThresh; // m
 	const float collisionMinDistance = 2.0; // m
@@ -103,16 +106,18 @@ ros::ServiceClient MissionPlanningProcessShare::intermediateWaypointsClient;
 robot_control::IntermediateWaypoints MissionPlanningProcessShare::intermediateWaypointsSrv;
 ros::ServiceClient MissionPlanningProcessShare::reqROIClient;
 robot_control::RegionsOfInterest MissionPlanningProcessShare::regionsOfInterestSrv;
+ros::ServiceClient MissionPlanningProcessShare::modROIClient;
+robot_control::ModifyROI MissionPlanningProcessShare::modROISrv;
 ros::ServiceClient MissionPlanningProcessShare::searchMapClient;
 robot_control::SearchMap MissionPlanningProcessShare::searchMapSrv;
+ros::ServiceClient MissionPlanningProcessShare::randomSearchWaypointsClient;
+robot_control::RandomSearchWaypoints MissionPlanningProcessShare::randomSearchWaypointsSrv;
 RobotStatus MissionPlanningProcessShare::robotStatus;
 std::vector<robot_control::Waypoint> MissionPlanningProcessShare::waypointsToTravel;
 int MissionPlanningProcessShare::numWaypointsToTravel;
 bool MissionPlanningProcessShare::execDequeEmpty;
 PROC_TYPES_T MissionPlanningProcessShare::execLastProcType;
 unsigned int MissionPlanningProcessShare::execLastSerialNum;
-ros::ServiceClient MissionPlanningProcessShare::modROIClient;
-robot_control::ModifyROI MissionPlanningProcessShare::modROISrv;
 messages::CollisionOut MissionPlanningProcessShare::collisionMsg;
 float MissionPlanningProcessShare::collisionInterruptThresh;
 ros::Subscriber MissionPlanningProcessShare::cvSamplesSub;

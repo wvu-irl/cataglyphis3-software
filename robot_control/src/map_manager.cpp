@@ -450,6 +450,12 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             {
                 res.waypointList.at(numRandomWaypointsSelected-1).x = randomWaypointPosition[0];
                 res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
+                res.waypointList.at(numRandomWaypointsSelected-1).cachedProb = searchLocalMap.at(layerToString(_cachedProb), randomWaypointIndex);
+                res.waypointList.at(numRandomWaypointsSelected-1).purpleProb = searchLocalMap.at(layerToString(_purpleProb), randomWaypointIndex);
+                res.waypointList.at(numRandomWaypointsSelected-1).redProb = searchLocalMap.at(layerToString(_redProb), randomWaypointIndex);
+                res.waypointList.at(numRandomWaypointsSelected-1).blueProb = searchLocalMap.at(layerToString(_blueProb), randomWaypointIndex);
+                res.waypointList.at(numRandomWaypointsSelected-1).silverProb = searchLocalMap.at(layerToString(_silverProb), randomWaypointIndex);
+                res.waypointList.at(numRandomWaypointsSelected-1).brassProb = searchLocalMap.at(layerToString(_brassProb), randomWaypointIndex);
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
             }
         }
