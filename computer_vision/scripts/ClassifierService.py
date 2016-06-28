@@ -126,11 +126,13 @@ if __name__ == "__main__":
 
 	# read the mean data
 	meanData150Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	# meanData150Path = cvModulePath+ "/data/mean_file/50_x_50_mean/allData_150_lmdb.npy"
 	meanData150 = np.load(meanData150Path)
 	meanData150 = np.reshape(meanData150, (1, 3, imgSize, imgSize))
 	
 	# read the classifier
-	classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	# classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/best_9epoch_'+str(imgSize)+'.npz'
 
 	# set dropout parameters for better performance
 	dropoutParams150 = {}
@@ -151,12 +153,14 @@ if __name__ == "__main__":
 	imgSize = 50
 	
 	# read the mean data
-	meanData50Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	# meanData50Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	meanData50Path = cvModulePath+ "/data/mean_file/50_x_50_mean/allData_50_lmdb.npy"
 	meanData50 = np.load(meanData50Path)
 	meanData50 = np.reshape(meanData50, (1, 3, imgSize, imgSize))
 	
 	# read the classifier
-	classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	# classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/best_9epoch_'+str(imgSize)+'.npz'
 	
 	# set dropout parameters for better performance
 	dropoutParams50 = {}
