@@ -48,6 +48,7 @@ private:
 	int bestJ;
 	int numWaypointsToPlan;
 	std::vector<robot_control::Waypoint> waypointsToPlan;
+	robot_control::Waypoint currentLocation;
 	int bestPheromone;
 	// Methods
 	void roiTimeExpiredCallback_();

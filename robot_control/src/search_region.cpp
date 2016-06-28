@@ -29,6 +29,7 @@ bool SearchRegion::runProc()
 		}
 		if(roiTimeExpired)
 		{
+			roiTimer.stop();
 			modROISrv.request.setSearchedROI = true;
 			modROISrv.request.numSearchedROI = currentROIIndex;
 			modROISrv.request.searchedROIState = true;
@@ -46,6 +47,9 @@ bool SearchRegion::runProc()
 			numWaypointsToPlan = numRandomWaypoints+1; // Number to plan path through is one more, because it includes the starting location
 			chooseRandomWaypoints_(); // Select random waypoint locations based on sample prob distro on search local map
 			// Add current location as last entry in waypointsToPlan
+			currentLocation.x = robotStatus.xPos;
+			currentLocation.y = robotStatus.yPos;
+			waypointsToPlan.push_back(currentLocation);
 			clearAndResizeWTT(); // waypointsToPlan minus the current location will get written into waypointsToTravel. Clear and resize to accomodate
 			antColony_(); // Plan path through waypoints with ant colongy optimization algorithm
 			// Do we really want to do this? Waypoints are very close together. callIntermediateWaypoints(); // Plan around obastacles.
@@ -57,7 +61,7 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
+		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_; // Do we want to end in the middle of executing the sequence of random points if the time expires or only check the time at the end?
 		else state = _exec_;
 		break;
 	case _interrupt_:

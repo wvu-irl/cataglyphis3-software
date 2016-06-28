@@ -19,6 +19,7 @@ inline std::string layerToString(MAP_LAYERS_T layer)
 	case _driveability: return "driveability";
 	case _objectHeight: return "objectHeight";
 	case _reflectivity: return "reflectivity";
+	case _cachedProb: return "cachedProb";
 	case _purpleProb: return "purpleProb";
 	case _redProb: return "redProb";
 	case _blueProb: return "blueProb";

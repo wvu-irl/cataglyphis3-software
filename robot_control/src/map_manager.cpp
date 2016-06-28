@@ -389,8 +389,10 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         randomWaypointsNumSampleTypes += req.includeBrass;
         searchLocalMapNumPoints = searchLocalMap.getSize()[0]*searchLocalMap.getSize()[1];
         possibleRandomWaypointValues.resize(searchLocalMapNumPoints);
+        possibleRandomWaypointValuesNormalized.resize(searchLocalMapNumPoints);
         res.waypointList.resize(req.numSeachWaypoints);
         possibleRandomWaypointValuesSum = 0;
+        ROS_INFO("after initial setup");
         for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
         {
             possibleRandomWaypointValues.at(it.getLinearIndex()) = 0.0;
@@ -403,28 +405,55 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             possibleRandomWaypointValues.at(it.getLinearIndex()) /= randomWaypointsNumSampleTypes;
             possibleRandomWaypointValuesSum += possibleRandomWaypointValues.at(it.getLinearIndex());
         }
+        ROS_INFO("after computing values of cells");
         for(int i=0; i<searchLocalMapNumPoints; i++)
         {
             possibleRandomWaypointValuesNormalized.at(i) = possibleRandomWaypointValues.at(i)/possibleRandomWaypointValuesSum;
         }
-        randomValueFloor = 0.0;
+        ROS_INFO("after normalizing values");
         numRandomWaypointsSelected = 0;
-        for(int i=0; i<searchLocalMapNumPoints; i++)
+        while(numRandomWaypointsSelected<req.numSeachWaypoints)
         {
+            ROS_INFO("numRandomWaypointsSelected = %i",numRandomWaypointsSelected);
+            randomValueFloor = 0.0;
             randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-            if((randomValue >= randomValueFloor) && (randomValue < (randomValueFloor + possibleRandomWaypointValuesNormalized.at(i))))
+            ROS_INFO("random value = %f",randomValue);
+            for(int j=0; j<searchLocalMapNumPoints; j++)
             {
-                candidateRandomWaypointIndex = i;
-                numRandomWaypointsSelected++;
-                break;
+                if((randomValue >= randomValueFloor) && (randomValue < (randomValueFloor + possibleRandomWaypointValuesNormalized.at(j))))
+                {
+                    candidateRandomWaypointIndex = j;
+                    numRandomWaypointsSelected++;
+                    ROS_INFO("candidateIndex = %i",candidateRandomWaypointIndex);
+                    break;
+                }
+                else randomValueFloor += possibleRandomWaypointValuesNormalized.at(j);
             }
-            else randomValueFloor += possibleRandomWaypointValuesNormalized.at(i);
+            randomWaypointIndex = grid_map::getIndexFromLinearIndex(candidateRandomWaypointIndex, searchLocalMap.getSize());
+            searchLocalMap.getPosition(randomWaypointIndex, randomWaypointPosition);
+            if(numRandomWaypointsSelected>1)
+            {
+                randomWaypointDistanceCriteriaFailed = false;
+                for(int j=0; j<(numRandomWaypointsSelected-1); j++)
+                {
+                    ROS_INFO("distance to %i = %f", j, hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y));
+                    if(hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y) < randomWaypointMinDistance)
+                    {
+                        numRandomWaypointsSelected--;
+                        randomWaypointDistanceCriteriaFailed = true;
+                        break;
+                    }
+                }
+            }
+            else randomWaypointDistanceCriteriaFailed = false;
+            if(!randomWaypointDistanceCriteriaFailed)
+            {
+                res.waypointList.at(numRandomWaypointsSelected-1).x = randomWaypointPosition[0];
+                res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
+                res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
+            }
         }
-        if(numRandomWaypointsSelected>1)
-        {
-
-        }
-
+        ROS_INFO("after selecting waypoints");
     }
     else return false;
     return true;

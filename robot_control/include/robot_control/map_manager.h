@@ -136,17 +136,20 @@ public:
 	float possibleRandomWaypointValuesSum;
 	std::vector<float> possibleRandomWaypointValuesNormalized;
 	grid_map::Position randomWaypointPosition;
+	grid_map::Index randomWaypointIndex;
 	int randomWaypointsNumSampleTypes;
 	float randomValue;
 	float randomValueFloor;
 	int searchLocalMapNumPoints;
 	int candidateRandomWaypointIndex;
 	int numRandomWaypointsSelected;
+	bool randomWaypointDistanceCriteriaFailed;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
+	const float randomWaypointMinDistance = 5.0; // m
 };
 
 #endif // MAP_MANAGER_H
