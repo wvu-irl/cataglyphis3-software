@@ -132,6 +132,7 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.bool5 = req.bool5;
     params_.bool6 = req.bool6;
     params_.bool7 = req.bool7;
+    params_.bool8 = req.bool8;
     params_.procType = static_cast<PROC_TYPES_T>(req.procType);
     params_.serialNum = req.serialNum;
 	ROS_INFO("ACTION CALLBACK, float1 = %f, float2 = %f",params_.float1,params_.float2);
@@ -190,6 +191,7 @@ void Exec::packInfoMsgOut_()
         execInfoMsgOut_.actionBool5[i] = 0;
         execInfoMsgOut_.actionBool6[i] = 0;
         execInfoMsgOut_.actionBool7[i] = 0;
+        execInfoMsgOut_.actionBool8[i] = 0;
         execInfoMsgOut_.actionProcType[i] = 0;
         execInfoMsgOut_.actionSerialNum[i] = 0;
 	}
@@ -209,6 +211,7 @@ void Exec::packInfoMsgOut_()
         execInfoMsgOut_.actionBool5[i] = actionDeque_.at(i)->params.bool5;
         execInfoMsgOut_.actionBool6[i] = actionDeque_.at(i)->params.bool6;
         execInfoMsgOut_.actionBool7[i] = actionDeque_.at(i)->params.bool7;
+        execInfoMsgOut_.actionBool8[i] = actionDeque_.at(i)->params.bool8;
         execInfoMsgOut_.actionProcType[i] = static_cast<uint8_t>(actionDeque_.at(i)->params.procType);
         execInfoMsgOut_.actionSerialNum[i] = actionDeque_.at(i)->params.serialNum;
 	}

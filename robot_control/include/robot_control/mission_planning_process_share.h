@@ -63,8 +63,8 @@ public:
 	const float blindDriveDistance = 0.457; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
-	const int possibleSampleConfThresh = 900;
-	const int definiteSampleConfThresh = 900;
+	const float possibleSampleConfThresh = 0.9;
+	const float definiteSampleConfThresh = 0.9;
 	static int currentROIIndex;
 	static bool inSearchableRegion;
 	static bool possessingSample;
@@ -80,16 +80,16 @@ public:
 	static bool avoidLockout;
 	static bool roiKeyframed;
 	static unsigned int numSampleCandidates;
-	static std::vector<int> sampleValues;
-	static int bestSampleValue;
+	static std::vector<float> sampleValues;
+	static float bestSampleValue;
 	static float distanceToDrive; // m
 	static float angleToTurn; // deg
 	static float expectedSampleDistance;
 	static float expectedSampleAngle;
 	static messages::CVSampleProps highestConfSample;
 	static float allocatedROITime; // sec
-	const int sampleConfidenceGain = 1000;
-	const int sampleDistanceToExpectedGain = 1000000;
+	const float sampleConfidenceGain = 1.0;
+	const float sampleDistanceToExpectedGain = 1000.0;
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -138,8 +138,8 @@ int MissionPlanningProcessShare::samplesCollected;
 bool MissionPlanningProcessShare::avoidLockout;
 bool MissionPlanningProcessShare::roiKeyframed;
 unsigned int MissionPlanningProcessShare::numSampleCandidates;
-std::vector<int> MissionPlanningProcessShare::sampleValues;
-int MissionPlanningProcessShare::bestSampleValue;
+std::vector<float> MissionPlanningProcessShare::sampleValues;
+float MissionPlanningProcessShare::bestSampleValue;
 float MissionPlanningProcessShare::distanceToDrive;
 float MissionPlanningProcessShare::angleToTurn;
 float MissionPlanningProcessShare::expectedSampleDistance;

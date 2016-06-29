@@ -11,6 +11,7 @@ void Search::init()
 	visionDeque.back()->params.bool5 = params.bool5;
 	visionDeque.back()->params.bool6 = params.bool6;
 	visionDeque.back()->params.bool7 = params.bool7;
+    visionDeque.back()->params.bool8 = params.bool8;
 	visionDeque.back()->params.procType = params.procType;
 	visionDeque.back()->params.serialNum = params.serialNum;
 }

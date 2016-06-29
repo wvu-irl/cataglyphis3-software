@@ -20,16 +20,11 @@ bool NextBestRegion::runProc()
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
 			roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*
-						(purpleProbGain*regionsOfInterestSrv.response.ROIList.at(i).purpleProb +
-						redProbGain*regionsOfInterestSrv.response.ROIList.at(i).redProb +
-						blueProbGain*regionsOfInterestSrv.response.ROIList.at(i).blueProb +
-						silverProbGain*regionsOfInterestSrv.response.ROIList.at(i).silverProb +
-						brassProbGain*regionsOfInterestSrv.response.ROIList.at(i).brassProb -
+                        (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb -
 						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
 										   regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos)/* -
-						terrainGain*terrainHazard(i,j)*/) /
-						(purpleProbGain + redProbGain + blueProbGain + silverProbGain + brassProbGain);
-            ROS_DEBUG("!)!)!)!)!)!) roiValue = %i, roiNum = %i",roiValue, i);
+                        terrainGain*terrainHazard(i,j)*/);
+            ROS_DEBUG("!)!)!)!)!)!) roiValue = %f, roiNum = %i",roiValue, i);
 			ROS_DEBUG("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
 			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
@@ -44,7 +39,7 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
 			//sendDriveGlobal(false, false);
-			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+            sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             currentROIIndex = bestROINum;
             allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
             state = _exec_;

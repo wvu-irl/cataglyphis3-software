@@ -137,7 +137,6 @@ public:
 	std::vector<float> possibleRandomWaypointValuesNormalized;
 	grid_map::Position randomWaypointPosition;
 	grid_map::Index randomWaypointIndex;
-	int randomWaypointsNumSampleTypes;
 	float randomValue;
 	float randomValueFloor;
 	int searchLocalMapNumPoints;

@@ -19,6 +19,7 @@ struct ACTION_PARAMS_T
 	bool bool5;
 	bool bool6;
 	bool bool7;
+	bool bool8;
 	PROC_TYPES_T procType;
 	unsigned int serialNum;
 };

@@ -56,20 +56,11 @@ public:
 	const float homeY = 0.0; // m
 	const float collisionDistanceThresh = 5.0; // m
 private:
-	void avoidObstacle_(); // ***
-	void returnHome_();// ***
-	void deposit_();// ***
-	void acquire_();// ***
-	void examine_();// ***
-	void planRegionPath_();// ***
-	void chooseRegion_();// ***
-	void init_();// ***
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
 	void calcNumProcsBeingExec_();
 	void updateSampleFlags_();
-
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);

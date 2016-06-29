@@ -4,9 +4,5 @@ float32 x
 float32 y
 float32 radialAxis
 float32 tangentialAxis
-int16 purpleProb
-int16 redProb
-int16 blueProb
-int16 silverProb
-int16 brassProb
+float32 sampleProb
 bool searched

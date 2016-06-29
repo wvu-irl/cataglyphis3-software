@@ -86,17 +86,11 @@ void SearchRegion::roiTimeExpiredCallback_()
 void SearchRegion::chooseRandomWaypoints_()
 {
 	randomSearchWaypointsSrv.request.numSeachWaypoints = numRandomWaypoints;
-	randomSearchWaypointsSrv.request.includeCached = true;
-	randomSearchWaypointsSrv.request.includePurple = true;
-	randomSearchWaypointsSrv.request.includeRed = true;
-	randomSearchWaypointsSrv.request.includeBlue = true;
-	randomSearchWaypointsSrv.request.includeSilver = true;
-	randomSearchWaypointsSrv.request.includeBrass = true;
 	if(randomSearchWaypointsClient.call(randomSearchWaypointsSrv)) ROS_DEBUG("randomSearchWaypoints service call successful");
 	else ROS_ERROR("randomSearchWaypoints service call unsuccessful");
 }
 
-void SearchRegion::antColony_()
+void SearchRegion::antColony_() // NEEDS REFACTORED AFTER CHANGING TO FLOATS AND ONLY ONE SAMPLE PROB TYPE
 {
 	value.resize(numWaypointsToPlan);
 	valueNormalized.resize(numWaypointsToPlan);

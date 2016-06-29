@@ -7,16 +7,12 @@ class NextBestRegion : public Procedure
 public:
     // Members
     int bestROINum;
-    int roiValue;
-    int bestROIValue;
+	float roiValue;
+	float bestROIValue;
 	int roiSearchedSum;
-	const int purpleProbGain = 1000;
-	const int redProbGain = 1000;
-	const int blueProbGain = 1000;
-	const int silverProbGain = 1000;
-	const int brassProbGain = 1000;
-    const int distanceGain = 1000;
-    const int terrainGain = 1000;
+	const float sampleProbGain = 1.0;
+	const float distanceGain = 1.0;
+	const float terrainGain = 1.0;
     // Methods
     bool runProc();
 };
