@@ -32,6 +32,11 @@ bool ConfirmCollect::runProc()
 			{
 				confirmedPossession = true;
                 inSearchableRegion = false;
+                searchMapSrv.request.createMap = false;
+                searchMapSrv.request.deleteMap = true;
+                if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
+                else ROS_ERROR("searchMap service call unsuccessful");
+                roiKeyframed = false;
 				state = _finish_;
 			}
 			else

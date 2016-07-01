@@ -39,7 +39,7 @@ MissionPlanning::MissionPlanning()
     collisionInterruptThresh = 1.0; // m
     avoid.reg(__avoid__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
-    //searchRegion.reg(__searchRegion__);
+    searchRegion.reg(__searchRegion__);
     approach.reg(__approach__);
     collect.reg(__collect__);
     confirmCollect.reg(__confirmCollect__);
@@ -68,6 +68,7 @@ void MissionPlanning::run()
 {
     //ROS_DEBUG("before evalConditions");
     ROS_INFO("=========================================");
+    ROS_INFO("inSearchableRegion = %i",inSearchableRegion);
     ROS_INFO("possessingSample = %i",possessingSample);
     ROS_INFO("possibleSample = %i",possibleSample);
     ROS_INFO("definiteSample = %i",definiteSample);
@@ -122,18 +123,19 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute nextBestRegion");
         }
         calcNumProcsBeingExec_();
-        /*if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && inSearchableRegion && !missionEnded) // Search Region
+        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && inSearchableRegion && !missionEnded) // Search Region
         {
-
+            procsToExecute[__searchRegion__] = true;
+            ROS_INFO("to execute searchRegion");
         }
-        calcNumProcsBeingExec_();*/
+        calcNumProcsBeingExec_();
         /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon && !missionEnded) // Examine
         {
             sampleDataActedUpon = true;
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
-        }*/
-        calcNumProcsBeingExec_();
+        }
+        calcNumProcsBeingExec_();*/
         if(numProcsBeingExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
@@ -188,9 +190,10 @@ void MissionPlanning::runProcesses_()
 {
     if(pauseStarted == true) pause.sendUnPause();
     pauseStarted = false;
-    nextBestRegion.run();
-    //searchClosestRegion.run();
     avoid.run();
+    nextBestRegion.run();
+    searchRegion.run();
+    //examine.run();
     approach.run();
     collect.run();
     confirmCollect.run();

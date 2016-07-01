@@ -10,6 +10,12 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         execDequeEmpty = false;
+        // Delete search local map in case region was exited without a successful sample collection
+        searchMapSrv.request.createMap = false;
+        searchMapSrv.request.deleteMap = true;
+        if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
+        else ROS_ERROR("searchMap service call unsuccessful");
+        roiKeyframed = false;
         // Request info about regions
         if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
         else ROS_ERROR("regionsOfInterest service call unsuccessful");
@@ -19,13 +25,15 @@ bool NextBestRegion::runProc()
 		roiSearchedSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
-			roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*
-                        (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb -
+            roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb -
 						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
 										   regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos)/* -
                         terrainGain*terrainHazard(i,j)*/);
-            ROS_DEBUG("!)!)!)!)!)!) roiValue = %f, roiNum = %i",roiValue, i);
+            ROS_DEBUG("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
 			ROS_DEBUG("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
+            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).searched) roiValue = 0.001;
+            else roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*roiValue;
+            ROS_DEBUG("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
 			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
         }

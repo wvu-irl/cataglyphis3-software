@@ -11,6 +11,7 @@ public:
 	bool allWaypointsVisited;
 	ros::Timer roiTimer;
 	const int numRandomWaypoints = 5;
+	bool finishAfterInterrupt;
 	// Methods
 	bool runProc();
 	SearchRegion(); // constructor
@@ -46,7 +47,7 @@ private:
 	robot_control::Waypoint currentLocation;
 	float bestPheromone;
 	// Methods
-	void roiTimeExpiredCallback_();
+	void roiTimeExpiredCallback_(const ros::TimerEvent& event);
 	void chooseRandomWaypoints_();
 	void antColony_();
 };
