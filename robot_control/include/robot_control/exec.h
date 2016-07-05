@@ -17,6 +17,7 @@
 #include <messages/ActuatorOut.h>
 #include <messages/ExecInfo.h>
 #include <messages/ExecActionEnded.h>
+#include <messages/RobotPose.h>
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
 
@@ -31,6 +32,7 @@ public:
 	ros::Publisher actuatorPub;
 	ros::Publisher actionEndedPub;
 	ros::ServiceServer actionServ;
+	ros::Subscriber poseSub;
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;
 	const int loopRate = 20; // Hz
@@ -61,6 +63,7 @@ private:
 	double execElapsedTime_;
 	// Methods
 	bool actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res);
+	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg);
 	void packActuatorMsgOut_();

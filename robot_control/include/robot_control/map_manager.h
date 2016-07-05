@@ -127,7 +127,7 @@ public:
 	float keyframeTransformYLen; // ***
 	float keyframeHeading;
 	grid_map::Position globalTransformCoord;
-	grid_map::Position satMapToGlobalMapPos;
+	grid_map::Position globalMapToSatMapPos;
 	//float globalYTransformPos;
 	robot_control::CurrentROI currentROIMsg;
 	messages::CVSamplesFound cvSamplesFoundMsg;

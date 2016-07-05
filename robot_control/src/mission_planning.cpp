@@ -3,7 +3,7 @@
 MissionPlanning::MissionPlanning()
 {
     execActionClient = nh.serviceClient<messages::ExecAction>("control/exec/actionin");
-	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
+    poseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MissionPlanning::poseCallback_, this);
     ExecActionEndedSub = nh.subscribe<messages::ExecActionEnded>("control/exec/actionended", 1, &MissionPlanning::ExecActionEndedCallback_, this);
     intermediateWaypointsClient = nh.serviceClient<robot_control::IntermediateWaypoints>("/control/safepathing/intermediatewaypoints");
     reqROIClient = nh.serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
@@ -228,12 +228,12 @@ void MissionPlanning::updateSampleFlags_()
     }
 }
 
-void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
+void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
 {
-	robotStatus.xPos = msg->x_position;
-	robotStatus.yPos = msg->y_position;
+    robotStatus.xPos = msg->x;
+    robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
-	robotStatus.bearing = msg->bearing;
+    robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)

@@ -4,7 +4,8 @@ Exec::Exec()
 {
 	robotStatus.loopRate = loopRate;
     actionServ = nh.advertiseService("control/exec/actionin", &Exec::actionCallback_, this);
-	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
+    poseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &Exec::poseCallback_, this);
+    navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
@@ -139,13 +140,17 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     return true;
 }
 
-void Exec::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
+void Exec::poseCallback_(const messages::RobotPose::ConstPtr& msg)
 {
-	robotStatus.xPos = msg->x_position;
-	robotStatus.yPos = msg->y_position;
+    robotStatus.xPos = msg->x;
+    robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
-	robotStatus.bearing = msg->bearing;
-	robotStatus.yawRate = msg->yaw_rate;
+    robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
+}
+
+void Exec::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
+{
+    robotStatus.yawRate = msg->yaw_rate;
 }
 
 void Exec::grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg)

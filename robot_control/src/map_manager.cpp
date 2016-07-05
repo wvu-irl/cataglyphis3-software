@@ -21,7 +21,7 @@ MapManager::MapManager()
     searchLocalMapExists = false;
     globalMapPathHazardsVertices.resize(4);
     globalPose.northAngle = 90.0; // degrees. initial guess
-    previousNorthAngle = 0.0; // degrees. different than actual north angle to force update first time through
+    previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.e = 8.0;
@@ -448,9 +448,20 @@ void MapManager::rotateCoord(double origX, double origY, double &newX, double &n
 
 void MapManager::writeSatMapIntoGlobalMap() // tested
 {
+    int i,j;
     gridMapResetLayers((int)_slope, (int)_driveability, globalMap);
     // Slope
-    for(int i=0; i<slopeNumRows; i++)
+    for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
+    {
+        globalMap.getPosition(*it,globalMapToSatMapPos);
+        rotateCoord(globalMapToSatMapPos[0], globalMapToSatMapPos[1], globalMapToSatMapPos[0], globalMapToSatMapPos[1], -(globalPose.northAngle-90.0));
+        globalMapToSatMapPos[0] += satMapStartE;
+        globalMapToSatMapPos[1] += satMapStartS;
+        j = (int)(round(globalMapToSatMapPos[0]-slopeMapRes/2.0)/slopeMapRes);
+        i = (int)(round(globalMapToSatMapPos[1]-slopeMapRes/2.0)/slopeMapRes);
+        if(j>=0 && j<slopeNumCols && i>=0 && i<slopeNumRows) globalMap.at(layerToString(_slope),*it) = (float)slopeMap[i][j];
+    }
+    /*for(int i=0; i<slopeNumRows; i++)
     {
         for(int j=0; j<slopeNumCols; j++)
         {
@@ -459,11 +470,25 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
             //satMapToGlobalMapPos[1] = (float)(i*slopeMapRes+slopeMapRes/2.0) - satMapStartS;
             if(globalMap.isInside(satMapToGlobalMapPos)) globalMap.atPosition(layerToString(_slope), satMapToGlobalMapPos) = slopeMap[i][j]; // *** Got to figure out if this is correct
         }
-    }
+    }*/
     // Driveability
-    for(int i=0; i<slopeNumRows; i++)
+    for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
     {
-        for(int j=0; j<slopeNumCols; j++)
+        globalMap.getPosition(*it,globalMapToSatMapPos);
+        rotateCoord(globalMapToSatMapPos[0], globalMapToSatMapPos[1], globalMapToSatMapPos[0], globalMapToSatMapPos[1], -(globalPose.northAngle-90.0));
+        globalMapToSatMapPos[0] += satMapStartE;
+        globalMapToSatMapPos[1] += satMapStartS;
+        j = (int)(round(globalMapToSatMapPos[0]-driveabilityMapRes/2.0)/driveabilityMapRes);
+        i = (int)(round(globalMapToSatMapPos[1]-driveabilityMapRes/2.0)/driveabilityMapRes);
+        if(j>=0 && j<driveabilityNumCols && i>=0 && i<driveabilityNumRows)
+        {
+            if(driveabilityMap[i][j]==1) globalMap.at(layerToString(_driveability),*it) = (float)_impassable;
+            else globalMap.at(layerToString(_driveability),*it) = (float)_noObject;
+        }
+    }
+    /*for(int i=0; i<driveabilityNumRows; i++)
+    {
+        for(int j=0; j<driveabilityNumCols; j++)
         {
             rotateCoord((float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - satMapStartE, (float)(i*driveabilityMapRes+driveabilityMapRes/2.0) - satMapStartS, satMapToGlobalMapPos[0], satMapToGlobalMapPos[1], globalPose.northAngle-90.0);
             //satMapToGlobalMapPos[0] = (float)(j*driveabilityMapRes+driveabilityMapRes/2.0) - satMapStartE;
@@ -474,11 +499,11 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
                 else globalMap.atPosition(layerToString(_driveability), satMapToGlobalMapPos) = (float)_noObject;
             }
         }
-    }
+    }*/
     /*grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
     globalMapPub.publish(globalMapMsg);
     ros::Duration(3).sleep();*/
-    smoothDriveabilityLayer();
+    //smoothDriveabilityLayer();
     grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
     globalMapPub.publish(globalMapMsg);
 }
@@ -494,7 +519,35 @@ void MapManager::writeKeyframesIntoGlobalMap()
         keyframeXPos = keyframes.keyframeList.at(i).x;
         keyframeYPos = keyframes.keyframeList.at(i).y;
         //ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0,30.0)));
-        for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
+        for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
+        {
+            globalMap.getPosition(*it, globalTransformCoord);
+            rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], -keyframeHeading);
+            if(currentKeyframe.isInside(keyframeCoord))
+            {
+                for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
+                {
+                    currentCellValue = globalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it);
+                    possibleNewCellValue = currentKeyframe.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)), keyframeCoord);
+                    if((static_cast<MAP_LAYERS_T>(j)==_driveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
+                    {
+                        if((possibleNewCellValue > currentCellValue) || (globalMap.at(layerToString(_keyframeWriteIntoGlobalMapSerialNum), *it) != (float)keyframeWriteIntoGlobalMapSerialNum))
+                            globalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = possibleNewCellValue;
+                    }
+                    else if(static_cast<MAP_LAYERS_T>(j)==_objectHeight)
+                    {
+                        if(currentKeyframe.atPosition(layerToString(_driveability), keyframeCoord) == _noObject) globalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = 0;
+                        else
+                        {
+                            if((possibleNewCellValue < currentCellValue) || (globalMap.at(layerToString(_keyframeWriteIntoGlobalMapSerialNum), *it) != (float)keyframeWriteIntoGlobalMapSerialNum))
+                                globalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = possibleNewCellValue;
+                        }
+                    }
+                }
+                globalMap.at(layerToString(_keyframeWriteIntoGlobalMapSerialNum), *it) = (float)keyframeWriteIntoGlobalMapSerialNum;
+            }
+        }
+        /*for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
         {
             currentKeyframe.getPosition(*it, keyframeCoord);
             rotateCoord(keyframeCoord[0], keyframeCoord[1], globalTransformCoord[0], globalTransformCoord[1], keyframeHeading);
@@ -526,7 +579,7 @@ void MapManager::writeKeyframesIntoGlobalMap()
                 }
                 globalMap.atPosition(layerToString(_keyframeWriteIntoGlobalMapSerialNum), globalTransformCoord) = (float)keyframeWriteIntoGlobalMapSerialNum;
             }
-        }
+        }*/
     }
     //ROS_INFO("globalMap.at = %f",globalMap.atPosition(layerToString(_driveability), grid_map::Position(50.0,45.0)));
     grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);

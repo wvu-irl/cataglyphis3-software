@@ -2,7 +2,7 @@
 #define MISSION_PLANNING_H
 #include <ros/ros.h>
 #include "mission_planning_process_share.h"
-#include <messages/NavFilterOut.h>
+#include <messages/RobotPose.h>
 #include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
 #include "avoid.h"
@@ -26,7 +26,7 @@ public:
 	void run();
 	// Members
 	ros::NodeHandle nh;
-	ros::Subscriber navSub;
+	ros::Subscriber poseSub;
 	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
@@ -42,8 +42,6 @@ public:
 	DepositApproach depositApproach;
 	DepositSample depositSample;
     Pause pause;
-
-
 
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
@@ -61,7 +59,7 @@ private:
 	void runPause_();
 	void calcNumProcsBeingExec_();
 	void updateSampleFlags_();
-	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
+	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);

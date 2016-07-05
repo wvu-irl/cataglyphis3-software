@@ -19,6 +19,7 @@ bool DepositSample::runProc()
 		}
 		else
 		{
+            sendOpen();
 			missionEnded = true;
 			state = _finish_;
 		}
