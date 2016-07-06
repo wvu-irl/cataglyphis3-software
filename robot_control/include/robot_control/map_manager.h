@@ -152,6 +152,7 @@ public:
 	const float randomWaypointMinDistance = 5.0; // m
 	const float satDriveabilityInitialConf = 0.5;
 	const float keyframeDriveabilityInitialConf = 0.0;
+	const float keyframeSize = 80.0;
 };
 
 #endif // MAP_MANAGER_H

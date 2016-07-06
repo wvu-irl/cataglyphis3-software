@@ -45,7 +45,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 350
+      Plane Cell Count: 450
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/Axes
@@ -106,7 +106,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 403.281
+      Distance: 558.422
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1

@@ -817,19 +817,19 @@ void MapManager::calculateGlobalMapSize()
 {
     float candidateSize;
     float bestCandidateSize = 0.0;
-    candidateSize = hypot(satMapStartE, satMapStartS);
+    candidateSize = hypot(satMapStartE, satMapStartS) + 1.41421356237/2.0*keyframeSize;
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapStartE, satMapSize[1] - satMapStartS);
+    candidateSize = hypot(satMapStartE, satMapSize[1] - satMapStartS) + 1.41421356237/2.0*keyframeSize;
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapStartS);
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapStartS) + 1.41421356237/2.0*keyframeSize;
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapSize[1] - satMapStartS);
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapSize[1] - satMapStartS) + 1.41421356237/2.0*keyframeSize;
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
