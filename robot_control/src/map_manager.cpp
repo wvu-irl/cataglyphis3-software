@@ -286,7 +286,16 @@ bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Re
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(3));
     for(grid_map::PolygonIterator it(globalMap, globalMapPathHazardsPolygon); !it.isPastEnd(); ++it)
     {
-        globalMapPathHazardValue = globalMap.at(layerToString(_driveability), *it);
+        if(globalMap.at(layerToString(_keyframeDriveabilityConf), *it) > globalMap.at(layerToString(_satDriveabilityConf), *it))
+        {
+            globalMapPathHazardValue = globalMap.at(layerToString(_keyframeDriveability), *it);
+            globalMapPathHazardHeight = globalMap.at(layerToString(_keyframeObjectHeight), *it);
+        }
+        else
+        {
+            globalMapPathHazardValue = globalMap.at(layerToString(_satDriveability), *it);
+            globalMapPathHazardHeight = globalMap.at(layerToString(_satObjectHeight), *it);
+        }
         if(globalMapPathHazardValue > 0.0)
         {
             res.numHazards++;
@@ -296,7 +305,7 @@ bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Re
             res.hazardList.at(res.numHazards-1).localX = globalMapPathHazardPosition[0] - req.xStart;
             res.hazardList.at(res.numHazards-1).localY = globalMapPathHazardPosition[1] - req.yStart;
             rotateCoord(res.hazardList.at(res.numHazards-1).localX,res.hazardList.at(res.numHazards-1).localY, res.hazardList.at(res.numHazards-1).localX, res.hazardList.at(res.numHazards-1).localY, RAD2DEG*globalMapPathHazardsPolygonHeading);
-            res.hazardList.at(res.numHazards-1).height = globalMap.at(layerToString(_objectHeight), *it);
+            res.hazardList.at(res.numHazards-1).height = globalMapPathHazardHeight;
         }
     }
     return true;
@@ -420,7 +429,10 @@ void MapManager::gridMapResetLayers(int startIndex, int endIndex, grid_map::Grid
 {
     for(int i=startIndex; i<=endIndex; i++)
     {
-        if(static_cast<MAP_LAYERS_T>(i)==_driveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        if(static_cast<MAP_LAYERS_T>(i)==_satDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        else if(static_cast<MAP_LAYERS_T>(i)==_satDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), satDriveabilityInitialConf);
+        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_noObject);
+        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialConf);
         else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
     }
 }
@@ -429,7 +441,10 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
 {
     for(int i=layerStartIndex; i<=layerEndIndex; i++)
     {
-        if(static_cast<MAP_LAYERS_T>(i)==_driveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        if(static_cast<MAP_LAYERS_T>(i)==_satDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        else if(static_cast<MAP_LAYERS_T>(i)==_satDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), satDriveabilityInitialConf);
+        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_noObject);
+        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialConf);
         else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
     }
 }
@@ -449,7 +464,7 @@ void MapManager::rotateCoord(double origX, double origY, double &newX, double &n
 void MapManager::writeSatMapIntoGlobalMap() // tested
 {
     int i,j;
-    gridMapResetLayers((int)_slope, (int)_driveability, globalMap);
+    gridMapResetLayers((int)_slope, (int)_satObjectHeight, globalMap);
     // Slope
     for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
     {
@@ -482,8 +497,8 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
         i = (int)(round(globalMapToSatMapPos[1]-driveabilityMapRes/2.0)/driveabilityMapRes);
         if(j>=0 && j<driveabilityNumCols && i>=0 && i<driveabilityNumRows)
         {
-            if(driveabilityMap[i][j]==1) globalMap.at(layerToString(_driveability),*it) = (float)_impassable;
-            else globalMap.at(layerToString(_driveability),*it) = (float)_noObject;
+            if(driveabilityMap[i][j]==1) globalMap.at(layerToString(_satDriveability),*it) = (float)_impassable;
+            else globalMap.at(layerToString(_satDriveability),*it) = (float)_noObject;
         }
     }
     /*for(int i=0; i<driveabilityNumRows; i++)
@@ -511,25 +526,43 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
 void MapManager::writeKeyframesIntoGlobalMap()
 {
     ++keyframeWriteIntoGlobalMapSerialNum;
-    gridMapResetLayers(MAP_KEYFRAME_LAYERS_START_INDEX+1, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
+    gridMapResetLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
     for(int i=0; i<keyframes.keyframeList.size(); i++)
     {
         grid_map::GridMapRosConverter::fromMessage(keyframes.keyframeList.at(i).map,currentKeyframe);
         keyframeHeading = keyframes.keyframeList.at(i).heading;
         keyframeXPos = keyframes.keyframeList.at(i).x;
         keyframeYPos = keyframes.keyframeList.at(i).y;
-        //ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0,30.0)));
+        //ROS_INFO("currentKeyframe.at = %f",currentKeyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0,30.0)));
         for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
         {
             globalMap.getPosition(*it, globalTransformCoord);
             rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], -keyframeHeading);
             if(currentKeyframe.isInside(keyframeCoord))
             {
-                for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
+                // Driveability, confidence, and height
+                if(currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf),keyframeCoord)>globalMap.at(layerToString(_keyframeDriveabilityConf),*it))
+                {
+                    globalMap.at(layerToString(_keyframeDriveability), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord);
+                    globalMap.at(layerToString(_keyframeDriveabilityConf), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf), keyframeCoord);
+                    globalMap.at(layerToString(_keyframeObjectHeight), *it) = currentKeyframe.atPosition(layerToString(_keyframeObjectHeight), keyframeCoord);
+                }
+                else if(currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf),keyframeCoord)==globalMap.at(layerToString(_keyframeDriveabilityConf),*it))
+                {
+                    if(currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord)>globalMap.at(layerToString(_keyframeDriveability), *it))
+                    {
+                        globalMap.at(layerToString(_keyframeDriveability), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord);
+                        globalMap.at(layerToString(_keyframeDriveabilityConf), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf), keyframeCoord);
+                        globalMap.at(layerToString(_keyframeObjectHeight), *it) = currentKeyframe.atPosition(layerToString(_keyframeObjectHeight), keyframeCoord);
+                    }
+                }
+                // Reflectivity
+                globalMap.at(layerToString(_reflectivity), *it) = currentKeyframe.atPosition(layerToString(_reflectivity), keyframeCoord);
+                /*for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
                 {
                     currentCellValue = globalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it);
                     possibleNewCellValue = currentKeyframe.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)), keyframeCoord);
-                    if((static_cast<MAP_LAYERS_T>(j)==_driveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
+                    if((static_cast<MAP_LAYERS_T>(j)==_keyframeDriveability) || (static_cast<MAP_LAYERS_T>(j)==_reflectivity))
                     {
                         if((possibleNewCellValue > currentCellValue) || (globalMap.at(layerToString(_keyframeWriteIntoGlobalMapSerialNum), *it) != (float)keyframeWriteIntoGlobalMapSerialNum))
                             globalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = possibleNewCellValue;
@@ -544,7 +577,7 @@ void MapManager::writeKeyframesIntoGlobalMap()
                         }
                     }
                 }
-                globalMap.at(layerToString(_keyframeWriteIntoGlobalMapSerialNum), *it) = (float)keyframeWriteIntoGlobalMapSerialNum;
+                globalMap.at(layerToString(_keyframeWriteIntoGlobalMapSerialNum), *it) = (float)keyframeWriteIntoGlobalMapSerialNum;*/
             }
         }
         /*for(grid_map::GridMapIterator it(currentKeyframe); !it.isPastEnd(); ++it)
@@ -586,7 +619,7 @@ void MapManager::writeKeyframesIntoGlobalMap()
     globalMapPub.publish(globalMapMsg);
 }
 
-void MapManager::northTransformROIs() // needs tested
+void MapManager::northTransformROIs() // tested
 {
     for(int i=0; i<regionsOfInterest.size(); i++)
     {
@@ -601,7 +634,7 @@ void MapManager::updateNorthTransformedMapData() // tested* ^^^
     northTransformROIs();
 }
 
-void MapManager::smoothDriveabilityLayer() // tested
+/*void MapManager::smoothDriveabilityLayer() // tested
 {
     float currentValue;
     int sumNeighborsDifferentFromCurrentValue;
@@ -778,7 +811,7 @@ void MapManager::smoothDriveabilityLayer() // tested
         }
     }
     globalMap.addDataFrom(globalMapTemp, false, true, false, std::vector<std::string>(1,layerToString(_driveability)));
-}
+}*/
 
 void MapManager::calculateGlobalMapSize()
 {

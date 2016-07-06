@@ -63,7 +63,7 @@ public:
 	void writeKeyframesIntoGlobalMap();
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
-	void smoothDriveabilityLayer();
+	//void smoothDriveabilityLayer();
 	void calculateGlobalMapSize();
 	//void smoothNumericLayer();
 	// Members
@@ -99,6 +99,7 @@ public:
 	std::vector<grid_map::Position> globalMapPathHazardsVertices;
 	float globalMapPathHazardsPolygonHeading;
 	float globalMapPathHazardValue;
+	float globalMapPathHazardHeight;
 	grid_map::Position globalMapPathHazardPosition;
 	messages::RobotPose globalPose;
 	float previousNorthAngle; // deg
@@ -149,6 +150,8 @@ public:
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 	const float randomWaypointMinDistance = 5.0; // m
+	const float satDriveabilityInitialConf = 0.5;
+	const float keyframeDriveabilityInitialConf = 0.0;
 };
 
 #endif // MAP_MANAGER_H

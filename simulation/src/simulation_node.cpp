@@ -145,10 +145,11 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
 
 bool createROIKeyframeCallback(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res)
 {
-    keyframe.add(layerToString(_driveability), 0.0);
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, 30.0)) = 1;
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(50.0, 0.0)) = 2;
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, -30.0)) = 2;
+    keyframe.add(layerToString(_keyframeDriveability), 0.0);
+    keyframe.add(layerToString(_keyframeDriveabilityConf), 0.9);
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, 30.0)) = 1;
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(50.0, 0.0)) = 2;
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, -30.0)) = 2;
     grid_map::GridMapRosConverter::toMessage(keyframe, res.keyframe.map);
     res.keyframe.x = robotSim.xPos;
     res.keyframe.y = robotSim.yPos;
@@ -171,19 +172,23 @@ void publishKeyframeList()
     //keyframeListMsg.keyframeList.resize(1);
     keyframeListMsg.keyframeList.resize(2);
 
-    keyframe.add(layerToString(_driveability), 0.0);
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, 30.0)) = 1;
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(50.0, 0.0)) = 2;
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, -30.0)) = 2;
+    keyframe.add(layerToString(_keyframeDriveability), 0.0);
+    keyframe.add(layerToString(_keyframeDriveabilityConf), 0.9);
+    keyframe.add(layerToString(_keyframeObjectHeight), 0.0);
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, 30.0)) = 1;
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(50.0, 0.0)) = 2;
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, -30.0)) = 2;
     grid_map::GridMapRosConverter::toMessage(keyframe, keyframeListMsg.keyframeList.at(0).map);
     keyframeListMsg.keyframeList.at(0).x = 20.0;
     keyframeListMsg.keyframeList.at(0).y = 15.0;
     keyframeListMsg.keyframeList.at(0).heading = 0.0;
 
-    keyframe.add(layerToString(_driveability), 0.0);
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, 30.0)) = 1;
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(50.0, 0.0)) = 2;
-    keyframe.atPosition(layerToString(_driveability), grid_map::Position(30.0, -30.0)) = 2;
+    keyframe.add(layerToString(_keyframeDriveability), 0.0);
+    keyframe.add(layerToString(_keyframeDriveabilityConf), 0.9);
+    keyframe.add(layerToString(_keyframeObjectHeight), 0.0);
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, 30.0)) = 1;
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(50.0, 0.0)) = 2;
+    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, -30.0)) = 2;
     grid_map::GridMapRosConverter::toMessage(keyframe, keyframeListMsg.keyframeList.at(1).map);
     keyframeListMsg.keyframeList.at(1).x = 20.0;
     keyframeListMsg.keyframeList.at(1).y = 15.0;
