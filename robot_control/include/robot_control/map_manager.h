@@ -18,6 +18,7 @@
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
 #include <vector>
+#include <time.h>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI

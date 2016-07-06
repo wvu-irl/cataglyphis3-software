@@ -184,6 +184,7 @@ void SearchRegion::antColony_()
 			for(int k=0; k<numWaypointsToPlan; k++) valueNormalizedSum += valueNormalized.at(k);
 			//ROS_DEBUG("valueNormalizedSum = %f",valueNormalizedSum);
 			randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+			ROS_INFO("randomValue = %f",randomValue);
 			if(randomValue>=valueNormalizedSum) // Picked 1.0 as the random value. Boundary condition, just choose the one with the biggest normalized value
 			{
 				//ROS_INFO("randomValue >= valueNormalizedSum");

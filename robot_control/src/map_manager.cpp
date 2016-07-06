@@ -22,6 +22,7 @@ MapManager::MapManager()
     globalMapPathHazardsVertices.resize(4);
     globalPose.northAngle = 90.0; // degrees. initial guess
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
+    srand(time(NULL));
 
     // Temporary ROIs. Rectangle around starting platform
     ROI.e = 8.0;
@@ -348,7 +349,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             //ROS_INFO("numRandomWaypointsSelected = %i",numRandomWaypointsSelected);
             randomValueFloor = 0.0;
             randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-            //ROS_INFO("random value = %f",randomValue);
+            ROS_INFO("random value = %f",randomValue);
             for(int j=0; j<searchLocalMapNumPoints; j++)
             {
                 if((randomValue >= randomValueFloor) && (randomValue < (randomValueFloor + possibleRandomWaypointValuesNormalized.at(j))))

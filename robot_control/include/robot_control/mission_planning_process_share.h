@@ -16,6 +16,7 @@
 #include <messages/CVSamplesFound.h>
 #include <armadillo>
 #include <math.h>
+#include <time.h>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
