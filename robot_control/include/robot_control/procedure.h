@@ -20,13 +20,14 @@ public:
     virtual bool runProc() = 0;
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
-	void sendDriveGlobal(bool pushToFront, bool clearFront);
+	void sendDriveGlobal(bool pushToFront);
 	void sendDriveAndSearch(uint8_t typeMux);
-	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool clearFront);
+	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
 	void sendDrop();
 	void sendOpen();
+	void sendDequeClearFront();
 	void computeSampleValuesWithExpectedDistance();
 	void computeExpectedSampleLocation();
 	void findHighestConfSample();
@@ -88,7 +89,7 @@ void Procedure::callIntermediateWaypoints()
     }
 }
 
-void Procedure::sendDriveGlobal(bool pushToFront, bool clearFront)
+void Procedure::sendDriveGlobal(bool pushToFront)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
@@ -97,7 +98,7 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool clearFront)
         execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = pushToFront;
         execActionSrv.request.clearDequeFlag = false;
-		execActionSrv.request.clearFrontFlag = clearFront;
+		execActionSrv.request.clearFrontFlag = false;
         execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
@@ -105,7 +106,14 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool clearFront)
         execActionSrv.request.float4 = 45.0;
         execActionSrv.request.float5 = 0.0;
         execActionSrv.request.int1 = 0;
-        execActionSrv.request.bool1 = false;
+		execActionSrv.request.bool1 = false;
+		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool3 = false;
+		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool5 = false;
+		execActionSrv.request.bool6 = false;
+		execActionSrv.request.bool7 = false;
+		execActionSrv.request.bool8 = false;
         execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
         execActionSrv.request.serialNum = this->serialNum;
         if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -138,6 +146,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.bool5 = false;
 		execActionSrv.request.bool6 = false;
 		execActionSrv.request.bool7 = false;
+		execActionSrv.request.bool8 = false;
 		execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 		execActionSrv.request.serialNum = this->serialNum;
 		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -158,13 +167,14 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 			execActionSrv.request.float4 = 0.0;
 			execActionSrv.request.float5 = 0.0;
 			execActionSrv.request.int1 = 0;
-			execActionSrv.request.bool1 = (typeMux & 1); // Purple
-			execActionSrv.request.bool2 = (((typeMux & 2) >> 1) & 255); // Red
-			execActionSrv.request.bool3 = (((typeMux & 4) >> 2) & 255); // Blue
-			execActionSrv.request.bool4 = (((typeMux & 8) >> 3) & 255); // Silver
-			execActionSrv.request.bool5 = (((typeMux & 16) >> 4) & 255); // Brass
-			execActionSrv.request.bool6 = (((typeMux & 32) >> 5) & 255); // Confirm
-			execActionSrv.request.bool7 = (((typeMux & 64) >> 6) & 255); // Save
+			execActionSrv.request.bool1 = (typeMux & 1); // Cached
+			execActionSrv.request.bool2 = (((typeMux & 2) >> 1) & 255); // Purple
+			execActionSrv.request.bool3 = (((typeMux & 4) >> 2) & 255); // Red
+			execActionSrv.request.bool4 = (((typeMux & 8) >> 3) & 255); // Blue
+			execActionSrv.request.bool5 = (((typeMux & 16) >> 4) & 255); // Silver
+			execActionSrv.request.bool6 = (((typeMux & 32) >> 5) & 255); // Brass
+			execActionSrv.request.bool7 = (((typeMux & 64) >> 6) & 255); // Confirm
+			execActionSrv.request.bool8 = (((typeMux & 255) >> 7) & 255); // Save
 			execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 			execActionSrv.request.serialNum = this->serialNum;
 			if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -173,14 +183,14 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 	}
 }
 
-void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool clearFront)
+void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
 {
 	this->serialNum++;
     execActionSrv.request.nextActionType = _driveRelative;
     execActionSrv.request.newActionFlag = 1;
     execActionSrv.request.pushToFrontFlag = frontOfDeque;
     execActionSrv.request.clearDequeFlag = false;
-	execActionSrv.request.clearFrontFlag = clearFront;
+	execActionSrv.request.clearFrontFlag = false;
     execActionSrv.request.pause = false;
     execActionSrv.request.float1 = deltaDistance;
     execActionSrv.request.float2 = deltaHeading;
@@ -188,7 +198,14 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
     execActionSrv.request.float4 = 45.0;
     execActionSrv.request.float5 = endHeading;
     execActionSrv.request.int1 = 0;
-    execActionSrv.request.bool1 = endHeadingFlag;
+	execActionSrv.request.bool1 = endHeadingFlag;
+	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool3 = false;
+	execActionSrv.request.bool4 = false;
+	execActionSrv.request.bool5 = false;
+	execActionSrv.request.bool6 = false;
+	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
     execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
     execActionSrv.request.serialNum = this->serialNum;
     if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -210,13 +227,14 @@ void Procedure::sendSearch(uint8_t typeMux)
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
 	execActionSrv.request.int1 = 0;
-	execActionSrv.request.bool1 = (typeMux & 1); // Purple
-	execActionSrv.request.bool2 = (((typeMux & 2) >> 1) & 255); // Red
-	execActionSrv.request.bool3 = (((typeMux & 4) >> 2) & 255); // Blue
-	execActionSrv.request.bool4 = (((typeMux & 8) >> 3) & 255); // Silver
-	execActionSrv.request.bool5 = (((typeMux & 16) >> 4) & 255); // Brass
-	execActionSrv.request.bool6 = (((typeMux & 32) >> 5) & 255); // Confirm
-	execActionSrv.request.bool7 = (((typeMux & 64) >> 6) & 255); // Save
+	execActionSrv.request.bool1 = (typeMux & 1); // Cached
+	execActionSrv.request.bool2 = (((typeMux & 2) >> 1) & 255); // Purple
+	execActionSrv.request.bool3 = (((typeMux & 4) >> 2) & 255); // Red
+	execActionSrv.request.bool4 = (((typeMux & 8) >> 3) & 255); // Blue
+	execActionSrv.request.bool5 = (((typeMux & 16) >> 4) & 255); // Silver
+	execActionSrv.request.bool6 = (((typeMux & 32) >> 5) & 255); // Brass
+	execActionSrv.request.bool7 = (((typeMux & 64) >> 6) & 255); // Confirm
+	execActionSrv.request.bool8 = (((typeMux & 255) >> 7) & 255); // Save
 	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -245,6 +263,7 @@ void Procedure::sendGrab()
 	execActionSrv.request.bool5 = false;
 	execActionSrv.request.bool6 = false;
 	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
 	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -273,6 +292,7 @@ void Procedure::sendDrop()
 	execActionSrv.request.bool5 = false;
 	execActionSrv.request.bool6 = false;
 	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
 	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -301,6 +321,35 @@ void Procedure::sendOpen()
 	execActionSrv.request.bool5 = false;
 	execActionSrv.request.bool6 = false;
 	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
+	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+	execActionSrv.request.serialNum = this->serialNum;
+	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+	else ROS_ERROR("exec action service call unsuccessful");
+}
+
+void Procedure::sendDequeClearFront()
+{
+	this->serialNum++;
+	execActionSrv.request.newActionFlag = 0;
+	execActionSrv.request.pushToFrontFlag = false;
+	execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = true;
+	execActionSrv.request.pause = false;
+	execActionSrv.request.float1 = 0.0;
+	execActionSrv.request.float2 = 0.0;
+	execActionSrv.request.float3 = 0.0;
+	execActionSrv.request.float4 = 0.0;
+	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.int1 = 0;
+	execActionSrv.request.bool1 = false;
+	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool3 = false;
+	execActionSrv.request.bool4 = false;
+	execActionSrv.request.bool5 = false;
+	execActionSrv.request.bool6 = false;
+	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
 	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");

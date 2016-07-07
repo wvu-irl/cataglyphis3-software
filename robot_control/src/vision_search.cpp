@@ -2,13 +2,14 @@
 
 void VisionSearch::init()
 {
-	cvSearchCmdSrv.request.purple = params.bool1;
-	cvSearchCmdSrv.request.red = params.bool2;
-	cvSearchCmdSrv.request.blue = params.bool3;
-	cvSearchCmdSrv.request.silver = params.bool4;
-	cvSearchCmdSrv.request.brass = params.bool5;
-	cvSearchCmdSrv.request.confirm = params.bool6;
-	cvSearchCmdSrv.request.save = params.bool7;
+    cvSearchCmdSrv.request.cached = params.bool1;
+    cvSearchCmdSrv.request.purple = params.bool2;
+    cvSearchCmdSrv.request.red = params.bool3;
+    cvSearchCmdSrv.request.blue = params.bool4;
+    cvSearchCmdSrv.request.silver = params.bool5;
+    cvSearchCmdSrv.request.brass = params.bool6;
+    cvSearchCmdSrv.request.confirm = params.bool7;
+    cvSearchCmdSrv.request.save = params.bool8;
 	cvSearchCmdSrv.request.procType = params.procType;
 	cvSearchCmdSrv.request.serialNum = params.serialNum;
 }

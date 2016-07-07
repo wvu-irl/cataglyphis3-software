@@ -50,7 +50,7 @@ bool DepositApproach::runProc()
 		waypointsToTravel.at(0).x = depositAlignXDistance;
 		waypointsToTravel.at(0).y = depositLocations.at(samplesCollected).y;
 		callIntermediateWaypoints();
-		sendDriveGlobal(false, false);
+        sendDriveGlobal(false);
 		state = _exec_;
 		break;
 	case _exec_:
@@ -63,7 +63,7 @@ bool DepositApproach::runProc()
 			if(execLastProcType == procType && execLastSerialNum == serialNum)
 			{
 				calcPlatformDrive();
-				sendDriveRel(platformDriveDistance, platformPivotAngle, false, 0.0, false, false);
+                sendDriveRel(platformDriveDistance, platformPivotAngle, false, 0.0, false);
 				step = _platform;
 				state = _exec_;
 			}

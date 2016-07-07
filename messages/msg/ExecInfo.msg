@@ -13,6 +13,7 @@ bool[100] actionBool4
 bool[100] actionBool5
 bool[100] actionBool6
 bool[100] actionBool7
+bool[100] actionBool8
 uint8[100] actionProcType
 uint32[100] actionSerialNum
 bool pause

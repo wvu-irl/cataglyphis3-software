@@ -34,9 +34,12 @@ from time import gmtime, strftime
 # theano.config.compute_test_value = 'warn' # Use 'warn' to activate this feature
 
 class DeepFishNet150:
+    
     '''
-    this class represents a convolutional neural network with 3 convolutional layers
-    and 2 fully connected layers connected to 1 layer LSTM cells with a final softmax layer. Predicts 5 classes
+        this class represents a convolutional neural network with 3 convolutional layers
+        and 2 fully connected layers connected with a final softmax layer.
+
+        Predicts 2 classes (objects and non-objects)
     '''
     def __init__(self, imgSize = None, crossvalidid = None,loadData = True, mode= None, modelToLoad=None, randomData=False, dropout_params = None, caffeModelName=None, total_epochs = 10 ):
         '''

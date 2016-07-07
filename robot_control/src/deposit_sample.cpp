@@ -13,12 +13,13 @@ bool DepositSample::runProc()
 		if(samplesCollected<MAX_SAMPLES)
 		{
 			sendDrop();
-			sendDriveRel(-3.0, 0.0, false, 0.0, false, false);
+            sendDriveRel(-3.0, 0.0, false, 0.0, false);
 			missionEnded = false;
 			state = _exec_;
 		}
 		else
 		{
+            sendOpen();
 			missionEnded = true;
 			state = _finish_;
 		}

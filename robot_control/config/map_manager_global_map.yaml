@@ -6,16 +6,40 @@ grid_map_visualizations:
      layer: slope
      data_min: 0.0
      data_max: 90.0
-  - name: driveability
+  - name: satDriveability
     type: occupancy_grid
     params:
-     layer: driveability
+     layer: satDriveability
      data_min: 0.0
      data_max: 2.0
-  - name: objectHeight
+  - name: satDriveabilityConf
     type: occupancy_grid
     params:
-     layer: objectHeight
+     layer: satDriveabilityConf
+     data_min: 0.0
+     data_max: 1.0
+  - name: satObjectHeight
+    type: occupancy_grid
+    params:
+     layer: satObjectHeight
+     data_min: 0.0
+     data_max: 100.0
+  - name: keyframeDriveability
+    type: occupancy_grid
+    params:
+     layer: keyframeDriveability
+     data_min: 0.0
+     data_max: 2.0
+  - name: keyframeDriveabilityConf
+    type: occupancy_grid
+    params:
+     layer: keyframeDriveabilityConf
+     data_min: 0.0
+     data_max: 1.0
+  - name: keyframeObjectHeight
+    type: occupancy_grid
+    params:
+     layer: keyframeObjectHeight
      data_min: 0.0
      data_max: 100.0
   - name: reflectivity
@@ -59,14 +83,30 @@ grid_map_visualizations:
     type: point_cloud
     params:
      layer: slope
-  - name: driveabilityPC
+  - name: satDriveabilityPC
     type: point_cloud
     params:
-     layer: driveability
-  - name: objectHeightPC
+     layer: satDriveability
+  - name: satDriveabilityConfPC
     type: point_cloud
     params:
-     layer: objectHeight
+     layer: satDriveabilityConf
+  - name: satObjectHeightPC
+    type: point_cloud
+    params:
+     layer: satObjectHeight
+  - name: keyframeDriveabilityPC
+    type: point_cloud
+    params:
+     layer: keyframeDriveability
+  - name: keyframeDriveabilityConfPC
+    type: point_cloud
+    params:
+     layer: keyframeDriveabilityConf
+  - name: keyframeObjectHeightPC
+    type: point_cloud
+    params:
+     layer: keyframeObjectHeight
   - name: reflectivityPC
     type: point_cloud
     params:

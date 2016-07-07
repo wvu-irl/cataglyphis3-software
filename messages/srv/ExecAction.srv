@@ -17,6 +17,7 @@ bool bool4
 bool bool5
 bool bool6
 bool bool7
+bool bool8
 uint8 procType
 uint32 serialNum
 ---

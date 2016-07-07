@@ -15,8 +15,8 @@ bool ConfirmCollect::runProc()
 		//sendSearch(sampleTypeMux);
 		expectedSampleAngle = 0.0;
 		expectedSampleDistance = distanceToGrabber - backUpDistance;
-		sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
-		sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+        sendDriveRel(backUpDistance, 0.0, false, 0.0, false);
+        sendSearch(252); // 124 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 		state = _exec_;
 		break;
 	case _exec_:
@@ -32,6 +32,11 @@ bool ConfirmCollect::runProc()
 			{
 				confirmedPossession = true;
                 inSearchableRegion = false;
+                searchMapSrv.request.createMap = false;
+                searchMapSrv.request.deleteMap = true;
+                if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
+                else ROS_ERROR("searchMap service call unsuccessful");
+                roiKeyframed = false;
 				state = _finish_;
 			}
 			else

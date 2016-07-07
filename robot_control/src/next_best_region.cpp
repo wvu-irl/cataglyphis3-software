@@ -10,6 +10,12 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         execDequeEmpty = false;
+        // Delete search local map in case region was exited without a successful sample collection
+        searchMapSrv.request.createMap = false;
+        searchMapSrv.request.deleteMap = true;
+        if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
+        else ROS_ERROR("searchMap service call unsuccessful");
+        roiKeyframed = false;
         // Request info about regions
         if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
         else ROS_ERROR("regionsOfInterest service call unsuccessful");
@@ -19,18 +25,15 @@ bool NextBestRegion::runProc()
 		roiSearchedSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
-			roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*
-						(purpleProbGain*regionsOfInterestSrv.response.ROIList.at(i).purpleProb +
-						redProbGain*regionsOfInterestSrv.response.ROIList.at(i).redProb +
-						blueProbGain*regionsOfInterestSrv.response.ROIList.at(i).blueProb +
-						silverProbGain*regionsOfInterestSrv.response.ROIList.at(i).silverProb +
-						brassProbGain*regionsOfInterestSrv.response.ROIList.at(i).brassProb -
+            roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb -
 						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
 										   regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos)/* -
-						terrainGain*terrainHazard(i,j)*/) /
-						(purpleProbGain + redProbGain + blueProbGain + silverProbGain + brassProbGain);
-            ROS_DEBUG("!)!)!)!)!)!) roiValue = %i, roiNum = %i",roiValue, i);
+                        terrainGain*terrainHazard(i,j)*/);
+            ROS_DEBUG("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
 			ROS_DEBUG("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
+            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).searched) roiValue = 0.001;
+            else roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*roiValue;
+            ROS_DEBUG("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
 			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
         }
@@ -43,8 +46,8 @@ bool NextBestRegion::runProc()
 			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
-			//sendDriveGlobal(false, false);
-			sendDriveAndSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+            //sendDriveGlobal(false);
+            sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             currentROIIndex = bestROINum;
             allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
             state = _exec_;
@@ -66,7 +69,7 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).y = 0.0;
             waypointsToTravel.at(0).searchable = false;
             callIntermediateWaypoints();
-			sendDriveGlobal(false, false);
+            sendDriveGlobal(false);
 			procsBeingExecuted[procType] = false;
             state = _init_;
         }
