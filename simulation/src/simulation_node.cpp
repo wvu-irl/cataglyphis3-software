@@ -2,7 +2,7 @@
 #include <simulation/RobotSim.h>
 #include <messages/ActuatorOut.h>
 #include <messages/NavFilterOut.h>
-#include <messages/RobotPose.h>
+#include <messages/SLAMPoseOut.h>
 #include <messages/GrabberFeedback.h>
 #include <messages/SimControl.h>
 #include <messages/nb1_to_i7_msg.h>
@@ -32,6 +32,7 @@ messages::CVSampleProps cvSampleProps;
 messages::KeyframeList keyframeListMsg;
 grid_map::GridMap keyframe;
 ros::Publisher keyframeListPub;
+float rollAngle = 0.0;
 
 int main(int argc, char** argv)
 {
@@ -40,7 +41,7 @@ int main(int argc, char** argv)
     ros::Subscriber actuatorSub = nh.subscribe<messages::ActuatorOut>("control/actuatorout/all",1,actuatorCallback);
     ros::Subscriber simConSub = nh.subscribe<messages::SimControl>("simulation/simcontrol/simcontrol",1,simControlCallback);
     ros::Publisher navPub = nh.advertise<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1);
-    ros::Publisher posePub = nh.advertise<messages::RobotPose>("/hsm/masterexec/globalpose",1);
+    ros::Publisher slamPosePub = nh.advertise<messages::SLAMPoseOut>("/slam/keyframesnode/slamposeout",1);
     ros::Publisher grabberPub = nh.advertise<messages::GrabberFeedback>("roboteq/grabberin/grabberin",1);
     ros::Publisher nb1Pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
     ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
@@ -49,7 +50,7 @@ int main(int argc, char** argv)
     ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
     ros::ServiceServer createROIKeyframeServ = nh.advertiseService("/slam/keyframesnode/createroikeyframe", createROIKeyframeCallback);
     messages::NavFilterOut navMsgOut;
-    messages::RobotPose poseMsgOut;
+    messages::SLAMPoseOut slamPoseMsgOut;
     messages::GrabberFeedback grabberMsgOut;
     messages::nb1_to_i7_msg nb1MsgOut;
 
@@ -81,18 +82,17 @@ int main(int argc, char** argv)
         navMsgOut.yaw_rate = angV;
         navMsgOut.heading = robotSim.heading;
         navMsgOut.human_heading = fmod(robotSim.heading, 360.0);
-        poseMsgOut.x = robotSim.xPos;
-        poseMsgOut.y = robotSim.yPos;
-        poseMsgOut.heading = robotSim.heading;
-        poseMsgOut.humanHeading = fmod(robotSim.heading, 360.0);
-        poseMsgOut.northAngle = 90.0;
+        navMsgOut.roll = rollAngle;
+        slamPoseMsgOut.globalX = robotSim.xPos;
+        slamPoseMsgOut.globalY = robotSim.yPos;
+        slamPoseMsgOut.globalHeading = robotSim.heading;
         grabberMsgOut.sliderPosAvg = robotSim.slidePos;
         grabberMsgOut.dropPos = robotSim.dropPos;
         grabberMsgOut.slideStatus = robotSim.slideStop;
         grabberMsgOut.dropStatus = robotSim.dropStop;
         nb1MsgOut.pause_switch = robotSim.nb1PauseSwitch;
         navPub.publish(navMsgOut);
-        posePub.publish(poseMsgOut);
+        slamPosePub.publish(slamPoseMsgOut);
         grabberPub.publish(grabberMsgOut);
         nb1Pub.publish(nb1MsgOut);
         collisionPub.publish(collisionMsgOut);
@@ -127,6 +127,7 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     cvSampleProps.bearing = msg->cvBearing;
     cvSampleProps.confidence = msg->cvConfidence;
     if(msg->pubKeyframeList) publishKeyframeList();
+    rollAngle = msg->rollAngle;
 }
 
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
