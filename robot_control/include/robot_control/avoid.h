@@ -5,8 +5,9 @@
 
 class Avoid : public Procedure
 {
+public:
 	// Members
-	bool interrupted = false;
+	bool dequeClearFront = false;
 	// Methods
 	bool runProc();
 };

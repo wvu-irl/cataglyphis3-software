@@ -5,6 +5,8 @@
 #include <messages/RobotPose.h>
 #include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
+#include <messages/EmergencyEscapeTrigger.h>
+#include "emergency_escape.h"
 #include "avoid.h"
 #include "next_best_region.h"
 #include "search_region.h"
@@ -30,8 +32,10 @@ public:
 	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
+	ros::ServiceServer emergencyEscapeServ;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
+	EmergencyEscape emergencyEscape;
 	Avoid avoid;
 	NextBestRegion nextBestRegion;
 	SearchRegion searchRegion;
@@ -65,6 +69,7 @@ private:
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);
 	void cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr& msg);
+	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 };
 
 #endif // MISSION_PLANNING_H

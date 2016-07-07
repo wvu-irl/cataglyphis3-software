@@ -118,6 +118,7 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     newActionFlag_ = req.newActionFlag;
     pushToFrontFlag_ = req.pushToFrontFlag;
     clearDequeFlag_ = req.clearDequeFlag;
+    clearFrontFlag_ = req.clearFrontFlag;
     pause_ = req.pause;
 	params_.actionType = nextActionType_;
     params_.float1 = req.float1;

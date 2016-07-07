@@ -14,7 +14,9 @@ MissionPlanning::MissionPlanning()
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
     execInfoSub = nh.subscribe<messages::ExecInfo>("control/exec/info", 1, &MissionPlanning::execInfoCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
+    emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
     collisionInterruptTrigger = false;
+    escapeCondition = false;
     inSearchableRegion = false;
     possessingSample = false;
     possibleSample = false;
@@ -32,11 +34,13 @@ MissionPlanning::MissionPlanning()
     robotStatus.pauseSwitch = true;
     execDequeEmpty = true;
     avoidLockout = false;
+    escapeLockout = false;
     roiKeyframed = false;
     execLastProcType = __depositSample__;
     execLastSerialNum = 99;
     allocatedROITime = 480.0; // sec == 8 min
     collisionInterruptThresh = 1.0; // m
+    emergencyEscape.reg(__emergencyEscape__);
     avoid.reg(__avoid__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
     searchRegion.reg(__searchRegion__);
@@ -68,16 +72,6 @@ MissionPlanning::MissionPlanning()
 void MissionPlanning::run()
 {
     //ROS_DEBUG("before evalConditions");
-    ROS_INFO("=========================================");
-    ROS_INFO("inSearchableRegion = %i",inSearchableRegion);
-    ROS_INFO("possessingSample = %i",possessingSample);
-    ROS_INFO("possibleSample = %i",possibleSample);
-    ROS_INFO("definiteSample = %i",definiteSample);
-    ROS_INFO("sampleDataActedUpon = %i",sampleDataActedUpon);
-    ROS_INFO("sampleInCollectPosition = %i",sampleInCollectPosition);
-    ROS_INFO("confirmedPossession = %i",confirmedPossession);
-    ROS_INFO("atHome = %i",atHome);
-    ROS_INFO("inDepositPosition = %i",inDepositPosition);
 
    /* ROS_INFO("\n");
     bestSample.distance = 1.934814;
@@ -108,66 +102,88 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
+        ROS_INFO("=========================================");
+        ROS_INFO("escapeCondition = %i",escapeCondition);
+        ROS_INFO("escapeLockout = %i",escapeLockout);
+        ROS_INFO("collisionCondition = %i",collisionMsg.collision);
+        ROS_INFO("avoidLockout = %i",avoidLockout);
+        ROS_INFO("inSearchableRegion = %i",inSearchableRegion);
+        ROS_INFO("possessingSample = %i",possessingSample);
+        ROS_INFO("possibleSample = %i",possibleSample);
+        ROS_INFO("definiteSample = %i",definiteSample);
+        ROS_INFO("sampleDataActedUpon = %i",sampleDataActedUpon);
+        ROS_INFO("sampleInCollectPosition = %i",sampleInCollectPosition);
+        ROS_INFO("confirmedPossession = %i",confirmedPossession);
+        ROS_INFO("atHome = %i",atHome);
+        ROS_INFO("inDepositPosition = %i",inDepositPosition);
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
-        if(collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
-        {
-            for(int i=1; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
-            procsToInterrupt[__avoid__] = false;
-            if(!procsBeingExecuted[__avoid__]) procsToExecute[__avoid__] = true;
-            else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) procsToInterrupt[__avoid__] = true;
-            ROS_INFO("to execute avoid");
-        }
         calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !inSearchableRegion && !missionEnded) // Next Best Region
+        if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
+        {
+            for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
+            if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape");}
+            else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape");}
+        }
+        //calcNumProcsBeingExec_();
+        if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
+        {
+            for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
+            procsToInterrupt[__avoid__] = false;
+            if(procsToInterrupt[__emergencyEscape__]) avoid.dequeClearFront = true;
+            if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid");}
+            else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid");}
+        }
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
         }
-        calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && inSearchableRegion && !missionEnded) // Search Region
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
         }
-        calcNumProcsBeingExec_();
-        /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon && !missionEnded) // Examine
+        //calcNumProcsBeingExec_();
+        /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Examine
         {
             sampleDataActedUpon = true;
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
         }
         calcNumProcsBeingExec_();*/
-        if(numProcsBeingExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && !missionEnded) // Approach
+        if(numProcsBeingExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
         }
-        calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample && !missionEnded) // Collect
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
         }
-        calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && !confirmedPossession && !missionEnded) // Confirm Collect
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && !confirmedPossession && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
-        calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && !atHome && !missionEnded) // Go Home
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && !atHome && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
-        calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !missionEnded) // Deposit Approach
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
         }
-        calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !missionEnded) // Deposit Sample
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
@@ -191,6 +207,7 @@ void MissionPlanning::runProcesses_()
 {
     if(pauseStarted == true) pause.sendUnPause();
     pauseStarted = false;
+    emergencyEscape.run();
     avoid.run();
     nextBestRegion.run();
     searchRegion.run();
@@ -214,7 +231,7 @@ void MissionPlanning::calcNumProcsBeingExec_()
     numProcsBeingExec = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++) 
     {
-	if(procsBeingExecuted[i]) numProcsBeingExec++;
+        if(procsBeingExecuted[i]) numProcsBeingExec++;
     }
 }
 
@@ -265,4 +282,9 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
     cvSamplesFoundMsg = *msg;
     updateSampleFlags_();
     sampleDataActedUpon = false;
+}
+
+bool MissionPlanning::emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res)
+{
+    escapeCondition = req.escapeCondition;
 }

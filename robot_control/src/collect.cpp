@@ -9,7 +9,7 @@ bool Collect::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false, false);
+        sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false);
 		sendGrab();
 		state = _exec_;
 		break;

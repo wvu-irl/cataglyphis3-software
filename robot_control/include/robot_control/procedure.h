@@ -20,13 +20,14 @@ public:
     virtual bool runProc() = 0;
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
-	void sendDriveGlobal(bool pushToFront, bool clearFront);
+	void sendDriveGlobal(bool pushToFront);
 	void sendDriveAndSearch(uint8_t typeMux);
-	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool clearFront);
+	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
 	void sendDrop();
 	void sendOpen();
+	void sendDequeClearFront();
 	void computeSampleValuesWithExpectedDistance();
 	void computeExpectedSampleLocation();
 	void findHighestConfSample();
@@ -88,7 +89,7 @@ void Procedure::callIntermediateWaypoints()
     }
 }
 
-void Procedure::sendDriveGlobal(bool pushToFront, bool clearFront)
+void Procedure::sendDriveGlobal(bool pushToFront)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
@@ -97,7 +98,7 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool clearFront)
         execActionSrv.request.newActionFlag = 1;
 		execActionSrv.request.pushToFrontFlag = pushToFront;
         execActionSrv.request.clearDequeFlag = false;
-		execActionSrv.request.clearFrontFlag = clearFront;
+		execActionSrv.request.clearFrontFlag = false;
         execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
@@ -182,14 +183,14 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 	}
 }
 
-void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool clearFront)
+void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
 {
 	this->serialNum++;
     execActionSrv.request.nextActionType = _driveRelative;
     execActionSrv.request.newActionFlag = 1;
     execActionSrv.request.pushToFrontFlag = frontOfDeque;
     execActionSrv.request.clearDequeFlag = false;
-	execActionSrv.request.clearFrontFlag = clearFront;
+	execActionSrv.request.clearFrontFlag = false;
     execActionSrv.request.pause = false;
     execActionSrv.request.float1 = deltaDistance;
     execActionSrv.request.float2 = deltaHeading;
@@ -306,6 +307,34 @@ void Procedure::sendOpen()
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = false;
 	execActionSrv.request.clearFrontFlag = false;
+	execActionSrv.request.pause = false;
+	execActionSrv.request.float1 = 0.0;
+	execActionSrv.request.float2 = 0.0;
+	execActionSrv.request.float3 = 0.0;
+	execActionSrv.request.float4 = 0.0;
+	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.int1 = 0;
+	execActionSrv.request.bool1 = false;
+	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool3 = false;
+	execActionSrv.request.bool4 = false;
+	execActionSrv.request.bool5 = false;
+	execActionSrv.request.bool6 = false;
+	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
+	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+	execActionSrv.request.serialNum = this->serialNum;
+	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+	else ROS_ERROR("exec action service call unsuccessful");
+}
+
+void Procedure::sendDequeClearFront()
+{
+	this->serialNum++;
+	execActionSrv.request.newActionFlag = 0;
+	execActionSrv.request.pushToFrontFlag = false;
+	execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = true;
 	execActionSrv.request.pause = false;
 	execActionSrv.request.float1 = 0.0;
 	execActionSrv.request.float2 = 0.0;
