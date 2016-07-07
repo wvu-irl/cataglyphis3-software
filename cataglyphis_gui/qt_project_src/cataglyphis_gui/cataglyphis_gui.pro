@@ -11,17 +11,25 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = cataglyphis_gui
 TEMPLATE = app
 
-#CONFIG += static
-#static {
-#    CONFIG += static
-#    DEFINES += STATIC
-#    message("Static Build.")
-#}
+
+CONFIG(static, debug|release|static):{
+    CONFIG += static
+    DEFINES += STATIC
+    DEFINES += STATIC_BUILD
+    message("Static Build.")
+}
+CONFIG(release, debug|release|static):{
+    message("Release Build.")
+    DEFINES += TEST_RELEASE_BUILD
+}
+CONFIG(debug, debug|release|static):{
+    DEFINES += DEBUG_BUILD
+    message("Debug Build.")
+}
 
 SOURCES +=\
     cataglyphis_startup_form_main.cpp \
     map_viewer.cpp \
-    window_selector.cpp \
     cataglyphis_gui.cpp \
     init_step_one.cpp \
     bias_removal_form.cpp \
@@ -32,7 +40,6 @@ SOURCES +=\
 HEADERS  += \
     cataglyphis_startup_form_main.h \
     map_viewer.h \
-    window_selector.h \
     cataglyphis_gui.h \
     init_step_one.h \
     bias_removal_form.h \
@@ -42,7 +49,6 @@ HEADERS  += \
 FORMS    += \
     cataglyphis_startup_form_main.ui \
     map_viewer.ui \
-    window_selector.ui \
     cataglyphis_gui.ui \
     init_step_one.ui \
     bias_removal_form.ui \
@@ -57,3 +63,4 @@ unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += roscpp
 
 unix: PKGCONFIG += roslib
+

@@ -21,6 +21,8 @@ class init_step_one : public QWidget
 signals:
     void init_nav_filter(messages::NavFilterControl serviceRequest);
     void step_one_finished();
+    void start_nav_info_subscriber();
+    void stop_nav_info_subscriber();
 
 public:
     explicit init_step_one(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
@@ -33,6 +35,8 @@ public:
 public slots:
     void when_nav_init_return(const messages::NavFilterControl navResponse,
                                 bool sucessful);
+
+    void nav_info_callback(const messages::NavFilterOut navInfo);
 
 private slots:
 

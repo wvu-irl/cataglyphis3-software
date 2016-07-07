@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTabWidget>
+#include <QMenuBar>
 #include <boost/smart_ptr.hpp>
 #include <boost/atomic.hpp>
 #include <ros/ros.h>

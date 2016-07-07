@@ -11,6 +11,16 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
                 worker.get(), &ros_workers::run_nav_init_service);
     connect(worker.get(), &ros_workers::nav_init_returned,
                 this, &init_step_one::when_nav_init_return);
+
+    connect(this, &init_step_one::start_nav_info_subscriber,
+                worker.get(), &ros_workers::run_nav_info_subscriber_start);
+    connect(this, &init_step_one::stop_nav_info_subscriber,
+                worker.get(), &ros_workers::run_nav_info_subscriber_stop);
+
+    connect(worker.get(), &ros_workers::nav_info_callback,
+                this, &init_step_one::nav_info_callback);
+
+    emit start_nav_info_subscriber();
 }
 
 init_step_one::~init_step_one()
@@ -46,4 +56,10 @@ void init_step_one::when_nav_init_return(const messages::NavFilterControl navRes
     {
         ROS_WARN("init_step_one:: Nav Init FAILED! skip step to move on");
     }
+}
+
+void init_step_one::nav_info_callback(const messages::NavFilterOut navInfo)
+{
+    ROS_DEBUG("init_step_one:: nav_info_callback");
+    ui->current_NA_spinbox->setValue(navInfo.north_angle);
 }
