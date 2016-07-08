@@ -83,7 +83,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	Eigen::Matrix3f _R_pitch;
 	_R_pitch(0,0) = cos(_navigation_filter_pitch);
 	_R_pitch(0,1) = 0;
-	_R_pitch(0,2) = -sin(_navigation_filter_pitch);
+	_R_pitch(0,2) = -sin(_navigation_filter_pitch);*object_filtered
 	_R_pitch(1,0) = 0;
 	_R_pitch(1,1) = 1;
 	_R_pitch(1,2) = 0;
@@ -309,6 +309,8 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
+	_object_filtered = *object_filtered;
+
 	//save point cloud after ground removal
 	// std::stringstream ss2;
 	// ss2 << "ss2.pcd";
@@ -326,146 +328,146 @@ void LidarFilter::doMathMapping()
 	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
-	//define variables used in this section
-	std::vector<float> point;
-	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
-	std::vector<std::vector<float> > local_grid_map_temp;
-	int index = 0;
-	_local_grid_map.clear();
+	// //define variables used in this section
+	// std::vector<float> point;
+	// std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
+	// std::vector<std::vector<float> > local_grid_map_temp;
+	// int index = 0;
+	// _local_grid_map.clear();
 
-	//grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
-	for (int i = 0; i< object_filtered->points.size(); i++)
-	{
-	    point.clear();
-	    point.push_back(object_filtered->points[i].x);
-	    point.push_back(object_filtered->points[i].y);
-	    point.push_back(object_filtered->points[i].z);
+	// //grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
+	// for (int i = 0; i< object_filtered->points.size(); i++)
+	// {
+	//     point.clear();
+	//     point.push_back(object_filtered->points[i].x);
+	//     point.push_back(object_filtered->points[i].y);
+	//     point.push_back(object_filtered->points[i].z);
 
-	    //the index checks which gird a point belongs to 
-	    index = floor(object_filtered->points[i].x + map_range) + floor(object_filtered->points[i].y + map_range)*(map_range*2);
-	    grid_map_cells[index].push_back(point);
-	}
-
-
-
-	//do the calculation
-	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
-	{
-		//define variables used to calculate mean x y z and variance of z
-		float total_x = 0;
-		float total_y = 0;
-		float total_z = 0;
-		float average_x = 0;
-		float average_y = 0;
-		float average_z = 0;
-		float variance_z = 0;
-
-	    for (int j = 0; j < grid_map_cells[i].size(); j++)
-	    {
-	        total_x += grid_map_cells[i][j][0];
-	        total_y += grid_map_cells[i][j][1];
-	        total_z += grid_map_cells[i][j][2];
-	    }
-	    average_x = total_x/grid_map_cells[i].size();
-	    average_y = total_y/grid_map_cells[i].size();
-	    average_z = total_z/grid_map_cells[i].size();
-	    for (int j = 0; j < grid_map_cells[i].size(); j++)
-	    {
-	        variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
-	    }
-	    variance_z = sqrt(variance_z);
-
-	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
-	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
-	    {
-	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
-	        point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
-	        point.push_back(average_x);
-	        point.push_back(average_y);
-	        point.push_back(average_z);
-	        point.push_back(variance_z);
-	        _local_grid_map.push_back(point);
-
-	        // // this part use the new defined array instead of the old vector of vector mode
-	        int x_index = 0;
-	        int y_index = 0;
-	        x_index = floor(average_x);
-	        y_index	= floor(average_y);
-	        _GridMap[x_index][y_index].x_mean = average_x;
-	        _GridMap[x_index][y_index].y_mean = average_y;
-	        _GridMap[x_index][y_index].z_mean = average_z;
-	        _GridMap[x_index][y_index].var_z = variance_z;
-	        _GridMap[x_index][y_index].occupy = true;
-	    }
-	}
+	//     //the index checks which gird a point belongs to 
+	//     index = floor(object_filtered->points[i].x + map_range) + floor(object_filtered->points[i].y + map_range)*(map_range*2);
+	//     grid_map_cells[index].push_back(point);
+	// }
 
 
-	//check and determine if the point is ground adjacent or non-adjacent
 
-	//define a cloud to transfer _local_grid_map to pcl format and use its KNN function
-	pcl::PointCloud<pcl::PointXYZ>::Ptr adjacent_check (new pcl::PointCloud<pcl::PointXYZ>);
+	// //do the calculation
+	// for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
+	// {
+	// 	//define variables used to calculate mean x y z and variance of z
+	// 	float total_x = 0;
+	// 	float total_y = 0;
+	// 	float total_z = 0;
+	// 	float average_x = 0;
+	// 	float average_y = 0;
+	// 	float average_z = 0;
+	// 	float variance_z = 0;
 
-	adjacent_check->width = _local_grid_map.size();
-	//cout << _local_grid_map.size() << " is the size of local grid map" << endl;
-    adjacent_check->height = 1;
-    adjacent_check->points.resize (adjacent_check->width * adjacent_check->height);
+	//     for (int j = 0; j < grid_map_cells[i].size(); j++)
+	//     {
+	//         total_x += grid_map_cells[i][j][0];
+	//         total_y += grid_map_cells[i][j][1];
+	//         total_z += grid_map_cells[i][j][2];
+	//     }
+	//     average_x = total_x/grid_map_cells[i].size();
+	//     average_y = total_y/grid_map_cells[i].size();
+	//     average_z = total_z/grid_map_cells[i].size();
+	//     for (int j = 0; j < grid_map_cells[i].size(); j++)
+	//     {
+	//         variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
+	//     }
+	//     variance_z = sqrt(variance_z);
 
-	// copy all points from _local_grid_map to the new cloud
-	for (int i = 0; i < _local_grid_map.size(); i ++)
-	{
-		adjacent_check->points[i].x = _local_grid_map[i][0];
-    	adjacent_check->points[i].y = _local_grid_map[i][1];
-    	adjacent_check->points[i].z = 0.0f;
-	}
+	//     //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
+	//     if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
+	//     {
+	//         // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
+	//         point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
+	//         point.push_back(average_x);
+	//         point.push_back(average_y);
+	//         point.push_back(average_z);
+	//         point.push_back(variance_z);
+	//         _local_grid_map.push_back(point);
 
-	// define a KdTree object
-	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+	//         // // this part use the new defined array instead of the old vector of vector mode
+	//         int x_index = 0;
+	//         int y_index = 0;
+	//         x_index = floor(average_x);
+	//         y_index	= floor(average_y);
+	//         _GridMap[x_index][y_index].x_mean = average_x;
+	//         _GridMap[x_index][y_index].y_mean = average_y;
+	//         _GridMap[x_index][y_index].z_mean = average_z;
+	//         _GridMap[x_index][y_index].var_z = variance_z;
+	//         _GridMap[x_index][y_index].occupy = true;
+	//     }
+	// }
 
-	// set input of the KtTree object
-    kdtree.setInputCloud (adjacent_check);
 
-    // define KNN parameters
-    std::vector<int> pointIdxRadiusSearch;
-    std::vector<float> pointRadiusSquaredDistance;
+	// //check and determine if the point is ground adjacent or non-adjacent
 
-    // set the search radius to determine if the point is ground adjacent
-    float radius = 1.5;
+	// //define a cloud to transfer _local_grid_map to pcl format and use its KNN function
+	// pcl::PointCloud<pcl::PointXYZ>::Ptr adjacent_check (new pcl::PointCloud<pcl::PointXYZ>);
 
-    //cout << adjacent_check->points.size() << " is the size of cloud" << endl;
-    // check each point in the cloud
-    for (int i = 0; i < adjacent_check->points.size(); i ++)
-    {
-    	// see how many points are within the range of search
-    	kdtree.radiusSearch (adjacent_check->points[i], radius, pointIdxRadiusSearch, pointRadiusSquaredDistance);
+	// adjacent_check->width = _local_grid_map.size();
+	// //cout << _local_grid_map.size() << " is the size of local grid map" << endl;
+ //    adjacent_check->height = 1;
+ //    adjacent_check->points.resize (adjacent_check->width * adjacent_check->height);
 
-    	// if there are more than 7 points, that means the particular point is surrounding by many points, so non-ground adjacent
-    	if (pointIdxRadiusSearch.size() > 7)
-    	{
-    		point.clear();
-    		point.push_back(_local_grid_map[i][0]);
-	        point.push_back(_local_grid_map[i][1]);
-	        point.push_back(_local_grid_map[i][2]);
-	        point.push_back(_local_grid_map[i][3]);
-	        point.push_back(0);
-    	}
+	// // copy all points from _local_grid_map to the new cloud
+	// for (int i = 0; i < _local_grid_map.size(); i ++)
+	// {
+	// 	adjacent_check->points[i].x = _local_grid_map[i][0];
+ //    	adjacent_check->points[i].y = _local_grid_map[i][1];
+ //    	adjacent_check->points[i].z = 0.0f;
+	// }
 
-    	// otherwise is ground adjacent
-    	else
-    	{
-    		point.clear();
-    		point.push_back(_local_grid_map[i][0]);
-	        point.push_back(_local_grid_map[i][1]);
-	        point.push_back(_local_grid_map[i][2]);
-	        point.push_back(_local_grid_map[i][3]);
-	        point.push_back(1);
-    	}
+	// // define a KdTree object
+	// pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
 
-    	// push the info back to _local_grid_map_new
-    	_local_grid_map_new.push_back(point);
-    }
+	// // set input of the KtTree object
+ //    kdtree.setInputCloud (adjacent_check);
 
-	//copy filtered point cloud after hard thresholding and ground removal
-	_object_filtered = *object_filtered; 
+ //    // define KNN parameters
+ //    std::vector<int> pointIdxRadiusSearch;
+ //    std::vector<float> pointRadiusSquaredDistance;
+
+ //    // set the search radius to determine if the point is ground adjacent
+ //    float radius = 1.5;
+
+ //    //cout << adjacent_check->points.size() << " is the size of cloud" << endl;
+ //    // check each point in the cloud
+ //    for (int i = 0; i < adjacent_check->points.size(); i ++)
+ //    {
+ //    	// see how many points are within the range of search
+ //    	kdtree.radiusSearch (adjacent_check->points[i], radius, pointIdxRadiusSearch, pointRadiusSquaredDistance);
+
+ //    	// if there are more than 7 points, that means the particular point is surrounding by many points, so non-ground adjacent
+ //    	if (pointIdxRadiusSearch.size() > 7)
+ //    	{
+ //    		point.clear();
+ //    		point.push_back(_local_grid_map[i][0]);
+	//         point.push_back(_local_grid_map[i][1]);
+	//         point.push_back(_local_grid_map[i][2]);
+	//         point.push_back(_local_grid_map[i][3]);
+	//         point.push_back(0);
+ //    	}
+
+ //    	// otherwise is ground adjacent
+ //    	else
+ //    	{
+ //    		point.clear();
+ //    		point.push_back(_local_grid_map[i][0]);
+	//         point.push_back(_local_grid_map[i][1]);
+	//         point.push_back(_local_grid_map[i][2]);
+	//         point.push_back(_local_grid_map[i][3]);
+	//         point.push_back(1);
+ //    	}
+
+ //    	// push the info back to _local_grid_map_new
+ //    	_local_grid_map_new.push_back(point);
+ //    }
+
+	// //copy filtered point cloud after hard thresholding and ground removal
+	// _object_filtered = *object_filtered; 
 }
 
 void LidarFilter::doMathHoming()
@@ -710,10 +712,9 @@ void LidarFilter::doMathHoming()
 					cylinders.push_back(current_cylinder);
 				}
 	        }
-    	}
-
-        
+    	}   
     }
+    
     //begin homing detection from cylinders
     if(cylinders.size()>=2) 
     {
