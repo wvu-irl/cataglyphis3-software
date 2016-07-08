@@ -18,6 +18,7 @@
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
 #include <vector>
+#include <time.h>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
@@ -63,7 +64,7 @@ public:
 	void writeKeyframesIntoGlobalMap();
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
-	void smoothDriveabilityLayer();
+	//void smoothDriveabilityLayer();
 	void calculateGlobalMapSize();
 	//void smoothNumericLayer();
 	// Members
@@ -99,6 +100,7 @@ public:
 	std::vector<grid_map::Position> globalMapPathHazardsVertices;
 	float globalMapPathHazardsPolygonHeading;
 	float globalMapPathHazardValue;
+	float globalMapPathHazardHeight;
 	grid_map::Position globalMapPathHazardPosition;
 	messages::RobotPose globalPose;
 	float previousNorthAngle; // deg
@@ -127,7 +129,7 @@ public:
 	float keyframeTransformYLen; // ***
 	float keyframeHeading;
 	grid_map::Position globalTransformCoord;
-	grid_map::Position satMapToGlobalMapPos;
+	grid_map::Position globalMapToSatMapPos;
 	//float globalYTransformPos;
 	robot_control::CurrentROI currentROIMsg;
 	messages::CVSamplesFound cvSamplesFoundMsg;
@@ -136,17 +138,22 @@ public:
 	float possibleRandomWaypointValuesSum;
 	std::vector<float> possibleRandomWaypointValuesNormalized;
 	grid_map::Position randomWaypointPosition;
-	int randomWaypointsNumSampleTypes;
+	grid_map::Index randomWaypointIndex;
 	float randomValue;
 	float randomValueFloor;
 	int searchLocalMapNumPoints;
 	int candidateRandomWaypointIndex;
 	int numRandomWaypointsSelected;
+	bool randomWaypointDistanceCriteriaFailed;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
+	const float randomWaypointMinDistance = 5.0; // m
+	const float satDriveabilityInitialConf = 0.5;
+	const float keyframeDriveabilityInitialConf = 0.0;
+	const float keyframeSize = 80.0;
 };
 
 #endif // MAP_MANAGER_H

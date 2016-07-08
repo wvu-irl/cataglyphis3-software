@@ -87,6 +87,7 @@ find_package(catkin REQUIRED COMPONENTS
    CreateROIKeyframe.srv
    SearchLocalMapInfo.srv
    GlobalMapPathHazards.srv
+   EmergencyEscapeTrigger.srv
  )
 
 ## Generate actions in the 'action' folder

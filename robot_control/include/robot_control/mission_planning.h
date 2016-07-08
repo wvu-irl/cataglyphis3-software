@@ -2,13 +2,15 @@
 #define MISSION_PLANNING_H
 #include <ros/ros.h>
 #include "mission_planning_process_share.h"
-#include <messages/NavFilterOut.h>
+#include <messages/RobotPose.h>
 #include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
+#include <messages/EmergencyEscapeTrigger.h>
+#include "emergency_escape.h"
 #include "avoid.h"
 #include "next_best_region.h"
-#//include "search_region.h"
-//#include "examine.h"
+#include "search_region.h"
+#include "examine.h"
 #include "approach.h"
 #include "collect.h"
 #include "confirm_collect.h"
@@ -26,15 +28,18 @@ public:
 	void run();
 	// Members
 	ros::NodeHandle nh;
-	ros::Subscriber navSub;
+	ros::Subscriber poseSub;
 	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
+	ros::ServiceServer emergencyEscapeServ;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
+	EmergencyEscape emergencyEscape;
 	Avoid avoid;
 	NextBestRegion nextBestRegion;
-	//SearchRegion searchRegion;
+	SearchRegion searchRegion;
+	Examine examine;
 	Approach approach;
 	Collect collect;
 	ConfirmCollect confirmCollect;
@@ -42,8 +47,6 @@ public:
 	DepositApproach depositApproach;
 	DepositSample depositSample;
     Pause pause;
-
-
 
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
@@ -56,26 +59,18 @@ public:
 	const float homeY = 0.0; // m
 	const float collisionDistanceThresh = 5.0; // m
 private:
-	void avoidObstacle_(); // ***
-	void returnHome_();// ***
-	void deposit_();// ***
-	void acquire_();// ***
-	void examine_();// ***
-	void planRegionPath_();// ***
-	void chooseRegion_();// ***
-	void init_();// ***
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
 	void calcNumProcsBeingExec_();
 	void updateSampleFlags_();
-
-	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
+	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);
 	void cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr& msg);
+	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 };
 
 #endif // MISSION_PLANNING_H

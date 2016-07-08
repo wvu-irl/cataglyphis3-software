@@ -1,9 +1,3 @@
 int32 numSeachWaypoints
-bool includeCached
-bool includePurple
-bool includeRed
-bool includeBlue
-bool includeSilver
-bool includeBrass
 ---
 Waypoint[] waypointList

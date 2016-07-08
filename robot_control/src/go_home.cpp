@@ -9,12 +9,14 @@ bool GoHome::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        examineCount = 0;
+        confirmCollectFailedCount = 0;
 		numWaypointsToTravel = 1;
 		clearAndResizeWTT();
 		waypointsToTravel.at(0).x = 5.0;
 		waypointsToTravel.at(0).y = 0.0;
 		callIntermediateWaypoints();
-		sendDriveGlobal(false, false);
+        sendDriveGlobal(false);
 		state = _exec_;
 		break;
 	case _exec_:

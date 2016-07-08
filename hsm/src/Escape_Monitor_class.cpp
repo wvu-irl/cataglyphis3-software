@@ -2,11 +2,11 @@
 
 Escape_Monitor_class::Escape_Monitor_class()
 {
-	pub = nh.advertise<hsm::HSM_Action>("HSM_Act/emergency_escape",1);
-	nav_sub = nh.subscribe<navigation::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1,&Escape_Monitor_class::navCallback,this);
-	left_roboteq_sub = nh.subscribe<roboteq_interface::encoder_data>("roboteq/drivemotorin/left",1,&Escape_Monitor_class::leftRoboteqCallback,this);
-	right_roboteq_sub = nh.subscribe<roboteq_interface::encoder_data>("roboteq/drivemotorin/right",1,&Escape_Monitor_class::rightRoboteqCallback,this);
-	exec_sub = nh.subscribe<robot_control::ExecStateMachineInfo>("control/statemachineinfo/statemachineinfo",1,&Escape_Monitor_class::execCallback,this);
+	emergencyEscapeTriggerClient = nh.serviceClient<messages::EmergencyEscapeTrigger>("/control/missionplanning/emergencyescapetrigger");
+	nav_sub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1,&Escape_Monitor_class::navCallback,this);
+	left_roboteq_sub = nh.subscribe<messages::encoder_data>("roboteq/drivemotorin/left",1,&Escape_Monitor_class::leftRoboteqCallback,this);
+	right_roboteq_sub = nh.subscribe<messages::encoder_data>("roboteq/drivemotorin/right",1,&Escape_Monitor_class::rightRoboteqCallback,this);
+	exec_sub = nh.subscribe<messages::ExecInfo>("control/exec/info",1,&Escape_Monitor_class::execCallback,this);
 	monitor_state = Init_Monitor;
 	recovering_substate = Commanding;
 	current_time = ros::Time::now().toSec();
@@ -21,9 +21,10 @@ void Escape_Monitor_class::service_monitor()
 	switch(monitor_state)
 	{
 		case Init_Monitor:
-			usleep(1000000); // Sleep 1 second to let publisher fully initialize before first publish
-			msg_out.command = "NO ESCAPE";
-			pub.publish(msg_out);
+			usleep(1000000); // Sleep 1 second to let ros services initialize
+			emergencyEscapeTriggerSrv.request.escapeCondition = false;
+			if(emergencyEscapeTriggerClient.call(emergencyEscapeTriggerSrv)) ROS_DEBUG("emergencyEscapeTrigger service call successful");
+			else ROS_ERROR("emergencyEscapeTrigger service call unsuccessful");
 			//std::cout << "Init - NO ESCAPE " << std::endl;
 			init_count++;
 			if(init_count>=3){monitor_state = Monitoring;}
@@ -34,7 +35,7 @@ void Escape_Monitor_class::service_monitor()
 			if(tilt_angle>=tilt_limit) tilt_counter++;
 			else tilt_counter = 0;
 			//ROS_INFO("tilt_counter = %i",tilt_counter);
-			if(traveling_to_wp==1)
+			if(exec_current_action==_driveGlobal || exec_current_action==_driveRelative)
 			{
 				if(turn_flag==0)
 				{
@@ -56,8 +57,9 @@ void Escape_Monitor_class::service_monitor()
 			switch(recovering_substate)
 				{
 					case Commanding:
-						msg_out.command = "ENGAGE ESCAPE";
-						pub.publish(msg_out);
+						emergencyEscapeTriggerSrv.request.escapeCondition = true;
+						if(emergencyEscapeTriggerClient.call(emergencyEscapeTriggerSrv)) ROS_DEBUG("emergencyEscapeTrigger service call successful");
+						else ROS_ERROR("emergencyEscapeTrigger service call unsuccessful");
 						monitor_state = Recovering;
 						recovering_substate = Confirming;
 						break;
@@ -66,8 +68,9 @@ void Escape_Monitor_class::service_monitor()
 						else tilt_recover_counter = 0;
 						if(tilt_recover_counter>=tilt_recover_counter_limit)
 						{
-							msg_out.command = "NO ESCAPE";
-							pub.publish(msg_out);
+							emergencyEscapeTriggerSrv.request.escapeCondition = false;
+							if(emergencyEscapeTriggerClient.call(emergencyEscapeTriggerSrv)) ROS_DEBUG("emergencyEscapeTrigger service call successful");
+							else ROS_ERROR("emergencyEscapeTrigger service call unsuccessful");
 							monitor_state = Monitoring;
 							recovering_substate = Commanding;
 						}
@@ -84,7 +87,7 @@ void Escape_Monitor_class::service_monitor()
 	//ROS_INFO("******************-------------------------");
 }
 
-void Escape_Monitor_class::navCallback(const navigation::NavFilterOut::ConstPtr& msg_in)
+void Escape_Monitor_class::navCallback(const messages::NavFilterOut::ConstPtr& msg_in)
 {
 	pitch_angle = msg_in->pitch;
 	roll_angle = msg_in->roll;
@@ -97,23 +100,23 @@ void Escape_Monitor_class::recoveringTimerCallback(const ros::TimerEvent& event)
 	recovering_substate = Commanding;
 }
 
-void Escape_Monitor_class::leftRoboteqCallback(const roboteq_interface::encoder_data::ConstPtr& msg_in)
+void Escape_Monitor_class::leftRoboteqCallback(const messages::encoder_data::ConstPtr& msg_in)
 {
 	fl_current = msg_in->motor1_amps;
 	ml_current = msg_in->motor2_amps;
 	bl_current = msg_in->motor3_amps;
 }
-void Escape_Monitor_class::rightRoboteqCallback(const roboteq_interface::encoder_data::ConstPtr& msg_in)
+void Escape_Monitor_class::rightRoboteqCallback(const messages::encoder_data::ConstPtr& msg_in)
 {
 	fr_current = msg_in->motor1_amps;
 	mr_current = msg_in->motor2_amps;
 	br_current = msg_in->motor3_amps;	
 }
 
-void Escape_Monitor_class::execCallback(const robot_control::ExecStateMachineInfo::ConstPtr& msg_in)
+void Escape_Monitor_class::execCallback(const messages::ExecInfo::ConstPtr& msg_in)
 {
-	turn_flag = msg_in->turn_flag;
-	traveling_to_wp = msg_in->traveling_to_wp;
+	turn_flag = msg_in->turnFlag;
+	exec_current_action = msg_in->actionDeque[0];
 }
 
 Stall_Monitor::Stall_Monitor()

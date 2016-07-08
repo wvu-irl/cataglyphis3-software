@@ -4,10 +4,12 @@
 #include <ros/ros.h>
 #include <hsm/HSM_Detection.h>
 #include <hsm/HSM_Action.h>
-#include <navigation/NavFilterOut.h>
-#include <robot_control/ExecStateMachineInfo.h>
+#include <messages/NavFilterOut.h>
+#include <messages/ExecInfo.h>
+#include <messages/EmergencyEscapeTrigger.h>
+#include <robot_control/action_type_enum.h>
 #include "monitor_enums.h"
-#include <roboteq_interface/encoder_data.h>
+#include <messages/encoder_data.h>
 
 class Stall_Monitor
 {
@@ -28,7 +30,7 @@ class Escape_Monitor_class
 public:
 	//Members
 	ros::NodeHandle nh;
-	ros::Publisher pub;
+	ros::ServiceClient emergencyEscapeTriggerClient;
 	ros::Subscriber nav_sub;
 	ros::Subscriber left_roboteq_sub;
 	ros::Subscriber right_roboteq_sub;
@@ -36,7 +38,7 @@ public:
 	float roll_angle = 0.0;
 	float pitch_angle = 0.0;
 	float tilt_angle = 0.0;
-	hsm::HSM_Action msg_out;
+	messages::EmergencyEscapeTrigger emergencyEscapeTriggerSrv;
 	double current_time;
 	double tilt_limit_start_time;
 	const float tilt_limit = 25.0; // deg
@@ -47,7 +49,7 @@ public:
 	int tilt_recover_counter = 0;
 	int init_count = 0;
 	int turn_flag = 0;
-	int traveling_to_wp = 0;
+	int exec_current_action = 0;
 	int wheels_stalled = 0;
 	const int wheel_stalled_limit = 3;
 	int fl_stalled = 0;
@@ -69,10 +71,10 @@ public:
 	//Methods
 	Escape_Monitor_class(); //constructor
 	void service_monitor();
-	void navCallback(const navigation::NavFilterOut::ConstPtr& msg_in);
-	void leftRoboteqCallback(const roboteq_interface::encoder_data::ConstPtr& msg_in);
-	void rightRoboteqCallback(const roboteq_interface::encoder_data::ConstPtr& msg_in);
-	void execCallback(const robot_control::ExecStateMachineInfo::ConstPtr& msg_in);
+	void navCallback(const messages::NavFilterOut::ConstPtr& msg_in);
+	void leftRoboteqCallback(const messages::encoder_data::ConstPtr& msg_in);
+	void rightRoboteqCallback(const messages::encoder_data::ConstPtr& msg_in);
+	void execCallback(const messages::ExecInfo::ConstPtr& msg_in);
 	void recoveringTimerCallback(const ros::TimerEvent& event);
 private:
 	Stall_Monitor fl_stall_monitor;

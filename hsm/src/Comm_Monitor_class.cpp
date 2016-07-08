@@ -10,10 +10,10 @@ Comm_Monitor_class::Comm_Monitor_class() //constructor
 	pub = nh.advertise<hsm::HSM_Action>("HSM_Act/port_pub_enabled",1000);
 	serial_hsm_sub = nh.subscribe<hsm::HSM_Detection>("HSM_Det/i7_nb1_serial",1,&Comm_Monitor_class::detectionCallback, this); 
 	udp_hsm_sub = nh.subscribe<hsm::HSM_Detection>("HSM_Det/nb1_i7_udp_receiver",1,&Comm_Monitor_class::detectionCallback, this);
-	serial_data_sub = nh.subscribe<comm::nb1_to_i7_msg>("/comm/nb1in/nb1in",1,&Comm_Monitor_class::serialDataCallback,this);
-	udp_data_sub = nh.subscribe<comm::nb1_to_i7_msg>("/comm/nb1in/nb1in",1,&Comm_Monitor_class::udpDataCallback,this);
-	nb2_data_sub = nh.subscribe<comm::nb2_3_to_i7_msg>("/comm/nb2in/nb2in",1,&Comm_Monitor_class::nb2DataCallback,this);
-	nb3_data_sub = nh.subscribe<comm::nb2_3_to_i7_msg>("/comm/nb3in/nb3in",1,&Comm_Monitor_class::nb3DataCallback,this);
+	serial_data_sub = nh.subscribe<messages::nb1_to_i7_msg>("/hw_interface/nb1in/nb1in",1,&Comm_Monitor_class::serialDataCallback,this);
+	udp_data_sub = nh.subscribe<messages::nb1_to_i7_msg>("/hw_interface/nb1in/nb1in",1,&Comm_Monitor_class::udpDataCallback,this);
+	nb2_data_sub = nh.subscribe<messages::nb2_3_to_i7_msg>("/hw_interface/nb2in/nb2in",1,&Comm_Monitor_class::nb2DataCallback,this);
+	nb3_data_sub = nh.subscribe<messages::nb2_3_to_i7_msg>("/hw_interface/nb3in/nb3in",1,&Comm_Monitor_class::nb3DataCallback,this);
 	timer = nh.createTimer(ros::Duration(10),&Comm_Monitor_class::recoveringTimerCallback,this,true); //~~~should be an HSM Timer; callback needs object qualification
 	timer.stop();
 //	timer = new Timer(ros::Duration(10),&Comm_Monitor_class::recoveringTimerCallback,this,true);
@@ -34,6 +34,7 @@ void Comm_Monitor_class::service_monitor()
 //	std::cout << "consecutive_count = " << detection_data.consecutive_count << std::endl;
 
 	// Monitor state machine
+	ROS_DEBUG("comm monitor state = %i",monitor_state);
 	switch(monitor_state)
 	{
 		case Init_Monitor:
@@ -53,7 +54,7 @@ void Comm_Monitor_class::service_monitor()
 			if((current_time - udp_callback_time >= callback_timeout_time)&&(msg_out.command == "UDP PUBLISH"))
 			{
 				detection_flag = true;
-				detection_data.detector_node = "/nb1_i7_udp_receiver";
+				detection_data.detector_node = "/nb1_i7_udp_receiver"; // *** This is going to change
 				detection_data.message_type = "NO CONTACT";
 				nb1_udp_go = false;
 			}
@@ -68,7 +69,7 @@ void Comm_Monitor_class::service_monitor()
 			if((current_time - serial_callback_time >= callback_timeout_time)&&msg_out.command == "SERIAL PUBLISH")
 			{
 				detection_flag = true;
-				detection_data.detector_node = "/i7_nb1_serial";
+				detection_data.detector_node = "/i7_nb1_serial"; // *** This is going to change
 				detection_data.message_type = "NO CONTACT";
 				nb1_serial_go = false;
 			} 
@@ -96,8 +97,8 @@ void Comm_Monitor_class::service_monitor()
 				switch(recovering_substate)
 				{
 					case Commanding:
-						if(detection_data.detector_node=="/nb1_i7_udp_receiver") msg_out.command = "SERIAL PUBLISH";
-						else if(detection_data.detector_node=="/i7_nb1_serial") msg_out.command = "UDP PUBLISH";
+						if(detection_data.detector_node=="/nb1_i7_udp_receiver") msg_out.command = "SERIAL PUBLISH"; // *** going to change
+						else if(detection_data.detector_node=="/i7_nb1_serial") msg_out.command = "UDP PUBLISH"; // *** going to change
 						pub.publish(msg_out);
 						monitor_state = Recovering;
 						recovering_substate = Confirming;
@@ -133,25 +134,25 @@ void Comm_Monitor_class::recoveringTimerCallback(const ros::TimerEvent& event)
 	recovering_substate = Commanding;
 }
 
-void Comm_Monitor_class::udpDataCallback(const comm::nb1_to_i7_msg::ConstPtr& msg_in)
+void Comm_Monitor_class::udpDataCallback(const messages::nb1_to_i7_msg::ConstPtr& msg_in)
 {
 	udp_callback_time = ros::Time::now().toSec();
 	nb1_udp_go = true;
 }
 
-void Comm_Monitor_class::serialDataCallback(const comm::nb1_to_i7_msg::ConstPtr& msg_in)
+void Comm_Monitor_class::serialDataCallback(const messages::nb1_to_i7_msg::ConstPtr& msg_in)
 {
 	serial_callback_time = ros::Time::now().toSec();
 	nb1_serial_go = true;
 }
 
-void Comm_Monitor_class::nb2DataCallback(const comm::nb2_3_to_i7_msg::ConstPtr& msg_in)
+void Comm_Monitor_class::nb2DataCallback(const messages::nb2_3_to_i7_msg::ConstPtr& msg_in)
 {
 	nb2_callback_time = ros::Time::now().toSec();
 	nb2_go = true;
 }
 
-void Comm_Monitor_class::nb3DataCallback(const comm::nb2_3_to_i7_msg::ConstPtr& msg_in)
+void Comm_Monitor_class::nb3DataCallback(const messages::nb2_3_to_i7_msg::ConstPtr& msg_in)
 {
 	nb3_callback_time = ros::Time::now().toSec();
 	nb3_go = true;

@@ -15,8 +15,8 @@ bool ConfirmCollect::runProc()
 		//sendSearch(sampleTypeMux);
 		expectedSampleAngle = 0.0;
 		expectedSampleDistance = distanceToGrabber - backUpDistance;
-		sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
-		sendSearch(124); // 124 = b1111100 -> purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+        sendDriveRel(backUpDistance, 0.0, false, 0.0, false);
+        sendSearch(252); // 124 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 		state = _exec_;
 		break;
 	case _exec_:
@@ -26,16 +26,42 @@ bool ConfirmCollect::runProc()
 		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
 		{
 			computeSampleValuesWithExpectedDistance();
+            ROS_INFO("confirmCollect bestSampleValue = %f",bestSampleValue);
 			if(bestSampleValue < confirmCollectValueThreshold) noSampleOnGround = true;
 			else noSampleOnGround = false;
 			if(noSampleOnGround)
 			{
+                ROS_INFO("confirmCollect success, no sample on ground");
 				confirmedPossession = true;
                 inSearchableRegion = false;
+                // Delete searchLocalMap
+                searchMapSrv.request.createMap = false;
+                searchMapSrv.request.deleteMap = true;
+                if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
+                else ROS_ERROR("searchMap service call unsuccessful");
+                // Set ROI to searched
+                modROISrv.request.setSearchedROI = true;
+                modROISrv.request.searchedROIState = true;
+                modROISrv.request.numSearchedROI = currentROIIndex;
+                modROISrv.request.addNewROI = false;
+                if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
+                else ROS_ERROR("modify ROI service call unsuccessful");
+                roiKeyframed = false;
 				state = _finish_;
 			}
 			else
 			{
+                ROS_INFO("confirmCollect failed, sample still on ground");
+                confirmCollectFailedCount++;
+                if(confirmCollectFailedCount>=confirmCollectFailedLimit)
+                {
+                    ROS_INFO("confirmCollect over failed limit");
+                    possibleSample = false;
+                    definiteSample = false;
+                    confirmCollectFailedCount = 0;
+                    examineCount = 0;
+                    backUpCount = 0;
+                }
 				confirmedPossession = false;
 				possessingSample = false;
 				sendOpen();

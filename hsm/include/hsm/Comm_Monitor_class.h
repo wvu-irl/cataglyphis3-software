@@ -4,8 +4,8 @@
 #include <ros/ros.h>
 #include <hsm/HSM_Detection.h>
 #include <hsm/HSM_Action.h>
-#include <comm/nb1_to_i7_msg.h>
-#include <comm/nb2_3_to_i7_msg.h>
+#include <messages/nb1_to_i7_msg.h>
+#include <messages/nb2_3_to_i7_msg.h>
 #include <string>
 #include "Counter.h"
 //#include "Timer.h"
@@ -50,10 +50,10 @@ public:
 	void service_monitor();
 	void detectionCallback(const hsm::HSM_Detection::ConstPtr& msg_in);
 	void recoveringTimerCallback(const ros::TimerEvent& event);
-	void udpDataCallback(const comm::nb1_to_i7_msg::ConstPtr& msg_in);
-	void serialDataCallback(const comm::nb1_to_i7_msg::ConstPtr& msg_in);
-	void nb2DataCallback(const comm::nb2_3_to_i7_msg::ConstPtr& msg_in);
-	void nb3DataCallback(const comm::nb2_3_to_i7_msg::ConstPtr& msg_in);
+	void udpDataCallback(const messages::nb1_to_i7_msg::ConstPtr& msg_in);
+	void serialDataCallback(const messages::nb1_to_i7_msg::ConstPtr& msg_in);
+	void nb2DataCallback(const messages::nb2_3_to_i7_msg::ConstPtr& msg_in);
+	void nb3DataCallback(const messages::nb2_3_to_i7_msg::ConstPtr& msg_in);
 };
 
 #endif /* COMM_MONITOR_CLASS_H */

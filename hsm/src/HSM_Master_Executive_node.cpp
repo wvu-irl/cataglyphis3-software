@@ -1,6 +1,6 @@
 #include <ros/ros.h>
-//#include "Comm_Monitor_class.h"
-//#include "Escape_Monitor_class.h"
+#include "Comm_Monitor_class.h"
+#include "Escape_Monitor_class.h"
 //#include "HSM_Heartbeat_Monitor_class.h"
 #include <robot_pose_monitor.h>
 #include <hsm/MasterStatus.h>
@@ -14,8 +14,8 @@ int main(int argc, char **argv)
 	
 	ros::Rate loop_rate(100);
 
-	//Comm_Monitor_class comm_monitor;
-	//Escape_Monitor_class escape_monitor;
+	Comm_Monitor_class comm_monitor;
+	Escape_Monitor_class escape_monitor;
 	//HSM_Heartbeat_Monitor_class vision_monitor("vision_state_machine_node_v2",100);
 	RobotPoseMonitor robotPoseMonitor;
 
@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 	while(ros::ok())
 	{
 		ROS_INFO_THROTTLE(3,"HSM Master Executive Running");
-		//comm_monitor.service_monitor();
-		//escape_monitor.service_monitor();
+		comm_monitor.service_monitor();
+		escape_monitor.service_monitor();
 		//vision_monitor.service_monitor();
 		// robotPoseMonitor serviced by internal timer at 20 Hz
 		

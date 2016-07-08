@@ -4,7 +4,8 @@ Exec::Exec()
 {
 	robotStatus.loopRate = loopRate;
     actionServ = nh.advertiseService("control/exec/actionin", &Exec::actionCallback_, this);
-	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
+    poseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &Exec::poseCallback_, this);
+    navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
@@ -117,6 +118,7 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     newActionFlag_ = req.newActionFlag;
     pushToFrontFlag_ = req.pushToFrontFlag;
     clearDequeFlag_ = req.clearDequeFlag;
+    clearFrontFlag_ = req.clearFrontFlag;
     pause_ = req.pause;
 	params_.actionType = nextActionType_;
     params_.float1 = req.float1;
@@ -132,19 +134,24 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.bool5 = req.bool5;
     params_.bool6 = req.bool6;
     params_.bool7 = req.bool7;
+    params_.bool8 = req.bool8;
     params_.procType = static_cast<PROC_TYPES_T>(req.procType);
     params_.serialNum = req.serialNum;
 	ROS_INFO("ACTION CALLBACK, float1 = %f, float2 = %f",params_.float1,params_.float2);
     return true;
 }
 
-void Exec::navCallback_(const messages::NavFilterOut::ConstPtr& msg)
+void Exec::poseCallback_(const messages::RobotPose::ConstPtr& msg)
 {
-	robotStatus.xPos = msg->x_position;
-	robotStatus.yPos = msg->y_position;
+    robotStatus.xPos = msg->x;
+    robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
-	robotStatus.bearing = msg->bearing;
-	robotStatus.yawRate = msg->yaw_rate;
+    robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
+}
+
+void Exec::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
+{
+    robotStatus.yawRate = msg->yaw_rate;
 }
 
 void Exec::grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg)
@@ -190,6 +197,7 @@ void Exec::packInfoMsgOut_()
         execInfoMsgOut_.actionBool5[i] = 0;
         execInfoMsgOut_.actionBool6[i] = 0;
         execInfoMsgOut_.actionBool7[i] = 0;
+        execInfoMsgOut_.actionBool8[i] = 0;
         execInfoMsgOut_.actionProcType[i] = 0;
         execInfoMsgOut_.actionSerialNum[i] = 0;
 	}
@@ -209,6 +217,7 @@ void Exec::packInfoMsgOut_()
         execInfoMsgOut_.actionBool5[i] = actionDeque_.at(i)->params.bool5;
         execInfoMsgOut_.actionBool6[i] = actionDeque_.at(i)->params.bool6;
         execInfoMsgOut_.actionBool7[i] = actionDeque_.at(i)->params.bool7;
+        execInfoMsgOut_.actionBool8[i] = actionDeque_.at(i)->params.bool8;
         execInfoMsgOut_.actionProcType[i] = static_cast<uint8_t>(actionDeque_.at(i)->params.procType);
         execInfoMsgOut_.actionSerialNum[i] = actionDeque_.at(i)->params.serialNum;
 	}
