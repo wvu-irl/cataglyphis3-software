@@ -46,7 +46,7 @@ bool NextBestRegion::runProc()
             clearAndResizeWTT();
 			waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
 			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
-            waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
+            waypointsToTravel.at(0).searchable = true; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
             //sendDriveGlobal(false);
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
@@ -100,17 +100,20 @@ bool NextBestRegion::runProc()
         break;
     case _finish_:
         if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
+        else
+        {
+            // ************************ THIS IS TEMPORARY TO ALLOW FOR DRIVING WITHOUT SEARCHING
+            modROISrv.request.setSearchedROI = true;
+            modROISrv.request.searchedROIState = true;
+            modROISrv.request.numSearchedROI = bestROINum;
+            modROISrv.request.addNewROI = false;
+            if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
+            else ROS_ERROR("modify ROI service call unsuccessful");
+            // ********************************************
+        }
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
-        // ************************ THIS NEEDS TO GO SOMEWHERE ELSE LATER
-		modROISrv.request.setSearchedROI = true;
-		modROISrv.request.searchedROIState = true;
-		modROISrv.request.numSearchedROI = bestROINum;
-        modROISrv.request.addNewROI = false;
-        if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
-        else ROS_ERROR("modify ROI service call unsuccessful");
-        // ********************************************
         state = _init_;
         break;
     }

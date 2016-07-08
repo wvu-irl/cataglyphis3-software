@@ -11,7 +11,6 @@ public:
 	bool allWaypointsVisited;
 	ros::Timer roiTimer;
 	const int numRandomWaypoints = 5;
-	bool finishAfterInterrupt;
 	// Methods
 	bool runProc();
 	SearchRegion(); // constructor

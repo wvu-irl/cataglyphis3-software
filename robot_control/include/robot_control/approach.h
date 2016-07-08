@@ -11,7 +11,6 @@ public:
 	APPROACH_STEP_T step;
 	uint8_t sampleTypeMux;
 	const float maxDriveDistance = 4.0; // m
-	int backUpCount = 0;
 	const int maxBackUpCount = 1;
 	const float backUpDistance = -0.5;
 	const float approachValueThreshold = 0.7;

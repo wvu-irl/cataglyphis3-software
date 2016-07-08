@@ -92,6 +92,7 @@ public:
 	static messages::CVSampleProps highestConfSample;
 	static float allocatedROITime; // sec
 	static int examineCount;
+	static int backUpCount;
 	static int confirmCollectFailedCount;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 1.0;
@@ -154,6 +155,7 @@ float MissionPlanningProcessShare::expectedSampleAngle;
 messages::CVSampleProps MissionPlanningProcessShare::highestConfSample;
 float MissionPlanningProcessShare::allocatedROITime;
 int MissionPlanningProcessShare::examineCount;
+int MissionPlanningProcessShare::backUpCount;
 int MissionPlanningProcessShare::confirmCollectFailedCount;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H
