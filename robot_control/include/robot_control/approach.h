@@ -14,7 +14,7 @@ public:
 	int backUpCount = 0;
 	const int maxBackUpCount = 1;
 	const float backUpDistance = -0.5;
-	const int approachValueThreshold = 700;
+	const float approachValueThreshold = 0.7;
 	bool commandedSearch;
 	bool approachableSample;
 	// Methods

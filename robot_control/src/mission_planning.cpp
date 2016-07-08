@@ -54,6 +54,8 @@ MissionPlanning::MissionPlanning()
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
     currentROIIndex = 0;
+    examineCount = 0;
+    confirmCollectFailedCount = 0;
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {

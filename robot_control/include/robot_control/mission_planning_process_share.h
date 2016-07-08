@@ -64,7 +64,7 @@ public:
 	const float blindDriveDistance = 0.457; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
-	const float possibleSampleConfThresh = 0.9;
+	const float possibleSampleConfThresh = 0.7;
 	const float definiteSampleConfThresh = 0.9;
 	static int currentROIIndex;
 	static bool escapeCondition;
@@ -91,8 +91,10 @@ public:
 	static float expectedSampleAngle;
 	static messages::CVSampleProps highestConfSample;
 	static float allocatedROITime; // sec
+	static int examineCount;
+	static int confirmCollectFailedCount;
 	const float sampleConfidenceGain = 1.0;
-	const float sampleDistanceToExpectedGain = 1000.0;
+	const float sampleDistanceToExpectedGain = 1.0;
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -151,5 +153,7 @@ float MissionPlanningProcessShare::expectedSampleDistance;
 float MissionPlanningProcessShare::expectedSampleAngle;
 messages::CVSampleProps MissionPlanningProcessShare::highestConfSample;
 float MissionPlanningProcessShare::allocatedROITime;
+int MissionPlanningProcessShare::examineCount;
+int MissionPlanningProcessShare::confirmCollectFailedCount;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

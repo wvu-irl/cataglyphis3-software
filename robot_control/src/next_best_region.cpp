@@ -10,6 +10,8 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         execDequeEmpty = false;
+        examineCount = 0;
+        confirmCollectFailedCount = 0;
         // Delete search local map in case region was exited without a successful sample collection
         searchMapSrv.request.createMap = false;
         searchMapSrv.request.deleteMap = true;
@@ -22,7 +24,7 @@ bool NextBestRegion::runProc()
 		// Loop through list and choose best region not yet searched
         bestROIValue = 0;
         bestROINum = 0;
-		roiSearchedSum = 0;
+        roiSearchedSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
             roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb -

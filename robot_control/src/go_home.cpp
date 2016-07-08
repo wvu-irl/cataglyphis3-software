@@ -9,6 +9,8 @@ bool GoHome::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        examineCount = 0;
+        confirmCollectFailedCount = 0;
 		numWaypointsToTravel = 1;
 		clearAndResizeWTT();
 		waypointsToTravel.at(0).x = 5.0;

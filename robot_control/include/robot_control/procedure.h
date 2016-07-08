@@ -364,10 +364,10 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 	bestSampleValue = 0;
 	for(int i=0; i<numSampleCandidates; i++)
 	{
-		sampleValues.at(i) = (sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
-								(int)(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2)+pow(expectedSampleDistance,2)-
-									2*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
-										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle)))))/sampleConfidenceGain;
+		sampleValues.at(i) = sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
+								(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2.0)+pow(expectedSampleDistance,2.0)-
+									2.0*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
+										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle))));
 		ROS_INFO("^^^^^ sampleValues.at(%i) = %i",i,sampleValues.at(i));
 
 		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}

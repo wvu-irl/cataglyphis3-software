@@ -20,6 +20,8 @@ bool SearchRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		finishAfterInterrupt = false;
+		examineCount = 0;
+		confirmCollectFailedCount = 0;
 		if(!roiKeyframed) // check if ROI is not yet keyframed
 		{
 			ROS_INFO("ROI not keyframed");

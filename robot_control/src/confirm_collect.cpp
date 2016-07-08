@@ -41,6 +41,8 @@ bool ConfirmCollect::runProc()
 			}
 			else
 			{
+                confirmCollectFailedCount++;
+                if(confirmCollectFailedCount>=confirmCollectFailedLimit) {possibleSample = false; definiteSample = false; confirmCollectFailedCount = 0;}
 				confirmedPossession = false;
 				possessingSample = false;
 				sendOpen();

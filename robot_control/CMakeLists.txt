@@ -143,7 +143,7 @@ include_directories(
  add_library(avoid src/avoid.cpp)
  add_library(next_best_region src/next_best_region.cpp)
  add_library(search_region src/search_region.cpp)
- #add_library(examine src/examine.cpp)
+ add_library(examine src/examine.cpp)
  add_library(approach src/approach.cpp)
  add_library(collect src/collect.cpp)
  add_library(confirm_collect src/confirm_collect.cpp)
@@ -214,7 +214,7 @@ include_directories(
    avoid
    next_best_region
    search_region
-   #examine
+   examine
    approach
    collect
    confirm_collect
