@@ -22,6 +22,7 @@ int Action::runDeques()
 {
 	driveDequeEmpty = driveDeque.empty();
 	if(driveDequeEmptyPrev && !driveDequeEmpty) driveDeque.front()->init();
+    else if(!driveDequeEmptyPrev && driveDequeEmpty) driveHalt.init();
 	if(driveDequeEmpty) {driveHalt.run(); driveDequeEmpty = 1; driveDequeEnded = 0;}
 	else driveDequeEnded = driveDeque.front()->run();
 	if(driveDequeEnded!=0)
@@ -66,7 +67,7 @@ void Action::clearDeques()
     driveDeque.clear();
     grabberDeque.clear();
     visionDeque.clear();
-    driveDequeEmptyPrev = 1;
-    grabberDequeEmptyPrev = 1;
-    visionDequeEmptyPrev = 1;
+    //driveDequeEmptyPrev = 1;
+    //grabberDequeEmptyPrev = 1;
+    //visionDequeEmptyPrev = 1;
 }

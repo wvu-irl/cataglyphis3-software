@@ -152,6 +152,9 @@ void Exec::poseCallback_(const messages::RobotPose::ConstPtr& msg)
 void Exec::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
 {
     robotStatus.yawRate = msg->yaw_rate;
+    robotStatus.rollAngle = msg->roll;
+    robotStatus.pitchAngle = msg->pitch;
+    robotStatus.velocity = msg->velocity;
 }
 
 void Exec::grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg)
