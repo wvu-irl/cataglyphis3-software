@@ -9,6 +9,7 @@ bool GoHome::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        computeDriveSpeeds();
         examineCount = 0;
         confirmCollectFailedCount = 0;
 		numWaypointsToTravel = 1;
@@ -23,6 +24,7 @@ bool GoHome::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;

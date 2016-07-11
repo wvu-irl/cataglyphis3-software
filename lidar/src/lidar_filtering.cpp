@@ -228,7 +228,7 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 		msg.homing_heading = 0;
 		msg.homing_found = _homing_found;			
 	}
-
+	msg.terrain_type = 0; // Set this based on terrain classification. 1 means obstacles/sidewalk/anything we need to go slow on, 0 means clear, grassy, go full speed
 }
 
 void LidarFilter::doMathMapping()

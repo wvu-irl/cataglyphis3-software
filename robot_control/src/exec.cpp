@@ -7,6 +7,7 @@ Exec::Exec()
     poseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &Exec::poseCallback_, this);
     navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
+    driveSpeedsSub = nh.subscribe<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1, &Exec::driveSpeedsCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
     actionEndedPub = nh.advertise<messages::ExecActionEnded>("control/exec/actionended",1);
@@ -163,6 +164,12 @@ void Exec::grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg)
 	robotStatus.grabberDropStatus = msg->dropStatus;
 	robotStatus.grabberSlidePos = msg->sliderPosAvg;
 	robotStatus.grabberDropPos = msg->dropPos;
+}
+
+void Exec::driveSpeedsCallback_(const robot_control::DriveSpeeds::ConstPtr &msg)
+{
+    robotStatus.vMax = msg->vMax;
+    robotStatus.rMax = msg->rMax;
 }
 
 void Exec::packActuatorMsgOut_()

@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
     double linV; // m/s
     double angV; // deg/s
-    const double linVGain = 1.2/1000.0/6.0; // m/s per speed cmd
+    const double linVGain = 1.4/900.0/6.0; // m/s per speed cmd
     const double angVGain = 45.0/2650.0; // deg/s per speec cmd
     actuatorCmd.grabber_stop_cmd = 0;
     actuatorCmd.slide_pos_cmd = 1000;
