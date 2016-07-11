@@ -147,6 +147,10 @@ private:
     //Cell _GridMap [2*map_range/grid_size][2*map_range/grid_size];
     Cell _GridMap [500][500];
 
+    //for the visualizer
+    int visualizerCounter = 0;
+    int spintime = 100;
+
 	//callback functions
 	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg);
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);

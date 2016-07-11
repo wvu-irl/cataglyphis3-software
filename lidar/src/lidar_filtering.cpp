@@ -83,7 +83,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	Eigen::Matrix3f _R_pitch;
 	_R_pitch(0,0) = cos(_navigation_filter_pitch);
 	_R_pitch(0,1) = 0;
-	_R_pitch(0,2) = -sin(_navigation_filter_pitch);*object_filtered
+	_R_pitch(0,2) = -sin(_navigation_filter_pitch);
 	_R_pitch(1,0) = 0;
 	_R_pitch(1,1) = 1;
 	_R_pitch(1,2) = 0;
@@ -307,7 +307,8 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
-	_object_filtered = *object_filtered;
+	//copy filtered point cloud after hard thresholding and ground removal
+	_object_filtered = *object_filtered; 
 
 	//save point cloud after ground removal
 	// std::stringstream ss2;
@@ -321,6 +322,22 @@ void LidarFilter::doMathMapping()
 	{
 		object_filtered_projection->points[i].z=0;
 	}
+
+	if(visualizerCounter == 10)
+	{
+		pcl::visualization::PCLVisualizer viewer;
+	    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
+	    viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
+	    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
+	    viewer.spinOnce(spintime);
+	    //viewer.removePointCloud("object_RGB");
+	    visualizerCounter =0;
+	} 
+	else
+	{
+		visualizerCounter = visualizerCounter + 1;
+	}
+	
 
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -385,11 +402,7 @@ void LidarFilter::doMathMapping()
 	        point.push_back(variance_z);
 	        _local_grid_map.push_back(point);
 	    }
-
 	}
-	
-	//copy filtered point cloud after hard thresholding and ground removal
-	_object_filtered = *object_filtered; 
 }
 
 void LidarFilter::doMathHoming()
