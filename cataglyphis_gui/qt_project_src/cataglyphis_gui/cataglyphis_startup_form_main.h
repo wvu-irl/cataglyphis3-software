@@ -32,6 +32,7 @@ public:
     ~cataglyphis_startup_form_main();
 
     boost::shared_ptr<Ui::cataglyphis_startup_form_main> ui;
+    //Ui::cataglyphis_startup_form_main ui;
 
 public slots:
     void step_one_returned();
@@ -40,6 +41,8 @@ public slots:
 private slots:
     void on_start_up_button_clicked();
     void on_reboot_recovery_button_clicked();
+
+    void on_input_tabber_currentChanged(int index);
 
 private:
     QThread rosWorkerThread;

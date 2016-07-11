@@ -4,6 +4,9 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
 {
     nh = nhArg;
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/nav/nav_filter_control_service");
+    navInfoTime = ros::Time::now();
+    navInfoSubStarted = false;
+    navInfoCallbackSub = ros::Subscriber();
     //workerMutex = boost::shared_ptr<QMutex>(new QMutex);
 }
 
@@ -21,13 +24,13 @@ void ros_workers::run_nav_service(messages::NavFilterControl serviceRequest,
         }
         else
         {
-            ROS_DEBUG("ros_workers::run_nav_service:: Nav Service Call Failure!");
+            ROS_WARN("ros_workers::run_nav_service:: Nav Service Call Failure!");
         }
     }
     else
     {
-        ROS_DEBUG("ros_workers::run_nav_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_workers::run_nav_service:: Nav Service Does not Exist!");
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
     }
@@ -56,7 +59,7 @@ void ros_workers::run_nav_init_service(messages::NavFilterControl serviceRequest
     else
     {
         ROS_WARN("ros_workers::nav_init_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
     }
@@ -86,7 +89,7 @@ void ros_workers::run_bias_removal_service()
     else
     {
         ROS_WARN("ros_workers::bias_removal_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
         navControl.response.p1Offset = NAN;
@@ -99,7 +102,7 @@ void ros_workers::run_bias_removal_service()
         navControl.response.q3Offset = NAN;
         navControl.response.r3Offset = NAN;
     }
-    ROS_DEBUG("before bias_removal emit");
+    ROS_DEBUG("ros_workers:: before bias_removal emit");
     emit bias_removal_returned(navControl, wasSucessful);
 }
 
@@ -127,7 +130,7 @@ void ros_workers::run_start_dead_reckoning_service()
     else
     {
         ROS_WARN("ros_workers::dead_reckoning_service:: Nav Service Does not Exist!");
-        ROS_DEBUG("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
         navControl.response.p1Offset = NAN;
@@ -142,6 +145,40 @@ void ros_workers::run_start_dead_reckoning_service()
     }
     ROS_DEBUG("ros_workers::dead_reckoning_service call finished");
     emit dead_reckoning_service_returned(navControl, wasSucessful);
+}
+
+void ros_workers::getNavInfoCallback(const messages::NavFilterOut::ConstPtr &msg)
+{
+    this->lastNavMsg = *msg;
+    //rate limit amount of signals sent to the QT event queue
+    if(navInfoTime.toSec() - ros::Time::now().toSec() > NAV_INFO_MIN_PUB_TIME)
+    {
+        navInfoTime = ros::Time::now();
+        emit nav_info_callback(this->lastNavMsg);
+    }
+}
+
+void ros_workers::run_nav_info_subscriber_start()
+{
+    ROS_DEBUG("ros_workers:: Entered nav info subscriber start");
+    if(!navInfoSubStarted)
+    {
+        navInfoSubStarted = true;
+        ROS_DEBUG("ros_workers::Starting New subscriber");
+        this->navInfoCallbackSub = nh->subscribe("navigation/navigationfilterout/navigationfilterout", 1,
+                                                        &ros_workers::getNavInfoCallback, this);
+    }
+}
+
+void ros_workers::run_nav_info_subscriber_stop()
+{
+    ROS_DEBUG("ros_workers:: Entered nav info subscriber stop");
+    if(navInfoSubStarted)
+    {
+        ROS_DEBUG("ros_workers::Stopping Nav Info subscriber");
+        navInfoSubStarted = false;
+        this->navInfoCallbackSub.shutdown();
+    }
 }
 
 

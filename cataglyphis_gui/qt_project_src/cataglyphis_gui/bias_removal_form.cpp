@@ -7,15 +7,25 @@ bias_removal_form::bias_removal_form(QWidget *parent, boost::shared_ptr<ros_work
 {
     ui->setupUi(this);
     worker = workerArg;
+    previousDeadReckButtonEnabled = false;
 
     connect(this, &bias_removal_form::start_bias_removal,
                 worker.get(), &ros_workers::run_bias_removal_service);
     connect(this, &bias_removal_form::start_dead_reckoning,
                 worker.get(), &ros_workers::run_start_dead_reckoning_service);
+
+    connect(this, &bias_removal_form::start_nav_info_subscriber,
+                worker.get(), &ros_workers::run_nav_info_subscriber_start);
+    connect(this, &bias_removal_form::stop_nav_info_subscriber,
+                worker.get(), &ros_workers::run_nav_info_subscriber_stop);
+
     connect(worker.get(), &ros_workers::bias_removal_returned,
                 this, &bias_removal_form::update_bias_removal_display);
     connect(worker.get(), &ros_workers::dead_reckoning_service_returned,
                 this, &bias_removal_form::update_bias_removal_display);
+
+    connect(worker.get(), &ros_workers::nav_info_callback,
+                this, &bias_removal_form::nav_info_callback);
 }
 
 bias_removal_form::~bias_removal_form()
@@ -29,6 +39,7 @@ void bias_removal_form::on_begin_dead_reckoning_button_clicked()
     //send service
     emit start_dead_reckoning();
     emit bias_removal_finished();
+    emit stop_nav_info_subscriber();
 }
 
 void bias_removal_form::on_perform_bias_removal_button_clicked()
@@ -37,6 +48,7 @@ void bias_removal_form::on_perform_bias_removal_button_clicked()
     //when min and max of a progress bar are the same, it simply sits there and moves
     ui->progressBar->setMaximum(0);
     emit start_bias_removal();
+    emit start_nav_info_subscriber();
 }
 
 void bias_removal_form::update_bias_removal_display(messages::NavFilterControl serviceResponse,
@@ -60,5 +72,42 @@ void bias_removal_form::update_bias_removal_display(messages::NavFilterControl s
     if(wasSucessful)
     {
         ui->begin_dead_reckoning_button->setDisabled(false);
+    }
+}
+
+void bias_removal_form::nav_info_callback(const messages::NavFilterOut navInfo)
+{
+    ROS_DEBUG("bias_removal_form:: nav_info_callback");
+    ui->p1_offset_spinbox->setValue(navInfo.p1_offset);
+    ui->q1_offset_spinbox->setValue(navInfo.q1_offset);
+    ui->r1_offset_spinbox->setValue(navInfo.r1_offset);
+
+    ui->p2_offset_spinbox->setValue(navInfo.p2_offset);
+    ui->q2_offset_spinbox->setValue(navInfo.q2_offset);
+    ui->r2_offset_spinbox->setValue(navInfo.r2_offset);
+
+    ui->p3_offset_spinbox->setValue(navInfo.p3_offset);
+    ui->q3_offset_spinbox->setValue(navInfo.q3_offset);
+    ui->r3_offset_spinbox->setValue(navInfo.r3_offset);
+}
+
+void bias_removal_form::keyPressEvent(QKeyEvent *event)
+{
+    ROS_DEBUG("bias_removal_form:: Key Pressed");
+    if((event->modifiers() & Qt::ControlModifier) == Qt::ControlModifier)
+    {
+        ROS_DEBUG("bias_removal_form:: Control pressed");
+        previousDeadReckButtonEnabled = ui->begin_dead_reckoning_button->isEnabled();
+        ui->begin_dead_reckoning_button->setEnabled(true);
+    }
+
+}
+
+void bias_removal_form::keyReleaseEvent(QKeyEvent *event)
+{
+    if((event->modifiers() & Qt::ControlModifier) != Qt::ControlModifier)
+    {
+        ROS_DEBUG("bias_removal_form:: Control released");
+        ui->begin_dead_reckoning_button->setEnabled(previousDeadReckButtonEnabled);
     }
 }
