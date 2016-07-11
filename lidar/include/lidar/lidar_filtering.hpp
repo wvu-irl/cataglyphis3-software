@@ -73,6 +73,8 @@ public:
 	void packLocalMapMessage(messages::LocalMap &msg);
 	void packHomingMessage(messages::LidarFilterOut &msg);
 	void stitchClouds();
+	void fitCylinderLong();
+	void fitCylinderShort();
 	short int _navigation_filter_counter;
 	short int _navigation_filter_counter_prev;
 	short int _registration_counter;
@@ -123,6 +125,7 @@ private:
 		arma::mat axis_direction = arma::zeros<arma::mat>(3,1);
 		arma::mat raius_estimate = arma::zeros<arma::mat>(1,1);
 	};
+	std::vector<cylinder> cylinders;
 
 	const float home_detection_range = 15.0;
 	std::string fileName; //temporary for saving cylinders to file
