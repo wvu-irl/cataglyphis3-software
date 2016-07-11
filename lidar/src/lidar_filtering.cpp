@@ -83,7 +83,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	Eigen::Matrix3f _R_pitch;
 	_R_pitch(0,0) = cos(_navigation_filter_pitch);
 	_R_pitch(0,1) = 0;
-	_R_pitch(0,2) = -sin(_navigation_filter_pitch);*object_filtered
+	_R_pitch(0,2) = -sin(_navigation_filter_pitch);
 	_R_pitch(1,0) = 0;
 	_R_pitch(1,1) = 1;
 	_R_pitch(1,2) = 0;
@@ -322,71 +322,71 @@ void LidarFilter::doMathMapping()
 		object_filtered_projection->points[i].z=0;
 	}
 
-	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	//define variables used in this section
-	std::vector<float> point;
-	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
-	std::vector<std::vector<float> > local_grid_map_temp;
-	int index = 0;
-	_local_grid_map.clear();
+	// //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	// //-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	// //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	// //define variables used in this section
+	// std::vector<float> point;
+	// std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
+	// std::vector<std::vector<float> > local_grid_map_temp;
+	// int index = 0;
+	// _local_grid_map.clear();
 
-	//grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
-	for (int i = 0; i< object_filtered->points.size(); i++)
-	{
-	    point.push_back(object_filtered->points[i].x);
-	    point.push_back(object_filtered->points[i].y);
-	    point.push_back(object_filtered->points[i].z);
+	// //grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
+	// for (int i = 0; i< object_filtered->points.size(); i++)
+	// {
+	//     point.push_back(object_filtered->points[i].x);
+	//     point.push_back(object_filtered->points[i].y);
+	//     point.push_back(object_filtered->points[i].z);
 
-	    //the index checks which gird a point belongs to 
-	    index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
-	    grid_map_cells[index].push_back(point);
-	    point.clear();
-	}
+	//     //the index checks which gird a point belongs to 
+	//     index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
+	//     grid_map_cells[index].push_back(point);
+	//     point.clear();
+	// }
 
 
 
-	//do the calculation
-	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
-	{
-		//define variables used to calculate mean x y z and variance of z
-		float total_x = 0;
-		float total_y = 0;
-		float total_z = 0;
-		float average_x = 0;
-		float average_y = 0;
-		float average_z = 0;
-		float variance_z = 0;
+	// //do the calculation
+	// for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
+	// {
+	// 	//define variables used to calculate mean x y z and variance of z
+	// 	float total_x = 0;
+	// 	float total_y = 0;
+	// 	float total_z = 0;
+	// 	float average_x = 0;
+	// 	float average_y = 0;
+	// 	float average_z = 0;
+	// 	float variance_z = 0;
 
-	    for (int j = 0; j < grid_map_cells[i].size(); j++)
-	    {
-	        total_x += grid_map_cells[i][j][0];
-	        total_y += grid_map_cells[i][j][1];
-	        total_z += grid_map_cells[i][j][2];
-	    }
-	    average_x = total_x/grid_map_cells[i].size();
-	    average_y = total_y/grid_map_cells[i].size();
-	    average_z = total_z/grid_map_cells[i].size();
-	    for (int j = 0; j < grid_map_cells[i].size(); j++)
-	    {
-	        variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
-	    }
-	    variance_z = sqrt(variance_z);
+	//     for (int j = 0; j < grid_map_cells[i].size(); j++)
+	//     {
+	//         total_x += grid_map_cells[i][j][0];
+	//         total_y += grid_map_cells[i][j][1];
+	//         total_z += grid_map_cells[i][j][2];
+	//     }
+	//     average_x = total_x/grid_map_cells[i].size();
+	//     average_y = total_y/grid_map_cells[i].size();
+	//     average_z = total_z/grid_map_cells[i].size();
+	//     for (int j = 0; j < grid_map_cells[i].size(); j++)
+	//     {
+	//         variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
+	//     }
+	//     variance_z = sqrt(variance_z);
 
-	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
-	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
-	    {
-	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
-	        point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
-	        point.push_back(average_x);
-	        point.push_back(average_y);
-	        point.push_back(average_z);
-	        point.push_back(variance_z);
-	        _local_grid_map.push_back(point);
-	    }
+	//     //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
+	//     if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
+	//     {
+	//         // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
+	//         point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
+	//         point.push_back(average_x);
+	//         point.push_back(average_y);
+	//         point.push_back(average_z);
+	//         point.push_back(variance_z);
+	//         _local_grid_map.push_back(point);
+	//     }
 
-	}
+	// }
 	
 	//copy filtered point cloud after hard thresholding and ground removal
 	_object_filtered = *object_filtered; 
@@ -638,8 +638,12 @@ void LidarFilter::doMathHoming()
     }
     
     //begin homing detection from cylinders
+int debug_count = 0;
     if(cylinders.size()>=2) 
     {
+    	
+debug_count++;
+std::cout << debug_count << std::endl;
 	    // find correct cylinders
 	    arma::mat xs1;
 	    arma::mat xs2;
@@ -655,7 +659,8 @@ void LidarFilter::doMathHoming()
 		double cx1, cx2, cy1, cy2;
 		bool cylinder_found = false;
 
-
+debug_count++;
+std::cout << debug_count << std::endl;
 		// rotate points and transform cylinder parameters
 	    for (int ii=0; ii<cylinders.size(); ii++)
 	    {
@@ -667,7 +672,8 @@ void LidarFilter::doMathHoming()
 				cylinders[ii].point_in_space(2,0) = 0.0;
 			}
 	    }
-
+debug_count++;
+std::cout << debug_count << std::endl;
 	    //cout << "1" << endl;
 	    // find all cylinders correct distance apart
 		for (int ii=0; ii<cylinders.size()-1; ii++)
@@ -708,7 +714,8 @@ void LidarFilter::doMathHoming()
 	    		}
 	    	}
 	    }
-
+debug_count++;
+std::cout << debug_count << std::endl;
 	    //cout << "4" << endl;
 	    // do the fit
 		int n1 = xs1.n_cols;
@@ -747,7 +754,8 @@ void LidarFilter::doMathHoming()
 			X(1) = X1s_y; //column 1 y-center
 			X(2) = X2s_x; //column 2 x-center
 			X(3) = X2s_y; //column 2 y-center*/
-
+debug_count++;
+std::cout << debug_count << std::endl;
 			for (int ii = 0; ii<20; ii++)
 			{
 				ax1 = X(0,0);
@@ -811,7 +819,8 @@ void LidarFilter::doMathHoming()
 			double heading_est_k = -(b_h_diff-bearing);*/
 
 
-
+debug_count++;
+std::cout << debug_count << std::endl;
 			x_mean = (cx1+cx2)/2;
 			y_mean = (cy1+cy2)/2;
 			d = sqrt(x_mean*x_mean+y_mean*y_mean);
