@@ -8,6 +8,7 @@
 #include <robot_control/ModifyROI.h>
 #include <robot_control/SearchMap.h>
 #include <robot_control/RandomSearchWaypoints.h>
+#include <messages/GlobalMapPathHazards.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
 #include <messages/ExecAction.h>
@@ -48,6 +49,8 @@ public:
 	static robot_control::SearchMap searchMapSrv;
 	static ros::ServiceClient randomSearchWaypointsClient;
 	static robot_control::RandomSearchWaypoints randomSearchWaypointsSrv;
+	static ros::ServiceClient globalMapPathHazardsClient;
+	static messages::GlobalMapPathHazards globalMapPathHazardsSrv;
     static RobotStatus robotStatus;
     static std::vector<robot_control::Waypoint> waypointsToTravel;
     static int numWaypointsToTravel;
@@ -118,6 +121,8 @@ ros::ServiceClient MissionPlanningProcessShare::searchMapClient;
 robot_control::SearchMap MissionPlanningProcessShare::searchMapSrv;
 ros::ServiceClient MissionPlanningProcessShare::randomSearchWaypointsClient;
 robot_control::RandomSearchWaypoints MissionPlanningProcessShare::randomSearchWaypointsSrv;
+ros::ServiceClient MissionPlanningProcessShare::globalMapPathHazardsClient;
+messages::GlobalMapPathHazards MissionPlanningProcessShare::globalMapPathHazardsSrv;
 RobotStatus MissionPlanningProcessShare::robotStatus;
 std::vector<robot_control::Waypoint> MissionPlanningProcessShare::waypointsToTravel;
 int MissionPlanningProcessShare::numWaypointsToTravel;

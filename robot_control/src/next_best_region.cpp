@@ -21,7 +21,23 @@ bool NextBestRegion::runProc()
         // Request info about regions
         if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
         else ROS_ERROR("regionsOfInterest service call unsuccessful");
-		// Loop through list and choose best region not yet searched
+        // Loop through list of ROIs and compute terrainHazard value along path from current location to each ROI center
+        terrainHazard.resize(regionsOfInterestSrv.response.ROIList.size());
+        for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
+        {
+            globalMapPathHazardsSrv.request.xStart = robotStatus.xPos;
+            globalMapPathHazardsSrv.request.yStart = robotStatus.yPos;
+            globalMapPathHazardsSrv.request.xEnd = regionsOfInterestSrv.response.ROIList.at(i).x;
+            globalMapPathHazardsSrv.request.yEnd = regionsOfInterestSrv.response.ROIList.at(i).y;
+            globalMapPathHazardsSrv.request.width = hazardCorridorWidth;
+            if(globalMapPathHazardsClient.call(globalMapPathHazardsSrv)) ROS_DEBUG("globalMapPathHazardsSrv call successful");
+            else ROS_ERROR("globalMapPathHazardsSrv call unsuccessful");
+            terrainHazard.at(i) = numHazardsPerDistanceToTerrainHazardGain*(float)globalMapPathHazardsSrv.response.numHazards /
+                                  hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
+                                        regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos);
+            if(terrainHazard.at(i) < 0.0) terrainHazard.at(i) = 0.0;
+        }
+        // Loop through list of ROIs and choose best region not yet searched
         bestROIValue = 0;
         bestROINum = 0;
         roiSearchedSum = 0;
@@ -29,8 +45,8 @@ bool NextBestRegion::runProc()
         {
             roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb -
 						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
-										   regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos)/* -
-                        terrainGain*terrainHazard(i,j)*/);
+                                           regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos) -
+						terrainGain*terrainHazard.at(i));
             ROS_DEBUG("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
 			ROS_DEBUG("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
             if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).searched) roiValue = 0.001;
