@@ -12,6 +12,9 @@ public:
 	float bearing = 0.0; // deg
 	float distToOrigin = 0.0; // m
 	float yawRate = 0.0; // deg/s
+	float rollAngle = 0.0; // deg
+	float pitchAngle = 0.0; // deg
+	float velocity = 0.0; // m/s
 	// Grabber data
 	int grabberSlideStatus = 0;
 	int grabberDropStatus = 0;

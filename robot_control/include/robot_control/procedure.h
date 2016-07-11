@@ -28,6 +28,7 @@ public:
 	void sendDrop();
 	void sendOpen();
 	void sendDequeClearFront();
+	void sendDequeClearAll();
 	void computeSampleValuesWithExpectedDistance();
 	void computeExpectedSampleLocation();
 	void findHighestConfSample();
@@ -356,6 +357,34 @@ void Procedure::sendDequeClearFront()
 	else ROS_ERROR("exec action service call unsuccessful");
 }
 
+void Procedure::sendDequeClearAll()
+{
+	this->serialNum++;
+	execActionSrv.request.newActionFlag = 0;
+	execActionSrv.request.pushToFrontFlag = false;
+	execActionSrv.request.clearDequeFlag = true;
+	execActionSrv.request.clearFrontFlag = false;
+	execActionSrv.request.pause = false;
+	execActionSrv.request.float1 = 0.0;
+	execActionSrv.request.float2 = 0.0;
+	execActionSrv.request.float3 = 0.0;
+	execActionSrv.request.float4 = 0.0;
+	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.int1 = 0;
+	execActionSrv.request.bool1 = false;
+	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool3 = false;
+	execActionSrv.request.bool4 = false;
+	execActionSrv.request.bool5 = false;
+	execActionSrv.request.bool6 = false;
+	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
+	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+	execActionSrv.request.serialNum = this->serialNum;
+	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+	else ROS_ERROR("exec action service call unsuccessful");
+}
+
 void Procedure::computeSampleValuesWithExpectedDistance()
 {
 	numSampleCandidates = cvSamplesFoundMsg.sampleList.size();
@@ -364,10 +393,10 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 	bestSampleValue = 0;
 	for(int i=0; i<numSampleCandidates; i++)
 	{
-		sampleValues.at(i) = (sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
-								(int)(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2)+pow(expectedSampleDistance,2)-
-									2*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
-										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle)))))/sampleConfidenceGain;
+		sampleValues.at(i) = sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
+								(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2.0)+pow(expectedSampleDistance,2.0)-
+									2.0*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
+										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle))));
 		ROS_INFO("^^^^^ sampleValues.at(%i) = %i",i,sampleValues.at(i));
 
 		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}

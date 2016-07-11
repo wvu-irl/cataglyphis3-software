@@ -236,7 +236,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			sampleProps.type = i;
 			sampleProps.distance = position[0];
 			sampleProps.bearing = position[1];
-			sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i]*1000;
+            sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i];
 			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
 		}
 	}

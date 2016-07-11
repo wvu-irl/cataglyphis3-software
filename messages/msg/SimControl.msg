@@ -11,5 +11,6 @@ bool cvFindSample
 int32 cvType
 float32 cvDistance
 float32 cvBearing
-int32 cvConfidence
+float32 cvConfidence
 bool pubKeyframeList
+float32 rollAngle

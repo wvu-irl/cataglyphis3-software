@@ -5,7 +5,6 @@ SearchRegion::SearchRegion()
 	roiTimer = nh.createTimer(ros::Duration(480.0), &SearchRegion::roiTimeExpiredCallback_, this); // 480 sec == 8 min; implement smarter way to compute
 	roiTimer.stop();
 	roiTimeExpired = false;
-	finishAfterInterrupt = false;
 }
 
 bool SearchRegion::runProc()
@@ -19,7 +18,8 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		finishAfterInterrupt = false;
+		examineCount = 0;
+		confirmCollectFailedCount = 0;
 		if(!roiKeyframed) // check if ROI is not yet keyframed
 		{
 			ROS_INFO("ROI not keyframed");
@@ -38,10 +38,15 @@ bool SearchRegion::runProc()
 		if(roiTimeExpired)
 		{
 			roiTimer.stop();
+			// Set ROI to searched
 			modROISrv.request.setSearchedROI = true;
-			modROISrv.request.numSearchedROI = currentROIIndex;
 			modROISrv.request.searchedROIState = true;
+			modROISrv.request.numSearchedROI = currentROIIndex;
+			modROISrv.request.addNewROI = false;
+			if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
+			else ROS_ERROR("modify ROI service call unsuccessful");
 			inSearchableRegion = false;
+			// Delete searchLocalMap
 			searchMapSrv.request.createMap = false;
 			searchMapSrv.request.deleteMap = true;
 			if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
@@ -70,11 +75,10 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		if(finishAfterInterrupt) state = _finish_; // Previously found a possible or definite sample, but was found on the last search action, so proc needs to end anyway.
-		else if(possibleSample || definiteSample) // Found a possible or definite sample. Interrupt to allow examine or approach procs to execute
+		if(possibleSample || definiteSample && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
-			if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) finishAfterInterrupt = true; // Found a possible or definite sample, but on the last search action, so need to finish this proc when it returns from interrupt
-			state = _interrupt_;
+			sendDequeClearAll();
+			state = _finish_;
 		}
 		else if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_; // Last search action ended, but nothing found. Finish the proc.
 		else state = _exec_; // Not finished, keep executing.

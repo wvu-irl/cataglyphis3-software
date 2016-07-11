@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <messages/ActuatorOut.h>
-//#include <messages/ExecInfo.h>
+#include <messages/ExecInfo.h>
 //#include <robot_control/Keys_Pressed.h>
 //#include <messages/Servo_command.h>
 //#include "robot_actions_class.h"
@@ -11,7 +11,7 @@
 #include <ncurses.h>
 
 messages::ActuatorOut actuator_msg;
-//messages::ExecInfo exec_msg;
+messages::ExecInfo exec_msg;
 //robot_control::Keys_Pressed keys_msg;
 //messages::Servo_command servo_msg;
 
@@ -28,9 +28,8 @@ int main(int argc, char **argv)
 	ros::Publisher actuator_pub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 /*
 	ros::Publisher keys_pub = nh.advertise<robot_control::Keys_Pressed>("control/keys_pressed",1);
-	ros::Publisher servo_cam_pub = nh.advertise<messages::Servo_command>("camera_pan_servo_command",1);
-	ros::Publisher exec_info_pub = nh.advertise<messages::ExecStateMachineInfo>("control/statemachineinfo/statemachineinfo",1);
-	*/
+    ros::Publisher servo_cam_pub = nh.advertise<messages::Servo_command>("camera_pan_servo_command",1);*/
+    ros::Publisher exec_info_pub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
 	int ch; 
 	#define initTimeouts 25
 	int numTimeOuts = initTimeouts;
@@ -67,6 +66,8 @@ int main(int argc, char **argv)
 		        case KEY_UP:
     		    //printw("The pressed key is up\n");
 			        numTimeOuts = 0;
+                    exec_msg.stopFlag = false;
+                    exec_msg.turnFlag = false;
 			        clear();printw("FORWARD!!");
     		        right[0] = speed; right[1] = speed; right[2] = speed;
     		        left[0] = speed; left[1] = speed; left[2] = speed;
@@ -74,6 +75,8 @@ int main(int argc, char **argv)
 			    case KEY_RIGHT:
 			    //printw("The pressed key is right\n");
 			        numTimeOuts = 0;
+                    exec_msg.stopFlag = false;
+                    exec_msg.turnFlag = true;
 			        clear();printw("RIGHT ROTATE");
                     right[0] = -speed/2; right[1] = -speed * 0.7347/2; right[2] = -speed/2;
     		        left[0] = speed/2; left[1] = speed * 0.7347/2; left[2] = speed/2;		    
@@ -81,6 +84,8 @@ int main(int argc, char **argv)
 			    case KEY_LEFT:
 			    //printw("The pressed key is left\n");
 			        numTimeOuts = 0;
+                    exec_msg.stopFlag = false;
+                    exec_msg.turnFlag = true;
 			        clear();printw("LEFT ROTATE");
                     right[0] = speed/2; right[1] = speed * 0.7347/2; right[2] = speed/2;
     		        left[0] = -speed/2; left[1] = -speed * 0.7347/2; left[2] = -speed/2;
@@ -88,6 +93,8 @@ int main(int argc, char **argv)
 			    case KEY_DOWN:
 			    //printw("The pressed key is down\n");
 			        numTimeOuts = 0;
+                    exec_msg.stopFlag = false;
+                    exec_msg.turnFlag = false;
 			        clear();printw("BACKWARD!!");
                     right[0] = -speed; right[1] = -speed; right[2] = -speed;
     		        left[0] = -speed; left[1] = -speed; left[2] = -speed;
@@ -96,21 +103,29 @@ int main(int argc, char **argv)
 			//grabber control
 				case 119: //w grabber down
 					numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 					clear();printw("Grabber Down");
 					grabberDropPos = fully_dropped; //gets these #define's from robot_actions
 					break;
 				case 115: //s grabber up
 					numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 					clear();printw("Grabber Up");
 					grabberDropPos = fully_raised;
 					break;
 				case 101: //e grabber slides open
 					numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 					clear();printw("Grabber Slides Open");
 					grabberSlidePos = fully_open;
 					break;
 				case 100: //d grabber slides closed
     				numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 					clear();printw("Grabber Slides Closed");
 					grabberSlidePos = fully_closed;
 					break;	
@@ -118,6 +133,8 @@ int main(int argc, char **argv)
 			//camera control	
 				case 111: //o (not zero) increase servo angle
     				numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 				    clear();
 				    servoAngleCmd += servoIncrement;
 				    printw("Increase Servo Angle %f", servoAngleCmd);
@@ -128,6 +145,8 @@ int main(int argc, char **argv)
 				    break;
 				case 112: //p decrease servo angle
     				numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 				    clear();
 				    servoAngleCmd += -servoIncrement;
 				    printw("Decrease Servo Angle %f", servoAngleCmd);
@@ -138,6 +157,8 @@ int main(int argc, char **argv)
 				    break;
 				case 32: //spacebar: take picture
 				    numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 				    clear();printw("Picture Time!");
 				    //keys_msg.spacebar = true;
 				    break;
@@ -145,8 +166,10 @@ int main(int argc, char **argv)
 		    //stop flag
 		        case 120: //x toggle stop flag
 		            numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 				    clear();
-				    //exec_msg.stop_flag = exec_msg.stop_flag == 0 ? 1 : 0;
+                    //exec_msg.stop_flag = exec_msg.stop_flag == 0 ? 1 : 0;
 				    //printw("Stop Flag %s", exec_msg.stop_flag ? "ON" : "OFF");
 				    break;
 				    
@@ -164,6 +187,8 @@ int main(int argc, char **argv)
    			//timeout
 				case -1: //timeout
 				    numTimeOuts++;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 				    if(numTimeOuts > 10)
 				    {
 				        clear();
@@ -172,7 +197,7 @@ int main(int argc, char **argv)
 				    {
 				        printw("Keys 1, 2, 3 .. 0 are drive speed controls, 1 is the slowest : 0 is the fastest\n");
 				        printw("Key 'p' rotates camera clockwise, Key 'o' rotates camera counter-clockwise\n");
-				        printw("Key 'x' toggles Stop Flag");
+                        //printw("Key 'x' toggles Stop Flag");
 				        printw("Spacebar will take a picture and store it\n\n");
    				        printw("Arrow keys drive the robot\n");
 				        printw("Key 'w' lowers the grabber, Key 's' raises the grabber\n");
@@ -188,6 +213,8 @@ int main(int argc, char **argv)
 		    //unknown key press
 				default: //print
 				    numTimeOuts = 0;
+                    exec_msg.stopFlag = true;
+                    exec_msg.turnFlag = false;
 				    clear();printw("The pressed key is unknown %i", ch);
     		        right[0] = 0; right[1] = 0; right[2] = 0;
     		        left[0] = 0; left[1] = 0; left[2] = 0;
@@ -218,9 +245,9 @@ int main(int argc, char **argv)
 	        //servo_msg.camera_pan_angle_cmd = servoAngleCmd;
 	        
 	        actuator_pub.publish(actuator_msg);
-    	  //      keys_pub.publish(keys_msg);
-    	  // servo_cam_pub.publish(servo_msg);
-         //  exec_info_pub.publish(exec_msg);
+            //keys_pub.publish(keys_msg);
+            //servo_cam_pub.publish(servo_msg);
+            exec_info_pub.publish(exec_msg);
 	        
 		    ros::spinOnce();
 		    loopRate.sleep();

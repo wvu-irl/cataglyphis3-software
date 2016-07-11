@@ -20,6 +20,7 @@ public:
 	const float poseMonitorPeriod = 0.05;
 	float navFilterConf;
 	float slamConf;
+	float northAngle;
 	// methods
 	RobotPoseMonitor();
 	void serviceMonitor(const ros::TimerEvent&);

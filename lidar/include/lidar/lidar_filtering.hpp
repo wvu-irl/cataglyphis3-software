@@ -2,12 +2,14 @@
 #define LIDAR_FILTERING_H
 #include "ros/ros.h"
 #include "ros/console.h"
+#include <array>
 #include <iostream>
 #include <stdio.h>
 #include <string>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/filter.h>
@@ -65,6 +67,7 @@ public:
 	ros::Subscriber _sub_velodyne;
 	void doMathMapping();
 	void doMathHoming();
+	void doLongDistanceHoming();
 	void setPreviousCounters();
 	bool newPointCloudAvailable();
 	void packLocalMapMessage(messages::LocalMap &msg);
@@ -74,6 +77,8 @@ public:
 	short int _navigation_filter_counter_prev;
 	short int _registration_counter;
 	short int _registration_counter_prev;
+
+	
 
 private:
 	//navigation filter callback
@@ -103,10 +108,11 @@ private:
 	pcl::PointCloud<pcl::PointXYZI> _piece_two;
 
 	//mapping function
-	const int map_range = 40; //size of local map is 20x20 m
+	const int map_range = 40; //
 	const float grid_size = 1; // size of the local map grid
 	const float threshold_tree_height = 10.0; // above which the points will be disgarded
-	std::vector<std::vector<float> > _local_grid_map;
+	std::vector<std::vector<float> > _local_grid_map; // local grid map without grond adjacent infomation
+	std::vector<std::vector<float> > _local_grid_map_new; // local grid map with grond adjacent infomation
 	pcl::PointCloud<pcl::PointXYZI> _object_filtered;
 
 	//homing function
@@ -124,6 +130,22 @@ private:
 	float _homing_y = 0;
 	float _homing_heading = 0;
 	bool _homing_found = 0;
+
+	// //use for grid map
+    typedef struct Cell 
+	{
+	    float x_mean;
+	    float y_mean;
+	    float z_mean;
+	    float var_z;
+	    bool ground_adjacent;
+	    bool occupy; //set to 1 if that cell has been occupied
+	    bool drivability; //set to 1 if that cell is drivable
+    }Cell;
+
+    //this is the grid map that store the points' x, y, z, z variance, occupy, adjacent info
+    //Cell _GridMap [2*map_range/grid_size][2*map_range/grid_size];
+    Cell _GridMap [500][500];
 
 	//callback functions
 	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg);

@@ -9,6 +9,7 @@ RobotPoseMonitor::RobotPoseMonitor()
 	// Trust dead reckoning right at beginning before any keyframes have been generated
 	navFilterConf = 1.0;
 	slamConf = 0.9;
+	northAngle = 90.0;
 }
 
 void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
@@ -24,6 +25,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.y = slamMsg.globalY;
 		bestPoseMsg.heading = slamMsg.globalHeading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
+		bestPoseMsg.northAngle = northAngle;
 	}
 	else
 	{
@@ -31,6 +33,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.y = navMsg.y_position;
 		bestPoseMsg.heading = navMsg.heading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
+		bestPoseMsg.northAngle = northAngle;
 	}
 	bestPosePub.publish(bestPoseMsg);
 }

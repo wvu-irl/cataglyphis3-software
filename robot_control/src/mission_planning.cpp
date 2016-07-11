@@ -10,6 +10,7 @@ MissionPlanning::MissionPlanning()
     modROIClient = nh.serviceClient<robot_control::ModifyROI>("/control/mapmanager/modifyroi");
     searchMapClient = nh.serviceClient<robot_control::SearchMap>("/control/mapmanager/searchlocalmap");
     randomSearchWaypointsClient = nh.serviceClient<robot_control::RandomSearchWaypoints>("/control/mapmanager/randomsearchwaypoints");
+    globalMapPathHazardsClient = nh.serviceClient<messages::GlobalMapPathHazards>("/control/mapmanager/globalmappathhazards");
     nb1Sub = nh.subscribe<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in", 1, &MissionPlanning::nb1Callback_, this);
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
     execInfoSub = nh.subscribe<messages::ExecInfo>("control/exec/info", 1, &MissionPlanning::execInfoCallback_, this);
@@ -44,6 +45,7 @@ MissionPlanning::MissionPlanning()
     avoid.reg(__avoid__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
     searchRegion.reg(__searchRegion__);
+    examine.reg(__examine__);
     approach.reg(__approach__);
     collect.reg(__collect__);
     confirmCollect.reg(__confirmCollect__);
@@ -54,6 +56,9 @@ MissionPlanning::MissionPlanning()
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
     currentROIIndex = 0;
+    examineCount = 0;
+    backUpCount = 0;
+    confirmCollectFailedCount = 0;
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -102,7 +107,7 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        ROS_INFO("=========================================");
+        /*ROS_INFO("=========================================");
         ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
@@ -111,11 +116,11 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("possessingSample = %i",possessingSample);
         ROS_INFO("possibleSample = %i",possibleSample);
         ROS_INFO("definiteSample = %i",definiteSample);
-        ROS_INFO("sampleDataActedUpon = %i",sampleDataActedUpon);
+        //ROS_INFO("sampleDataActedUpon = %i",sampleDataActedUpon);
         ROS_INFO("sampleInCollectPosition = %i",sampleInCollectPosition);
         ROS_INFO("confirmedPossession = %i",confirmedPossession);
         ROS_INFO("atHome = %i",atHome);
-        ROS_INFO("inDepositPosition = %i",inDepositPosition);
+        ROS_INFO("inDepositPosition = %i",inDepositPosition);*/
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
         calcNumProcsBeingExec_();
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
@@ -134,32 +139,31 @@ void MissionPlanning::evalConditions_()
             else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid");}
         }
         //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && !inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Next Best Region
+        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
         }
         //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !(possibleSample || definiteSample) && inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Search Region
+        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
         }
         //calcNumProcsBeingExec_();
-        /*if(numProcsBeingExec==0 && !possessingSample && possibleSample && !definiteSample && !sampleDataActedUpon && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Examine
+        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Examine
         {
-            sampleDataActedUpon = true;
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
         }
-        calcNumProcsBeingExec_();*/
-        if(numProcsBeingExec==0 && !possessingSample && definiteSample && !sampleInCollectPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Approach
+        //calcNumProcsBeingExec_();
+        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
         }
         //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Collect
+        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
@@ -211,7 +215,7 @@ void MissionPlanning::runProcesses_()
     avoid.run();
     nextBestRegion.run();
     searchRegion.run();
-    //examine.run();
+    examine.run();
     approach.run();
     collect.run();
     confirmCollect.run();

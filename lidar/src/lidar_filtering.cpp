@@ -83,7 +83,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	Eigen::Matrix3f _R_pitch;
 	_R_pitch(0,0) = cos(_navigation_filter_pitch);
 	_R_pitch(0,1) = 0;
-	_R_pitch(0,2) = -sin(_navigation_filter_pitch);
+	_R_pitch(0,2) = -sin(_navigation_filter_pitch);*object_filtered
 	_R_pitch(1,0) = 0;
 	_R_pitch(1,1) = 1;
 	_R_pitch(1,2) = 0;
@@ -190,14 +190,15 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	//populate local map
 	for(int i=0; i<_local_grid_map.size(); i++)
 	{
-	    msg.x_mean.push_back(_local_grid_map[i][0]);
-	    msg.y_mean.push_back(_local_grid_map[i][1]);
-	    msg.z_mean.push_back(_local_grid_map[i][2]);
-	    msg.var_z.push_back(_local_grid_map[i][3]);
-	    //msg.ground_adjacent.push_back(_local_grid_map[i][5]); //
-	    msg.ground_adjacent.push_back(1);
-
+	    msg.x_mean.push_back(_local_grid_map_new[i][0]);
+	    msg.y_mean.push_back(_local_grid_map_new[i][1]);
+	    msg.z_mean.push_back(_local_grid_map_new[i][2]);
+	    msg.var_z.push_back(_local_grid_map_new[i][3]);
+	    //msg.ground_adjacent.push_back(1);
+	    msg.ground_adjacent.push_back(_local_grid_map_new[i][4]);
+	    //ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
+
 	//forward relavent navigation information
 	msg.x_filter = this->_navigation_filter_x;
 	msg.y_filter = this->_navigation_filter_y;
@@ -237,7 +238,13 @@ void LidarFilter::doMathMapping()
 	*cloud = _input_cloud;
 
 	ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
-	ROS_INFO("Running callback function with %i points.",cloud->points.size());
+	//ROS_INFO("Running callback function with %i points.",cloud->points.size());
+
+	//test the intensity data
+    //for (int jj=1; jj<cloud->points.size();jj++)
+    //{
+    //	cout << cloud->points[jj].intensity << endl;
+    //}
 
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*FILTER POINTS FOR BUILDING LOCAL MAP-*-*-*-*-*-*-*-*-*
@@ -300,6 +307,8 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
+	_object_filtered = *object_filtered;
+
 	//save point cloud after ground removal
 	// std::stringstream ss2;
 	// ss2 << "ss2.pcd";
@@ -316,7 +325,6 @@ void LidarFilter::doMathMapping()
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-
 	//define variables used in this section
 	std::vector<float> point;
 	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
@@ -462,10 +470,10 @@ void LidarFilter::doMathHoming()
     //ROS_INFO("%i clusters extracted from scan.", points_cluster.size());
     static bool stopSavingDataToFile = false;
     bool cylinderWasDetected = false;
-	// std::ofstream outputFile;
+	std::ofstream outputFile;
 	if(stopSavingDataToFile==false)
 	{
-		//outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
+		outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
 	}
 	
 	//parameters need to run the cylinder detection algorithm
@@ -476,6 +484,11 @@ void LidarFilter::doMathHoming()
 	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
 	pcl::ExtractIndices<pcl::PointXYZI> extract;
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZI> ());
+
+	//define variables for point intensity value checking
+	int high_intensity_counter = 0;
+	int high_intensity_threshold = 200;
+	bool high_intensity_cluster = false;
 
     for (int i=0; i<points_cluster.size(); i++)
     {
@@ -520,10 +533,23 @@ void LidarFilter::doMathHoming()
     		{
     			min_z_pre = points_cluster[i]->points[ii].z;
     		}
+
+    		//check if enough high intensity points are detected in one cluster
+    		if(points_cluster[i]->points[ii].intensity > high_intensity_threshold)
+    		{
+    			high_intensity_counter = high_intensity_counter + 1;
+    		}
+
     	}
-	
-	//pre check to filter out some obvious false detection
-    	if(abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
+
+    	// a cluster needs to have at least 15 high intensity points
+    	if (high_intensity_counter > 15)
+    	{
+    		high_intensity_cluster = true;
+    	}
+
+	    //pre check to filter out some obvious false detection
+    	if(high_intensity_cluster == true && abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
     	{
     		ne.setSearchMethod (tree2);
 	        ne.setInputCloud (points_cluster[i]);
@@ -550,7 +576,7 @@ void LidarFilter::doMathHoming()
 	        extract.setNegative (false);
 	        extract.filter (*cloud_cylinder);
 	        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
-
+	        
 	        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
 	        cylinder current_cylinder;
 	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
@@ -566,6 +592,11 @@ void LidarFilter::doMathHoming()
 	                                            << coefficients_cylinder->values[6] << endl;
 	            cout << "Probability is " << seg.getProbability () << endl;
 
+	            //test the intensity data
+	            //for (int jj=1; jj<cloud_cylinder->points.size();jj++)
+	            //{
+	            //	cout << cloud_cylinder->points[jj].intensity << endl;
+	            //}
 
 				float max_x = cloud_cylinder->points[0].x;
 				float max_y = cloud_cylinder->points[0].y;
@@ -598,32 +629,14 @@ void LidarFilter::doMathHoming()
 						current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
 						current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
 						current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
-
-						if(stopSavingDataToFile==false)
-						{
-							// outputFile << current_cylinder.points(0,jj) << ",";
-							// outputFile << current_cylinder.points(1,jj) << ",";
-							// outputFile << current_cylinder.points(2,jj) << ",";
-							// outputFile << i << ","; //cylinder number
-							// outputFile << current_cylinder.point_in_space(0,0) << ",";
-							// outputFile << current_cylinder.point_in_space(1,0) << ",";
-							// outputFile << current_cylinder.point_in_space(2,0) << ",";
-							// outputFile << current_cylinder.axis_direction(0,0) << ",";
-							// outputFile << current_cylinder.axis_direction(1,0) << ",";
-							// outputFile << current_cylinder.axis_direction(2,0) << ",";
-							// outputFile << current_cylinder.raius_estimate(0,0);
-							// outputFile << std::endl;   		
-						}
 					}
 					//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
 					cylinders.push_back(current_cylinder);
 				}
 	        }
-    	}
-
-        
+    	}   
     }
-
+    
     //begin homing detection from cylinders
     if(cylinders.size()>=2) 
     {
@@ -642,48 +655,10 @@ void LidarFilter::doMathHoming()
 		double cx1, cx2, cy1, cy2;
 		bool cylinder_found = false;
 
-		// rotate points
-		// Define roll matrix
-		double phi = 0.0;
-		double theta = 0.0;
-		R(1,1) = cos(phi);
-		R(1,2) = sin(phi);	
-		R(2,1) = -sin(phi);
-		R(2,2) = cos(phi);
-		R(0,0) = 1.0;
-		R(0,1) = 0.0;
-		R(1,0) = 0.0;
-		R(0,2) = 0.0;
-		R(2,0) = 0.0;
-		
-		// Define pitch matrix
-		P(0,0) = cos(theta);
-		P(0,2) = -sin(theta);	
-		P(2,0) = sin(theta);
-		P(2,2) = cos(theta);
-		P(1,0) = 0.0;
-		P(0,1) = 0.0;
-		P(1,1) = 1.0;
-		P(1,2) = 0.0;
-		P(2,1) = 0.0;
-	    
-	    // find total rotation
-		Rot = R*P;
 
 		// rotate points and transform cylinder parameters
 	    for (int ii=0; ii<cylinders.size(); ii++)
 	    {
-	    	// rotate points
-	    	//cylinders[ii].points.print("cylinders[ii].points = ");
-	    	//cout << "points_cluster.size() = " << points_cluster.size() << endl;
-	    	//cout << "cylinders[" << ii << "].points size = " << cylinders[ii].points.n_rows << ", " << cylinders[ii].points.n_cols << endl;
-	    	cylinders[ii].points = Rot*cylinders[ii].points;
-
-	    	// rotate cylinder parameters
-	    	cylinders[ii].point_in_space = Rot*cylinders[ii].point_in_space;
-	    	cylinders[ii].axis_direction = Rot*cylinders[ii].axis_direction;
-
-	    	// translate point to x_y plane along axis direction
 			if (cylinders[ii].axis_direction(2,0)!=0)
 			{
 				t = -cylinders[ii].point_in_space(2,0)/cylinders[ii].axis_direction(2,0);
@@ -742,15 +717,17 @@ void LidarFilter::doMathHoming()
 		arma::mat FX(n1+n2+1,1);
 		arma::mat J(n1+n2+1,4);
 		arma::mat W(n1+n2+1,n1+n2+1,arma::fill::eye);
-		W(n1+n2,n1+n2) = 10000;
+		arma::mat JtWJ(4,4);
+		W(n1+n2,n1+n2) = 1600;
+		bool explode = false;
 
 		if (cylinder_found)
 		{
-			//X(0,0) = cx1; //column 1 x-center
-			//X(1,0) = cy1; //column 1 y-center
-			//X(2,0) = cx2; //column 2 x-center
-			//X(3,0) = cy2; //column 2 y-center
-			//ROS_INFO("Cylinder centroids = %f, %f, %f, %f", c1_x, c1_y, c2_x, c2_y);
+			X(0,0) = cx1; //column 1 x-center
+			X(1,0) = cy1; //column 1 y-center
+			X(2,0) = cx2; //column 2 x-center
+			X(3,0) = cy2; //column 2 y-center
+			/*//ROS_INFO("Cylinder centroids = %f, %f, %f, %f", c1_x, c1_y, c2_x, c2_y);
 			// alternate initial guess
 			double X1s_x = arma::as_scalar(arma::mean(xs1,1));
 			double X1s_y = arma::as_scalar(arma::mean(ys1,1));
@@ -769,49 +746,76 @@ void LidarFilter::doMathHoming()
 			X(0) = X1s_x; //column 1 x-center
 			X(1) = X1s_y; //column 1 y-center
 			X(2) = X2s_x; //column 2 x-center
-			X(3) = X2s_y; //column 2 y-center
-/*
-			for (int ii = 0; ii<100; ii++)
+			X(3) = X2s_y; //column 2 y-center*/
+
+			for (int ii = 0; ii<20; ii++)
 			{
 				ax1 = X(0,0);
 				ay1 = X(1,0);
 				ax2 = X(2,0);
 				ay2 = X(3,0);
-
 				for (int jj = 0; jj<n1; jj++)
 				{
 					x = xs1(0,jj);
 					y = ys1(0,jj);
-					FX(jj,0) = (x-ax1)*(x-ax1)+(y-ay1)*(y-ay1)-r*r;
-					J(jj,0) = 2*ax1-2*x;
-					J(jj,1) = 2*ay1-2*y;
+					FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1))-r; 
+					J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
+					J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
 				}
 				for (int jj = n1; jj<n1+n2; jj++)
 				{
 					x = xs2(0,jj-n1);
 					y = ys2(0,jj-n1);
-					FX(jj,0) = (x-ax2)*(x-ax2)+(y-ay2)*(y-ay2)-r*r;
-					J(jj,2) = 2*ax2-2*x;
-					J(jj,3) = 2*ay2-2*y;
+					FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r; 
+					J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
+					J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
 				}
-				FX(n1+n2,0) = (ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2)-dist*dist;
-				J(n1+n2,0) = 2*ax1-2*ax2;
-				J(n1+n2,1) = 2*ay1-2*ay2;
-				J(n1+n2,2) = 2*ax2-2*ax1;
-				J(n1+n2,3) = 2*ay2-2*ay1;
-				X = X-0.25*solve(J.st()*W*J,J.st()*W*FX);
-			}*/
+				FX(n1+n2,0) = sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2))-dist;
+				J(n1+n2,0) = (ax1-ax2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+				J(n1+n2,1) = (ay1-ay2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+				J(n1+n2,2) = (ax2-ax1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+				J(n1+n2,3) = (ay2-ay1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+				JtWJ = J.st()*W*J;
+				if (!JtWJ.has_nan() && !JtWJ.has_inf())
+				{
+					X = X-0.25*arma::solve(JtWJ,J.st()*W*FX);
+				}
+				else
+				{
+					explode = true;
+				}
+			}
 
 			//cout << "5" << endl;
-			//x_mean = (X(0,0)+X(2,0))/2;
-			//y_mean = (X(1,0)+X(3,0))/2;
+			// this part is used for comparing the results between two parts
+			/*x_mean = (X(0,0)+X(2,0))/2;
+			y_mean = (X(1,0)+X(3,0))/2;
+
+			d = sqrt(x_mean*x_mean+y_mean*y_mean);
+
+			v2_x = X(0,0)-X(2,0);
+			v2_y = X(1,0)-X(3,0);
+
+			v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
+			v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+			v1_x = x_mean/v1_mag;
+			v1_y = y_mean/v1_mag;
+			v2_x = v2_x/v2_mag;
+			v2_y = v2_y/v2_mag;
+
+			v_dot = v1_x*v2_x+v1_y*v2_y;
+			bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
+			double x_est_k = d*cos(bearing);
+			double y_est_k = d*sin(bearing);
+			double b_h_diff_k = atan2(-v1_y,-v1_x); 
+			double heading_est_k = -(b_h_diff-bearing);*/
+
+
 
 			x_mean = (cx1+cx2)/2;
 			y_mean = (cy1+cy2)/2;
 			d = sqrt(x_mean*x_mean+y_mean*y_mean);
 
-			//v2_x = X(0,0)-X(2,0);
-			//v2_y = X(1,0)-X(3,0);
 			v2_x = cx1-cx2;
 			v2_y = cy1-cy2;
 			v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
@@ -833,10 +837,8 @@ void LidarFilter::doMathHoming()
 			ROS_INFO("y = %f", y_est);
 			ROS_INFO("heading = %f", heading_est*180.0/3.14159265);
 
-			//homing_x=x_est;
-			//homing_y=y_est;
-			_homing_x = x_mean;
-			_homing_y = y_mean;
+			_homing_x=x_est;
+			_homing_y=y_est;
 			_homing_heading=heading_est;
 			_homing_found=true;
 			ROS_INFO("********************");
@@ -845,6 +847,7 @@ void LidarFilter::doMathHoming()
 			ROS_INFO("x_mean = %f",x_mean);
 			ROS_INFO("y_mean = %f",y_mean);
 			ROS_INFO("heading = %f\n",heading_est);
+			ROS_INFO("explode = %f\n",explode);
 		}
 		else
 		{
@@ -853,15 +856,257 @@ void LidarFilter::doMathHoming()
 			_homing_heading=0;
 			_homing_found=false;
 		} //end if cylinder found
+		double diff1, diff2;
+		diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
+		diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
 
-		if(stopSavingDataToFile==false && _homing_found==true)
+		if(stopSavingDataToFile==false && _homing_found==true && (diff1+diff2<0.3 || explode == true))
 		{
-			// outputFile.close();
+			for (int i=0; i<points_cluster.size(); i++)
+			{
+				for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
+				{
+					outputFile << cylinders[i].points(0,jj) << ",";
+					outputFile << cylinders[i].points(1,jj) << ",";
+					outputFile << cylinders[i].points(2,jj) << ",";
+					outputFile << i << ","; //cylinder number
+					outputFile << cylinders[i].point_in_space(0,0) << ",";
+					outputFile << cylinders[i].point_in_space(1,0) << ",";
+					outputFile << cylinders[i].point_in_space(2,0) << ",";
+					outputFile << cylinders[i].axis_direction(0,0) << ",";
+					outputFile << cylinders[i].axis_direction(1,0) << ",";
+					outputFile << cylinders[i].axis_direction(2,0) << ",";
+					outputFile << cylinders[i].raius_estimate(0,0);
+					outputFile << std::endl; 	
+				}
+			}
 			stopSavingDataToFile=true; 
 		}
 		else
 		{
-			// outputFile.close();
+			outputFile.close();
 		}
 	}
+}
+
+
+//use this member function to detect homing cylinder from a long distance 10 m < distance < 20 m
+void LidarFilter::doLongDistanceHoming()
+{
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+	*object_filtered= _object_filtered;
+
+	// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
+	pcl::PassThrough<pcl::PointXYZI> pass;
+	pass.setInputCloud(object_filtered);
+    pass.setFilterFieldName("z");
+    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
+    pass.filter(*object_filtered);
+    pass.setInputCloud(object_filtered);
+    pass.setFilterFieldName("x");
+    pass.setFilterLimits(-home_detection_range,home_detection_range);
+    pass.filter(*object_filtered);
+    pass.setInputCloud(object_filtered);
+    pass.setFilterFieldName("y");
+    pass.setFilterLimits(-home_detection_range,home_detection_range); 
+    pass.filter(*object_filtered);
+    //ROS_INFO("PassThrough done.");
+	
+	// std::stringstream ss;
+	// ss << "file.pcd";
+	// pcl::io::savePCDFile( ss.str(), *object_filtered);
+
+    // CREATING THE KDTREE OBJECT FOR THE SEARCH METHOD OF THE EXTRACTION
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>); //for clustering
+    tree->setInputCloud (object_filtered);
+    //cout << "0" << endl;
+    
+    //use the euclidean clustering method to put points into different clusters based on their relative distance
+    //parameters are different than close ditance detection
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+    ec.setClusterTolerance (1.0); // distance threshold
+    ec.setMinClusterSize (15); //minial size to generate a cluster 
+    ec.setMaxClusterSize (5000); //max size
+    ec.setSearchMethod (tree);
+    ec.setInputCloud (object_filtered); //use the points after ground removal 
+    ec.extract (cluster_indices);
+
+    //cout << "1" << endl;
+    
+    //generate empty clouds to hold previous cluster
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
+    for (int ii=0;ii<cluster_indices.size ();ii++)
+    {
+        points_cluster.push_back(cloud_middle);
+    }
+    
+	//cout << "2" << endl;
+	    
+    //put above clusters into differnt point clouds
+    int j = 0;
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
+    {
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
+        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+        {
+        	cloud_cluster->points.push_back (object_filtered->points[*pit]);
+        }
+        cloud_cluster->width = cloud_cluster->points.size ();
+        cloud_cluster->height = 1;
+        cloud_cluster->is_dense = true;
+        points_cluster[j] = cloud_cluster;
+        j++;
+    }
+
+	//define variables for point intensity value checking
+	int high_intensity_counter = 0;
+	int high_intensity_threshold = 200;
+	bool high_intensity_cluster = false;
+
+    for (int i=0; i<points_cluster.size(); i++)
+    {
+    	// pre-check if that particular cluser fit the general requirement
+    	float max_x_pre = 0;
+    	float min_x_pre = 0;
+    	float max_y_pre = 0;
+    	float min_y_pre = 0;
+    	float max_z_pre = 0;
+    	float min_z_pre = 0;
+    	float mean_x_cluster_pre = 0; //mean position of the x position high intensity cylinder
+    	float mean_y_cluster_pre = 0; //mean position of the y position high intensity cylinder
+
+    	max_x_pre = points_cluster[i]->points[0].x;
+    	min_x_pre = points_cluster[i]->points[0].x;
+    	max_y_pre = points_cluster[i]->points[0].y;
+    	min_y_pre = points_cluster[i]->points[0].y;
+    	max_z_pre = points_cluster[i]->points[0].z;
+    	min_z_pre = points_cluster[i]->points[0].z;
+
+    	for (int ii=0; ii<points_cluster[i]->points.size();ii++)
+    	{
+    		if(points_cluster[i]->points[ii].x > max_x_pre)
+    		{
+    			max_x_pre = points_cluster[i]->points[ii].x;
+    		}
+    		if(points_cluster[i]->points[ii].x < min_x_pre)
+    		{
+    			min_x_pre = points_cluster[i]->points[ii].x;
+    		}
+    		if(points_cluster[i]->points[ii].y > max_y_pre)
+    		{
+    			max_y_pre = points_cluster[i]->points[ii].y;
+    		}
+    		if(points_cluster[i]->points[ii].y < min_y_pre)
+    		{
+    			min_y_pre = points_cluster[i]->points[ii].y;
+    		}
+    		if(points_cluster[i]->points[ii].z > max_z_pre)
+    		{
+    			max_z_pre = points_cluster[i]->points[ii].z;
+    		}
+    		if(points_cluster[i]->points[ii].z < min_z_pre)
+    		{
+    			min_z_pre = points_cluster[i]->points[ii].z;
+    		}
+
+    		//sum up
+    		mean_x_cluster_pre = mean_x_cluster_pre + points_cluster[i]->points[ii].x;
+    		mean_y_cluster_pre = mean_y_cluster_pre + points_cluster[i]->points[ii].y;
+
+    		//check if enough high intensity points are detected in one cluster
+    		if(points_cluster[i]->points[ii].intensity > high_intensity_threshold)
+    		{
+    			high_intensity_counter = high_intensity_counter + 1;
+    		}
+
+    	}
+
+    	//calculate the mean value
+    	mean_x_cluster_pre =  mean_x_cluster_pre/points_cluster[i]->points.size();
+    	mean_y_cluster_pre =  mean_y_cluster_pre/points_cluster[i]->points.size();
+
+    	// a cluster needs to have at least 15 high intensity points
+    	if (high_intensity_counter > 10)
+    	{
+    		high_intensity_cluster = true;
+    	}
+
+    	if(high_intensity_cluster == true && abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
+    	{
+    		ROS_INFO_STREAM("The cluser is located at " << mean_x_cluster_pre << ", " << mean_y_cluster_pre);
+
+    		//check the nearest big cluster
+    	    for (int k=0; k<points_cluster.size(); k++)
+    	    {
+    	    	if (k != i)
+    	    	{
+    	    		//variables to define the 2nd cluster
+    	    		float max_x_post = 0;
+			    	float min_x_post = 0;
+			    	float max_y_post = 0;
+			    	float min_y_post = 0;
+			    	float max_z_post = 0;
+			    	float min_z_post = 0;
+			    	float mean_x_cluster_post = 0; //mean position of the x position of the closest large cluster
+			    	float mean_y_cluster_post = 0; //mean position of the y position of the closest large cluster
+
+			    	max_x_post = points_cluster[k]->points[0].x;
+			    	min_x_post = points_cluster[k]->points[0].x;
+			    	max_y_post = points_cluster[k]->points[0].y;
+			    	min_y_post = points_cluster[k]->points[0].y;
+
+			    	for (int ii=0; ii<points_cluster[k]->points.size();ii++)
+			    	{
+			    		if(points_cluster[k]->points[ii].x > max_x_post)
+			    		{
+			    			max_x_post = points_cluster[k]->points[ii].x;
+			    		}
+			    		if(points_cluster[k]->points[ii].x < min_x_post)
+			    		{
+			    			min_x_post = points_cluster[k]->points[ii].x;
+			    		}
+			    		if(points_cluster[k]->points[ii].y > max_y_post)
+			    		{
+			    			max_y_post = points_cluster[k]->points[ii].y;
+			    		}
+			    		if(points_cluster[k]->points[ii].y < min_y_post)
+			    		{
+			    			min_y_post = points_cluster[k]->points[ii].y;
+			    		}
+			    		if(points_cluster[k]->points[ii].z > max_z_post)
+			    		{
+			    			max_z_post = points_cluster[k]->points[ii].z;
+			    		}
+			    		if(points_cluster[k]->points[ii].z < min_z_post)
+			    		{
+			    			min_z_post = points_cluster[k]->points[ii].z;
+			    		}
+
+			    		//sum up
+			    		mean_x_cluster_post = mean_x_cluster_post + points_cluster[k]->points[ii].x;
+			    		mean_y_cluster_post = mean_y_cluster_post + points_cluster[k]->points[ii].y;
+			    	}
+
+			    	//calculate the mean value
+			    	mean_x_cluster_post =  mean_x_cluster_post/points_cluster[k]->points.size();
+			    	mean_y_cluster_post =  mean_y_cluster_post/points_cluster[k]->points.size();
+
+			    	//calculate their relative distance
+			    	float distance = 0;
+			    	distance = sqrt((mean_x_cluster_pre - mean_x_cluster_post)*(mean_x_cluster_pre - mean_x_cluster_post)
+			    		+ (mean_y_cluster_pre - mean_y_cluster_post)*(mean_y_cluster_pre - mean_y_cluster_post));
+
+			    	//ROS_INFO_STREAM("Distance is " << distance << " .");
+			    	if(int(distance) <= 2 && abs(max_x_post - min_x_post) < 1.5 && abs(max_y_post - min_y_post) < 1.5 && abs(max_z_pre - min_z_pre) >0.5)
+			    	{
+			    		ROS_INFO_STREAM("Distance between two clusters is " << distance << " .");
+			    	}
+    	    	}
+    	    }
+    	}
+    	high_intensity_cluster = false;
+    	high_intensity_counter = 0;
+    }
 }

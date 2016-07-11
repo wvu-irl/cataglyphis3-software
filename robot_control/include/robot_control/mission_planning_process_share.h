@@ -8,6 +8,7 @@
 #include <robot_control/ModifyROI.h>
 #include <robot_control/SearchMap.h>
 #include <robot_control/RandomSearchWaypoints.h>
+#include <messages/GlobalMapPathHazards.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
 #include <messages/ExecAction.h>
@@ -48,6 +49,8 @@ public:
 	static robot_control::SearchMap searchMapSrv;
 	static ros::ServiceClient randomSearchWaypointsClient;
 	static robot_control::RandomSearchWaypoints randomSearchWaypointsSrv;
+	static ros::ServiceClient globalMapPathHazardsClient;
+	static messages::GlobalMapPathHazards globalMapPathHazardsSrv;
     static RobotStatus robotStatus;
     static std::vector<robot_control::Waypoint> waypointsToTravel;
     static int numWaypointsToTravel;
@@ -64,7 +67,7 @@ public:
 	const float blindDriveDistance = 0.457; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
-	const float possibleSampleConfThresh = 0.9;
+	const float possibleSampleConfThresh = 0.7;
 	const float definiteSampleConfThresh = 0.9;
 	static int currentROIIndex;
 	static bool escapeCondition;
@@ -91,8 +94,11 @@ public:
 	static float expectedSampleAngle;
 	static messages::CVSampleProps highestConfSample;
 	static float allocatedROITime; // sec
+	static int examineCount;
+	static int backUpCount;
+	static int confirmCollectFailedCount;
 	const float sampleConfidenceGain = 1.0;
-	const float sampleDistanceToExpectedGain = 1000.0;
+	const float sampleDistanceToExpectedGain = 1.0;
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -115,6 +121,8 @@ ros::ServiceClient MissionPlanningProcessShare::searchMapClient;
 robot_control::SearchMap MissionPlanningProcessShare::searchMapSrv;
 ros::ServiceClient MissionPlanningProcessShare::randomSearchWaypointsClient;
 robot_control::RandomSearchWaypoints MissionPlanningProcessShare::randomSearchWaypointsSrv;
+ros::ServiceClient MissionPlanningProcessShare::globalMapPathHazardsClient;
+messages::GlobalMapPathHazards MissionPlanningProcessShare::globalMapPathHazardsSrv;
 RobotStatus MissionPlanningProcessShare::robotStatus;
 std::vector<robot_control::Waypoint> MissionPlanningProcessShare::waypointsToTravel;
 int MissionPlanningProcessShare::numWaypointsToTravel;
@@ -151,5 +159,8 @@ float MissionPlanningProcessShare::expectedSampleDistance;
 float MissionPlanningProcessShare::expectedSampleAngle;
 messages::CVSampleProps MissionPlanningProcessShare::highestConfSample;
 float MissionPlanningProcessShare::allocatedROITime;
+int MissionPlanningProcessShare::examineCount;
+int MissionPlanningProcessShare::backUpCount;
+int MissionPlanningProcessShare::confirmCollectFailedCount;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

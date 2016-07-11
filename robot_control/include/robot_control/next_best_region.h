@@ -10,9 +10,12 @@ public:
 	float roiValue;
 	float bestROIValue;
 	int roiSearchedSum;
-	const float sampleProbGain = 1.0;
-	const float distanceGain = 1.0;
-	const float terrainGain = 1.0;
+	std::vector<float> terrainHazard;
+	const float hazardCorridorWidth = 2.0; // m
+	const float numHazardsPerDistanceToTerrainHazardGain = 1.0; // terrainHzardIndex/(numHazards/m)
+	const float sampleProbGain = 1.0; // value/conf
+	const float distanceGain = 0.02; // value/m
+	const float terrainGain = 0.2; // value/terrainHazardIndex
     // Methods
     bool runProc();
 };

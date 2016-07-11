@@ -113,9 +113,9 @@ include_directories(
 
 ## Declare a cpp library
  #add_library(HSM_Detector src/HSM_Detector.cpp)
- #add_library(Comm_Monitor_class src/Comm_Monitor_class.cpp)
- #add_library(Escape_Monitor_class src/Escape_Monitor_class.cpp)
- #add_library(Counter src/Counter.cpp)
+ add_library(Comm_Monitor_class src/Comm_Monitor_class.cpp)
+ add_library(Escape_Monitor_class src/Escape_Monitor_class.cpp)
+ add_library(Counter src/Counter.cpp)
  #add_library(Timer src/Timer.cpp)
  #add_library(user_input_mp_act_class src/user_input_mp_act_class.cpp)
  #add_library(user_input_exec_act_class src/user_input_exec_act_class.cpp)
@@ -162,9 +162,9 @@ include_directories(
  #target_link_libraries(TEST_DRIVER_Counter ${catkin_LIBRARIES})
  #target_link_libraries(TEST_DRIVER_Timer ${catkin_LIBRARIES})
  target_link_libraries(HSM_Master_Executive ${catkin_LIBRARIES}
- #											Comm_Monitor_class
- #											Escape_Monitor_class
- #											Counter
+ 											Comm_Monitor_class
+ 											Escape_Monitor_class
+ 											Counter
  #											Timer
  #											HSM_Heartbeat_Monitor_class
  											robot_pose_monitor

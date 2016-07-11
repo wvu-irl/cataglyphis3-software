@@ -10,7 +10,7 @@
 #include "avoid.h"
 #include "next_best_region.h"
 #include "search_region.h"
-//#include "examine.h"
+#include "examine.h"
 #include "approach.h"
 #include "collect.h"
 #include "confirm_collect.h"
@@ -39,6 +39,7 @@ public:
 	Avoid avoid;
 	NextBestRegion nextBestRegion;
 	SearchRegion searchRegion;
+	Examine examine;
 	Approach approach;
 	Collect collect;
 	ConfirmCollect confirmCollect;
