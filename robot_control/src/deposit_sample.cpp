@@ -9,6 +9,11 @@ bool DepositSample::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        driveSpeedsMsg.vMax = slowVMax;
+        driveSpeedsMsg.rMax = defaultRMax;
+        driveSpeedsMsgPrev.vMax = slowVMax;
+        driveSpeedsMsgPrev.rMax = defaultRMax;
+        driveSpeedsPub.publish(driveSpeedsMsg);
 		samplesCollected++;
 		if(samplesCollected<MAX_SAMPLES)
 		{

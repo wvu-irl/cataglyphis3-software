@@ -23,6 +23,7 @@ bool Approach::runProc()
 		//sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
 		//ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
 		//sendSearch(sampleTypeMux);
+        computeDriveSpeeds();
 		step = _computeManeuver;
 		state = _exec_;
 		break;
@@ -30,6 +31,7 @@ bool Approach::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        computeDriveSpeeds();
 		switch(step)
 		{
 		case _computeManeuver:

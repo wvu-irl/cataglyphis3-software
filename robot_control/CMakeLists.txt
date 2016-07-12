@@ -56,6 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
    Waypoint.msg
    ROI.msg
    CurrentROI.msg
+   DriveSpeeds.msg
  )
 
 ## Generate services in the 'srv' folder

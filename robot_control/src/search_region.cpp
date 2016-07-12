@@ -70,11 +70,13 @@ bool SearchRegion::runProc()
 			sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 			state = _exec_;
 		}
+		computeDriveSpeeds();
 		break;
 	case _exec_:
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+		computeDriveSpeeds();
 		if(possibleSample || definiteSample && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
 			sendDequeClearAll();

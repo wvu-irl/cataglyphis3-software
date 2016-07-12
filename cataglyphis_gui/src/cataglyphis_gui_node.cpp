@@ -1,11 +1,20 @@
 #include <ros/ros.h>
 
+#ifdef STATIC
+    #include <QtPlugin>
+#endif
+
+
 #include <QApplication>
 #include "cataglyphis_gui.h"
 
 int main(int argc, char **argv)
 {
-    Q_INIT_RESOURCE(resources);
+
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+       ros::console::notifyLoggerLevelsChanged();
+    }
+    //Q_INIT_RESOURCE(resources);
     ros::init(argc, argv, "GUI_Node");
     ROS_INFO("GUI_Node - ros::init complete");
     boost::shared_ptr<ros::NodeHandle> nh(new ros::NodeHandle());

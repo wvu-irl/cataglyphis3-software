@@ -9,6 +9,7 @@ bool Avoid::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        computeDriveSpeeds();
 		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
 		intermediateWaypointsSrv.request.collision = collisionMsg.collision;
 		intermediateWaypointsSrv.request.collisionDistance = collisionMsg.distance_to_collision;
@@ -48,6 +49,7 @@ bool Avoid::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;

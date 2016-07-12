@@ -8,6 +8,7 @@
 #include <robot_control/ModifyROI.h>
 #include <robot_control/SearchMap.h>
 #include <robot_control/RandomSearchWaypoints.h>
+#include <robot_control/DriveSpeeds.h>
 #include <messages/GlobalMapPathHazards.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
@@ -15,6 +16,8 @@
 #include <messages/ExecInfo.h>
 #include <messages/CollisionOut.h>
 #include <messages/CVSamplesFound.h>
+#include <messages/LidarFilterOut.h>
+#include <messages/MasterStatus.h>
 #include <armadillo>
 #include <math.h>
 #include <time.h>
@@ -39,6 +42,10 @@ public:
     static messages::ExecAction execActionSrv;
 	static ros::Subscriber execInfoSub;
 	static messages::ExecInfo execInfoMsg;
+	static ros::Subscriber lidarFilterSub;
+	static messages::LidarFilterOut lidarFilterMsg;
+	static ros::Subscriber hsmMasterStatusSub;
+	static messages::MasterStatus hsmMasterStatusMsg;
     static ros::ServiceClient intermediateWaypointsClient;
     static robot_control::IntermediateWaypoints intermediateWaypointsSrv;
     static ros::ServiceClient reqROIClient;
@@ -51,6 +58,9 @@ public:
 	static robot_control::RandomSearchWaypoints randomSearchWaypointsSrv;
 	static ros::ServiceClient globalMapPathHazardsClient;
 	static messages::GlobalMapPathHazards globalMapPathHazardsSrv;
+	static ros::Publisher driveSpeedsPub;
+	static robot_control::DriveSpeeds driveSpeedsMsg;
+	static robot_control::DriveSpeeds driveSpeedsMsgPrev;
     static RobotStatus robotStatus;
     static std::vector<robot_control::Waypoint> waypointsToTravel;
     static int numWaypointsToTravel;
@@ -99,6 +109,10 @@ public:
 	static int confirmCollectFailedCount;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 1.0;
+	const float defaultVMax = 1.2; // m/s
+	const float fastVMax = 1.4; // m/s
+	const float slowVMax = 0.6; // m/s
+	const float defaultRMax = 45.0; // deg/s
 };
 
 //std::vector<bool> MissionPlanningProcessShare::procsToExecute;
@@ -111,6 +125,10 @@ ros::ServiceClient MissionPlanningProcessShare::execActionClient;
 messages::ExecAction MissionPlanningProcessShare::execActionSrv;
 ros::Subscriber MissionPlanningProcessShare::execInfoSub;
 messages::ExecInfo MissionPlanningProcessShare::execInfoMsg;
+ros::Subscriber MissionPlanningProcessShare::lidarFilterSub;
+messages::LidarFilterOut MissionPlanningProcessShare::lidarFilterMsg;
+ros::Subscriber MissionPlanningProcessShare::hsmMasterStatusSub;
+messages::MasterStatus MissionPlanningProcessShare::hsmMasterStatusMsg;
 ros::ServiceClient MissionPlanningProcessShare::intermediateWaypointsClient;
 robot_control::IntermediateWaypoints MissionPlanningProcessShare::intermediateWaypointsSrv;
 ros::ServiceClient MissionPlanningProcessShare::reqROIClient;
@@ -123,6 +141,9 @@ ros::ServiceClient MissionPlanningProcessShare::randomSearchWaypointsClient;
 robot_control::RandomSearchWaypoints MissionPlanningProcessShare::randomSearchWaypointsSrv;
 ros::ServiceClient MissionPlanningProcessShare::globalMapPathHazardsClient;
 messages::GlobalMapPathHazards MissionPlanningProcessShare::globalMapPathHazardsSrv;
+ros::Publisher MissionPlanningProcessShare::driveSpeedsPub;
+robot_control::DriveSpeeds MissionPlanningProcessShare::driveSpeedsMsg;
+robot_control::DriveSpeeds MissionPlanningProcessShare::driveSpeedsMsgPrev;
 RobotStatus MissionPlanningProcessShare::robotStatus;
 std::vector<robot_control::Waypoint> MissionPlanningProcessShare::waypointsToTravel;
 int MissionPlanningProcessShare::numWaypointsToTravel;

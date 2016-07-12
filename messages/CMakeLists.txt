@@ -75,6 +75,7 @@ find_package(catkin REQUIRED COMPONENTS
    CollisionOut.msg
    SLAMPoseOut.msg
    LocalMap.msg
+   MasterStatus.msg
  )
 
 ## Generate services in the 'srv' folder

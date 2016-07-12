@@ -228,7 +228,7 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 		msg.homing_heading = 0;
 		msg.homing_found = _homing_found;			
 	}
-
+	msg.terrain_type = 0; // Set this based on terrain classification. 1 means obstacles/sidewalk/anything we need to go slow on, 0 means clear, grassy, go full speed
 }
 
 void LidarFilter::doMathMapping()
@@ -307,7 +307,8 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
-	_object_filtered = *object_filtered;
+	//copy filtered point cloud after hard thresholding and ground removal
+	_object_filtered = *object_filtered; 
 
 	//save point cloud after ground removal
 	// std::stringstream ss2;
@@ -321,6 +322,22 @@ void LidarFilter::doMathMapping()
 	{
 		object_filtered_projection->points[i].z=0;
 	}
+
+	if(visualizerCounter == 10)
+	{
+		pcl::visualization::PCLVisualizer viewer;
+	    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
+	    viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
+	    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
+	    viewer.spinOnce(spintime);
+	    //viewer.removePointCloud("object_RGB");
+	    visualizerCounter =0;
+	} 
+	else
+	{
+		visualizerCounter = visualizerCounter + 1;
+	}
+	
 
 	// //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	// //-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -385,11 +402,7 @@ void LidarFilter::doMathMapping()
 	//         point.push_back(variance_z);
 	//         _local_grid_map.push_back(point);
 	//     }
-
 	// }
-	
-	//copy filtered point cloud after hard thresholding and ground removal
-	_object_filtered = *object_filtered; 
 }
 
 void LidarFilter::doMathHoming()

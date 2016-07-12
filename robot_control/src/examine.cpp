@@ -9,6 +9,7 @@ bool Examine::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+		computeDriveSpeeds();
 		examineCount++;
 		if(examineCount>examineLimit) {possibleSample = false; definiteSample = false; examineCount = 0; state = _finish_; break;}
 		findHighestConfSample();
@@ -25,6 +26,7 @@ bool Examine::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+		computeDriveSpeeds();
 		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
 		else state = _exec_;
 		break;

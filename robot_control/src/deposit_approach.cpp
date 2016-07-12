@@ -44,7 +44,12 @@ bool DepositApproach::runProc()
 		avoidLockout = true;
 		step = _align;
 		procsBeingExecuted[procType] = true;
-		procsToExecute[procType] = false;
+        procsToExecute[procType] = false;
+        driveSpeedsMsg.vMax = slowVMax;
+        driveSpeedsMsg.rMax = defaultRMax;
+        driveSpeedsMsgPrev.vMax = slowVMax;
+        driveSpeedsMsgPrev.rMax = defaultRMax;
+        driveSpeedsPub.publish(driveSpeedsMsg);
 		numWaypointsToTravel = 1;
 		clearAndResizeWTT();
 		waypointsToTravel.at(0).x = depositAlignXDistance;
@@ -56,7 +61,7 @@ bool DepositApproach::runProc()
 	case _exec_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
-		procsToExecute[procType] = false;
+        procsToExecute[procType] = false;
 		switch(step)
 		{
 		case _align:

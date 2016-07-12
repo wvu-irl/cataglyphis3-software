@@ -32,6 +32,7 @@ public:
 	void computeSampleValuesWithExpectedDistance();
 	void computeExpectedSampleLocation();
 	void findHighestConfSample();
+	void computeDriveSpeeds();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -103,8 +104,8 @@ void Procedure::sendDriveGlobal(bool pushToFront)
         execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-        execActionSrv.request.float3 = 1.5;
-        execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float4 = 0.0;
         execActionSrv.request.float5 = 0.0;
         execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
@@ -195,9 +196,9 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
     execActionSrv.request.pause = false;
     execActionSrv.request.float1 = deltaDistance;
     execActionSrv.request.float2 = deltaHeading;
-    execActionSrv.request.float3 = 1.5;
-    execActionSrv.request.float4 = 45.0;
-    execActionSrv.request.float5 = endHeading;
+	execActionSrv.request.float3 = endHeading;
+	execActionSrv.request.float4 = 0.0;
+	execActionSrv.request.float5 = 0.0;
     execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = endHeadingFlag;
 	execActionSrv.request.bool2 = false;
@@ -421,6 +422,28 @@ void Procedure::findHighestConfSample()
 	{
 		if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestConfSample.confidence) highestConfSample = cvSamplesFoundMsg.sampleList.at(i);
 	}
+}
+
+void Procedure::computeDriveSpeeds()
+{
+	if(hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0/* && zedMsg.terrain_type==0*/)
+	{
+		driveSpeedsMsg.vMax = fastVMax;
+		driveSpeedsMsg.rMax = defaultRMax;
+	}
+	else if(!hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0)
+	{
+		driveSpeedsMsg.vMax = defaultVMax;
+		driveSpeedsMsg.rMax = defaultRMax;
+	}
+	else
+	{
+		driveSpeedsMsg.vMax = slowVMax;
+		driveSpeedsMsg.rMax = defaultRMax;
+	}
+	if((driveSpeedsMsg.vMax != driveSpeedsMsgPrev.vMax) || (driveSpeedsMsg.rMax != driveSpeedsMsgPrev.rMax)) driveSpeedsPub.publish(driveSpeedsMsg);
+	driveSpeedsMsgPrev.vMax = driveSpeedsMsg.vMax;
+	driveSpeedsMsgPrev.rMax = driveSpeedsMsg.rMax;
 }
 
 #endif // PROCEDURE_H

@@ -11,12 +11,14 @@ bool Collect::runProc()
 		procsToExecute[procType] = false;
         sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false);
 		sendGrab();
+        computeDriveSpeeds();
 		state = _exec_;
 		break;
 	case _exec_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
