@@ -277,8 +277,39 @@ void LidarFilter::doMathMapping()
 
 	//save point cloud after hard thresholds
 	// std::stringstream ss1;
-	// ss1 << "ss1.pcd";
+	// ss1 << "ss1.pcd";pcl::visualization::PCLVisualizer viewer;
 	// pcl::io::savePCDFile( ss1.str(), *cloud);
+
+
+	/*  //this is another way of removing the ground
+	// Create the filtering object
+	pcl::PointIndicesPtr ground (new pcl::PointIndices);
+    pcl::ApproximateProgressiveMorphologicalFilter<pcl::PointXYZI> pmf;
+    pmf.setInputCloud (cloud);
+    pmf.setMaxWindowSize (33);
+    pmf.setSlope (1.0f);
+    pmf.setInitialDistance (0.15f);
+    pmf.setCellSize(2.0f);
+    pmf.setMaxDistance (2.0f);
+    //cout << "Cell size is " << pmf.getCellSize() << endl;
+    pmf.extract (ground->indices);
+
+    pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+
+    // Create the filtering object
+    pcl::ExtractIndices<pcl::PointXYZI> extract;
+    extract.setInputCloud (cloud);
+    extract.setIndices (ground);
+    extract.filter (*ground_filtered);
+
+    //std::cerr << "Ground cloud after filtering: " << std::endl;
+    //std::cerr << *ground_filtered << std::endl;
+
+    // Extract non-ground returns
+    extract.setNegative (true);
+    extract.filter (*object_filtered);
+	*/
 
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
 	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
@@ -286,7 +317,7 @@ void LidarFilter::doMathMapping()
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
+	seg_plane.setDistanceThreshold (1); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
@@ -323,15 +354,18 @@ void LidarFilter::doMathMapping()
 		object_filtered_projection->points[i].z=0;
 	}
 
+
 	if(visualizerCounter == 10)
 	{
-		pcl::visualization::PCLVisualizer viewer;
+		//pcl::visualization::PCLVisualizer viewer;
 	    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
 	    viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
 	    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
 	    viewer.spinOnce(spintime);
 	    //viewer.removePointCloud("object_RGB");
 	    visualizerCounter =0;
+	    //visualization_flag = 2;
+	    viewer.removePointCloud("object_RGB");
 	} 
 	else
 	{
@@ -339,70 +373,71 @@ void LidarFilter::doMathMapping()
 	}
 	
 
-	// //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	// //-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	// //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-	// //define variables used in this section
-	// std::vector<float> point;
-	// std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
-	// std::vector<std::vector<float> > local_grid_map_temp;
-	// int index = 0;
-	// _local_grid_map.clear();
+	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	//define variables used in this section
+	std::vector<float> point;
+	std::vector<std::vector<std::vector<float> > > grid_map_cells((map_range*2)*(map_range*2));
+	std::vector<std::vector<float> > local_grid_map_temp;
+	int index = 0;
+	_local_grid_map.clear();
 
-	// //grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
-	// for (int i = 0; i< object_filtered->points.size(); i++)
-	// {
-	//     point.push_back(object_filtered->points[i].x);
-	//     point.push_back(object_filtered->points[i].y);
-	//     point.push_back(object_filtered->points[i].z);
+	//grid_map_cells is a vector of vectors, each element of it is a grid in the local map which includes 0-N points
+	for (int i = 0; i< object_filtered->points.size(); i++)
+	{
+	    point.push_back(object_filtered->points[i].x);
+	    point.push_back(object_filtered->points[i].y);
+	    point.push_back(object_filtered->points[i].z);
 
-	//     //the index checks which gird a point belongs to 
-	//     index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
-	//     grid_map_cells[index].push_back(point);
-	//     point.clear();
-	// }
+	    //the index checks which gird a point belongs to 
+	    index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
+	    grid_map_cells[index].push_back(point);
+	    point.clear();
+	}
 
+	//clear it up before using it
+	_local_grid_map.clear();
 
+	//do the calculation
+	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
+	{
+		//define variables used to calculate mean x y z and variance of z
+		float total_x = 0;
+		float total_y = 0;
+		float total_z = 0;
+		float average_x = 0;
+		float average_y = 0;
+		float average_z = 0;
+		float variance_z = 0;
 
-	// //do the calculation
-	// for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
-	// {
-	// 	//define variables used to calculate mean x y z and variance of z
-	// 	float total_x = 0;
-	// 	float total_y = 0;
-	// 	float total_z = 0;
-	// 	float average_x = 0;
-	// 	float average_y = 0;
-	// 	float average_z = 0;
-	// 	float variance_z = 0;
+	    for (int j = 0; j < grid_map_cells[i].size(); j++)
+	    {
+	        total_x += grid_map_cells[i][j][0];
+	        total_y += grid_map_cells[i][j][1];
+	        total_z += grid_map_cells[i][j][2];
+	    }
+	    average_x = total_x/grid_map_cells[i].size();
+	    average_y = total_y/grid_map_cells[i].size();
+	    average_z = total_z/grid_map_cells[i].size();
+	    for (int j = 0; j < grid_map_cells[i].size(); j++)
+	    {
+	        variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
+	    }
+	    variance_z = sqrt(variance_z);
 
-	//     for (int j = 0; j < grid_map_cells[i].size(); j++)
-	//     {
-	//         total_x += grid_map_cells[i][j][0];
-	//         total_y += grid_map_cells[i][j][1];
-	//         total_z += grid_map_cells[i][j][2];
-	//     }
-	//     average_x = total_x/grid_map_cells[i].size();
-	//     average_y = total_y/grid_map_cells[i].size();
-	//     average_z = total_z/grid_map_cells[i].size();
-	//     for (int j = 0; j < grid_map_cells[i].size(); j++)
-	//     {
-	//         variance_z = (grid_map_cells[i][j][2]-average_z) * (grid_map_cells[i][j][2]-average_z);
-	//     }
-	//     variance_z = sqrt(variance_z);
-
-	//     //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
-	//     if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
-	//     {
-	//         // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
-	//         point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
-	//         point.push_back(average_x);
-	//         point.push_back(average_y);
-	//         point.push_back(average_z);
-	//         point.push_back(variance_z);
-	//         _local_grid_map.push_back(point);
-	//     }
-	// }
+	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
+	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
+	    {
+	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
+	        point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
+	        point.push_back(average_x);
+	        point.push_back(average_y);
+	        point.push_back(average_z);
+	        point.push_back(variance_z);
+	        _local_grid_map.push_back(point);
+	    }
+	}
 }
 
 void LidarFilter::doMathHoming()
@@ -728,6 +763,8 @@ void LidarFilter::doLongDistanceHoming()
 	int high_intensity_threshold = 200;
 	bool high_intensity_cluster = false;
 
+	_potential_cylinders_intensity.clear();
+	_potential_cylinders_nonintensity.clear();
     for (int i=0; i<points_cluster.size(); i++)
     {
     	// pre-check if that particular cluser fit the general requirement
@@ -783,91 +820,115 @@ void LidarFilter::doLongDistanceHoming()
     		{
     			high_intensity_counter = high_intensity_counter + 1;
     		}
-
     	}
 
     	//calculate the mean value
     	mean_x_cluster_pre =  mean_x_cluster_pre/points_cluster[i]->points.size();
     	mean_y_cluster_pre =  mean_y_cluster_pre/points_cluster[i]->points.size();
 
-    	// a cluster needs to have at least 15 high intensity points
-    	if (high_intensity_counter > 10)
+    	// a cluster needs to have at least 10 high intensity points
+    	if (high_intensity_counter > 10 && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
     	{
     		high_intensity_cluster = true;
+
+    		// save this high intensity cluster into vector A
+    		cylinder current_potential_cylinders_intensity;
+	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
+	        {
+				current_potential_cylinders_intensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
+	            current_potential_cylinders_intensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
+	            current_potential_cylinders_intensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
+	        }	
+			_potential_cylinders_intensity.push_back(current_potential_cylinders_intensity);
+    	}
+    	else if(high_intensity_counter <= 10 && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
+    	{
+	 	    cylinder current_potential_cylinders_nonintensity;
+	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
+	        {
+				current_potential_cylinders_nonintensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
+				current_potential_cylinders_nonintensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
+				current_potential_cylinders_nonintensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
+	        }
+			_potential_cylinders_nonintensity.push_back(current_potential_cylinders_nonintensity);   		
+    	}
+    	else
+    	{
+    		//keep blank, just ignore those clusters
     	}
 
     	if(high_intensity_cluster == true && abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
     	{
     		ROS_INFO_STREAM("The cluser is located at " << mean_x_cluster_pre << ", " << mean_y_cluster_pre);
 
-    		//check the nearest big cluster
-    	    for (int k=0; k<points_cluster.size(); k++)
-    	    {
-    	    	if (k != i)
-    	    	{
-    	    		//variables to define the 2nd cluster
-    	    		float max_x_post = 0;
-			    	float min_x_post = 0;
-			    	float max_y_post = 0;
-			    	float min_y_post = 0;
-			    	float max_z_post = 0;
-			    	float min_z_post = 0;
-			    	float mean_x_cluster_post = 0; //mean position of the x position of the closest large cluster
-			    	float mean_y_cluster_post = 0; //mean position of the y position of the closest large cluster
+    		// //check the nearest big cluster
+    	 //    for (int k=0; k<points_cluster.size(); k++)
+    	 //    {
+    	 //    	if (k != i)
+    	 //    	{
+    	 //    		//variables to define the 2nd cluster
+    	 //    		float max_x_post = 0;
+			   //  	float min_x_post = 0;
+			   //  	float max_y_post = 0;
+			   //  	float min_y_post = 0;
+			   //  	float max_z_post = 0;
+			   //  	float min_z_post = 0;
+			   //  	float mean_x_cluster_post = 0; //mean position of the x position of the closest large cluster
+			   //  	float mean_y_cluster_post = 0; //mean position of the y position of the closest large cluster
 
-			    	max_x_post = points_cluster[k]->points[0].x;
-			    	min_x_post = points_cluster[k]->points[0].x;
-			    	max_y_post = points_cluster[k]->points[0].y;
-			    	min_y_post = points_cluster[k]->points[0].y;
+			   //  	max_x_post = points_cluster[k]->points[0].x;
+			   //  	min_x_post = points_cluster[k]->points[0].x;
+			   //  	max_y_post = points_cluster[k]->points[0].y;
+			   //  	min_y_post = points_cluster[k]->points[0].y;
 
-			    	for (int ii=0; ii<points_cluster[k]->points.size();ii++)
-			    	{
-			    		if(points_cluster[k]->points[ii].x > max_x_post)
-			    		{
-			    			max_x_post = points_cluster[k]->points[ii].x;
-			    		}
-			    		if(points_cluster[k]->points[ii].x < min_x_post)
-			    		{
-			    			min_x_post = points_cluster[k]->points[ii].x;
-			    		}
-			    		if(points_cluster[k]->points[ii].y > max_y_post)
-			    		{
-			    			max_y_post = points_cluster[k]->points[ii].y;
-			    		}
-			    		if(points_cluster[k]->points[ii].y < min_y_post)
-			    		{
-			    			min_y_post = points_cluster[k]->points[ii].y;
-			    		}
-			    		if(points_cluster[k]->points[ii].z > max_z_post)
-			    		{
-			    			max_z_post = points_cluster[k]->points[ii].z;
-			    		}
-			    		if(points_cluster[k]->points[ii].z < min_z_post)
-			    		{
-			    			min_z_post = points_cluster[k]->points[ii].z;
-			    		}
+			   //  	for (int ii=0; ii<points_cluster[k]->points.size();ii++)
+			   //  	{
+			   //  		if(points_cluster[k]->points[ii].x > max_x_post)
+			   //  		{
+			   //  			max_x_post = points_cluster[k]->points[ii].x;
+			   //  		}
+			   //  		if(points_cluster[k]->points[ii].x < min_x_post)
+			   //  		{
+			   //  			min_x_post = points_cluster[k]->points[ii].x;
+			   //  		}
+			   //  		if(points_cluster[k]->points[ii].y > max_y_post)
+			   //  		{
+			   //  			max_y_post = points_cluster[k]->points[ii].y;
+			   //  		}
+			   //  		if(points_cluster[k]->points[ii].y < min_y_post)
+			   //  		{
+			   //  			min_y_post = points_cluster[k]->points[ii].y;
+			   //  		}
+			   //  		if(points_cluster[k]->points[ii].z > max_z_post)
+			   //  		{
+			   //  			max_z_post = points_cluster[k]->points[ii].z;
+			   //  		}
+			   //  		if(points_cluster[k]->points[ii].z < min_z_post)
+			   //  		{
+			   //  			min_z_post = points_cluster[k]->points[ii].z;
+			   //  		}
 
-			    		//sum up
-			    		mean_x_cluster_post = mean_x_cluster_post + points_cluster[k]->points[ii].x;
-			    		mean_y_cluster_post = mean_y_cluster_post + points_cluster[k]->points[ii].y;
-			    	}
+			   //  		//sum up
+			   //  		mean_x_cluster_post = mean_x_cluster_post + points_cluster[k]->points[ii].x;
+			   //  		mean_y_cluster_post = mean_y_cluster_post + points_cluster[k]->points[ii].y;
+			   //  	}
 
-			    	//calculate the mean value
-			    	mean_x_cluster_post =  mean_x_cluster_post/points_cluster[k]->points.size();
-			    	mean_y_cluster_post =  mean_y_cluster_post/points_cluster[k]->points.size();
+			   //  	//calculate the mean value
+			   //  	mean_x_cluster_post =  mean_x_cluster_post/points_cluster[k]->points.size();
+			   //  	mean_y_cluster_post =  mean_y_cluster_post/points_cluster[k]->points.size();
 
-			    	//calculate their relative distance
-			    	float distance = 0;
-			    	distance = sqrt((mean_x_cluster_pre - mean_x_cluster_post)*(mean_x_cluster_pre - mean_x_cluster_post)
-			    		+ (mean_y_cluster_pre - mean_y_cluster_post)*(mean_y_cluster_pre - mean_y_cluster_post));
+			   //  	//calculate their relative distance
+			   //  	float distance = 0;
+			   //  	distance = sqrt((mean_x_cluster_pre - mean_x_cluster_post)*(mean_x_cluster_pre - mean_x_cluster_post)
+			   //  		+ (mean_y_cluster_pre - mean_y_cluster_post)*(mean_y_cluster_pre - mean_y_cluster_post));
 
-			    	//ROS_INFO_STREAM("Distance is " << distance << " .");
-			    	if(int(distance) <= 2 && abs(max_x_post - min_x_post) < 1.5 && abs(max_y_post - min_y_post) < 1.5 && abs(max_z_pre - min_z_pre) >0.5)
-			    	{
-			    		ROS_INFO_STREAM("Distance between two clusters is " << distance << " .");
-			    	}
-    	    	}
-    	    }
+			   //  	//ROS_INFO_STREAM("Distance is " << distance << " .");
+			   //  	if(int(distance) <= 2 && abs(max_x_post - min_x_post) < 1.5 && abs(max_y_post - min_y_post) < 1.5 && abs(max_z_pre - min_z_pre) >0.5)
+			   //  	{
+			   //  		ROS_INFO_STREAM("Distance between two clusters is " << distance << " .");
+			   //  	}
+    	 //    	}
+    	 //    }
     	}
     	high_intensity_cluster = false;
     	high_intensity_counter = 0;
