@@ -125,7 +125,7 @@ private:
 		arma::mat axis_direction = arma::zeros<arma::mat>(3,1);
 		arma::mat raius_estimate = arma::zeros<arma::mat>(1,1);
 	};
-	std::vector<cylinder> cylinders;
+	std::vector<cylinder> _cylinders;
 	std::vector<cylinder> _potential_cylinders_nonintensity;
 	std::vector<cylinder> _potential_cylinders_intensity;
 

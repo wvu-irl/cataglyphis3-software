@@ -531,7 +531,7 @@ void LidarFilter::doMathHoming()
 	bool high_intensity_cluster = false;
 
     //make sure cylinder vector is cleared
-    cylinders.clear();
+    _cylinders.clear();
 
     //loop through all clusters
     for (int i=0; i<points_cluster.size(); i++)
@@ -674,14 +674,14 @@ void LidarFilter::doMathHoming()
 						current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
 					}
 					//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
-					cylinders.push_back(current_cylinder);
+					_cylinders.push_back(current_cylinder);
 				}
 	        }
     	}   
     }
     
     //begin homing detection from cylinders
-    if(cylinders.size()>=2) 
+    if(_cylinders.size()>=2) 
     {
     	fitCylinderShort();
 	}
@@ -933,6 +933,11 @@ void LidarFilter::doLongDistanceHoming()
     	high_intensity_cluster = false;
     	high_intensity_counter = 0;
     }
+
+    // if(_potential_cylinders_intensity.size() > 0 && _potential_cylinders_nonintensity.size() > 0)
+    // {
+    // 	fitCylinderLong();
+    // }
 }
 
 void LidarFilter::fitCylinderLong()
@@ -964,37 +969,37 @@ void LidarFilter::fitCylinderShort()
 	bool cylinder_found = false;
 
 	// rotate points and transform cylinder parameters
-    for (int ii=0; ii<cylinders.size(); ii++)
+    for (int ii=0; ii<_cylinders.size(); ii++)
     {
-		if (cylinders[ii].axis_direction(2,0)!=0)
+		if (_cylinders[ii].axis_direction(2,0)!=0)
 		{
-			t = -cylinders[ii].point_in_space(2,0)/cylinders[ii].axis_direction(2,0);
-			cylinders[ii].point_in_space(0,0) = cylinders[ii].point_in_space(0,0)+t*cylinders[ii].axis_direction(0,0);
-			cylinders[ii].point_in_space(1,0) = cylinders[ii].point_in_space(1,0)+t*cylinders[ii].axis_direction(1,0);
-			cylinders[ii].point_in_space(2,0) = 0.0;
+			t = -_cylinders[ii].point_in_space(2,0)/_cylinders[ii].axis_direction(2,0);
+			_cylinders[ii].point_in_space(0,0) = _cylinders[ii].point_in_space(0,0)+t*_cylinders[ii].axis_direction(0,0);
+			_cylinders[ii].point_in_space(1,0) = _cylinders[ii].point_in_space(1,0)+t*_cylinders[ii].axis_direction(1,0);
+			_cylinders[ii].point_in_space(2,0) = 0.0;
 		}
     }
 
     // find all cylinders correct distance apart
-	for (int ii=0; ii<cylinders.size()-1; ii++)
+	for (int ii=0; ii<_cylinders.size()-1; ii++)
     {
     	//cout << "2" << endl;
-    	c1_x = cylinders[ii].point_in_space(0,0);
-    	c1_y = cylinders[ii].point_in_space(1,0);
-    	for (int jj=ii+1; jj<cylinders.size(); jj++)
+    	c1_x = _cylinders[ii].point_in_space(0,0);
+    	c1_y = _cylinders[ii].point_in_space(1,0);
+    	for (int jj=ii+1; jj<_cylinders.size(); jj++)
     	{
     		//cout << "3" << endl;
-    		c2_x = cylinders[jj].point_in_space(0,0);
-    		c2_y = cylinders[jj].point_in_space(1,0);
+    		c2_x = _cylinders[jj].point_in_space(0,0);
+    		c2_y = _cylinders[jj].point_in_space(1,0);
     		if (fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.05)
     		{
     			cylinder_found = true;
     			if (c1_x*c2_y-c2_x*c1_y>0)
     			{
-    				xs1 = cylinders[ii].points.row(0);
-    				ys1 = cylinders[ii].points.row(1);
-    				xs2 = cylinders[jj].points.row(0);
-    				ys2 = cylinders[jj].points.row(1);
+    				xs1 = _cylinders[ii].points.row(0);
+    				ys1 = _cylinders[ii].points.row(1);
+    				xs2 = _cylinders[jj].points.row(0);
+    				ys2 = _cylinders[jj].points.row(1);
 					cx1 = c1_x;
 					cy1 = c1_y;
 					cx2 = c2_x;
@@ -1002,10 +1007,10 @@ void LidarFilter::fitCylinderShort()
     			}
     			else
     			{
-    				xs1 = cylinders[jj].points.row(0);
-    				ys1 = cylinders[jj].points.row(1);
-    				xs2 = cylinders[ii].points.row(0);
-    				ys2 = cylinders[ii].points.row(1);
+    				xs1 = _cylinders[jj].points.row(0);
+    				ys1 = _cylinders[jj].points.row(1);
+    				xs2 = _cylinders[ii].points.row(0);
+    				ys2 = _cylinders[ii].points.row(1);
 					cx1 = c2_x;
 					cy1 = c2_y;
 					cx2 = c1_x;
@@ -1187,21 +1192,21 @@ void LidarFilter::fitCylinderShort()
 
 	if(stopSavingDataToFile==false && _homing_found==true && (diff1+diff2>0.3 || explode == true))
 	{
-		for (int i=0; i<cylinders.size(); i++)
+		for (int i=0; i<_cylinders.size(); i++)
 		{
-			for (int jj=0; jj<cylinders[i].points.n_cols; jj++)
+			for (int jj=0; jj<_cylinders[i].points.n_cols; jj++)
 			{
-				outputFile << cylinders[i].points(0,jj) << ",";
-				outputFile << cylinders[i].points(1,jj) << ",";
-				outputFile << cylinders[i].points(2,jj) << ",";
+				outputFile << _cylinders[i].points(0,jj) << ",";
+				outputFile << _cylinders[i].points(1,jj) << ",";
+				outputFile << _cylinders[i].points(2,jj) << ",";
 				outputFile << i << ","; //cylinder number
-				outputFile << cylinders[i].point_in_space(0,0) << ",";
-				outputFile << cylinders[i].point_in_space(1,0) << ",";
-				outputFile << cylinders[i].point_in_space(2,0) << ",";
-				outputFile << cylinders[i].axis_direction(0,0) << ",";
-				outputFile << cylinders[i].axis_direction(1,0) << ",";
-				outputFile << cylinders[i].axis_direction(2,0) << ",";
-				outputFile << cylinders[i].raius_estimate(0,0) << ",";
+				outputFile << _cylinders[i].point_in_space(0,0) << ",";
+				outputFile << _cylinders[i].point_in_space(1,0) << ",";
+				outputFile << _cylinders[i].point_in_space(2,0) << ",";
+				outputFile << _cylinders[i].axis_direction(0,0) << ",";
+				outputFile << _cylinders[i].axis_direction(1,0) << ",";
+				outputFile << _cylinders[i].axis_direction(2,0) << ",";
+				outputFile << _cylinders[i].raius_estimate(0,0) << ",";
 				outputFile << X(0) << ",";
 				outputFile << X(1) << ",";
 				outputFile << X(2) << ",";
