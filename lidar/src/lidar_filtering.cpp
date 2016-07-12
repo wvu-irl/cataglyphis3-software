@@ -558,7 +558,7 @@ void LidarFilter::doMathHoming()
     	}
 
 	    //pre check to filter out some obvious false detection
-    	if(high_intensity_cluster == true && abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
+    	if(high_intensity_cluster == true && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
     	{
     		ne.setSearchMethod (tree2);
 	        ne.setInputCloud (points_cluster[i]);
@@ -621,7 +621,7 @@ void LidarFilter::doMathHoming()
 					if(cloud_cylinder->points[jj].y < min_y)
 					    min_y = cloud_cylinder->points[jj].y;
 			    }
-				if(abs(max_x-min_x)<0.6 && abs(max_y-min_y)<0.6)
+				if(fabs(max_x-min_x)<0.6 && fabs(max_y-min_y)<0.6)
 				{
 					current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
 					current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
@@ -648,7 +648,7 @@ void LidarFilter::doMathHoming()
     //begin homing detection from cylinders
     if(cylinders.size()>=2) 
     {
-    	//fitCylinderShort();
+    	fitCylinderShort();
 	}
 }
 
@@ -796,7 +796,7 @@ void LidarFilter::doLongDistanceHoming()
     		high_intensity_cluster = true;
     	}
 
-    	if(high_intensity_cluster == true && abs(max_x_pre - min_x_pre) < 1 && abs(max_y_pre - min_y_pre) < 1 && abs(max_z_pre - min_z_pre) >0.5 && abs(max_z_pre - min_z_pre) < 3)
+    	if(high_intensity_cluster == true && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
     	{
     		ROS_INFO_STREAM("The cluser is located at " << mean_x_cluster_pre << ", " << mean_y_cluster_pre);
 
@@ -862,7 +862,7 @@ void LidarFilter::doLongDistanceHoming()
 			    		+ (mean_y_cluster_pre - mean_y_cluster_post)*(mean_y_cluster_pre - mean_y_cluster_post));
 
 			    	//ROS_INFO_STREAM("Distance is " << distance << " .");
-			    	if(int(distance) <= 2 && abs(max_x_post - min_x_post) < 1.5 && abs(max_y_post - min_y_post) < 1.5 && abs(max_z_pre - min_z_pre) >0.5)
+			    	if(int(distance) <= 2 && fabs(max_x_post - min_x_post) < 1.5 && fabs(max_y_post - min_y_post) < 1.5 && fabs(max_z_pre - min_z_pre) >0.5)
 			    	{
 			    		ROS_INFO_STREAM("Distance between two clusters is " << distance << " .");
 			    	}
@@ -893,11 +893,10 @@ void LidarFilter::fitCylinderShort()
     arma::mat xs2;
     arma::mat ys1;
     arma::mat ys2;
-    arma::mat R(3,3); // Roll Matrix
-	arma::mat P(3,3); // Pitch Matrix
-	arma::mat Rot(3,3); // Total Rotation Matrix
-	double dist = 2.0-12.0*0.0254;
+	//double dist = 2.0-12.0*0.0254;
 	double r = 6.0*0.0254;
+	std::cout << "r = " << r << std::endl;
+	double dist = 2.0-2*r-14.5*0.0254;
 	double t, c1_x, c1_y, c2_x, c2_y, x, y, ax1, ay1, ax2, ay2, x_mean, y_mean, d, bearing;
 	double v1_x, v1_y, v2_x, v2_y, v1_mag, v2_mag, v_dot, X1s_x, X1s_y, X2s_x, X2s_y, X1s_mag, X2s_mag;
 	double cx1, cx2, cy1, cy2;
@@ -926,7 +925,7 @@ void LidarFilter::fitCylinderShort()
     		//cout << "3" << endl;
     		c2_x = cylinders[jj].point_in_space(0,0);
     		c2_y = cylinders[jj].point_in_space(1,0);
-    		if (abs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.05)
+    		if (fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.05)
     		{
     			cylinder_found = true;
     			if (c1_x*c2_y-c2_x*c1_y>0)
@@ -959,39 +958,39 @@ void LidarFilter::fitCylinderShort()
 	int n1 = xs1.n_cols;
 	int n2 = xs2.n_cols;
 	arma::mat X(4,1);
-	arma::mat FX(n1+n2+1,1);
-	arma::mat J(n1+n2+1,4);
+	arma::mat FX(n1+n2+1,1,arma::fill::zeros);
+	arma::mat J(n1+n2+1,4,arma::fill::zeros);
 	arma::mat W(n1+n2+1,n1+n2+1,arma::fill::eye);
 	arma::mat JtWJ(4,4);
-	W(n1+n2,n1+n2) = 1600;
+	W(n1+n2,n1+n2) = 1600.0;
 	bool explode = false;
 
-	if (cylinder_found)
+	if(cylinder_found)
 	{
-		X(0,0) = cx1; //column 1 x-center
-		X(1,0) = cy1; //column 1 y-center
-		X(2,0) = cx2; //column 2 x-center
-		X(3,0) = cy2; //column 2 y-center
+		// X(0,0) = cx1; //column 1 x-center
+		// X(1,0) = cy1; //column 1 y-center
+		// X(2,0) = cx2; //column 2 x-center
+		// X(3,0) = cy2; //column 2 y-center
 
-		// // alternate initial guess
-		// double X1s_x = arma::as_scalar(arma::mean(xs1,1));
-		// double X1s_y = arma::as_scalar(arma::mean(ys1,1));
-		// double X2s_x = arma::as_scalar(arma::mean(xs2,1));
-		// double X2s_y = arma::as_scalar(arma::mean(ys2,1));
-		// // cout<<"X1s_x="<<X1s_x<<endl;
-		// // cout<<"X1s_y="<<X1s_y<<endl;
-		// // cout<<"X2s_x="<<X2s_x<<endl;
-		// // cout<<"X2s_y="<<X2s_y<<endl;
-		// double X1s_mag = sqrt(X1s_x*X1s_x+X1s_y*X1s_y);
-		// double X2s_mag = sqrt(X2s_x*X2s_x+X2s_y*X2s_y);
-		// X1s_x = X1s_x+r*X1s_x/X1s_mag;
-		// X1s_y = X1s_y+r*X1s_y/X1s_mag;
-		// X2s_x = X2s_x+r*X2s_x/X2s_mag;
-		// X2s_y = X2s_y+r*X2s_y/X2s_mag;
-		// X(0) = X1s_x; //column 1 x-center
-		// X(1) = X1s_y; //column 1 y-center
-		// X(2) = X2s_x; //column 2 x-center
-		// X(3) = X2s_y; //column 2 y-center
+		// alternate initial guess
+		double X1s_x = arma::as_scalar(arma::mean(xs1,1));
+		double X1s_y = arma::as_scalar(arma::mean(ys1,1));
+		double X2s_x = arma::as_scalar(arma::mean(xs2,1));
+		double X2s_y = arma::as_scalar(arma::mean(ys2,1));
+		// cout<<"X1s_x="<<X1s_x<<endl;
+		// cout<<"X1s_y="<<X1s_y<<endl;
+		// cout<<"X2s_x="<<X2s_x<<endl;
+		// cout<<"X2s_y="<<X2s_y<<endl;
+		double X1s_mag = sqrt(X1s_x*X1s_x+X1s_y*X1s_y);
+		double X2s_mag = sqrt(X2s_x*X2s_x+X2s_y*X2s_y);
+		X1s_x = X1s_x+r*X1s_x/X1s_mag;
+		X1s_y = X1s_y+r*X1s_y/X1s_mag;
+		X2s_x = X2s_x+r*X2s_x/X2s_mag;
+		X2s_y = X2s_y+r*X2s_y/X2s_mag;
+		X(0,0) = X1s_x; //column 1 x-center
+		X(1,0) = X1s_y; //column 1 y-center
+		X(2,0) = X2s_x; //column 2 x-center
+		X(3,0) = X2s_y; //column 2 y-center
 
 		for (int ii = 0; ii<20; ii++)
 		{
@@ -999,31 +998,47 @@ void LidarFilter::fitCylinderShort()
 			ay1 = X(1,0);
 			ax2 = X(2,0);
 			ay2 = X(3,0);
+			//std::cout << "ax1 = " << ax1 << std::endl;
+			//std::cout << "ay1 = " << ay1 << std::endl;
+			//std::cout << "ax2 = " << ax2 << std::endl;
+			//std::cout << "ay2 = " << ay2 << std::endl;
 			for (int jj = 0; jj<n1; jj++)
 			{
 				x = xs1(0,jj);
 				y = ys1(0,jj);
-				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1))-r; 
+				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay1)*(y-ay1))-r; 
+				//std::cout << "sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1)) = " << (x-ax1)*(x-ax1)+(y-ay2)*(y-ay1) << std::endl;
 				J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
 				J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
+				//std:: cout << "sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) = " << sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) << std::endl;
 			}
 			for (int jj = n1; jj<n1+n2; jj++)
 			{
 				x = xs2(0,jj-n1);
 				y = ys2(0,jj-n1);
 				FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r; 
+				//std::cout << "sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2)) = " << (x-ax2)*(x-ax2)+(y-ay2)*(y-ay2) << std::endl;
 				J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
 				J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
+				//std:: cout << "sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) = " << sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) << std::endl;
 			}
 			FX(n1+n2,0) = sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2))-dist;
 			J(n1+n2,0) = (ax1-ax2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
 			J(n1+n2,1) = (ay1-ay2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
 			J(n1+n2,2) = (ax2-ax1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
 			J(n1+n2,3) = (ay2-ay1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+			//std:: cout << "sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2)) = " << sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2)) << std::endl;
 			JtWJ = J.st()*W*J;
+			//J.print("J = ");
+			//JtWJ.print("JtWJ = ");
+			//std::cout << "arma::cond(JtWJ) = " << arma::cond(JtWJ) << std::endl;
 			if (!JtWJ.has_nan() && !JtWJ.has_inf())
 			{
-				X = X-0.25*arma::solve(JtWJ,J.st()*W*FX);
+				//X = X-0.25*arma::solve(JtWJ,J.st()*W*FX);
+				//std::cout << "arma::inv(JtWJ) = " << arma::inv(JtWJ) << std::endl;
+				//std::cout << "FX = " << FX << std::endl;
+				//std::cout << "0.25*arma::inv(JtWJ)*J.st()*W*FX = " << 0.25*arma::inv(JtWJ)*J.st()*W*FX << std::endl;
+				X = X-0.25*arma::inv(JtWJ)*J.st()*W*FX;
 			}
 			else
 			{
@@ -1032,27 +1047,30 @@ void LidarFilter::fitCylinderShort()
 		}
 
 		// this part is used for comparing the results between two parts
-		// x_mean = (X(0,0)+X(2,0))/2;
-		// y_mean = (X(1,0)+X(3,0))/2;
+		x_mean = (X(0,0)+X(2,0))/2;
+		y_mean = (X(1,0)+X(3,0))/2;
 
-		// d = sqrt(x_mean*x_mean+y_mean*y_mean);
+		d = sqrt(x_mean*x_mean+y_mean*y_mean);
 
-		// v2_x = X(0,0)-X(2,0);
-		// v2_y = X(1,0)-X(3,0);
+		v2_x = X(0,0)-X(2,0);
+		v2_y = X(1,0)-X(3,0);
 
-		// v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-		// v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
-		// v1_x = x_mean/v1_mag;
-		// v1_y = y_mean/v1_mag;
-		// v2_x = v2_x/v2_mag;
-		// v2_y = v2_y/v2_mag;
+		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
+		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+		v1_x = x_mean/v1_mag;
+		v1_y = y_mean/v1_mag;
+		v2_x = v2_x/v2_mag;
+		v2_y = v2_y/v2_mag;
 
-		// v_dot = v1_x*v2_x+v1_y*v2_y;
-		// bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
-		// double x_est_k = d*cos(bearing);
-		// double y_est_k = d*sin(bearing);
-		// double b_h_diff_k = atan2(-v1_y,-v1_x); 
-		// double heading_est_k = -(b_h_diff-bearing);
+		v_dot = v1_x*v2_x+v1_y*v2_y;
+		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
+		double x_est_k = d*cos(bearing);
+		double y_est_k = d*sin(bearing);
+		double b_h_diff_k = atan2(-v1_y,-v1_x); 
+		double heading_est_k = -(b_h_diff_k-bearing);
+		std::cout << "x_est_k = " << x_est_k << std::endl;
+		std::cout << "y_est_k = " << y_est_k << std::endl;
+		std::cout << "heading_est_k = " << heading_est_k*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
 
 		x_mean = (cx1+cx2)/2;
 		y_mean = (cy1+cy2)/2;
@@ -1073,6 +1091,9 @@ void LidarFilter::fitCylinderShort()
 		double y_est = d*sin(bearing);
 		double b_h_diff = atan2(-v1_y,-v1_x); 
 		double heading_est = -(b_h_diff-bearing);
+		std::cout << "x_est = " << x_est << std::endl;
+		std::cout << "y_est = " << y_est << std::endl;
+		std::cout << "heading_est = " << heading_est*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
 
 		ROS_INFO("\nHOMING UPDATE!");
 		ROS_INFO("x = %f", x_est);
@@ -1098,11 +1119,12 @@ void LidarFilter::fitCylinderShort()
 		_homing_heading=0;
 		_homing_found=false;
 	} //end if cylinder found
+
 	double diff1, diff2;
 	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
 	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
 
-	if(stopSavingDataToFile==false && explode == true)
+	if(stopSavingDataToFile==false && _homing_found==true && (diff1+diff2>0.3 || explode == true))
 	{
 		for (int i=0; i<cylinders.size(); i++)
 		{
@@ -1118,7 +1140,12 @@ void LidarFilter::fitCylinderShort()
 				outputFile << cylinders[i].axis_direction(0,0) << ",";
 				outputFile << cylinders[i].axis_direction(1,0) << ",";
 				outputFile << cylinders[i].axis_direction(2,0) << ",";
-				outputFile << cylinders[i].raius_estimate(0,0);
+				outputFile << cylinders[i].raius_estimate(0,0) << ",";
+				outputFile << X(0) << ",";
+				outputFile << X(1) << ",";
+				outputFile << X(2) << ",";
+				outputFile << X(3) << ",";
+				outputFile << diff1+diff2; 
 				outputFile << std::endl; 	
 			}
 		}
