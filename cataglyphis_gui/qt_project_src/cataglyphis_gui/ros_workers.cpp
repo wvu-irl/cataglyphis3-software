@@ -4,6 +4,7 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
 {
     nh = nhArg;
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/nav/nav_filter_control_service");
+    hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
     navInfoTime = ros::Time::now();
     navInfoSubStarted = false;
     navInfoCallbackSub = ros::Subscriber();
@@ -62,6 +63,23 @@ void ros_workers::run_nav_init_service(messages::NavFilterControl serviceRequest
         ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
+    }
+    if(hsmNAControlClient.exists())
+    {
+        lastHSMNAMsg.request.northAngle = navControl.request.northAngle;
+        if(hsmNAControlClient.call(lastHSMNAMsg.request, lastHSMNAMsg.response))
+        {
+            ROS_DEBUG("ros_workers::nav_init_service:: HSM Service Call Sucess");
+            wasSucessful = true;
+        }
+        else
+        {
+            ROS_WARN("ros_workers::nav_init_service:: HSM Service Call Failure!");
+        }
+    }
+    else
+    {
+        ROS_WARN("ros_workers::nav_init_service:: HSM Service Does not Exist!");
     }
     emit nav_init_returned(navControl, wasSucessful);
 }

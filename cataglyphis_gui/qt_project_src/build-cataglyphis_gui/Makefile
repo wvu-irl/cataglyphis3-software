@@ -1857,9 +1857,51 @@ cataglyphis_startup_form_main.o: ../cataglyphis_gui/cataglyphis_startup_form_mai
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialog \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialog.h \
 		ui_cataglyphis_startup_form_main.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qaction.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qactiongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHBoxLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QLabel \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlabel.h \
-		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QPushButton \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qpushbutton.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QSpacerItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QTabWidget \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QVBoxLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o cataglyphis_startup_form_main.o ../cataglyphis_gui/cataglyphis_startup_form_main.cpp
 
 map_viewer.o: ../cataglyphis_gui/map_viewer.cpp ../cataglyphis_gui/map_viewer.h \
@@ -1971,7 +2013,51 @@ map_viewer.o: ../cataglyphis_gui/map_viewer.cpp ../cataglyphis_gui/map_viewer.h 
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/QImage \
-		ui_map_viewer.h
+		ui_map_viewer.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qaction.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qactiongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QComboBox \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qcombobox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpainter.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QVBoxLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgridlayout.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o map_viewer.o ../cataglyphis_gui/map_viewer.cpp
 
 cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cataglyphis_gui.h \
@@ -2160,7 +2246,42 @@ cataglyphis_gui.o: ../cataglyphis_gui/cataglyphis_gui.cpp ../cataglyphis_gui/cat
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QGraphicsPixmapItem \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgraphicsitem.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/QImage \
-		ui_cataglyphis_gui.h
+		ui_cataglyphis_gui.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QStatusBar \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstatusbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QVBoxLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgridlayout.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o cataglyphis_gui.o ../cataglyphis_gui/cataglyphis_gui.cpp
 
 init_step_one.o: ../cataglyphis_gui/init_step_one.cpp ../cataglyphis_gui/init_step_one.h \
@@ -2325,7 +2446,58 @@ init_step_one.o: ../cataglyphis_gui/init_step_one.cpp ../cataglyphis_gui/init_st
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
-		ui_init_step_one.h
+		ui_init_step_one.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qaction.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qactiongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QCheckBox \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qcheckbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDoubleSpinBox \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QFormLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qformlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHBoxLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QLabel \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlabel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QPushButton \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qpushbutton.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QSpacerItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QVBoxLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o init_step_one.o ../cataglyphis_gui/init_step_one.cpp
 
 bias_removal_form.o: ../cataglyphis_gui/bias_removal_form.cpp ../cataglyphis_gui/bias_removal_form.h \
@@ -2491,7 +2663,58 @@ bias_removal_form.o: ../cataglyphis_gui/bias_removal_form.cpp ../cataglyphis_gui
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QThread \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qthread.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QMutex \
-		ui_bias_removal_form.h
+		ui_bias_removal_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qaction.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qactiongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDoubleSpinBox \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QFormLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qformlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHBoxLayout \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QLabel \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qlabel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QProgressBar \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qprogressbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QPushButton \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qpushbutton.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QSpacerItem \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QVBoxLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o bias_removal_form.o ../cataglyphis_gui/bias_removal_form.cpp
 
 ros_workers.o: ../cataglyphis_gui/ros_workers.cpp ../cataglyphis_gui/ros_workers.h \
@@ -2761,7 +2984,55 @@ generic_error_dialog_form.o: ../cataglyphis_gui/generic_error_dialog_form.cpp ..
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qfiledevice.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvector2d.h \
 		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtouchdevice.h \
-		ui_generic_error_dialog_form.h
+		ui_generic_error_dialog_form.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/QVariant \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qaction.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qactiongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QDialogButtonBox \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qdialogbuttonbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QFrame \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qrubberband.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/QPlainTextEdit \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qplaintextedit.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtWidgets/qtextedit.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextdocument.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextoption.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextcursor.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextformat.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qpen.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qabstracttextdocumentlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qtextlayout.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qglyphrun.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qrawfont.h \
+		/opt/Qt5.5.1/5.5/gcc_64/include/QtGui/qfontdatabase.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o generic_error_dialog_form.o ../cataglyphis_gui/generic_error_dialog_form.cpp
 
 cataglyphis_gui_node.o: ../../src/cataglyphis_gui_node.cpp /opt/ros/indigo/include/ros/ros.h \
