@@ -885,7 +885,7 @@ void LidarFilter::fitCylinderShort()
 	std::ofstream outputFile;
 	if(stopSavingDataToFile==false)
 	{
-		outputFile.open(fileName.c_str(), ofstream::out | ofstream::trunc);
+		outputFile.open("bad_point_cloud.txt", ofstream::out | ofstream::trunc);
 	}
 
     // find correct cylinders
@@ -1089,7 +1089,7 @@ void LidarFilter::fitCylinderShort()
 		ROS_INFO("x_mean = %f",x_mean);
 		ROS_INFO("y_mean = %f",y_mean);
 		ROS_INFO("heading = %f\n",heading_est);
-		ROS_INFO("explode = %f\n",explode);
+		ROS_INFO("explode = %i\n",explode);
 	}
 	else
 	{
@@ -1102,30 +1102,27 @@ void LidarFilter::fitCylinderShort()
 	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
 	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
 
-	// if(stopSavingDataToFile==false && _homing_found==true && (diff1+diff2<0.3 || explode == true))
-	// {
-	// 	for (int i=0; i<cylinders.size(); i++)
-	// 	{
-	// 		for (int jj=0; jj<cylinders[i].points.n_cols; jj++)
-	// 		{
-	// 			outputFile << cylinders[i].points(0,jj) << ",";
-	// 			outputFile << cylinders[i].points(1,jj) << ",";
-	// 			outputFile << cylinders[i].points(2,jj) << ",";
-	// 			outputFile << i << ","; //cylinder number
-	// 			outputFile << cylinders[i].point_in_space(0,0) << ",";
-	// 			outputFile << cylinders[i].point_in_space(1,0) << ",";
-	// 			outputFile << cylinders[i].point_in_space(2,0) << ",";
-	// 			outputFile << cylinders[i].axis_direction(0,0) << ",";
-	// 			outputFile << cylinders[i].axis_direction(1,0) << ",";
-	// 			outputFile << cylinders[i].axis_direction(2,0) << ",";
-	// 			outputFile << cylinders[i].raius_estimate(0,0);
-	// 			outputFile << std::endl; 	
-	// 		}
-	// 	}
-	// 	stopSavingDataToFile=true; 
-	// }
-	// else
-	// {
-	// 	outputFile.close();
-	// }
+	if(stopSavingDataToFile==false && explode == true)
+	{
+		for (int i=0; i<cylinders.size(); i++)
+		{
+			for (int jj=0; jj<cylinders[i].points.n_cols; jj++)
+			{
+				outputFile << cylinders[i].points(0,jj) << ",";
+				outputFile << cylinders[i].points(1,jj) << ",";
+				outputFile << cylinders[i].points(2,jj) << ",";
+				outputFile << i << ","; //cylinder number
+				outputFile << cylinders[i].point_in_space(0,0) << ",";
+				outputFile << cylinders[i].point_in_space(1,0) << ",";
+				outputFile << cylinders[i].point_in_space(2,0) << ",";
+				outputFile << cylinders[i].axis_direction(0,0) << ",";
+				outputFile << cylinders[i].axis_direction(1,0) << ",";
+				outputFile << cylinders[i].axis_direction(2,0) << ",";
+				outputFile << cylinders[i].raius_estimate(0,0);
+				outputFile << std::endl; 	
+			}
+		}
+		stopSavingDataToFile=true; 
+		outputFile.close();
+	}
 }
