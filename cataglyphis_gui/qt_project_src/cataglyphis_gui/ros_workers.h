@@ -12,6 +12,7 @@
 #include <messages/NavFilterControl.h>
 
 #define ON_SERIVCE_FAILURE_RETURN_PAUSE 3
+#define NAV_INFO_MIN_PUB_TIME 1.00
 
 class ros_workers : public QObject
 {
@@ -31,12 +32,24 @@ signals:
     void dead_reckoning_service_returned(const messages::NavFilterControl navResponse,
                                             bool wasSucessful);
 
+    void nav_info_callback(const messages::NavFilterOut navInfo);
+
 private:
     boost::shared_ptr<ros::NodeHandle> nh;
     ros::ServiceClient navControlClient;
+    messages::NavFilterOut lastNavMsg;
+
+    ros::Time navInfoTime;
+    bool navInfoSubStarted;
+    ros::Subscriber navInfoCallbackSub;
+
+    void getNavInfoCallback(const messages::NavFilterOut::ConstPtr &msg);
 
 public:
     ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg);
+
+
+
 
 public slots:
     //may need to change arguments
@@ -49,6 +62,8 @@ public slots:
     void run_bias_removal_service();
     void run_start_dead_reckoning_service();
     void run_nav_init_service(messages::NavFilterControl serviceRequest);
+    void run_nav_info_subscriber_start();
+    void run_nav_info_subscriber_stop();
 
 };
 

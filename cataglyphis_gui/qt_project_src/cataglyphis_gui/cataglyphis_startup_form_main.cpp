@@ -11,7 +11,7 @@ cataglyphis_startup_form_main::cataglyphis_startup_form_main(QWidget *parent,
 
     qRegisterMetaType<messages::NavFilterControl>("messages::NavFilterControl");
 
-    if(nhArg != 0)
+    if(nhArg.get() != 0)
     {
         nh = nhArg;
     }
@@ -35,9 +35,6 @@ cataglyphis_startup_form_main::cataglyphis_startup_form_main(QWidget *parent,
                 this, &cataglyphis_startup_form_main::step_one_returned);
     connect(stepTwoTab.get(), &bias_removal_form::bias_removal_finished,
                 this, &cataglyphis_startup_form_main::step_two_returned);
-
-    generic_error_dialog_form test;
-    test.show();
 
     rosWorkerThread.start();
 }
@@ -68,6 +65,7 @@ void cataglyphis_startup_form_main::on_start_up_button_clicked()
     //emit start_bias_removal();
 
     ui->input_tabber->addTab(stepOneTab.get(), "Nav Init");
+    ui->input_tabber->setCurrentWidget(stepOneTab.get());
 }
 
 void cataglyphis_startup_form_main::step_one_returned()
@@ -88,3 +86,11 @@ void cataglyphis_startup_form_main::on_reboot_recovery_button_clicked()
 }
 
 
+
+void cataglyphis_startup_form_main::on_input_tabber_currentChanged(int index)
+{
+    if(ui->input_tabber->currentWidget() != 0)
+    {
+        ui->input_tabber->resize(ui->input_tabber->currentWidget()->size());
+    }
+}

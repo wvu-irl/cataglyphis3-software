@@ -8,6 +8,8 @@ cataglyphis_gui::cataglyphis_gui(QWidget *parent, boost::shared_ptr<ros::NodeHan
     ROS_DEBUG("Cataglyphis_GUI:: Core app init");
     ui->setupUi(this);
 
+
+
     cataglyphis_gui::gui_nh = nh;
     ROS_DEBUG("Cataglypis_GUI:: Starting %d callback theads", NUM_MSG_CALLBACK_THREADS);
     cataglyphis_gui::async_spinner = boost::shared_ptr<ros::AsyncSpinner>(new ros::AsyncSpinner(NUM_MSG_CALLBACK_THREADS));
@@ -24,6 +26,18 @@ cataglyphis_gui::cataglyphis_gui(QWidget *parent, boost::shared_ptr<ros::NodeHan
     {
         ROS_ERROR("Node Invalid, Cannot connect to ROS Master");
     }
+
+    //set title bar to a recongizable name
+    //sharedMenuBar = boost::shared_ptr<QMenuBar>(new QMenuBar(0));
+#ifdef STATIC_BUILD
+    setWindowTitle(tr("Cataglyphis GUI - STATIC"));
+#elif TEST_RELEASE_BUILD
+    setWindowTitle(tr("Cataglyphis GUI - TEST_RELEASE"));
+#elif DEBUG_BUILD
+    setWindowTitle(tr("Cataglyphis GUI - DEBUG"));
+#else
+    setWindowTitle(tr("Cataglyphis GUI - UNKOWN_BUILD"));
+#endif
 
 
     cataglyphis_gui::cataglyphis_startup_form =
@@ -44,5 +58,7 @@ cataglyphis_gui::~cataglyphis_gui()
     cataglyphis_gui::async_spinner->stop();
     //ui.reset();
 }
+
+
 
 

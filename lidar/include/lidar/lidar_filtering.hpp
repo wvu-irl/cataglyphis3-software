@@ -130,7 +130,6 @@ private:
 	std::vector<cylinder> _potential_cylinders_intensity;
 
 	const float home_detection_range = 15.0;
-	std::string fileName; //temporary for saving cylinders to file
 	float _homing_x = 0;
 	float _homing_y = 0;
 	float _homing_heading = 0;

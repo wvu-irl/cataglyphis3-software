@@ -91,11 +91,13 @@ bool NextBestRegion::runProc()
 			procsBeingExecuted[procType] = false;
             state = _init_;
         }
+        computeDriveSpeeds();
         break;
     case _exec_:
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        computeDriveSpeeds();
 		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         if(waypointsToTravel.at(0).searchable)
         {

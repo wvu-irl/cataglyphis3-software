@@ -6,7 +6,6 @@ void DriveStraightCL::init()
 	initY_ = robotStatus.yPos;
 	initHeading_ = robotStatus.heading;
 	desiredDistance_ = params.float1;
-	vMax_ = params.float2;
 	if(desiredDistance_<0.0) driveSign_ = -1;
 	else driveSign_ = 1;
 	timeoutValue_ = (unsigned int)round((30.0 + 1.0*fabs(desiredDistance_))*robotStatus.loopRate);
@@ -22,6 +21,7 @@ int DriveStraightCL::run()
 {
     robotOutputs.stopFlag = false;
     robotOutputs.turnFlag = false;
+    vMax_ = robotStatus.vMax;
 	traversedDistance_ = driveSign_*hypot(robotStatus.xPos-initX_,robotStatus.yPos-initY_);
 	remainingDistance_ = desiredDistance_ - traversedDistance_;
 	vDesRaw_ = kpV_*remainingDistance_;

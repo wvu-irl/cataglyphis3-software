@@ -4,7 +4,6 @@ void DrivePivot::init()
 {
 	initHeading_ = robotStatus.heading;
 	desiredDeltaHeading_ = params.float1;
-	rMax_ = params.float2;
 	if(deltaHeading_<0.0) pivotSign_ = -1;
 	else pivotSign_ = 1;
     timeoutValue_ = (unsigned int)round((30.0 + fabs(desiredDeltaHeading_)/10.0)*robotStatus.loopRate);
@@ -21,6 +20,7 @@ int DrivePivot::run()
 {
     robotOutputs.stopFlag = false;
     robotOutputs.turnFlag = true;
+    rMax_ = robotStatus.rMax;
 	deltaHeading_ = robotStatus.heading - initHeading_;
 	rDes_ = kpR_*(desiredDeltaHeading_-deltaHeading_);
 	if(rDes_>rMax_) rDes_ = rMax_;

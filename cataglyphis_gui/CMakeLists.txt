@@ -17,12 +17,13 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+set(Qt5Core_DIR /opt/Qt5.5.1/5.5/gcc_64/lib/cmake/Qt5Core)
+#set(Qt5Core_DIR /home/calypso-irl/Downloads/qt-everywhere-opensource-src-5.5.1/qtbase/src)
+
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
-
-set(Qt5Core_DIR /opt/Qt5.5.1/5.5/gcc_64/lib/cmake/Qt5Core)
 
 # Find the QtWidgets library
 find_package(Qt5Core)

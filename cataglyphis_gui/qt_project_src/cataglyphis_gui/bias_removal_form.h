@@ -2,9 +2,11 @@
 #define BIAS_REMOVAL_FORM_H
 
 #include <QWidget>
+#include <QKeyEvent>
 #include <boost/shared_ptr.hpp>
 
 #include <ros/ros.h>
+#include <messages/NavFilterOut.h>
 #include <messages/NavFilterControl.h>
 
 #include <ros_workers.h>
@@ -23,10 +25,12 @@ signals:
     void start_bias_removal();
     void start_dead_reckoning();
     void bias_removal_finished();
+    void start_nav_info_subscriber();
+    void stop_nav_info_subscriber();
 
 public:
     explicit bias_removal_form(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
-                                                        boost::shared_ptr<ros_workers>());
+                                                            boost::shared_ptr<ros_workers>());
     ~bias_removal_form();
 
     //Ui::bias_removal_form *ui;
@@ -36,6 +40,7 @@ public slots:
 
     void update_bias_removal_display(messages::NavFilterControl serviceResponse,
                                         bool wasSucessful);
+    void nav_info_callback(const messages::NavFilterOut navInfo);
 
 private slots:
     void on_begin_dead_reckoning_button_clicked();
@@ -44,8 +49,16 @@ private slots:
 
 private:
 
+    boost::shared_ptr<ros::NodeHandle> nh;
     boost::shared_ptr<ros_workers> worker;
     messages::NavFilterControl navServiceResponse;
+
+    bool previousDeadReckButtonEnabled;
+
+protected:
+    void keyPressEvent(QKeyEvent *);
+    void keyReleaseEvent(QKeyEvent *);
+
 
 };
 

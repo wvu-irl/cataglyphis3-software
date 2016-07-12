@@ -14,8 +14,11 @@ MissionPlanning::MissionPlanning()
     nb1Sub = nh.subscribe<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in", 1, &MissionPlanning::nb1Callback_, this);
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
     execInfoSub = nh.subscribe<messages::ExecInfo>("control/exec/info", 1, &MissionPlanning::execInfoCallback_, this);
+    lidarFilterSub = nh.subscribe<messages::LidarFilterOut>("lidar/lidarfilteringout/lidarfilteringout", 1, &MissionPlanning::lidarFilterCallback_, this);
+    hsmMasterStatusSub = nh.subscribe<messages::MasterStatus>("hsm/masterexecutive/masterstatus", 1, &MissionPlanning::hsmMasterStatusCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
+    driveSpeedsPub = nh.advertise<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1);
     collisionInterruptTrigger = false;
     escapeCondition = false;
     inSearchableRegion = false;
@@ -59,6 +62,11 @@ MissionPlanning::MissionPlanning()
     examineCount = 0;
     backUpCount = 0;
     confirmCollectFailedCount = 0;
+    driveSpeedsMsg.vMax = defaultVMax;
+    driveSpeedsMsg.rMax = defaultRMax;
+    driveSpeedsMsgPrev.vMax = 0.0;
+    driveSpeedsMsgPrev.rMax = 0.0;
+    driveSpeedsPub.publish(driveSpeedsMsg);
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -279,6 +287,16 @@ void MissionPlanning::collisionCallback_(const messages::CollisionOut::ConstPtr 
 void MissionPlanning::execInfoCallback_(const messages::ExecInfo::ConstPtr &msg)
 {
     execInfoMsg = *msg;
+}
+
+void MissionPlanning::lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr &msg)
+{
+    lidarFilterMsg = *msg;
+}
+
+void MissionPlanning::hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr &msg)
+{
+    hsmMasterStatusMsg = *msg;
 }
 
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)

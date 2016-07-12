@@ -50,7 +50,6 @@ add_message_files(
 	FILES
 	HSM_Detection.msg
 	HSM_Action.msg
-	MasterStatus.msg
 	UserInputInitStartup.msg
 	UserInputReboot.msg
 	UserInputLostLocation.msg

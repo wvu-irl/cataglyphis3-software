@@ -15,6 +15,8 @@ public:
 	float rollAngle = 0.0; // deg
 	float pitchAngle = 0.0; // deg
 	float velocity = 0.0; // m/s
+	float vMax = 1.2; // m/s
+	float rMax = 45.0; // deg/s
 	// Grabber data
 	int grabberSlideStatus = 0;
 	int grabberDropStatus = 0;

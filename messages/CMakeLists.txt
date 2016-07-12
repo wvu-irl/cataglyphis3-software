@@ -75,6 +75,7 @@ find_package(catkin REQUIRED COMPONENTS
    CollisionOut.msg
    SLAMPoseOut.msg
    LocalMap.msg
+   MasterStatus.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -88,6 +89,7 @@ find_package(catkin REQUIRED COMPONENTS
    SearchLocalMapInfo.srv
    GlobalMapPathHazards.srv
    EmergencyEscapeTrigger.srv
+   HSMSetNorthAngle.srv
  )
 
 ## Generate actions in the 'action' folder

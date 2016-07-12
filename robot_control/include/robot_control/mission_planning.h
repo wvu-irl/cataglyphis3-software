@@ -70,6 +70,8 @@ private:
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);
 	void cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr& msg);
+	void lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr& msg);
+	void hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 };
 
