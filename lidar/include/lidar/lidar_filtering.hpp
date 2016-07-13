@@ -129,7 +129,7 @@ private:
 	std::vector<cylinder> _potential_cylinders_nonintensity;
 	std::vector<cylinder> _potential_cylinders_intensity;
 
-	const float home_detection_range = 15.0;
+	const float home_detection_range = 35.0;
 	float _homing_x = 0;
 	float _homing_y = 0;
 	float _homing_heading = 0;
