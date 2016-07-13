@@ -9,6 +9,16 @@ bool Avoid::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        avoidCount++;
+        if(avoidCount > maxAvoidCount)
+        {
+            sendDequeClearFront();
+            dequeClearFront = false;
+            avoidCount = 0;
+            avoidLockout = true;
+            state = _finish_;
+            break;
+        }
         computeDriveSpeeds();
 		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
 		intermediateWaypointsSrv.request.collision = collisionMsg.collision;

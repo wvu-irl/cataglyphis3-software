@@ -7,7 +7,7 @@ class Avoid : public Procedure
 {
 public:
 	// Members
-	bool dequeClearFront = false;
+
 	// Methods
 	bool runProc();
 };

@@ -10,6 +10,9 @@ bool GoHome::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         computeDriveSpeeds();
+        avoidCount = 0;
+        prevAvoidCountDecXPos = robotStatus.xPos;
+        prevAvoidCountDecYPos = robotStatus.yPos;
         examineCount = 0;
         confirmCollectFailedCount = 0;
 		numWaypointsToTravel = 1;
@@ -25,11 +28,11 @@ bool GoHome::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         computeDriveSpeeds();
+        serviceAvoidCounterDecrement();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
 	case _interrupt_:
-		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		state = _exec_;

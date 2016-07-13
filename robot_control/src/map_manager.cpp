@@ -24,7 +24,7 @@ MapManager::MapManager()
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
     srand(time(NULL));
 
-    // Temporary ROIs. Rectangle around starting platform
+    /*// Temporary ROIs. Rectangle around starting platform
     ROI.e = 8.0;
     ROI.s = 5.0;
     ROI.sampleProb = 0.6;
@@ -53,10 +53,10 @@ MapManager::MapManager()
     ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();
+    northTransformROIs();*/
 
     // Temporary ROIs. Search in front of library
-    /*ROI.e = 35.0826;
+    ROI.e = 35.0826;
     ROI.s = 20.9706;
     ROI.sampleProb = 0.6;
     ROI.radialAxis = 20.0;
@@ -133,7 +133,7 @@ MapManager::MapManager()
     ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();*/
+    northTransformROIs();
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);

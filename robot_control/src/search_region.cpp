@@ -18,6 +18,9 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+		avoidCount = 0;
+		prevAvoidCountDecXPos = robotStatus.xPos;
+		prevAvoidCountDecYPos = robotStatus.yPos;
 		examineCount = 0;
 		confirmCollectFailedCount = 0;
 		if(!roiKeyframed) // check if ROI is not yet keyframed
@@ -77,6 +80,7 @@ bool SearchRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		computeDriveSpeeds();
+		serviceAvoidCounterDecrement();
 		if(possibleSample || definiteSample && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
 			sendDequeClearAll();
@@ -86,7 +90,6 @@ bool SearchRegion::runProc()
 		else state = _exec_; // Not finished, keep executing.
 		break;
 	case _interrupt_:
-		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		state = _exec_;

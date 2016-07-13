@@ -50,19 +50,21 @@ public:
 
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
-	unsigned int numProcsBeingExec;
+	unsigned int numProcsBeingOrToBeExec;
 	bool multiProcLockout;
 	unsigned int lockoutSum;
 	bool initComplete;
 	bool pauseStarted;
 	const float homeX = 5.0; // m
 	const float homeY = 0.0; // m
-	const float collisionDistanceThresh = 5.0; // m
+	float avoidRemainingWaypointDistance;
+	const float minAvoidRemainingWaypointDistance = 2.0; // m
+	bool shouldExecuteAvoidManeuver;
 private:
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
-	void calcNumProcsBeingExec_();
+	void calcnumProcsBeingOrToBeExec_();
 	void updateSampleFlags_();
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);

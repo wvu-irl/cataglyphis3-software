@@ -10,6 +10,9 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         execDequeEmpty = false;
+        avoidCount = 0;
+        prevAvoidCountDecXPos = robotStatus.xPos;
+        prevAvoidCountDecYPos = robotStatus.yPos;
         examineCount = 0;
         confirmCollectFailedCount = 0;
         // Delete search local map in case region was exited without a successful sample collection
@@ -98,6 +101,7 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         computeDriveSpeeds();
+        serviceAvoidCounterDecrement();
 		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         if(waypointsToTravel.at(0).searchable)
         {
@@ -111,7 +115,6 @@ bool NextBestRegion::runProc()
         }
         break;
     case _interrupt_:
-		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		state = _exec_;
