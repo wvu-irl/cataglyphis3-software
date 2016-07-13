@@ -12,11 +12,14 @@ bool Avoid::runProc()
         avoidCount++;
         if(avoidCount > maxAvoidCount)
         {
+            //ROS_INFO("avoid count limit reached");
             sendDequeClearFront();
             dequeClearFront = false;
             avoidCount = 0;
             avoidLockout = true;
-            state = _finish_;
+            procsBeingExecuted[procType] = false;
+            procsToExecute[procType] = false;
+            state = _init_;
             break;
         }
         computeDriveSpeeds();
@@ -49,8 +52,10 @@ bool Avoid::runProc()
             {
                 sendDequeClearFront();
                 dequeClearFront = false;
+                //ROS_INFO("avoid dequeClearFront true");
             }
             sendDriveGlobal(true);
+            //ROS_INFO("avoid sendDriveGlobal(front)");
 
 		}
 		state = _exec_;

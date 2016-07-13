@@ -335,6 +335,7 @@ void Procedure::sendOpen()
 void Procedure::sendDequeClearFront()
 {
 	this->serialNum++;
+	execActionSrv.request.nextActionType = 0;
 	execActionSrv.request.newActionFlag = 0;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = false;
@@ -363,6 +364,7 @@ void Procedure::sendDequeClearFront()
 void Procedure::sendDequeClearAll()
 {
 	this->serialNum++;
+	execActionSrv.request.nextActionType = 0;
 	execActionSrv.request.newActionFlag = 0;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = true;

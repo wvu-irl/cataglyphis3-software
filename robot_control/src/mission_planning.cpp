@@ -100,16 +100,18 @@ void MissionPlanning::run()
     ROS_INFO("expectedSampleDistance = %f",expectedSampleDistance);
     ROS_INFO("expectedSampleAngle = %f",expectedSampleAngle);*/
 
+    ROS_INFO_THROTTLE(3,"Mission Planning running...");
     evalConditions_();
     //ROS_DEBUG("after evalConditions");
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch) runPause_();
     else runProcesses_();
-    std::printf("\n");
+    //std::printf("\n");
 }
 
 void MissionPlanning::evalConditions_()
 {
+    int temp;
     if(multiProcLockout)
     {
         multiProcLockout = true;
@@ -131,8 +133,18 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("sampleInCollectPosition = %i",sampleInCollectPosition);
         ROS_INFO("confirmedPossession = %i",confirmedPossession);
         ROS_INFO("atHome = %i",atHome);
-        ROS_INFO("inDepositPosition = %i",inDepositPosition);*/
+        ROS_INFO("inDepositPosition = %i",inDepositPosition);
         ROS_INFO("avoidCount = %u",avoidCount);
+        ROS_INFO("execDequeSize = %u",execInfoMsg.actionDequeSize);
+        std::printf("actionDeque: (");
+        for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%i,",execInfoMsg.actionDeque[i]);
+        std::printf(")\n");
+        std::printf("actionFloat1: (");
+        for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat1[i]);
+        std::printf(")\n");
+        std::printf("actionFloat2: (");
+        for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
+        std::printf(")\n");*/
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
         calcnumProcsBeingOrToBeExec_();
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
@@ -164,6 +176,12 @@ void MissionPlanning::evalConditions_()
                         avoidLockout = true;
                     }
                 }
+                /*robotStatus.pauseSwitch = true;
+                pause.sendPause();
+                std::cout << "press enter to continue" << std::endl;
+                std::cin >> temp;
+                robotStatus.pauseSwitch = false;
+                pause.sendUnPause();*/
             }
             if(shouldExecuteAvoidManeuver)
             {
@@ -176,12 +194,24 @@ void MissionPlanning::evalConditions_()
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
+            /*robotStatus.pauseSwitch = true;
+            pause.sendPause();
+            std::cout << "press enter to continue" << std::endl;
+            std::cin >> temp;
+            robotStatus.pauseSwitch = false;
+            pause.sendUnPause();*/
         }
         //calcnumProcsBeingOrToBeExec_();
         if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
+            /*robotStatus.pauseSwitch = true;
+            pause.sendPause();
+            std::cout << "press enter to continue" << std::endl;
+            std::cin >> temp;
+            robotStatus.pauseSwitch = false;
+            pause.sendUnPause();*/
         }
         //calcnumProcsBeingOrToBeExec_();
         if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !missionEnded) // Examine
