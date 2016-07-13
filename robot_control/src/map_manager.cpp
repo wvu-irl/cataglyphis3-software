@@ -24,7 +24,7 @@ MapManager::MapManager()
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
     srand(time(NULL));
 
-    /*// Temporary ROIs. Rectangle around starting platform
+    // Temporary ROIs. Rectangle around starting platform
     ROI.e = 8.0;
     ROI.s = 5.0;
     ROI.sampleProb = 0.6;
@@ -53,10 +53,10 @@ MapManager::MapManager()
     ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();*/
+    northTransformROIs();
 
     // Temporary ROIs. Search in front of library
-    ROI.e = 35.0826;
+    /*ROI.e = 35.0826;
     ROI.s = 20.9706;
     ROI.sampleProb = 0.6;
     ROI.radialAxis = 20.0;
@@ -133,7 +133,7 @@ MapManager::MapManager()
     ROI.tangentialAxis = 15.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();
+    northTransformROIs();*/
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -236,6 +236,9 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             createROIKeyframeSrv.request.roiIndex = req.roiIndex;
             if(createROIKeyframeClient.call(createROIKeyframeSrv)) ROS_DEBUG("MAP MANAGER: createROIKeyframe service call successful"); // call createROIKeyframe service
             else {ROS_ERROR("MAP MANAGER: createROIKeyframe service call unsuccessful"); return false;}
+            searchLocalMapXPos = createROIKeyframeSrv.response.keyframe.x;
+            searchLocalMapYPos = createROIKeyframeSrv.response.keyframe.y;
+            searchLocalMapHeading = createROIKeyframeSrv.response.keyframe.heading;
             searchLocalMapExists = true;
             grid_map::GridMapRosConverter::fromMessage(createROIKeyframeSrv.response.keyframe.map, ROIKeyframe);
             searchLocalMapToROIAngle = RAD2DEG*atan2(regionsOfInterest.at(req.roiIndex).s, regionsOfInterest.at(req.roiIndex).e) - fmod(createROIKeyframeSrv.response.keyframe.heading, 360.0);
@@ -380,8 +383,9 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             else randomWaypointDistanceCriteriaFailed = false;
             if(!randomWaypointDistanceCriteriaFailed)
             {
-                res.waypointList.at(numRandomWaypointsSelected-1).x = randomWaypointPosition[0];
-                res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
+                rotateCoord(randomWaypointPosition[0], randomWaypointPosition[1], res.waypointList.at(numRandomWaypointsSelected-1).x, res.waypointList.at(numRandomWaypointsSelected-1).y, searchLocalMapHeading);
+                res.waypointList.at(numRandomWaypointsSelected-1).x += searchLocalMapXPos;
+                res.waypointList.at(numRandomWaypointsSelected-1).y += searchLocalMapYPos;
                 res.waypointList.at(numRandomWaypointsSelected-1).sampleProb = searchLocalMap.at(layerToString(_sampleProb), randomWaypointIndex);
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
             }
