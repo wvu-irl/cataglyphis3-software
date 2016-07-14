@@ -52,7 +52,7 @@ bool Avoid::runProc()
             {
                 sendDequeClearFront();
                 dequeClearFront = false;
-                //ROS_INFO("avoid dequeClearFront true");
+                ROS_INFO("avoid dequeClearFront true");
             }
             sendDriveGlobal(true);
             //ROS_INFO("avoid sendDriveGlobal(front)");
@@ -70,7 +70,7 @@ bool Avoid::runProc()
 		break;
 	case _interrupt_:
 		avoidLockout = false;
-		procsBeingExecuted[procType] = false;
+        procsBeingExecuted[procType] = true;
 		procsToInterrupt[procType] = false;
         dequeClearFront = true;
 		state = _init_;
