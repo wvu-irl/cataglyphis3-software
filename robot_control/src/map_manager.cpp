@@ -25,115 +25,130 @@ MapManager::MapManager()
     srand(time(NULL));
 
     // Temporary ROIs. Rectangle around starting platform
-    ROI.e = 8.0;
+    /*ROI.e = 8.0;
     ROI.s = 5.0;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = -8.0;
     ROI.s = 5.0;
     ROI.sampleProb = 0.5;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = -8.0;
     ROI.s = -5.0;
     ROI.sampleProb = 0.4;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 8.0;
     ROI.s = -5.0;
     ROI.sampleProb = 0.3;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();
+    northTransformROIs();*/
 
     // Temporary ROIs. Search in front of library
-    /*ROI.e = 35.0826;
+    ROI.e = 35.0826;
     ROI.s = 20.9706;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 34.9990;
     ROI.s = 28.0289;
-   ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleProb = 0.6;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 42.0208;
     ROI.s = 28.1840;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 48.9591;
     ROI.s = 28.0289;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 48.9591;
     ROI.s = 21.0482;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 42.1044;
     ROI.s = 21.2033;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 41.9373;
     ROI.s = 34.9320;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 45.7825;
     ROI.s = 31.5968;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 45.4482;
     ROI.s = 24.3059;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 38.5099;
     ROI.s = 24.5385;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
     ROI.e = 38.5935;
     ROI.s = 31.5968;
     ROI.sampleProb = 0.6;
-    ROI.radialAxis = 20.0;
-    ROI.tangentialAxis = 15.0;
+    ROI.sampleSig = 10.0;
+    ROI.radialAxis = 15.0;
+    ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();*/
+    northTransformROIs();
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -217,10 +232,40 @@ bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_c
 
 bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res) // need to add more features
 {
-    if(req.setSearchedROI) regionsOfInterest.at(req.numSearchedROI).searched = req.searchedROIState;
+    if(req.setSearchedROI) regionsOfInterest.at(req.modROIIndex).searched = req.searchedROIState;
+    if(req.setPosES && !req.setPosXY)
+    {
+        regionsOfInterest.at(req.modROIIndex).e = req.e;
+        regionsOfInterest.at(req.modROIIndex).s = req.s;
+        rotateCoord(regionsOfInterest.back().e, regionsOfInterest.back().s, regionsOfInterest.back().x, regionsOfInterest.back().y, globalPose.northAngle-90.0);
+    }
+    if(req.setPosXY && !req.setPosES)
+    {
+        regionsOfInterest.at(req.modROIIndex).x = req.x;
+        regionsOfInterest.at(req.modROIIndex).y = req.y;
+        rotateCoord(regionsOfInterest.back().x, regionsOfInterest.back().y, regionsOfInterest.back().e, regionsOfInterest.back().s, -(globalPose.northAngle-90.0));
+    }
+    if(req.setROISize)
+    {
+        regionsOfInterest.at(req.modROIIndex).radialAxis = req.radialAxis;
+        regionsOfInterest.at(req.modROIIndex).tangentialAxis = req.tangentialAxis;
+    }
+    if(req.setSampleProps)
+    {
+        regionsOfInterest.at(req.modROIIndex).sampleProb = req.sampleProb;
+        regionsOfInterest.at(req.modROIIndex).sampleSig = req.sampleSig;
+    }
     if(req.addNewROI)
     {
         regionsOfInterest.push_back(req.newROI);
+        if(req.newROIInESNotXY)
+            rotateCoord(regionsOfInterest.back().e, regionsOfInterest.back().s, regionsOfInterest.back().x, regionsOfInterest.back().y, globalPose.northAngle-90.0);
+        else
+            rotateCoord(regionsOfInterest.back().x, regionsOfInterest.back().y, regionsOfInterest.back().e, regionsOfInterest.back().s, -(globalPose.northAngle-90.0));
+    }
+    if(req.deleteROI)
+    {
+        regionsOfInterest.erase(regionsOfInterest.begin()+req.numDeleteROI);
     }
     ROS_INFO("modified ROI");
     return true;
@@ -332,7 +377,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         searchLocalMapNumPoints = searchLocalMap.getSize()[0]*searchLocalMap.getSize()[1];
         possibleRandomWaypointValues.resize(searchLocalMapNumPoints);
         possibleRandomWaypointValuesNormalized.resize(searchLocalMapNumPoints);
-        res.waypointList.resize(req.numSeachWaypoints);
+        res.waypointList.resize(req.numSearchWaypoints);
         possibleRandomWaypointValuesSum = 0.0;
         //ROS_INFO("after initial setup");
         for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
@@ -347,7 +392,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         }
         //ROS_INFO("after normalizing values");
         numRandomWaypointsSelected = 0;
-        while(numRandomWaypointsSelected<req.numSeachWaypoints)
+        while(numRandomWaypointsSelected<req.numSearchWaypoints)
         {
             //ROS_INFO("numRandomWaypointsSelected = %i",numRandomWaypointsSelected);
             randomValueFloor = 0.0;

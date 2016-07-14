@@ -76,6 +76,7 @@ find_package(catkin REQUIRED COMPONENTS
    SLAMPoseOut.msg
    LocalMap.msg
    MasterStatus.msg
+   MissionPlanningInfo.msg
  )
 
 ## Generate services in the 'srv' folder

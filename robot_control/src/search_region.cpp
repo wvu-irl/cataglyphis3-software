@@ -44,7 +44,7 @@ bool SearchRegion::runProc()
 			// Set ROI to searched
 			modROISrv.request.setSearchedROI = true;
 			modROISrv.request.searchedROIState = true;
-			modROISrv.request.numSearchedROI = currentROIIndex;
+			modROISrv.request.modROIIndex = currentROIIndex;
 			modROISrv.request.addNewROI = false;
 			if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
 			else ROS_ERROR("modify ROI service call unsuccessful");
@@ -111,7 +111,7 @@ void SearchRegion::roiTimeExpiredCallback_(const ros::TimerEvent &event)
 
 void SearchRegion::chooseRandomWaypoints_()
 {
-	randomSearchWaypointsSrv.request.numSeachWaypoints = numRandomWaypoints;
+	randomSearchWaypointsSrv.request.numSearchWaypoints = numRandomWaypoints;
 	if(randomSearchWaypointsClient.call(randomSearchWaypointsSrv))
 	{
 		ROS_DEBUG("randomSearchWaypoints service call successful");

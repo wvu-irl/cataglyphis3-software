@@ -27,7 +27,6 @@
 #define NUM_PROC_TYPES 11
 #define MAX_SAMPLES 10
 enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
-//enum PROC_TYPES_T {avoid__, returnHome__, deposit__, acquire__, examine__, planRegionPath__, chooseRegion__, init__, pause__};
 
 class MissionPlanningProcessShare
 {
@@ -91,7 +90,7 @@ public:
 	static bool atHome;
 	static bool inDepositPosition;
 	static bool missionEnded;
-	static int samplesCollected;
+	static unsigned int samplesCollected;
 	static bool avoidLockout;
 	static bool escapeLockout;
 	static bool roiKeyframed;
@@ -109,9 +108,9 @@ public:
 	static float expectedSampleAngle;
 	static messages::CVSampleProps highestConfSample;
 	static float allocatedROITime; // sec
-	static int examineCount;
-	static int backUpCount;
-	static int confirmCollectFailedCount;
+	static unsigned int examineCount;
+	static unsigned int backUpCount;
+	static unsigned int confirmCollectFailedCount;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 1.0;
 	const float defaultVMax = 1.2; // m/s
@@ -172,7 +171,7 @@ bool MissionPlanningProcessShare::confirmedPossession;
 bool MissionPlanningProcessShare::atHome;
 bool MissionPlanningProcessShare::inDepositPosition;
 bool MissionPlanningProcessShare::missionEnded;
-int MissionPlanningProcessShare::samplesCollected;
+unsigned int MissionPlanningProcessShare::samplesCollected;
 bool MissionPlanningProcessShare::avoidLockout;
 bool MissionPlanningProcessShare::escapeLockout;
 bool MissionPlanningProcessShare::roiKeyframed;
@@ -188,8 +187,8 @@ float MissionPlanningProcessShare::expectedSampleDistance;
 float MissionPlanningProcessShare::expectedSampleAngle;
 messages::CVSampleProps MissionPlanningProcessShare::highestConfSample;
 float MissionPlanningProcessShare::allocatedROITime;
-int MissionPlanningProcessShare::examineCount;
-int MissionPlanningProcessShare::backUpCount;
-int MissionPlanningProcessShare::confirmCollectFailedCount;
+unsigned int MissionPlanningProcessShare::examineCount;
+unsigned int MissionPlanningProcessShare::backUpCount;
+unsigned int MissionPlanningProcessShare::confirmCollectFailedCount;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H
