@@ -23,7 +23,7 @@ int Action::runDeques()
 	driveDequeEmpty = driveDeque.empty();
 	if(driveDequeEmptyPrev && !driveDequeEmpty) driveDeque.front()->init();
     else if(!driveDequeEmptyPrev && driveDequeEmpty) driveHalt.init();
-	if(driveDequeEmpty) {driveHalt.run(); driveDequeEmpty = 1; driveDequeEnded = 0;}
+    if(driveDequeEmpty) {driveHalt.run(); driveDequeEmpty = 1; driveDequeEnded = 0;}
 	else driveDequeEnded = driveDeque.front()->run();
 	if(driveDequeEnded!=0)
 	{
