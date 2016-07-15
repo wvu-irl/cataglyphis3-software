@@ -18,6 +18,7 @@ MissionPlanning::MissionPlanning()
     hsmMasterStatusSub = nh.subscribe<messages::MasterStatus>("hsm/masterexecutive/masterstatus", 1, &MissionPlanning::hsmMasterStatusCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
+    infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
     driveSpeedsPub = nh.advertise<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1);
     collisionInterruptTrigger = false;
     escapeCondition = false;
@@ -70,6 +71,9 @@ MissionPlanning::MissionPlanning()
     driveSpeedsMsgPrev.vMax = 0.0;
     driveSpeedsMsgPrev.rMax = 0.0;
     driveSpeedsPub.publish(driveSpeedsMsg);
+    infoMsg.procsToExecute.resize(NUM_PROC_TYPES,0);
+    infoMsg.procsToInterrupt.resize(NUM_PROC_TYPES,0);
+    infoMsg.procsBeingExecuted.resize(NUM_PROC_TYPES,0);
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -106,6 +110,7 @@ void MissionPlanning::run()
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch) runPause_();
     else runProcesses_();
+    packAndPubInfoMsg_();
     //std::printf("\n");
 }
 
@@ -313,6 +318,39 @@ void MissionPlanning::updateSampleFlags_()
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= possibleSampleConfThresh) possibleSample = true;
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= definiteSampleConfThresh) definiteSample = true;
     }
+}
+
+void MissionPlanning::packAndPubInfoMsg_()
+{
+    infoMsg.pause = robotStatus.pauseSwitch;
+    infoMsg.escapeCondition = escapeCondition;
+    infoMsg.escapeLockout = escapeLockout;
+    infoMsg.collisionCondition = collisionMsg.collision;
+    infoMsg.avoidLockout = avoidLockout;
+    infoMsg.inSearchableRegion = inSearchableRegion;
+    infoMsg.possessingSample = possessingSample;
+    infoMsg.possibleSample = possibleSample;
+    infoMsg.definiteSample = definiteSample;
+    infoMsg.sampleInCollectPosition = sampleInCollectPosition;
+    infoMsg.confirmedPossession = confirmedPossession;
+    infoMsg.atHome = atHome;
+    infoMsg.inDepositPosition = inDepositPosition;
+    infoMsg.samplesCollected = samplesCollected;
+    infoMsg.avoidCount = avoidCount;
+    infoMsg.examineCount = examineCount;
+    infoMsg.backupCount = backUpCount;
+    infoMsg.confirmCollectFailedCount = confirmCollectFailedCount;
+    infoMsg.roiKeyframed = roiKeyframed;
+    infoMsg.stopFlag = execInfoMsg.stopFlag;
+    infoMsg.turnFlag = execInfoMsg.turnFlag;
+    for(int i=0; i<NUM_PROC_TYPES; i++)
+    {
+        infoMsg.procsToExecute.at(i) = procsToExecute[i];
+        infoMsg.procsToInterrupt.at(i) = procsToInterrupt[i];
+        infoMsg.procsBeingExecuted.at(i) = procsBeingExecuted[i];
+    }
+    infoMsg.missionEnded = missionEnded;
+    infoPub.publish(infoMsg);
 }
 
 void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
