@@ -26,7 +26,7 @@
 #define RAD2DEG 180.0/PI
 #define NUM_PROC_TYPES 11
 #define MAX_SAMPLES 10
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
+enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__}; // If this is ever edited, edit controlCallback_ as well
 
 class MissionPlanningProcessShare
 {
@@ -81,6 +81,7 @@ public:
 	static int currentROIIndex;
 	static bool escapeCondition;
 	static bool inSearchableRegion;
+	static bool roiTimeExpired;
 	static bool possessingSample;
 	static bool possibleSample;
 	static bool definiteSample;
@@ -162,6 +163,7 @@ messages::CVSampleProps MissionPlanningProcessShare::bestSample;
 int MissionPlanningProcessShare::currentROIIndex;
 bool MissionPlanningProcessShare::escapeCondition;
 bool MissionPlanningProcessShare::inSearchableRegion;
+bool MissionPlanningProcessShare::roiTimeExpired;
 bool MissionPlanningProcessShare::possessingSample;
 bool MissionPlanningProcessShare::possibleSample;
 bool MissionPlanningProcessShare::definiteSample;

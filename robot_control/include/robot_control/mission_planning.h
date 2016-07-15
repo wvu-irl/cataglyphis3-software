@@ -7,6 +7,7 @@
 #include <messages/nb1_to_i7_msg.h>
 #include <messages/EmergencyEscapeTrigger.h>
 #include <messages/MissionPlanningInfo.h>
+#include <messages/MissionPlanningControl.h>
 #include "emergency_escape.h"
 #include "avoid.h"
 #include "next_best_region.h"
@@ -35,6 +36,7 @@ public:
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
 	ros::ServiceServer emergencyEscapeServ;
+	ros::ServiceServer controlServ;
 	messages::MissionPlanningInfo infoMsg;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
@@ -79,6 +81,7 @@ private:
 	void lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr& msg);
 	void hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
+	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
 };
 
 #endif // MISSION_PLANNING_H

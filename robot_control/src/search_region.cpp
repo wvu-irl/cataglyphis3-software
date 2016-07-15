@@ -4,7 +4,6 @@ SearchRegion::SearchRegion()
 {
 	roiTimer = nh.createTimer(ros::Duration(480.0), &SearchRegion::roiTimeExpiredCallback_, this); // 480 sec == 8 min; implement smarter way to compute
 	roiTimer.stop();
-	roiTimeExpired = false;
 }
 
 bool SearchRegion::runProc()
@@ -40,6 +39,7 @@ bool SearchRegion::runProc()
 		}
 		if(roiTimeExpired)
 		{
+			roiTimeExpired = false;
 			roiTimer.stop();
 			// Set ROI to searched
 			modROISrv.request.setSearchedROI = true;

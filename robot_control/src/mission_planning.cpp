@@ -18,11 +18,13 @@ MissionPlanning::MissionPlanning()
     hsmMasterStatusSub = nh.subscribe<messages::MasterStatus>("hsm/masterexecutive/masterstatus", 1, &MissionPlanning::hsmMasterStatusCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
+    controlServ = nh.advertiseService("/control/missionplanning/control", &MissionPlanning::controlCallback_, this);
     infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
     driveSpeedsPub = nh.advertise<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1);
     collisionInterruptTrigger = false;
     escapeCondition = false;
     inSearchableRegion = false;
+    roiTimeExpired = false;
     possessingSample = false;
     possibleSample = false;
     definiteSample = false;
@@ -131,6 +133,7 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
         ROS_INFO("avoidLockout = %i",avoidLockout);
         ROS_INFO("inSearchableRegion = %i",inSearchableRegion);
+        ROS_INFO("roiTimeExpired = %i",roiTimeExpired);
         ROS_INFO("possessingSample = %i",possessingSample);
         ROS_INFO("possibleSample = %i",possibleSample);
         ROS_INFO("definiteSample = %i",definiteSample);
@@ -328,6 +331,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.collisionCondition = collisionMsg.collision;
     infoMsg.avoidLockout = avoidLockout;
     infoMsg.inSearchableRegion = inSearchableRegion;
+    infoMsg.roiTimeExpired = roiTimeExpired;
     infoMsg.possessingSample = possessingSample;
     infoMsg.possibleSample = possibleSample;
     infoMsg.definiteSample = definiteSample;
@@ -404,4 +408,76 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
 bool MissionPlanning::emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res)
 {
     escapeCondition = req.escapeCondition;
+    return true;
+}
+
+bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res)
+{
+    escapeCondition = req.escapeCondition;
+    escapeLockout = req.escapeLockout;
+    inSearchableRegion = req.inSearchableRegion;
+    roiTimeExpired = req.roiTimeExpired;
+    possessingSample = req.possessingSample;
+    possibleSample = req.possibleSample;
+    definiteSample = req.definiteSample;
+    sampleInCollectPosition = req.sampleInCollectPosition;
+    confirmedPossession = req.confirmedPossession;
+    atHome = req.atHome;
+    inDepositPosition = req.inDepositPosition;
+    samplesCollected = req.samplesCollected;
+    avoidCount = req.avoidCount;
+    examineCount = req.examineCount;
+    backUpCount = req.backupCount;
+    confirmCollectFailedCount = req.confirmCollectFailedCount;
+    roiKeyframed = req.roiKeyframed;
+    for(int i=0; i<req.numProcs; i++)
+    {
+        procsToExecute[i] = req.procsToExecute.at(i);
+        procsToInterrupt[i] = req.procsToInterrupt.at(i);
+        procsBeingExecuted[i] = req.procsBeingExecuted.at(i);
+    }
+    missionEnded = req.missionEnded;
+    if(req.setProcState)
+    {
+        switch(static_cast<PROC_TYPES_T>(req.setProcStateIndex)) // If PROC_TYPES_T enum is ever edited, edit this as well
+        {
+        case __emergencyEscape__:
+            emergencyEscape.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __avoid__:
+            avoid.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __nextBestRegion__:
+            nextBestRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __searchRegion__:
+            searchRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __examine__:
+            examine.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __approach__:
+            approach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __collect__:
+            collect.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __confirmCollect__:
+            confirmCollect.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __goHome__:
+            goHome.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __depositApproach__:
+            depositApproach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __depositSample__:
+            depositSample.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __pause__:
+            pause.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        }
+    }
+    return true;
 }

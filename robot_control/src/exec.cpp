@@ -52,7 +52,7 @@ Exec::Exec()
 void Exec::run()
 {
     ROS_INFO_THROTTLE(3,"Exec running...");
-    if(clearDequeFlag_) actionDeque_.clear(); // Clear deque
+    if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.driveDeque.clear(); pauseIdle_.grabberDeque.clear(); pauseIdle_.visionDeque.clear();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
     {

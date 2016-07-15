@@ -1,7 +1,5 @@
-bool pause
 bool escapeCondition
 bool escapeLockout
-int32 collisionCondition
 bool avoidLockout
 bool inSearchableRegion
 bool roiTimeExpired
@@ -18,9 +16,12 @@ uint32 examineCount
 uint32 backupCount
 uint32 confirmCollectFailedCount
 bool roiKeyframed
-bool stopFlag
-bool turnFlag
+uint32 numProcs
 bool[] procsToExecute
 bool[] procsToInterrupt
 bool[] procsBeingExecuted
 bool missionEnded
+bool setProcState
+int32 setProcStateIndex
+int32 setProcStateValue
+---

@@ -91,6 +91,7 @@ find_package(catkin REQUIRED COMPONENTS
    GlobalMapPathHazards.srv
    EmergencyEscapeTrigger.srv
    HSMSetNorthAngle.srv
+   MissionPlanningControl.srv
  )
 
 ## Generate actions in the 'action' folder
