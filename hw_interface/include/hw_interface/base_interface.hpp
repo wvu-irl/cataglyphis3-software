@@ -11,36 +11,46 @@
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 
-#include <hw_interface/hw_interface.hpp>
-
 namespace base_classes
 {
     enum interfaceType_t {Serial, UDP};
 
     class base_interface
     {
-        friend class hw_interface;
-
 
     public:
         //const boost::shared_ptr<boost::asio::io_service> interfaceService
 
+        std::string pluginName;
         interfaceType_t interfaceType;
+        bool interfaceStarted;
 
-        virtual bool initPlugin();
+        //hw_interface will call to check if work can continue
+        virtual bool interfaceReady() {}
 
-        virtual bool startWork();
+        //called after io_service init
+        virtual bool initPlugin(const boost::shared_ptr<boost::asio::io_service> ioService) {}
 
-        virtual bool stopWork();
+        //called after init, used to start interface and restart listen
+        virtual bool startWork() {}
 
-        virtual void readHandler();
+        //called to stop interface
+        virtual bool stopWork() {}
 
+        //plugin provided data handler that moves data into ROS
+        virtual bool interfaceDataHandler() {}
+
+        //called by hw_interface
+        virtual bool verifyChecksum() {}
+
+        virtual bool handleIORequest(const boost::system::error_code &ec, size_t bytesReceived) {}
+
+        base_interface() {}
         virtual ~base_interface(){}
 
     protected:
-        base_interface();
 
-        virtual void handleIORequest(const boost::system::error_code &ec, size_t bytesReceived);
+        boost::shared_ptr<char> receivedData;
 
     };
 };

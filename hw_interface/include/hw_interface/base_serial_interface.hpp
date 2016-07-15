@@ -11,7 +11,7 @@
 
 namespace base_classes
 {
-    class base_serial_interface : base_interface
+    class base_serial_interface : public base_interface
     {
         friend class hw_interface;
 

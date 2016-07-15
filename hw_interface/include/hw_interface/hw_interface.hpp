@@ -6,6 +6,8 @@
 
 #include <ros/ros.h>
 #include <hw_interface/base_interface.hpp>
+#include <hw_interface/base_serial_interface.hpp>
+#include <hw_interface/base_UDP_interface.hpp>
 #include <pluginlib/class_loader.h>
 
 #include <boost/asio.hpp>
@@ -28,6 +30,8 @@ private:
 
     std::vector<boost::shared_ptr<base_classes::base_interface> > interfacePluginVector;
 
+    pluginlib::ClassLoader<base_classes::base_interface> pluginLoader;
+
     void initInterfacePlugins();
     void initThreadPool();
 
@@ -36,6 +40,8 @@ public:
 
     hw_interface();
     hw_interface(int maxNumOfThreads);
+
+    virtual ~hw_interface();
 
     void addInterfacePlugins();  //TODO implement
 

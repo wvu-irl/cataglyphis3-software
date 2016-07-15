@@ -1,18 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hw_interface)
+project(hw_interface_plugin_netburner)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
+  hw_interface
+  messages
   pluginlib
-    messages
-  grid_map_ros
+  roscpp
 )
 
 ## System dependencies are found with CMake's conventions
- find_package(Boost REQUIRED COMPONENTS system)
+# find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -68,7 +68,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -101,9 +101,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  #INCLUDE_DIRS include
-  LIBRARIES base_interface base_serial_interface base_UDP_interface
-  CATKIN_DEPENDS roscpp messages pluginlib
+  INCLUDE_DIRS include
+  LIBRARIES hw_interface_plugin_netburner
+  CATKIN_DEPENDS hw_interface messages pluginlib roscpp
 #  DEPENDS system_lib
 )
 
@@ -113,68 +113,47 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-#include_directories(include)
-include_directories(AFTER
+# include_directories(include)
+include_directories(
+    include
     ~/cataglyphis_ws/src/hw_interface/include
   ${catkin_INCLUDE_DIRS}
 )
-include_directories()
+
+
+add_library(hw_interface_plugin_netburner_UDP   src/hw_interface_plugin_netburner_UDP.cpp)
+
+
+add_dependencies(hw_interface_plugin_netburner_UDP ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+                    messages_generate_messages)
+
 ## Declare a C++ library
-# add_library(hw_interface
-#   src/${PROJECT_NAME}/hw_interface.cpp
+# add_library(hw_interface_plugin_netburner
+#   src/${PROJECT_NAME}/hw_interface_plugin_netburner.cpp
 # )
-
-add_library(base_interface          src/base_interface.cpp)
-add_library(base_serial_interface   src/base_serial_interface.cpp)
-add_library(base_UDP_interface      src/base_UDP_interface.cpp)
-add_library(hw_interface            src/hw_interface.cpp)
-
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(hw_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(hw_interface_plugin_netburner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-#add_executable(hw_interface_node src/hw_interface_node.cpp)
-
-add_executable(hw_interface_node src/hw_interface_node.cpp)
+# add_executable(hw_interface_plugin_netburner_node src/hw_interface_plugin_netburner_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(hw_interface_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(hw_interface_plugin_netburner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+# target_link_libraries(hw_interface_plugin_netburner_node
+#   ${catkin_LIBRARIES}
+# )
 
-target_link_libraries(hw_interface
+ target_link_libraries(hw_interface_plugin_netburner_UDP
    ${catkin_LIBRARIES}
     base_interface
-    base_serial_interface
     base_UDP_interface
  )
-
-
-target_link_libraries(base_serial_interface
-   ${catkin_LIBRARIES}
-    base_interface
- )
-
-target_link_libraries(base_UDP_interface
-   ${catkin_LIBRARIES}
-    base_interface
- )
-
-
-
-
-target_link_libraries(hw_interface_node
-                        ${catkin_LIBRARIES}
-                        base_interface
-                        base_serial_interface
-                        base_UDP_interface
-                        hw_interface
-                        )
-
 
 #############
 ## Install ##
@@ -191,7 +170,7 @@ target_link_libraries(hw_interface_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS hw_interface hw_interface_node
+# install(TARGETS hw_interface_plugin_netburner hw_interface_plugin_netburner_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -216,7 +195,7 @@ target_link_libraries(hw_interface_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_hw_interface.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_hw_interface_plugin_netburner.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

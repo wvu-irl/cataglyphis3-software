@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>hw_interface</name>
-  <version>0.0.1</version>
-  <description>The hw_interface package</description>
+  <name>hw_interface_plugin_netburner</name>
+  <version>0.0.0</version>
+  <description>The hw_interface_plugin_netburner package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/hw_interface</url> -->
+  <!-- <url type="website">http://wiki.ros.org/hw_interface_plugin_netburner</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -40,9 +40,11 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>hw_interface</build_depend>
   <build_depend>messages</build_depend>
   <build_depend>pluginlib</build_depend>
   <build_depend>roscpp</build_depend>
+  <run_depend>hw_interface</run_depend>
   <run_depend>messages</run_depend>
   <run_depend>pluginlib</run_depend>
   <run_depend>roscpp</run_depend>
@@ -50,7 +52,9 @@
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
+
+<!-- These lines export the class plugin-->
+    <hw_interface plugin="${prefix}/netburner_plugins.xml" />
 
   </export>
 </package>
