@@ -76,5 +76,6 @@ bool base_classes::base_UDP_interface::stopWork()
 bool base_classes::base_UDP_interface::handleIORequest(const boost::system::error_code &ec, size_t bytesReceived)
 {
     ROS_INFO("Thread <%s>:: Received Packet!", THREAD_ID_TO_C_STR);
+    
     return startWork();
 }

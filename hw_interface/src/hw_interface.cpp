@@ -8,7 +8,7 @@
 
 
 #define THREAD_ID_TO_C_STR boost::lexical_cast<std::string>(boost::this_thread::get_id()).c_str()
-#define NUM_THREADS_PER_PLUGIN 5
+#define NUM_THREADS_PER_PLUGIN 2
 
 hw_interface::hw_interface() :
     pluginLoader("hw_interface", "base_classes::base_interface")

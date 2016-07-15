@@ -11,6 +11,8 @@
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 
+#define NUM_BUFFERS_PER_PLUGIN 4
+
 namespace base_classes
 {
     enum interfaceType_t {Serial, UDP};
@@ -49,8 +51,8 @@ namespace base_classes
         virtual ~base_interface(){}
 
     protected:
-
-        boost::shared_ptr<char> receivedData;
+        
+        boost::shared_ptr<char> receivedData[NUM_BUFFERS_PER_PLUGIN];
 
     };
 };
