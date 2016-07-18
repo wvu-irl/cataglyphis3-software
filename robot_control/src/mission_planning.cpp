@@ -127,7 +127,7 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        ROS_INFO("=========================================");
+        /*ROS_INFO("=========================================");
         ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
@@ -154,7 +154,7 @@ void MissionPlanning::evalConditions_()
         std::printf(")\n");
         std::printf("actionFloat2: (");
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
-        std::printf(")\n");
+        std::printf(")\n");*/
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
         calcnumProcsBeingOrToBeExec_();
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
@@ -172,15 +172,15 @@ void MissionPlanning::evalConditions_()
             if(procsToInterrupt[__emergencyEscape__]) avoid.dequeClearFront = true; // If avoid occured during emergency escape, just treat the avoid maneuver as the offset drive in emergency escape
             if(procsToInterrupt[__nextBestRegion__] || procsToInterrupt[__searchRegion__] || procsToInterrupt[__goHome__]) // If avoid occured while driving to a waypoint globally (which occurs in these procedures), check if the remaining distance to the waypoint is small enough to just end the drive there
             {
-                ROS_INFO("was executing proc with driveGlobal");
+                //ROS_INFO("was executing proc with driveGlobal");
                 if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[0]) == _driveGlobal)
                 {
-                    ROS_INFO("was executing driveGlobal");
+                    //ROS_INFO("was executing driveGlobal");
                     avoidRemainingWaypointDistance = hypot(execInfoMsg.actionFloat1[0] - robotStatus.xPos, execInfoMsg.actionFloat2[0] - robotStatus.yPos);
-                    ROS_INFO("avoidRemainingWaypointDistance = %f",avoidRemainingWaypointDistance);
+                    //ROS_INFO("avoidRemainingWaypointDistance = %f",avoidRemainingWaypointDistance);
                     if(avoidRemainingWaypointDistance <= minAvoidRemainingWaypointDistance)
                     {
-                        ROS_INFO("closer than avoid remaining waypoint distance. End drive here");
+                        //ROS_INFO("closer than avoid remaining waypoint distance. End drive here");
                         avoid.sendDequeClearFront();
                         shouldExecuteAvoidManeuver = false;
                         avoidLockout = true;

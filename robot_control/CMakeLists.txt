@@ -124,6 +124,7 @@ include_directories(
  add_library(drop src/drop.cpp)
  add_library(open src/open.cpp)
  add_library(search src/search.cpp)
+ add_library(wait src/wait.cpp)
  
  add_library(drive_straight src/drive_straight.cpp)
  add_library(drive_straight_cl src/drive_straight_cl.cpp)
@@ -189,6 +190,7 @@ include_directories(
    drop
    open
    search
+   wait
    drive_straight
    drive_straight_cl
    drive_pivot

@@ -9,8 +9,8 @@ SearchRegion::SearchRegion()
 bool SearchRegion::runProc()
 {
 	//ROS_INFO("searchRegion state = %i", state);
-	ROS_INFO_THROTTLE(1,"roiTimer.isValid = %i",roiTimer.isValid());
-	ROS_INFO_THROTTLE(1,"roiTimer.hasPending = %i",roiTimer.hasPending());
+	//ROS_INFO_THROTTLE(1,"roiTimer.isValid = %i",roiTimer.isValid());
+	//ROS_INFO_THROTTLE(1,"roiTimer.hasPending = %i",roiTimer.hasPending());
 	switch(state)
 	{
 	case _init_:
@@ -24,7 +24,7 @@ bool SearchRegion::runProc()
 		confirmCollectFailedCount = 0;
 		if(!roiKeyframed) // check if ROI is not yet keyframed
 		{
-			ROS_INFO("ROI not keyframed");
+			//ROS_INFO("ROI not keyframed");
 			searchMapSrv.request.createMap = true;
 			searchMapSrv.request.roiIndex = currentROIIndex;
 			searchMapSrv.request.deleteMap = false;
@@ -164,36 +164,37 @@ void SearchRegion::antColony_()
 			valueNormalizedFloor = 0.0;
 			for(j; j<numWaypointsToPlan; j++)
 			{
-				/*ROS_DEBUG("before value computation, j=%i",j);
-				ROS_DEBUG("pheromone(i,j) = %f",pheromone(i,j));
-				ROS_DEBUG("waypointsToPlan.at(j).sampleProb = %f",waypointsToPlan.at(j).sampleProb);
-				ROS_DEBUG("sampleProbGain*sampleProb = %f",sampleProbGain*waypointsToPlan.at(j).sampleProb);
-				ROS_DEBUG("pheromoneGain*pheromone(i,j) = %f",pheromoneGain*pheromone(i,j));
-				ROS_DEBUG("distance(i,j) = %f",distance(i,j));
-				ROS_DEBUG("distanceGain*distance(i,j) = %f",distanceGain*distance(i,j));
-				ROS_DEBUG("terrainHazard(i,j) = %f",terrainHazard(i,j));
-				ROS_DEBUG("terrainGain*terrainHazard(i,j) = %f",terrainGain*terrainHazard(i,j));
-				ROS_DEBUG("notVisited[j] = %i",notVisited.at(j));*/
+				/*ROS_INFO("before value computation, j=%i",j);
+				ROS_INFO("pheromone(i,j) = %f",pheromone(i,j));
+				ROS_INFO("waypointsToPlan.at(j).sampleProb = %f",waypointsToPlan.at(j).sampleProb);
+				ROS_INFO("sampleProbGain*sampleProb = %f",sampleProbGain*waypointsToPlan.at(j).sampleProb);
+				ROS_INFO("pheromoneGain*pheromone(i,j) = %f",pheromoneGain*pheromone(i,j));
+				ROS_INFO("distance(i,j) = %f",distance(i,j));
+				ROS_INFO("distanceGain*distance(i,j) = %f",distanceGain*distance(i,j));
+				ROS_INFO("terrainHazard(i,j) = %f",terrainHazard(i,j));
+				ROS_INFO("terrainGain*terrainHazard(i,j) = %f",terrainGain*terrainHazard(i,j));
+				ROS_INFO("notVisited[j] = %i",notVisited.at(j));*/
 				computedValue =	(sampleProbGain*waypointsToPlan.at(j).sampleProb +
 								pheromoneGain*pheromone(i,j) -
 								distanceGain*distance(i,j) -
 								terrainGain*terrainHazard(i,j));
-				//ROS_DEBUG("after value computation, before coersion. value[j] = %f",value.at(j));
+				//ROS_INFO("after value computation, before coersion. computedValue = %f",computedValue);
 				if(computedValue <= 0.0 && notVisited.at(j)==1) value.at(j) = 0.001;
 				else value.at(j) = ((float)notVisited.at(j))*computedValue;
-				//ROS_DEBUG("after value computation. value[j] = %f",value.at(j));
+				//ROS_INFO("after value computation. value[j] = %f",value.at(j));
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueSum += value.at(k);
-			//ROS_DEBUG("valueSum = %f",valueSum);
+			//ROS_INFO("valueSum = %f",valueSum);
 			for(int k=0; k<numWaypointsToPlan; k++)
 			{
 				valueNormalized.at(k) = value.at(k)/valueSum;
 				if(value.at(k)!=0.0 && valueNormalized.at(k)==0.0) valueNormalized.at(k) = 0.001; // Basement for normalized values. Probability distribution is discrete, not continuous, so there needs to be a basement (0.1%) that even the smallest probabilities get rounded up to so they are included in the distribution and not lost due to discrete rounding down
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueNormalizedSum += valueNormalized.at(k);
-			//ROS_DEBUG("valueNormalizedSum = %f",valueNormalizedSum);
+			//ROS_INFO("valueNormalizedSum = %f",valueNormalizedSum);
 			randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-			ROS_INFO("randomValue = %f",randomValue);
+			//ROS_INFO("randomValue = %f",randomValue);
+			for(int z=0; z<valueNormalized.size(); z++) ROS_INFO("valueNormalized.at(%i) = %f",z,valueNormalized.at(z));
 			if(randomValue>=valueNormalizedSum) // Picked 1.0 as the random value. Boundary condition, just choose the one with the biggest normalized value
 			{
 				//ROS_INFO("randomValue >= valueNormalizedSum");
@@ -220,8 +221,10 @@ void SearchRegion::antColony_()
 			}
 			//ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
 			//ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %f\n", pheroDepoGain/distance(i,bestJ));
+			// Deposit new pheromone
 			pheromone(i,bestJ) += (pheroDepoGain/distance(i,bestJ) + pheroDecayValue);
 			pheromone(bestJ,i) += (pheroDepoGain/distance(bestJ,i) + pheroDecayValue);
+
 			//ROS_DEBUG("after pheromone increment");
 			notVisited.at(bestJ) = 0;
 			i = bestJ;
@@ -229,12 +232,13 @@ void SearchRegion::antColony_()
 			notVisitedSum = 0;
 			for(int k=0; k<numWaypointsToPlan; k++) notVisitedSum += notVisited.at(k);
 		}
-		for(int m=0; m<numWaypointsToPlan; m++) // Pheromone decay
+		for(int m=0; m<numWaypointsToPlan; m++) // Pheromone decay and min and max coersion checks
 		{
 			for(int n=0; n<numWaypointsToPlan; n++)
 			{
 				pheromone(m,n) -= pheroDecayValue;
 				if(pheromone(m,n)<0.0) pheromone(m,n) = 0.0;
+				else if(pheromone(m,n)>maxPheromoneValue) pheromone(m,n) = maxPheromoneValue;
 			}
 		}
 		//ROS_INFO("pheromone matrix, loop:");

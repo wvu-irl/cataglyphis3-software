@@ -13,6 +13,7 @@
 #include "grab.h"
 #include "open.h"
 #include "search.h"
+#include "wait.h"
 #include <messages/ExecAction.h>
 #include <messages/ActuatorOut.h>
 #include <messages/ExecInfo.h>

@@ -27,6 +27,7 @@ Exec::Exec()
 		actionPool_[_drop][j] = new Drop;
 		actionPool_[_open][j] = new Open;
         actionPool_[_search][j] = new Search;
+        actionPool_[_wait][j] = new Wait;
 	}
 	for(int k=0; k<NUM_TASKS; k++)
 	{
