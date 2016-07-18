@@ -10,7 +10,7 @@ SafePathing::SafePathing()
     transitionWaypoint1.sampleProb = 0.0;
     transitionWaypoint1.terrainHazard = 0.0;
     transitionWaypoint1.searchable = false;
-    transitionWaypoint2.x = 15.2711;;
+    transitionWaypoint2.x = 15.2711;
     transitionWaypoint2.y = 17.9457;
     transitionWaypoint2.sampleProb = 0.0;
     transitionWaypoint2.terrainHazard = 0.0;

@@ -951,7 +951,7 @@ void LidarFilter::fitCylinderLong()
 	//double dist = 2.0-12.0*0.0254;
 	double r = 6.0*0.0254;
 	std::cout << "r = " << r << std::endl;
-	double dist = 2.0-2*r-14.5*0.0254;
+	double dist = 1.82-2*r;
 	double t, c1_x, c1_y, c2_x, c2_y, x, y, ax1, ay1, ax2, ay2, x_mean, y_mean, d, bearing, c1_mag, c2_mag;
 	double v1_x, v1_y, v2_x, v2_y, v1_mag, v2_mag, v_dot, X1s_x, X1s_y, X2s_x, X2s_y, X1s_mag, X2s_mag;
 	double cx1, cx2, cy1, cy2;
@@ -1104,9 +1104,20 @@ void LidarFilter::fitCylinderLong()
 		v2_y = v2_y/v2_mag;
 
 		v_dot = v1_x*v2_x+v1_y*v2_y;
-		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
-		double x_est_k = d*cos(bearing);
-		double y_est_k = d*sin(bearing);
+
+		double x_est, y_est, x_est_k, y_est_k;
+		if (X(0)*X(3)-X(1)*X(2)<0)
+		{
+			bearing = -acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est_k = d*cos(bearing);
+			y_est_k = d*sin(bearing);
+		}
+		else
+		{
+			bearing = acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est_k = d*cos(bearing);
+			y_est_k = d*sin(bearing);
+		}
 		double b_h_diff_k = atan2(-v1_y,-v1_x); 
 		double heading_est_k = -(b_h_diff_k-bearing);
 		std::cout << "x_est_k = " << x_est_k << std::endl;
@@ -1127,9 +1138,18 @@ void LidarFilter::fitCylinderLong()
 		v2_y = v2_y/v2_mag;
 
 		v_dot = v1_x*v2_x+v1_y*v2_y;
-		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
-		double x_est = d*cos(bearing);
-		double y_est = d*sin(bearing);
+		if (cx1*cy2-cy1*cx2<0)
+		{
+			bearing = -acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est = d*cos(bearing);
+			y_est = d*sin(bearing);
+		}
+		else
+		{
+			bearing = acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est = d*cos(bearing);
+			y_est = d*sin(bearing);
+		}
 		double b_h_diff = atan2(-v1_y,-v1_x); 
 		double heading_est = -(b_h_diff-bearing);
 		std::cout << "x_est = " << x_est << std::endl;
@@ -1137,13 +1157,13 @@ void LidarFilter::fitCylinderLong()
 		std::cout << "heading_est = " << heading_est*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
 
 		ROS_INFO("\nHOMING UPDATE!");
-		ROS_INFO("x = %f", x_est);
-		ROS_INFO("y = %f", y_est);
-		ROS_INFO("heading = %f", heading_est*180.0/3.14159265);
+		ROS_INFO("x = %f", x_est_k);
+		ROS_INFO("y = %f", y_est_k);
+		ROS_INFO("heading = %f", heading_est_k*180.0/3.14159265);
 
-		_homing_x=x_est;
-		_homing_y=y_est;
-		_homing_heading=heading_est;
+		_homing_x=x_est_k;
+		_homing_y=y_est_k;
+		_homing_heading=heading_est_k;
 		_homing_found=true;
 		ROS_INFO("********************");
 		ROS_INFO("x_est = %f",x_est);
