@@ -391,7 +391,7 @@ void LidarFilter::doMathMapping()
 	    point.push_back(object_filtered->points[i].z);
 
 	    //the index checks which gird a point belongs to 
-	    index = floor(object_filtered->points[i].x + map_range)*map_range + floor(object_filtered->points[i].y + map_range);
+	    index = floor(object_filtered->points[i].x + map_range)*(map_range) + floor(object_filtered->points[i].y + map_range);
 	    grid_map_cells[index].push_back(point);
 	    point.clear();
 	}
@@ -402,6 +402,7 @@ void LidarFilter::doMathMapping()
 	//do the calculation
 	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
 	{
+		//cout << i << endl;
 		//define variables used to calculate mean x y z and variance of z
 		float total_x = 0;
 		float total_y = 0;
@@ -435,7 +436,7 @@ void LidarFilter::doMathMapping()
 	        point.push_back(average_y);
 	        point.push_back(average_z);
 	        point.push_back(variance_z);
-	        _local_grid_map.push_back(point);
+	        //_local_grid_map.push_back(point);
 	    }
 	}
 }
@@ -487,6 +488,7 @@ void LidarFilter::doMathHoming()
     //generate empty clouds to hold previous cluster
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
+
     for (int ii=0;ii<cluster_indices.size ();ii++)
     {
         points_cluster.push_back(cloud_middle);
@@ -691,25 +693,79 @@ void LidarFilter::doMathHoming()
 //use this member function to detect homing cylinder from a long distance 10 m < distance < 20 m
 void LidarFilter::doLongDistanceHoming()
 {
+	pcl::PointCloud<pcl::PointXYZI>::Ptr raw_cloud (new pcl::PointCloud<pcl::PointXYZI>);
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
-	*object_filtered= _object_filtered;
+	//*object_filtered= _object_filtered;
+	*raw_cloud = _object_filtered;
 
-	// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
-	pcl::PassThrough<pcl::PointXYZI> pass;
-	pass.setInputCloud(object_filtered);
+	// // ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
+	// pcl::PassThrough<pcl::PointXYZI> pass;
+	// pass.setInputCloud(object_filtered);
+ //    pass.setFilterFieldName("z");
+ //    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
+ //    pass.filter(*object_filtered);
+ //    pass.setInputCloud(object_filtered);
+ //    pass.setFilterFieldName("x");
+ //    pass.setFilterLimits(-home_detection_range,home_detection_range);
+ //    pass.filter(*object_filtered);
+ //    pass.setInputCloud(object_filtered);
+ //    pass.setFilterFieldName("y");
+ //    pass.setFilterLimits(-home_detection_range,home_detection_range); 
+ //    pass.filter(*object_filtered);
+ //    //ROS_INFO("PassThrough done.");
+
+	//define variables for point intensity value checking
+	int high_intensity_counter = 0;
+	int high_intensity_threshold = 95;
+	bool high_intensity_cluster = false;
+
+    pcl::PassThrough<pcl::PointXYZI> pass;
+	pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("z");
     pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
-    pass.filter(*object_filtered);
-    pass.setInputCloud(object_filtered);
+    pass.filter(*raw_cloud);
+    pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("x");
     pass.setFilterLimits(-home_detection_range,home_detection_range);
-    pass.filter(*object_filtered);
-    pass.setInputCloud(object_filtered);
+    pass.filter(*raw_cloud);
+    pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("y");
     pass.setFilterLimits(-home_detection_range,home_detection_range); 
-    pass.filter(*object_filtered);
-    //ROS_INFO("PassThrough done.");
+    pass.filter(*raw_cloud);
+
+    *object_filtered = *raw_cloud;
+
+ //    int counter = 0;
+ //    for (int i = 0; i < raw_cloud->points.size(); i++)
+ //    {
+ //    	if((raw_cloud->points[i].intensity) > high_intensity_threshold)
+ //    	{
+ //    		// object_filtered->points[counter].x = raw_cloud->points[i].x;
+ //    		// object_filtered->points[counter].y = raw_cloud->points[i].y;
+ //    		// object_filtered->points[counter].z = raw_cloud->points[i].z;
+ //    		// object_filtered->points[counter].intensity = raw_cloud->points[i].intensity;
+ //    		counter = counter + 1;
+ //    	}
+ //    }
+
+ //    object_filtered->width = counter;
+ //    object_filtered->height = 1;
+ //    object_filtered->points.resize (object_filtered->width * object_filtered->height);
 	
+	// counter = 0;
+	// for (int i = 0; i < raw_cloud->points.size(); i++)
+ //    {
+ //    	if((raw_cloud->points[i].intensity) > high_intensity_threshold)
+ //    	{
+ //    		object_filtered->points[counter].x = raw_cloud->points[i].x;
+ //    		object_filtered->points[counter].y = raw_cloud->points[i].y;
+ //    		object_filtered->points[counter].z = raw_cloud->points[i].z;
+ //    		object_filtered->points[counter].intensity = raw_cloud->points[i].intensity;
+ //    		counter = counter + 1;
+ //    	}
+ //    }
+ //    counter = 0;
+
 	// std::stringstream ss;
 	// ss << "file.pcd";
 	// pcl::io::savePCDFile( ss.str(), *object_filtered);
@@ -724,7 +780,7 @@ void LidarFilter::doLongDistanceHoming()
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
     ec.setClusterTolerance (1.0); // distance threshold
-    ec.setMinClusterSize (15); //minial size to generate a cluster 
+    ec.setMinClusterSize (2); //minial size to generate a cluster 
     ec.setMaxClusterSize (5000); //max size
     ec.setSearchMethod (tree);
     ec.setInputCloud (object_filtered); //use the points after ground removal 
@@ -758,13 +814,9 @@ void LidarFilter::doLongDistanceHoming()
         j++;
     }
 
-	//define variables for point intensity value checking
-	int high_intensity_counter = 0;
-	int high_intensity_threshold = 200;
-	bool high_intensity_cluster = false;
-
 	_potential_cylinders_intensity.clear();
 	_potential_cylinders_nonintensity.clear();
+
     for (int i=0; i<points_cluster.size(); i++)
     {
     	// pre-check if that particular cluser fit the general requirement
@@ -819,6 +871,7 @@ void LidarFilter::doLongDistanceHoming()
     		if(points_cluster[i]->points[ii].intensity > high_intensity_threshold)
     		{
     			high_intensity_counter = high_intensity_counter + 1;
+    			//cout << points_cluster[i]->points[ii].intensity << endl;
     		}
     	}
 
@@ -826,38 +879,23 @@ void LidarFilter::doLongDistanceHoming()
     	mean_x_cluster_pre =  mean_x_cluster_pre/points_cluster[i]->points.size();
     	mean_y_cluster_pre =  mean_y_cluster_pre/points_cluster[i]->points.size();
 
-    	// a cluster needs to have at least 10 high intensity points
-    	if (high_intensity_counter > 10 && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
+    	float distance_from_robot = sqrt(mean_x_cluster_pre*mean_x_cluster_pre + mean_y_cluster_pre*mean_y_cluster_pre);
+    	int high_intensity_cluster_size_threshold = 0;
+    	if (distance_from_robot < 15)
     	{
-    		high_intensity_cluster = true;
-
-    		// save this high intensity cluster into vector A
-    		cylinder current_potential_cylinders_intensity;
-	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
-	        {
-				current_potential_cylinders_intensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
-	            current_potential_cylinders_intensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
-	            current_potential_cylinders_intensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
-	        }	
-			_potential_cylinders_intensity.push_back(current_potential_cylinders_intensity);
+    		high_intensity_cluster_size_threshold = 8;
     	}
-    	else if(high_intensity_counter <= 10 && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
+    	else if (distance_from_robot < 25 && distance_from_robot >= 15)
     	{
-	 	    cylinder current_potential_cylinders_nonintensity;
-	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
-	        {
-				current_potential_cylinders_nonintensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
-				current_potential_cylinders_nonintensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
-				current_potential_cylinders_nonintensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
-	        }
-			_potential_cylinders_nonintensity.push_back(current_potential_cylinders_nonintensity);   		
+    		high_intensity_cluster_size_threshold = 3;
     	}
-    	else
+    	else if (distance_from_robot >= 25)
     	{
-    		//keep blank, just ignore those clusters
+    		high_intensity_cluster_size_threshold = 2;
     	}
-
-    	if(high_intensity_cluster == true && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
+    	
+    	//if(high_intensity_counter > 1 && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) < 3)
+    	if(high_intensity_counter > high_intensity_cluster_size_threshold && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) < 3 )
     	{
     		ROS_INFO_STREAM("The cluser is located at " << mean_x_cluster_pre << ", " << mean_y_cluster_pre);
 

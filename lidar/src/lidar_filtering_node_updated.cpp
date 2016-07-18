@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 	{
 		if(lidar_filter.newPointCloudAvailable())
 		{
-			ROS_INFO_STREAM("New cloud is available");
+			//ROS_INFO_STREAM("New cloud is available");
 
 			if (low_sampling_freq == true)
 			{
@@ -32,8 +32,8 @@ int main(int argc, char **argv)
 			else if(low_sampling_freq == false)
 			{
 				lidar_filter.doMathMapping();
-				lidar_filter.doMathHoming();
-				//lidar_filter.doLongDistanceHoming();
+				//lidar_filter.doMathHoming();
+				lidar_filter.doLongDistanceHoming();
 			}
 		}
 		lidar_filter.packLocalMapMessage(msg_LocalMap);

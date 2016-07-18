@@ -110,7 +110,7 @@ private:
 	pcl::PointCloud<pcl::PointXYZI> _piece_two;
 
 	//mapping function
-	const int map_range = 40; //
+	const int map_range = 60; //
 	const float grid_size = 1; // size of the local map grid
 	const float threshold_tree_height = 10.0; // above which the points will be disgarded
 	std::vector<std::vector<float> > _local_grid_map; // local grid map without grond adjacent infomation
@@ -129,7 +129,7 @@ private:
 	std::vector<cylinder> _potential_cylinders_nonintensity;
 	std::vector<cylinder> _potential_cylinders_intensity;
 
-	const float home_detection_range = 15.0;
+	const float home_detection_range = 60.0;
 	float _homing_x = 0;
 	float _homing_y = 0;
 	float _homing_heading = 0;
