@@ -11,6 +11,8 @@
 #include <messages/NavFilterOut.h>
 #include <messages/NavFilterControl.h>
 
+#include <messages/HSMSetNorthAngle.h>
+
 #define ON_SERIVCE_FAILURE_RETURN_PAUSE 3
 #define NAV_INFO_MIN_PUB_TIME 1.00
 
@@ -38,6 +40,9 @@ private:
     boost::shared_ptr<ros::NodeHandle> nh;
     ros::ServiceClient navControlClient;
     messages::NavFilterOut lastNavMsg;
+
+    ros::ServiceClient hsmNAControlClient;
+    messages::HSMSetNorthAngle lastHSMNAMsg;
 
     ros::Time navInfoTime;
     bool navInfoSubStarted;

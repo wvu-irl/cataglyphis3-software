@@ -9,6 +9,19 @@ bool Avoid::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        avoidCount++;
+        if(avoidCount > maxAvoidCount)
+        {
+            //ROS_INFO("avoid count limit reached");
+            sendDequeClearFront();
+            dequeClearFront = false;
+            avoidCount = 0;
+            avoidLockout = true;
+            procsBeingExecuted[procType] = false;
+            procsToExecute[procType] = false;
+            state = _init_;
+            break;
+        }
         computeDriveSpeeds();
 		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
 		intermediateWaypointsSrv.request.collision = collisionMsg.collision;
@@ -39,8 +52,10 @@ bool Avoid::runProc()
             {
                 sendDequeClearFront();
                 dequeClearFront = false;
+                ROS_INFO("avoid dequeClearFront true");
             }
             sendDriveGlobal(true);
+            //ROS_INFO("avoid sendDriveGlobal(front)");
 
 		}
 		state = _exec_;
@@ -55,7 +70,7 @@ bool Avoid::runProc()
 		break;
 	case _interrupt_:
 		avoidLockout = false;
-		procsBeingExecuted[procType] = false;
+        procsBeingExecuted[procType] = true;
 		procsToInterrupt[procType] = false;
         dequeClearFront = true;
 		state = _init_;

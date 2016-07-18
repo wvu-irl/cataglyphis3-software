@@ -4,7 +4,6 @@ SearchRegion::SearchRegion()
 {
 	roiTimer = nh.createTimer(ros::Duration(480.0), &SearchRegion::roiTimeExpiredCallback_, this); // 480 sec == 8 min; implement smarter way to compute
 	roiTimer.stop();
-	roiTimeExpired = false;
 }
 
 bool SearchRegion::runProc()
@@ -18,6 +17,9 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+		avoidCount = 0;
+		prevAvoidCountDecXPos = robotStatus.xPos;
+		prevAvoidCountDecYPos = robotStatus.yPos;
 		examineCount = 0;
 		confirmCollectFailedCount = 0;
 		if(!roiKeyframed) // check if ROI is not yet keyframed
@@ -37,11 +39,12 @@ bool SearchRegion::runProc()
 		}
 		if(roiTimeExpired)
 		{
+			roiTimeExpired = false;
 			roiTimer.stop();
 			// Set ROI to searched
 			modROISrv.request.setSearchedROI = true;
 			modROISrv.request.searchedROIState = true;
-			modROISrv.request.numSearchedROI = currentROIIndex;
+			modROISrv.request.modROIIndex = currentROIIndex;
 			modROISrv.request.addNewROI = false;
 			if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
 			else ROS_ERROR("modify ROI service call unsuccessful");
@@ -77,6 +80,7 @@ bool SearchRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		computeDriveSpeeds();
+		serviceAvoidCounterDecrement();
 		if(possibleSample || definiteSample && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
 			sendDequeClearAll();
@@ -86,7 +90,6 @@ bool SearchRegion::runProc()
 		else state = _exec_; // Not finished, keep executing.
 		break;
 	case _interrupt_:
-		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		state = _exec_;
@@ -108,7 +111,7 @@ void SearchRegion::roiTimeExpiredCallback_(const ros::TimerEvent &event)
 
 void SearchRegion::chooseRandomWaypoints_()
 {
-	randomSearchWaypointsSrv.request.numSeachWaypoints = numRandomWaypoints;
+	randomSearchWaypointsSrv.request.numSearchWaypoints = numRandomWaypoints;
 	if(randomSearchWaypointsClient.call(randomSearchWaypointsSrv))
 	{
 		ROS_DEBUG("randomSearchWaypoints service call successful");

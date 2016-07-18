@@ -96,6 +96,9 @@ public:
 	grid_map::GridMap searchLocalMap;
 	int searchLocalMapROINum;
 	bool searchLocalMapExists;
+	float searchLocalMapXPos;
+	float searchLocalMapYPos;
+	float searchLocalMapHeading;
 	grid_map::Polygon globalMapPathHazardsPolygon;
 	std::vector<grid_map::Position> globalMapPathHazardsVertices;
 	float globalMapPathHazardsPolygonHeading;

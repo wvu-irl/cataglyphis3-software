@@ -18,10 +18,13 @@ MissionPlanning::MissionPlanning()
     hsmMasterStatusSub = nh.subscribe<messages::MasterStatus>("hsm/masterexecutive/masterstatus", 1, &MissionPlanning::hsmMasterStatusCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
+    controlServ = nh.advertiseService("/control/missionplanning/control", &MissionPlanning::controlCallback_, this);
+    infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
     driveSpeedsPub = nh.advertise<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1);
     collisionInterruptTrigger = false;
     escapeCondition = false;
     inSearchableRegion = false;
+    roiTimeExpired = false;
     possessingSample = false;
     possibleSample = false;
     definiteSample = false;
@@ -37,9 +40,12 @@ MissionPlanning::MissionPlanning()
     pauseStarted = false;
     robotStatus.pauseSwitch = true;
     execDequeEmpty = true;
-    avoidLockout = false;
+    avoidLockout = true;
     escapeLockout = false;
     roiKeyframed = false;
+    avoidCount = 0;
+    prevAvoidCountDecXPos = robotStatus.xPos;
+    prevAvoidCountDecYPos = robotStatus.yPos;
     execLastProcType = __depositSample__;
     execLastSerialNum = 99;
     allocatedROITime = 480.0; // sec == 8 min
@@ -67,6 +73,9 @@ MissionPlanning::MissionPlanning()
     driveSpeedsMsgPrev.vMax = 0.0;
     driveSpeedsMsgPrev.rMax = 0.0;
     driveSpeedsPub.publish(driveSpeedsMsg);
+    infoMsg.procsToExecute.resize(NUM_PROC_TYPES,0);
+    infoMsg.procsToInterrupt.resize(NUM_PROC_TYPES,0);
+    infoMsg.procsBeingExecuted.resize(NUM_PROC_TYPES,0);
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -97,16 +106,19 @@ void MissionPlanning::run()
     ROS_INFO("expectedSampleDistance = %f",expectedSampleDistance);
     ROS_INFO("expectedSampleAngle = %f",expectedSampleAngle);*/
 
+    ROS_INFO_THROTTLE(3,"Mission Planning running...");
     evalConditions_();
     //ROS_DEBUG("after evalConditions");
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch) runPause_();
     else runProcesses_();
-    std::printf("\n");
+    packAndPubInfoMsg_();
+    //std::printf("\n");
 }
 
 void MissionPlanning::evalConditions_()
 {
+    int temp;
     if(multiProcLockout)
     {
         multiProcLockout = true;
@@ -115,12 +127,13 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        /*ROS_INFO("=========================================");
+        ROS_INFO("=========================================");
         ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
         ROS_INFO("avoidLockout = %i",avoidLockout);
         ROS_INFO("inSearchableRegion = %i",inSearchableRegion);
+        ROS_INFO("roiTimeExpired = %i",roiTimeExpired);
         ROS_INFO("possessingSample = %i",possessingSample);
         ROS_INFO("possibleSample = %i",possibleSample);
         ROS_INFO("definiteSample = %i",definiteSample);
@@ -128,74 +141,126 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("sampleInCollectPosition = %i",sampleInCollectPosition);
         ROS_INFO("confirmedPossession = %i",confirmedPossession);
         ROS_INFO("atHome = %i",atHome);
-        ROS_INFO("inDepositPosition = %i",inDepositPosition);*/
+        ROS_INFO("inDepositPosition = %i",inDepositPosition);
+        ROS_INFO("avoidCount = %u",avoidCount);
+        ROS_INFO("turnFlag = %i",execInfoMsg.turnFlag);
+        ROS_INFO("stopFlag = %i",execInfoMsg.stopFlag);
+        ROS_INFO("execDequeSize = %u",execInfoMsg.actionDequeSize);
+        std::printf("actionDeque: (");
+        for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%i,",execInfoMsg.actionDeque[i]);
+        std::printf(")\n");
+        std::printf("actionFloat1: (");
+        for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat1[i]);
+        std::printf(")\n");
+        std::printf("actionFloat2: (");
+        for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
+        std::printf(")\n");
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
-        calcNumProcsBeingExec_();
+        calcnumProcsBeingOrToBeExec_();
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
         {
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape");}
             else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape");}
         }
-        //calcNumProcsBeingExec_();
+        //calcnumProcsBeingOrToBeExec_();
         if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
         {
+            shouldExecuteAvoidManeuver = true;
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             procsToInterrupt[__avoid__] = false;
-            if(procsToInterrupt[__emergencyEscape__]) avoid.dequeClearFront = true;
-            if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid");}
-            else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid");}
+            if(procsToInterrupt[__emergencyEscape__]) avoid.dequeClearFront = true; // If avoid occured during emergency escape, just treat the avoid maneuver as the offset drive in emergency escape
+            if(procsToInterrupt[__nextBestRegion__] || procsToInterrupt[__searchRegion__] || procsToInterrupt[__goHome__]) // If avoid occured while driving to a waypoint globally (which occurs in these procedures), check if the remaining distance to the waypoint is small enough to just end the drive there
+            {
+                ROS_INFO("was executing proc with driveGlobal");
+                if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[0]) == _driveGlobal)
+                {
+                    ROS_INFO("was executing driveGlobal");
+                    avoidRemainingWaypointDistance = hypot(execInfoMsg.actionFloat1[0] - robotStatus.xPos, execInfoMsg.actionFloat2[0] - robotStatus.yPos);
+                    ROS_INFO("avoidRemainingWaypointDistance = %f",avoidRemainingWaypointDistance);
+                    if(avoidRemainingWaypointDistance <= minAvoidRemainingWaypointDistance)
+                    {
+                        ROS_INFO("closer than avoid remaining waypoint distance. End drive here");
+                        avoid.sendDequeClearFront();
+                        shouldExecuteAvoidManeuver = false;
+                        avoidLockout = true;
+                    }
+                }
+                /*robotStatus.pauseSwitch = true;
+                pause.sendPause();
+                std::cout << "press enter to continue" << std::endl;
+                std::cin >> temp;
+                robotStatus.pauseSwitch = false;
+                pause.sendUnPause();*/
+            }
+            if(shouldExecuteAvoidManeuver)
+            {
+                if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid");}
+                else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid");}
+            }
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Next Best Region
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
+            /*robotStatus.pauseSwitch = true;
+            pause.sendPause();
+            std::cout << "press enter to continue" << std::endl;
+            std::cin >> temp;
+            robotStatus.pauseSwitch = false;
+            pause.sendUnPause();*/
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Search Region
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
+            /*robotStatus.pauseSwitch = true;
+            pause.sendPause();
+            std::cout << "press enter to continue" << std::endl;
+            std::cin >> temp;
+            robotStatus.pauseSwitch = false;
+            pause.sendUnPause();*/
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Examine
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Approach
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Collect
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && !confirmedPossession && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Confirm Collect
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && !atHome && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Go Home
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && !atHome && !escapeCondition && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Deposit Approach
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
         }
-        //calcNumProcsBeingExec_();
-        if(numProcsBeingExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && collisionMsg.collision==0 && !escapeCondition && !missionEnded) // Deposit Sample
+        //calcnumProcsBeingOrToBeExec_();
+        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !escapeCondition && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
@@ -238,12 +303,12 @@ void MissionPlanning::runPause_()
     pauseStarted = true;
 }
 
-void MissionPlanning::calcNumProcsBeingExec_()
+void MissionPlanning::calcnumProcsBeingOrToBeExec_()
 {
-    numProcsBeingExec = 0;
+    numProcsBeingOrToBeExec = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++) 
     {
-        if(procsBeingExecuted[i]) numProcsBeingExec++;
+        if(procsBeingExecuted[i] || procsToExecute[i]) numProcsBeingOrToBeExec++;
     }
 }
 
@@ -256,6 +321,40 @@ void MissionPlanning::updateSampleFlags_()
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= possibleSampleConfThresh) possibleSample = true;
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= definiteSampleConfThresh) definiteSample = true;
     }
+}
+
+void MissionPlanning::packAndPubInfoMsg_()
+{
+    infoMsg.pause = robotStatus.pauseSwitch;
+    infoMsg.escapeCondition = escapeCondition;
+    infoMsg.escapeLockout = escapeLockout;
+    infoMsg.collisionCondition = collisionMsg.collision;
+    infoMsg.avoidLockout = avoidLockout;
+    infoMsg.inSearchableRegion = inSearchableRegion;
+    infoMsg.roiTimeExpired = roiTimeExpired;
+    infoMsg.possessingSample = possessingSample;
+    infoMsg.possibleSample = possibleSample;
+    infoMsg.definiteSample = definiteSample;
+    infoMsg.sampleInCollectPosition = sampleInCollectPosition;
+    infoMsg.confirmedPossession = confirmedPossession;
+    infoMsg.atHome = atHome;
+    infoMsg.inDepositPosition = inDepositPosition;
+    infoMsg.samplesCollected = samplesCollected;
+    infoMsg.avoidCount = avoidCount;
+    infoMsg.examineCount = examineCount;
+    infoMsg.backupCount = backUpCount;
+    infoMsg.confirmCollectFailedCount = confirmCollectFailedCount;
+    infoMsg.roiKeyframed = roiKeyframed;
+    infoMsg.stopFlag = execInfoMsg.stopFlag;
+    infoMsg.turnFlag = execInfoMsg.turnFlag;
+    for(int i=0; i<NUM_PROC_TYPES; i++)
+    {
+        infoMsg.procsToExecute.at(i) = procsToExecute[i];
+        infoMsg.procsToInterrupt.at(i) = procsToInterrupt[i];
+        infoMsg.procsBeingExecuted.at(i) = procsBeingExecuted[i];
+    }
+    infoMsg.missionEnded = missionEnded;
+    infoPub.publish(infoMsg);
 }
 
 void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
@@ -309,4 +408,76 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
 bool MissionPlanning::emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res)
 {
     escapeCondition = req.escapeCondition;
+    return true;
+}
+
+bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res)
+{
+    escapeCondition = req.escapeCondition;
+    escapeLockout = req.escapeLockout;
+    inSearchableRegion = req.inSearchableRegion;
+    roiTimeExpired = req.roiTimeExpired;
+    possessingSample = req.possessingSample;
+    possibleSample = req.possibleSample;
+    definiteSample = req.definiteSample;
+    sampleInCollectPosition = req.sampleInCollectPosition;
+    confirmedPossession = req.confirmedPossession;
+    atHome = req.atHome;
+    inDepositPosition = req.inDepositPosition;
+    samplesCollected = req.samplesCollected;
+    avoidCount = req.avoidCount;
+    examineCount = req.examineCount;
+    backUpCount = req.backupCount;
+    confirmCollectFailedCount = req.confirmCollectFailedCount;
+    roiKeyframed = req.roiKeyframed;
+    for(int i=0; i<req.numProcs; i++)
+    {
+        procsToExecute[i] = req.procsToExecute.at(i);
+        procsToInterrupt[i] = req.procsToInterrupt.at(i);
+        procsBeingExecuted[i] = req.procsBeingExecuted.at(i);
+    }
+    missionEnded = req.missionEnded;
+    if(req.setProcState)
+    {
+        switch(static_cast<PROC_TYPES_T>(req.setProcStateIndex)) // If PROC_TYPES_T enum is ever edited, edit this as well
+        {
+        case __emergencyEscape__:
+            emergencyEscape.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __avoid__:
+            avoid.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __nextBestRegion__:
+            nextBestRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __searchRegion__:
+            searchRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __examine__:
+            examine.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __approach__:
+            approach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __collect__:
+            collect.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __confirmCollect__:
+            confirmCollect.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __goHome__:
+            goHome.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __depositApproach__:
+            depositApproach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __depositSample__:
+            depositSample.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __pause__:
+            pause.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        }
+    }
+    return true;
 }

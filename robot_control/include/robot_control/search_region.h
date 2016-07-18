@@ -7,7 +7,6 @@ class SearchRegion : public Procedure
 public:
 	// Members
 	ros::NodeHandle nh;
-	bool roiTimeExpired;
 	bool allWaypointsVisited;
 	ros::Timer roiTimer;
 	const int numRandomWaypoints = 5;

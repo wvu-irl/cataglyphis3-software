@@ -3,12 +3,15 @@
 void Idle::init()
 {
     clearDeques();
-	visionHalt.init();
+    visionHalt.init();
 }
 
 int Idle::run()
 {
-	driveHalt.run();
+    driveHalt.run();
 	grabberIdle.run();
-	visionHalt.run();
+    visionHalt.run();
+    if(driveDeque.empty()) driveDequeEmptyPrev = 1;
+    if(grabberDeque.empty()) grabberDequeEmptyPrev = 1;
+    if(visionDeque.empty()) visionDequeEmptyPrev = 1;
 }

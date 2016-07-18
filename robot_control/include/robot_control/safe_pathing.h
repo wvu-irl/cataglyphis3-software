@@ -21,6 +21,7 @@ public:
 	robot_control::Waypoint transitionWaypoint2;
 	robot_control::Waypoint transitionWaypoint3;
 	const float transitionWaypointRadius = 30.0; // m
+	const float minCollisionDistance = 2.0; // m
 	float startRadialDistance;
 	float finishRadialDistance;
 };

@@ -5,4 +5,5 @@ float32 y
 float32 radialAxis
 float32 tangentialAxis
 float32 sampleProb
+float32 sampleSig
 bool searched

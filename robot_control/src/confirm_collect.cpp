@@ -42,8 +42,9 @@ bool ConfirmCollect::runProc()
                 // Set ROI to searched
                 modROISrv.request.setSearchedROI = true;
                 modROISrv.request.searchedROIState = true;
-                modROISrv.request.numSearchedROI = currentROIIndex;
+                modROISrv.request.modROIIndex = currentROIIndex;
                 modROISrv.request.addNewROI = false;
+                modROISrv.request.deleteROI = false;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
                 roiKeyframed = false;

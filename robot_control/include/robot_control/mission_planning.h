@@ -6,6 +6,8 @@
 #include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
 #include <messages/EmergencyEscapeTrigger.h>
+#include <messages/MissionPlanningInfo.h>
+#include <messages/MissionPlanningControl.h>
 #include "emergency_escape.h"
 #include "avoid.h"
 #include "next_best_region.h"
@@ -28,11 +30,14 @@ public:
 	void run();
 	// Members
 	ros::NodeHandle nh;
+	ros::Publisher infoPub;
 	ros::Subscriber poseSub;
 	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
 	ros::ServiceServer emergencyEscapeServ;
+	ros::ServiceServer controlServ;
+	messages::MissionPlanningInfo infoMsg;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
 	EmergencyEscape emergencyEscape;
@@ -50,20 +55,23 @@ public:
 
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
-	unsigned int numProcsBeingExec;
+	unsigned int numProcsBeingOrToBeExec;
 	bool multiProcLockout;
 	unsigned int lockoutSum;
 	bool initComplete;
 	bool pauseStarted;
 	const float homeX = 5.0; // m
 	const float homeY = 0.0; // m
-	const float collisionDistanceThresh = 5.0; // m
+	float avoidRemainingWaypointDistance;
+	const float minAvoidRemainingWaypointDistance = 2.0; // m
+	bool shouldExecuteAvoidManeuver;
 private:
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
-	void calcNumProcsBeingExec_();
+	void calcnumProcsBeingOrToBeExec_();
 	void updateSampleFlags_();
+	void packAndPubInfoMsg_();
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
@@ -73,6 +81,7 @@ private:
 	void lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr& msg);
 	void hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
+	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
 };
 
 #endif // MISSION_PLANNING_H

@@ -14,6 +14,7 @@ public:
     std::vector<robot_control::Waypoint>::iterator intermWaypointsIt;
     int initNumWaypointsToTravel;
 	int totalIntermWaypoints;
+	bool dequeClearFront = false;
     // Methods
     void reg(PROC_TYPES_T procTypeIn);
     bool run();
@@ -33,6 +34,7 @@ public:
 	void computeExpectedSampleLocation();
 	void findHighestConfSample();
 	void computeDriveSpeeds();
+	void serviceAvoidCounterDecrement();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -59,7 +61,7 @@ void Procedure::clearAndResizeWTT()
 
 void Procedure::callIntermediateWaypoints()
 {
-	intermediateWaypointsSrv.request.collision = collisionMsg.collision;
+	intermediateWaypointsSrv.request.collision = false;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
 	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
@@ -333,6 +335,7 @@ void Procedure::sendOpen()
 void Procedure::sendDequeClearFront()
 {
 	this->serialNum++;
+	execActionSrv.request.nextActionType = 0;
 	execActionSrv.request.newActionFlag = 0;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = false;
@@ -361,6 +364,7 @@ void Procedure::sendDequeClearFront()
 void Procedure::sendDequeClearAll()
 {
 	this->serialNum++;
+	execActionSrv.request.nextActionType = 0;
 	execActionSrv.request.newActionFlag = 0;
 	execActionSrv.request.pushToFrontFlag = false;
 	execActionSrv.request.clearDequeFlag = true;
@@ -444,6 +448,16 @@ void Procedure::computeDriveSpeeds()
 	if((driveSpeedsMsg.vMax != driveSpeedsMsgPrev.vMax) || (driveSpeedsMsg.rMax != driveSpeedsMsgPrev.rMax)) driveSpeedsPub.publish(driveSpeedsMsg);
 	driveSpeedsMsgPrev.vMax = driveSpeedsMsg.vMax;
 	driveSpeedsMsgPrev.rMax = driveSpeedsMsg.rMax;
+}
+
+void Procedure::serviceAvoidCounterDecrement()
+{
+	if(hypot(robotStatus.xPos - prevAvoidCountDecXPos, robotStatus.yPos - prevAvoidCountDecYPos) > metersPerAvoidCountDecrement)
+	{
+		if(avoidCount > 0) avoidCount--;
+		prevAvoidCountDecXPos = robotStatus.xPos;
+		prevAvoidCountDecYPos = robotStatus.yPos;
+	}
 }
 
 #endif // PROCEDURE_H

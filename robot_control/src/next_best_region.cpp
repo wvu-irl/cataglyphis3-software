@@ -10,6 +10,9 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         execDequeEmpty = false;
+        avoidCount = 0;
+        prevAvoidCountDecXPos = robotStatus.xPos;
+        prevAvoidCountDecYPos = robotStatus.yPos;
         examineCount = 0;
         confirmCollectFailedCount = 0;
         // Delete search local map in case region was exited without a successful sample collection
@@ -43,7 +46,8 @@ bool NextBestRegion::runProc()
         roiSearchedSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
-            roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb -
+            roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
+                        sampleSigGain*regionsOfInterestSrv.response.ROIList.at(i).sampleSig -
 						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
                                            regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos) -
 						terrainGain*terrainHazard.at(i));
@@ -76,8 +80,9 @@ bool NextBestRegion::runProc()
             {
 				modROISrv.request.setSearchedROI = true;
 				modROISrv.request.searchedROIState = false;
-				modROISrv.request.numSearchedROI = i;
+                modROISrv.request.modROIIndex = i;
                 modROISrv.request.addNewROI = false;
+                modROISrv.request.deleteROI = false;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
             }
@@ -98,6 +103,7 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         computeDriveSpeeds();
+        serviceAvoidCounterDecrement();
 		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         if(waypointsToTravel.at(0).searchable)
         {
@@ -111,7 +117,6 @@ bool NextBestRegion::runProc()
         }
         break;
     case _interrupt_:
-		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
 		state = _exec_;
@@ -123,8 +128,9 @@ bool NextBestRegion::runProc()
             // ************************ THIS IS TEMPORARY TO ALLOW FOR DRIVING WITHOUT SEARCHING
             modROISrv.request.setSearchedROI = true;
             modROISrv.request.searchedROIState = true;
-            modROISrv.request.numSearchedROI = bestROINum;
+            modROISrv.request.modROIIndex = bestROINum;
             modROISrv.request.addNewROI = false;
+            modROISrv.request.deleteROI = false;
             if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
             else ROS_ERROR("modify ROI service call unsuccessful");
             // ********************************************

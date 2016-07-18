@@ -26,8 +26,7 @@
 #define RAD2DEG 180.0/PI
 #define NUM_PROC_TYPES 11
 #define MAX_SAMPLES 10
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
-//enum PROC_TYPES_T {avoid__, returnHome__, deposit__, acquire__, examine__, planRegionPath__, chooseRegion__, init__, pause__};
+enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__}; // If this is ever edited, edit controlCallback_ as well
 
 class MissionPlanningProcessShare
 {
@@ -82,6 +81,7 @@ public:
 	static int currentROIIndex;
 	static bool escapeCondition;
 	static bool inSearchableRegion;
+	static bool roiTimeExpired;
 	static bool possessingSample;
 	static bool possibleSample;
 	static bool definiteSample;
@@ -91,10 +91,15 @@ public:
 	static bool atHome;
 	static bool inDepositPosition;
 	static bool missionEnded;
-	static int samplesCollected;
+	static unsigned int samplesCollected;
 	static bool avoidLockout;
 	static bool escapeLockout;
 	static bool roiKeyframed;
+	static unsigned int avoidCount;
+	const unsigned int maxAvoidCount = 5;
+	const float metersPerAvoidCountDecrement = 5.0;
+	static float prevAvoidCountDecXPos;
+	static float prevAvoidCountDecYPos;
 	static unsigned int numSampleCandidates;
 	static std::vector<float> sampleValues;
 	static float bestSampleValue;
@@ -104,9 +109,9 @@ public:
 	static float expectedSampleAngle;
 	static messages::CVSampleProps highestConfSample;
 	static float allocatedROITime; // sec
-	static int examineCount;
-	static int backUpCount;
-	static int confirmCollectFailedCount;
+	static unsigned int examineCount;
+	static unsigned int backUpCount;
+	static unsigned int confirmCollectFailedCount;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 1.0;
 	const float defaultVMax = 1.2; // m/s
@@ -158,6 +163,7 @@ messages::CVSampleProps MissionPlanningProcessShare::bestSample;
 int MissionPlanningProcessShare::currentROIIndex;
 bool MissionPlanningProcessShare::escapeCondition;
 bool MissionPlanningProcessShare::inSearchableRegion;
+bool MissionPlanningProcessShare::roiTimeExpired;
 bool MissionPlanningProcessShare::possessingSample;
 bool MissionPlanningProcessShare::possibleSample;
 bool MissionPlanningProcessShare::definiteSample;
@@ -167,10 +173,13 @@ bool MissionPlanningProcessShare::confirmedPossession;
 bool MissionPlanningProcessShare::atHome;
 bool MissionPlanningProcessShare::inDepositPosition;
 bool MissionPlanningProcessShare::missionEnded;
-int MissionPlanningProcessShare::samplesCollected;
+unsigned int MissionPlanningProcessShare::samplesCollected;
 bool MissionPlanningProcessShare::avoidLockout;
 bool MissionPlanningProcessShare::escapeLockout;
 bool MissionPlanningProcessShare::roiKeyframed;
+unsigned int MissionPlanningProcessShare::avoidCount;
+float MissionPlanningProcessShare::prevAvoidCountDecXPos;
+float MissionPlanningProcessShare::prevAvoidCountDecYPos;
 unsigned int MissionPlanningProcessShare::numSampleCandidates;
 std::vector<float> MissionPlanningProcessShare::sampleValues;
 float MissionPlanningProcessShare::bestSampleValue;
@@ -180,8 +189,8 @@ float MissionPlanningProcessShare::expectedSampleDistance;
 float MissionPlanningProcessShare::expectedSampleAngle;
 messages::CVSampleProps MissionPlanningProcessShare::highestConfSample;
 float MissionPlanningProcessShare::allocatedROITime;
-int MissionPlanningProcessShare::examineCount;
-int MissionPlanningProcessShare::backUpCount;
-int MissionPlanningProcessShare::confirmCollectFailedCount;
+unsigned int MissionPlanningProcessShare::examineCount;
+unsigned int MissionPlanningProcessShare::backUpCount;
+unsigned int MissionPlanningProcessShare::confirmCollectFailedCount;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

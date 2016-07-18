@@ -51,7 +51,8 @@ Exec::Exec()
 
 void Exec::run()
 {
-    if(clearDequeFlag_) actionDeque_.clear(); // Clear deque
+    ROS_INFO_THROTTLE(3,"Exec running...");
+    if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.clearDeques();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
     {
@@ -68,7 +69,7 @@ void Exec::run()
         actionPoolIndex_[nextActionType_]++; // Increment the action pool index of the action type just pushed
         if(actionPoolIndex_[nextActionType_]>=ACTION_POOL_SIZE) actionPoolIndex_[nextActionType_] = 0; // If pool index has wrapped around, restart at 0
     }
-	if(pause_==true && pausePrev_==false) pauseIdle_.visionHalt.init(); // Call vision empty halt init to record camera location for halt
+    if(pause_==true && pausePrev_==false) pauseIdle_.driveHalt.init(); // Call init on driveHalt to begin possible drive hold
 	if(pause_) pauseIdle_.run(); // If pause switch is true, run pause action
     else // Else, run actions from deque
     {
@@ -90,12 +91,14 @@ void Exec::run()
                 if(actionDeque_.empty()==0) {actionDeque_.front()->init(); execActionEndedMsgOut_.dequeEmpty = false;}
                 else execActionEndedMsgOut_.dequeEmpty = true;
                 actionEndedPub.publish(execActionEndedMsgOut_);
+                currentActionDone_ = 0;
             }
 			if(actionDeque_.empty()==0) currentActionDone_ = actionDeque_.front()->run();
 			else currentActionDone_ = 0;
         }
     }
     clearDequeFlag_ = false;
+    clearFrontFlag_ = false;
     newActionFlag_ = false;
     pushToFrontFlag_ = false;
 	pausePrev_ = pause_;
@@ -103,14 +106,14 @@ void Exec::run()
 	packInfoMsgOut_();
 	actuatorPub.publish(actuatorMsgOut_);
 	infoPub.publish(execInfoMsgOut_);
-    execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
+    /*execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
     ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
     for(int i=0; i<NUM_ACTIONS; i++) ROS_INFO("actionPoolIndex[%i] = %i",i,actionPoolIndex_[i]);
     for(int i=0; i<NUM_TASKS; i++) ROS_INFO("taskPoolIndex[%i] = %i",i,pauseIdle_.taskPoolIndex[i]);
     ROS_INFO("actionDeque size = %u",actionDeque_.size());
     ROS_INFO("driveDeque size = %u",pauseIdle_.driveDeque.size());
     ROS_INFO("grabberDeque size = %u",pauseIdle_.grabberDeque.size());
-    ROS_INFO("visionDeque size = %u\n",pauseIdle_.visionDeque.size());
+    ROS_INFO("visionDeque size = %u\n",pauseIdle_.visionDeque.size());*/
 }
 
 bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res)
@@ -138,7 +141,8 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.bool8 = req.bool8;
     params_.procType = static_cast<PROC_TYPES_T>(req.procType);
     params_.serialNum = req.serialNum;
-	ROS_INFO("ACTION CALLBACK, float1 = %f, float2 = %f",params_.float1,params_.float2);
+    ROS_INFO("ACTION CALLBACK,\n\t nextActionType = %i,\n\t newActionFlag = %i,\n\t pushToFrontFlag = %i,\n\t clearDequeFlag = %i,\n\t clearFrontFlag = %i,\n\t pause = %i,\n\t float1 = %f,\n\t float2 = %f",
+             nextActionType_, newActionFlag_, pushToFrontFlag_, clearDequeFlag_, clearFrontFlag_, pause_, params_.float1,params_.float2);
     return true;
 }
 

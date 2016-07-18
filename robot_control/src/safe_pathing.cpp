@@ -26,6 +26,10 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 {
 	intermediateWaypoints.clear();
 
+    if(req.collision!=0 && req.collisionDistance<minCollisionDistance) // Check if collision distance is less than the minimum. If it is, set it to the minimum.
+    {
+        req.collisionDistance = minCollisionDistance;
+    }
 	if(req.collision==1) //object on left
 	{
 		const float turn_angle = 30; //turn 30 degrees (to right)

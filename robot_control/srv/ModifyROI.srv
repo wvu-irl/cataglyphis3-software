@@ -1,6 +1,21 @@
+uint32 modROIIndex
 bool setSearchedROI
 bool searchedROIState
-uint32 numSearchedROI
+bool setPosES
+float32 e
+float32 s
+bool setPosXY
+float32 x
+float32 y
+bool setROISize
+float32 radialAxis
+float32 tangentialAxis
+bool setSampleProps
+float32 sampleProb
+float32 sampleSig
 bool addNewROI
+bool newROIInESNotXY
 ROI newROI
+bool deleteROI
+uint32 numDeleteROI
 ---
