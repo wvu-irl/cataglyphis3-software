@@ -29,7 +29,7 @@ QT_BEGIN_NAMESPACE
 class Ui_init_step_one
 {
 public:
-    QWidget *widget;
+    QWidget *layoutWidget;
     QVBoxLayout *verticalLayout_3;
     QHBoxLayout *horizontalLayout_2;
     QVBoxLayout *verticalLayout_2;
@@ -60,17 +60,17 @@ public:
         sizePolicy.setHeightForWidth(init_step_one->sizePolicy().hasHeightForWidth());
         init_step_one->setSizePolicy(sizePolicy);
         init_step_one->setMinimumSize(QSize(448, 188));
-        widget = new QWidget(init_step_one);
-        widget->setObjectName(QStringLiteral("widget"));
-        widget->setGeometry(QRect(10, 10, 425, 167));
-        verticalLayout_3 = new QVBoxLayout(widget);
+        layoutWidget = new QWidget(init_step_one);
+        layoutWidget->setObjectName(QStringLiteral("layoutWidget"));
+        layoutWidget->setGeometry(QRect(10, 10, 425, 167));
+        verticalLayout_3 = new QVBoxLayout(layoutWidget);
         verticalLayout_3->setObjectName(QStringLiteral("verticalLayout_3"));
         verticalLayout_3->setContentsMargins(0, 0, 0, 0);
         horizontalLayout_2 = new QHBoxLayout();
         horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
         verticalLayout_2 = new QVBoxLayout();
         verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
-        input_NA_label = new QLabel(widget);
+        input_NA_label = new QLabel(layoutWidget);
         input_NA_label->setObjectName(QStringLiteral("input_NA_label"));
         QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
         sizePolicy1.setHorizontalStretch(0);
@@ -81,7 +81,7 @@ public:
 
         verticalLayout_2->addWidget(input_NA_label);
 
-        input_NA_spinbox = new QDoubleSpinBox(widget);
+        input_NA_spinbox = new QDoubleSpinBox(layoutWidget);
         input_NA_spinbox->setObjectName(QStringLiteral("input_NA_spinbox"));
         QSizePolicy sizePolicy2(QSizePolicy::Preferred, QSizePolicy::Fixed);
         sizePolicy2.setHorizontalStretch(0);
@@ -89,6 +89,7 @@ public:
         sizePolicy2.setHeightForWidth(input_NA_spinbox->sizePolicy().hasHeightForWidth());
         input_NA_spinbox->setSizePolicy(sizePolicy2);
         input_NA_spinbox->setMinimumSize(QSize(123, 26));
+        input_NA_spinbox->setMaximum(360);
 
         verticalLayout_2->addWidget(input_NA_spinbox);
 
@@ -101,7 +102,7 @@ public:
 
         verticalLayout = new QVBoxLayout();
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
-        current_NA_label = new QLabel(widget);
+        current_NA_label = new QLabel(layoutWidget);
         current_NA_label->setObjectName(QStringLiteral("current_NA_label"));
         sizePolicy2.setHeightForWidth(current_NA_label->sizePolicy().hasHeightForWidth());
         current_NA_label->setSizePolicy(sizePolicy2);
@@ -109,7 +110,7 @@ public:
 
         verticalLayout->addWidget(current_NA_label);
 
-        current_NA_spinbox = new QDoubleSpinBox(widget);
+        current_NA_spinbox = new QDoubleSpinBox(layoutWidget);
         current_NA_spinbox->setObjectName(QStringLiteral("current_NA_spinbox"));
         current_NA_spinbox->setEnabled(true);
         sizePolicy2.setHeightForWidth(current_NA_spinbox->sizePolicy().hasHeightForWidth());
@@ -118,6 +119,7 @@ public:
         current_NA_spinbox->setAlignment(Qt::AlignCenter);
         current_NA_spinbox->setReadOnly(true);
         current_NA_spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+        current_NA_spinbox->setMaximum(360);
 
         verticalLayout->addWidget(current_NA_spinbox);
 
@@ -133,7 +135,7 @@ public:
 
         formLayout_3 = new QFormLayout();
         formLayout_3->setObjectName(QStringLiteral("formLayout_3"));
-        label = new QLabel(widget);
+        label = new QLabel(layoutWidget);
         label->setObjectName(QStringLiteral("label"));
         QSizePolicy sizePolicy3(QSizePolicy::Minimum, QSizePolicy::Preferred);
         sizePolicy3.setHorizontalStretch(0);
@@ -144,7 +146,7 @@ public:
 
         formLayout_3->setWidget(0, QFormLayout::LabelRole, label);
 
-        sunny_day_checkbox = new QCheckBox(widget);
+        sunny_day_checkbox = new QCheckBox(layoutWidget);
         sunny_day_checkbox->setObjectName(QStringLiteral("sunny_day_checkbox"));
         sunny_day_checkbox->setMinimumSize(QSize(16, 16));
 
@@ -159,7 +161,7 @@ public:
 
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        skip_init_button = new QPushButton(widget);
+        skip_init_button = new QPushButton(layoutWidget);
         skip_init_button->setObjectName(QStringLiteral("skip_init_button"));
         QSizePolicy sizePolicy4(QSizePolicy::Fixed, QSizePolicy::Fixed);
         sizePolicy4.setHorizontalStretch(0);
@@ -174,7 +176,7 @@ public:
 
         horizontalLayout->addItem(horizontalSpacer_3);
 
-        continue_button = new QPushButton(widget);
+        continue_button = new QPushButton(layoutWidget);
         continue_button->setObjectName(QStringLiteral("continue_button"));
         sizePolicy4.setHeightForWidth(continue_button->sizePolicy().hasHeightForWidth());
         continue_button->setSizePolicy(sizePolicy4);
@@ -185,10 +187,6 @@ public:
 
         verticalLayout_3->addLayout(horizontalLayout);
 
-        current_NA_label->raise();
-        input_NA_spinbox->raise();
-        current_NA_label->raise();
-        input_NA_label->raise();
 
         retranslateUi(init_step_one);
 
