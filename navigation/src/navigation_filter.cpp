@@ -9,10 +9,10 @@ NavigationFilter::NavigationFilter()
 	turnFlag = false;
 
 	sub_lidar = nh.subscribe("lidar/lidarfilteringout/lidarfilteringout", 1, &NavigationFilter::getLidarFilterOutCallback, this);
-	homing_x=0;
+    /*homing_x=0;
 	homing_y=0;
 	homing_heading=0;
-	homing_found=false;
+    homing_found=false;*/
 
 	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 	filter.set_imu_offset(0,0);
