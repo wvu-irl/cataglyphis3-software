@@ -112,7 +112,7 @@ void Procedure::sendDriveGlobal(bool pushToFront)
         execActionSrv.request.float5 = 0.0;
         execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
-		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool2 = pushToFront;
 		execActionSrv.request.bool3 = false;
 		execActionSrv.request.bool4 = false;
 		execActionSrv.request.bool5 = false;
@@ -204,7 +204,7 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
 	execActionSrv.request.float5 = 0.0;
     execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = endHeadingFlag;
-	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool2 = frontOfDeque;
 	execActionSrv.request.bool3 = false;
 	execActionSrv.request.bool4 = false;
 	execActionSrv.request.bool5 = false;

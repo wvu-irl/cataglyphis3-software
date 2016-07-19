@@ -18,6 +18,7 @@ public:
 	void pushTask(TASK_TYPE_T taskType);
 	int runDeques();
 	void clearDeques();
+	void initDequesFront();
 };
 
 #endif // ACTION_H

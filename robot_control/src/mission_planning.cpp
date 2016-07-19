@@ -166,6 +166,7 @@ void MissionPlanning::evalConditions_()
         //calcnumProcsBeingOrToBeExec_();
         if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
         {
+            ROS_INFO("avoid case");
             shouldExecuteAvoidManeuver = true;
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             procsToInterrupt[__avoid__] = false;
