@@ -1,5 +1,5 @@
 <library path="lib/libhw_interface_plugin_netburner_UDP">
-  <class type="hw_interface_plugins::netburner_UDP" base_class_type="base_classes::base_interface">
+  <class type="hw_interface_plugin_netburner::netburner_UDP" base_class_type="base_classes::base_interface">
     <description>Netburner UDP Interface</description>
   </class>
 </library>

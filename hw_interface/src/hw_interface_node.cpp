@@ -1,6 +1,16 @@
 #include <ros/ros.h>
 #include <hw_interface/hw_interface.hpp>
 
+#include <boost/scoped_ptr.hpp>
+
+void mySigintHandler(int sig)
+{
+    // Do some custom action.
+    // For example, publish a stop message to some other nodes.
+
+    // All the default sigint handler does is call shutdown()
+    ros::shutdown();
+}
 
 int main(int argc, char **argv)
 {
@@ -15,14 +25,21 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ROS_INFO(" - node handle created");
 
-    hw_interface interfaces;
+    //override default ros handler
+  //  signal(SIGINT, mySigintHandler);
+
+    boost::scoped_ptr<hw_interface> hwInterfacePtr(new hw_interface());
     ROS_DEBUG("HW_Interface Obj start");
 
     while(ros::ok())
     {
-        ROS_INFO("Sitting In Main");
-        ros::Duration pause(10);
-        pause.sleep();
+        //This is where monitoring of the interfaces can happen.
+        //Monitoring can also be implemented into the ASIO Thread pool by posting
+            //the monitoring function into the work queue
+        ros::spin();
     }
+
+    hwInterfacePtr.reset();
+    ROS_DEBUG("HW_Interface Closing");
     return 0;
 }

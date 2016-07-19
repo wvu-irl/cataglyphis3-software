@@ -1,0 +1,19 @@
+plugin_names: 
+    {
+        hw_interface_plugin_netburner: netburner_UDP,
+    }
+    
+netburner_UDP:
+    {
+        NB1_UDP : NB1_UDP,
+    }
+    
+NB1_UDP:
+    {
+        remoteAddress           : "192.168.2.122",
+        remotePort              : 9001,
+        localPort               : 9003,
+        checksumType            : "not-full-message-sum",
+    }
+
+

@@ -9,7 +9,7 @@
 
 
 
-namespace hw_interface_plugins {
+namespace hw_interface_plugin_netburner {
 
     class netburner_UDP : public base_classes::base_UDP_interface
     {
@@ -26,7 +26,7 @@ namespace hw_interface_plugins {
 }
 
 
-PLUGINLIB_EXPORT_CLASS(hw_interface_plugins::netburner_UDP, base_classes::base_interface)
+PLUGINLIB_EXPORT_CLASS(hw_interface_plugin_netburner::netburner_UDP, base_classes::base_interface)
 
 
 

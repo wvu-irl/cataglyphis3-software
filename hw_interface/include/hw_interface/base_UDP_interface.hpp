@@ -6,7 +6,6 @@
 
 #include <ros/ros.h>
 
-#include <hw_interface/hw_interface.hpp>
 #include <hw_interface/base_interface.hpp>
 
 #include <boost/bind.hpp>
@@ -46,9 +45,9 @@ namespace base_classes
         virtual bool subPluginInit() = 0;
 
         boost::asio::ip::address localAddress;
-        short localPort;
+        int localPort;
         boost::asio::ip::address remoteAddress;
-        short remotePort;
+        int remotePort;
 
     public:
         bool handleIORequest(const boost::system::error_code &ec, size_t bytesReceived);

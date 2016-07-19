@@ -1,0 +1,12 @@
+<!--NB1 -->
+
+
+<launch>
+    
+    <rosparam
+                command="load"
+                file="$(find hw_interface_plugin_netburner)/launch/launch_params/NB1_launch_params.yaml"
+                subst_value="true"
+    />
+
+</launch>

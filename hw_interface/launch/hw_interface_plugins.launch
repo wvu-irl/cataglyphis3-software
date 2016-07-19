@@ -1,0 +1,10 @@
+
+
+<launch>
+
+    <include file="$(find hw_interface_plugin_netburner)/launch/NB1_Interface.launch" />
+    
+    <include file="$(find hw_interface_plugin_roboteq)/launch/Left_Roboteq_Interface.launch" />
+    <include file="$(find hw_interface_plugin_roboteq)/launch/Right_Roboteq_Interface.launch" />
+
+</launch>

@@ -16,6 +16,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/bind.hpp>
 
+#define NUM_THREADS_PER_PLUGIN 2
+
 namespace interface_worker
 {
     void worker(boost::shared_ptr<boost::asio::io_service> ioService);
@@ -30,13 +32,18 @@ private:
 
     std::vector<boost::shared_ptr<base_classes::base_interface> > interfacePluginVector;
 
+    boost::thread_group interfaceWorkerGroup;
+
     pluginlib::ClassLoader<base_classes::base_interface> pluginLoader;
+
+    bool initPlugin(boost::shared_ptr<base_classes::base_interface> pluginPtr,
+                        std::string pluginName);
 
     void initInterfacePlugins();
     void initThreadPool();
 
 public:
-    boost::thread_group interfaceWorkerGroup;
+
 
     hw_interface();
     hw_interface(int maxNumOfThreads);

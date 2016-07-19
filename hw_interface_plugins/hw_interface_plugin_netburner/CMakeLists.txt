@@ -125,6 +125,7 @@ add_library(hw_interface_plugin_netburner_UDP   src/hw_interface_plugin_netburne
 
 
 add_dependencies(hw_interface_plugin_netburner_UDP ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+                    hw_interface
                     messages_generate_messages)
 
 ## Declare a C++ library

@@ -1,0 +1,17 @@
+plugin_names: 
+    {
+        hw_interface_plugin_roboteq : roboteq_serial,
+    }
+
+roboteq_serial:
+    {
+        Right_Roboteq : Right_Roboteq,
+    }
+
+Right_Roboteq:
+    {
+        deviceName         : "/dev/ttyS1",
+        baudrate           : 115200,
+        topicSubscription  : "/control/actuatorout/all",
+        topicPublisher     : "roboteq/drivemotorin/right",
+    }

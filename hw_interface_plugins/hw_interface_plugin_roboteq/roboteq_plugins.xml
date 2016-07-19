@@ -1,0 +1,5 @@
+<library path="lib/libhw_interface_plugin_roboteq">
+  <class type="hw_interface_plugin_roboteq::roboteq_serial" base_class_type="base_classes::base_interface">
+    <description>Roboteq Serial Interface</description>
+  </class>
+</library>
