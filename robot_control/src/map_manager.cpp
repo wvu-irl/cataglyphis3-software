@@ -25,42 +25,42 @@ MapManager::MapManager()
     srand(time(NULL));
 
     // Temporary ROIs. Rectangle around starting platform
-    /*ROI.e = 8.0;
-    ROI.s = 5.0;
+    ROI.e = 7.0;
+    ROI.s = 7.0;
     ROI.sampleProb = 0.6;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    ROI.e = -8.0;
-    ROI.s = 5.0;
+    ROI.e = -7.0;
+    ROI.s = 7.0;
     ROI.sampleProb = 0.5;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    ROI.e = -8.0;
-    ROI.s = -5.0;
+    ROI.e = -7.0;
+    ROI.s = -7.0;
     ROI.sampleProb = 0.4;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    ROI.e = 8.0;
-    ROI.s = -5.0;
+    ROI.e = 7.0;
+    ROI.s = -7.0;
     ROI.sampleProb = 0.3;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();*/
+    northTransformROIs();
 
     // Temporary ROIs. Search in front of library
-    ROI.e = 35.0826;
+    /*ROI.e = 35.0826;
     ROI.s = 20.9706;
     ROI.sampleProb = 0.6;
     ROI.sampleSig = 10.0;
@@ -148,7 +148,7 @@ MapManager::MapManager()
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();
+    northTransformROIs();*/
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);

@@ -1,5 +1,10 @@
 #include <robot_control/wait.h>
 
+Wait::Wait()
+{
+	timer = nh.createTimer(ros::Duration(10.0), &Wait::waitTimeCallback_, this);
+}
+
 void Wait::init()
 {
 	waitTime_ = params.float1;

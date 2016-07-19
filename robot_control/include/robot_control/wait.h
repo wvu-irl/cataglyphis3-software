@@ -5,9 +5,11 @@
 class Wait : public Action
 {
 public:
+	Wait(); // constructor
 	void init();
 	int run();
 private:
+	ros::NodeHandle nh;
 	float waitTime_; // sec
 	ros::Timer timer;
 	bool timeExpired_;
