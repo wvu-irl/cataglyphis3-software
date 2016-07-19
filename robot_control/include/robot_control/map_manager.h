@@ -104,6 +104,7 @@ public:
 	float globalMapPathHazardsPolygonHeading;
 	float globalMapPathHazardValue;
 	float globalMapPathHazardHeight;
+	unsigned int globalMapPathHazardNumCellsInPolygon;
 	grid_map::Position globalMapPathHazardPosition;
 	messages::RobotPose globalPose;
 	float previousNorthAngle; // deg

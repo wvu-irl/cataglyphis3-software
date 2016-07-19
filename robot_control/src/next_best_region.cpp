@@ -35,9 +35,10 @@ bool NextBestRegion::runProc()
             globalMapPathHazardsSrv.request.width = hazardCorridorWidth;
             if(globalMapPathHazardsClient.call(globalMapPathHazardsSrv)) ROS_DEBUG("globalMapPathHazardsSrv call successful");
             else ROS_ERROR("globalMapPathHazardsSrv call unsuccessful");
-            terrainHazard.at(i) = numHazardsPerDistanceToTerrainHazardGain*(float)globalMapPathHazardsSrv.response.numHazards /
+            /*terrainHazard.at(i) = numHazardsPerDistanceToTerrainHazardGain*(float)globalMapPathHazardsSrv.response.numHazards /
                                   hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
-                                        regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos);
+                                        regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos);*/
+            terrainHazard.at(i) = globalMapPathHazardsSrv.response.hazardValue;
             if(terrainHazard.at(i) < 0.0) terrainHazard.at(i) = 0.0;
         }
         // Loop through list of ROIs and choose best region not yet searched

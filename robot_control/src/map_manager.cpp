@@ -318,8 +318,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
 bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // tested
 {
     globalMapPathHazardsPolygon.removeVertices();
-    res.numHazards = 0;
-    res.hazardList.clear();
+    res.hazardValue = 0.0;
     globalMapPathHazardsPolygonHeading = atan2(req.yEnd - req.yStart, req.xEnd - req.xStart); // radians
     globalMapPathHazardsVertices.at(0)[0] = req.xStart + req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
     globalMapPathHazardsVertices.at(0)[1] = req.yStart - req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
@@ -333,30 +332,26 @@ bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Re
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(1));
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(2));
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(3));
+    globalMapPathHazardNumCellsInPolygon = 0;
     for(grid_map::PolygonIterator it(globalMap, globalMapPathHazardsPolygon); !it.isPastEnd(); ++it)
     {
-        if(globalMap.at(layerToString(_keyframeDriveabilityConf), *it) > globalMap.at(layerToString(_satDriveabilityConf), *it))
+        /*if(globalMap.at(layerToString(_keyframeDriveabilityConf), *it) > globalMap.at(layerToString(_satDriveabilityConf), *it))
         {
             globalMapPathHazardValue = globalMap.at(layerToString(_keyframeDriveability), *it);
             globalMapPathHazardHeight = globalMap.at(layerToString(_keyframeObjectHeight), *it);
         }
         else
-        {
-            globalMapPathHazardValue = globalMap.at(layerToString(_satDriveability), *it);
-            globalMapPathHazardHeight = globalMap.at(layerToString(_satObjectHeight), *it);
-        }
+        {*/
+        globalMapPathHazardValue = globalMap.at(layerToString(_satDriveability), *it);
+        globalMapPathHazardHeight = globalMap.at(layerToString(_satObjectHeight), *it);
+        //}
         if(globalMapPathHazardValue > 0.0)
         {
-            res.numHazards++;
-            globalMap.getPosition(*it, globalMapPathHazardPosition);
-            res.hazardList.push_back(messages::DriveabilityHazards());
-            res.hazardList.at(res.numHazards-1).type = (int)globalMapPathHazardValue;
-            res.hazardList.at(res.numHazards-1).localX = globalMapPathHazardPosition[0] - req.xStart;
-            res.hazardList.at(res.numHazards-1).localY = globalMapPathHazardPosition[1] - req.yStart;
-            rotateCoord(res.hazardList.at(res.numHazards-1).localX,res.hazardList.at(res.numHazards-1).localY, res.hazardList.at(res.numHazards-1).localX, res.hazardList.at(res.numHazards-1).localY, RAD2DEG*globalMapPathHazardsPolygonHeading);
-            res.hazardList.at(res.numHazards-1).height = globalMapPathHazardHeight;
+            res.hazardValue += globalMapPathHazardValue;
         }
+        globalMapPathHazardNumCellsInPolygon++;
     }
+    res.hazardValue /= (float)globalMapPathHazardNumCellsInPolygon;
     return true;
 }
 
