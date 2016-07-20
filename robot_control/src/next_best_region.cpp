@@ -74,6 +74,7 @@ bool NextBestRegion::runProc()
             sendWait(10.0);
             currentROIIndex = bestROINum;
             allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
+            tempGoHome = false;
             state = _exec_;
         }
 		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -96,6 +97,7 @@ bool NextBestRegion::runProc()
             callIntermediateWaypoints();
             sendDriveGlobal(false);
 			procsBeingExecuted[procType] = false;
+            tempGoHome = true;
             state = _exec_;
         }
         computeDriveSpeeds();
@@ -128,13 +130,16 @@ bool NextBestRegion::runProc()
         else
         {
             // ************************ THIS IS TEMPORARY TO ALLOW FOR DRIVING WITHOUT SEARCHING
-            modROISrv.request.setSearchedROI = true;
-            modROISrv.request.searchedROIState = true;
-            modROISrv.request.modROIIndex = bestROINum;
-            modROISrv.request.addNewROI = false;
-            modROISrv.request.deleteROI = false;
-            if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
-            else ROS_ERROR("modify ROI service call unsuccessful");
+            if(!tempGoHome)
+            {
+                modROISrv.request.setSearchedROI = true;
+                modROISrv.request.searchedROIState = true;
+                modROISrv.request.modROIIndex = currentROIIndex;
+                modROISrv.request.addNewROI = false;
+                modROISrv.request.deleteROI = false;
+                if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
+                else ROS_ERROR("modify ROI service call unsuccessful");
+            }
             // ********************************************
         }
 		avoidLockout = false;

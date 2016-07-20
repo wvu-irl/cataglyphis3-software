@@ -7,7 +7,7 @@
 		value = "50" />
 	<param name = "MODEMDEVICE"
 		type = "str"
-		value = "/dev/ttyS1" />
+		value = "/dev/ttyS2" />
 	<param name = "BAUDRATE"
 		type = "int"
 		value = "115200" />

@@ -10,6 +10,7 @@ public:
 	float roiValue;
 	float bestROIValue;
 	int roiSearchedSum;
+	bool tempGoHome;
 	std::vector<float> terrainHazard;
 	const float hazardCorridorWidth = 2.0; // m
 	const float numHazardsPerDistanceToTerrainHazardGain = 1.0; // terrainHzardIndex/(numHazards/m)
