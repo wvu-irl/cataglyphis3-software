@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     ros::Subscriber actuatorSub = nh.subscribe<messages::ActuatorOut>("control/actuatorout/all",1,actuatorCallback);
     ros::Subscriber simConSub = nh.subscribe<messages::SimControl>("simulation/simcontrol/simcontrol",1,simControlCallback);
     ros::Publisher navPub = nh.advertise<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1);
-    ros::Publisher slamPosePub = nh.advertise<messages::SLAMPoseOut>("/slam/keyframesnode/slamposeout",1);
+    ros::Publisher slamPosePub = nh.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout",1);
     ros::Publisher grabberPub = nh.advertise<messages::GrabberFeedback>("roboteq/grabberin/grabberin",1);
     ros::Publisher nb1Pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
     ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
