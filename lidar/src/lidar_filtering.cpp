@@ -429,7 +429,7 @@ void LidarFilter::doMathMapping()
 	    variance_z = sqrt(variance_z);
 
 	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
-	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
+	    if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
 	    {
 	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
 	        point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
