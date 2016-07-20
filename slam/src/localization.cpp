@@ -20,6 +20,7 @@
 //message files
 #include "messages/LocalMap.h"
 #include "slam/TkeyTomap_msg.h"
+#include "messages/SLAMPoseOut.h"
 
 //output position data to txt file
 #include <fstream>
@@ -133,7 +134,7 @@ Localization::Localization()
 	localmapSub = node.subscribe("/lidar/lidarfilteringnode/localmap", 1, &Localization::getlocalmapcallback, this);
 	TkeyTomapSub = node.subscribe("/slam/TkeyTomap_msg", 1, &Localization::getTkeyTomapcallback, this);
 
-	// keyframePub = node.advertise<message::Localization>("/slam/keyframe", 1, true); //need to change the message file
+	PositionPub = node.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, true); 
 }
 
 void Localization::Initialization()
@@ -324,12 +325,18 @@ void Localization::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		//************************************************************//
 
 		Position position;
-
+		messages::SLAMPoseOut slamposeout;
 		if(pre_x != x || pre_y != y || pre_heading != heading)
 		{
 			LocalMap_All_s[ref_index].x_filter = LocalMap_All_s[read_index].x_filter;
 			LocalMap_All_s[ref_index].y_filter = LocalMap_All_s[read_index].y_filter;
 			LocalMap_All_s[ref_index].heading_filter = LocalMap_All_s[read_index].heading_filter;
+
+			slamposeout.globalX = x;
+			slamposeout.globalY = y;
+			slamposeout.globalHeading = heading;
+
+			PositionPub.publish(slamposeout);
 			
 			position.x = x;
 			position.y = y;
@@ -366,7 +373,11 @@ void Localization::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			TreadTomap = TkeyTomap * TreadTokey;
 
 				
+			slamposeout.globalX = TreadTomap(0,3);
+			slamposeout.globalY = TreadTomap(1,3);
+			slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap);
 
+			PositionPub.publish(slamposeout);
 
 			double position_x = TreadTomap(0,3);
 			double position_y = TreadTomap(1,3);
