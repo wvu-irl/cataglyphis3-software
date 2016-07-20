@@ -18,7 +18,8 @@
 #include "Eigen/Dense"
 
 //message files
-#include "messages/LocalMap.h"
+// #include "messages/LocalMap.h"
+#include <messages/NavFilterOut.h>
 #include "slam/TkeyTomap_msg.h"
 #include "messages/SLAMPoseOut.h"
 
@@ -115,7 +116,7 @@ protected:
 	//recored position data
 	std::vector<Position> position_data;
 
-	void getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn);
+	void getlocalmapcallback(const messages::NavFilterOut& LocalMapMsgIn);
 	void getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgIn);
 
 	// ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index, int option);	
@@ -131,7 +132,7 @@ protected:
 Localization::Localization()
 {
 	//topic initialization
-	localmapSub = node.subscribe("/lidar/lidarfilteringnode/localmap", 1, &Localization::getlocalmapcallback, this);
+	localmapSub = node.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &Localization::getlocalmapcallback, this);
 	TkeyTomapSub = node.subscribe("/slam/TkeyTomap_msg", 1, &Localization::getTkeyTomapcallback, this);
 
 	PositionPub = node.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, true); 
@@ -311,13 +312,13 @@ void Localization::getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgI
 
 }
 
-void Localization::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
+void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsgIn)
 {	
 	//timer, debug
 	// start = clock();
 	
-	if(LocalMapMsgIn.new_data) //if the localmap data is new, update
-	{	
+	// if(LocalMapMsgIn.new_data) //if the localmap data is new, update
+	// {	
 
 
 		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Get data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
@@ -352,9 +353,9 @@ void Localization::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		pre_heading = heading;
 
 
-		LocalMap_All_s[read_index].x_filter = LocalMapMsgIn.x_filter;
-		LocalMap_All_s[read_index].y_filter = LocalMapMsgIn.y_filter;
-		LocalMap_All_s[read_index].heading_filter = LocalMapMsgIn.heading_filter;
+		LocalMap_All_s[read_index].x_filter = LocalMapMsgIn.x_position;
+		LocalMap_All_s[read_index].y_filter = LocalMapMsgIn.y_position;
+		LocalMap_All_s[read_index].heading_filter = LocalMapMsgIn.heading * PI / 180;
 	
 		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
 
@@ -375,7 +376,7 @@ void Localization::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				
 			slamposeout.globalX = TreadTomap(0,3);
 			slamposeout.globalY = TreadTomap(1,3);
-			slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap);
+			slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI;
 
 			PositionPub.publish(slamposeout);
 
@@ -428,7 +429,7 @@ void Localization::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 	}
 	
-}
+// }
 
 
 
