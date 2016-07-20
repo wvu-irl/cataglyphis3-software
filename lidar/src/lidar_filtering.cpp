@@ -189,14 +189,14 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 
 	//populate local map
 	//for(int i=0; i<_local_grid_map.size(); i++)
-	for(int i=0; i<_local_grid_map_new.size(); i++)
+	for(int i=0; i<_local_grid_map.size(); i++)
 	{
-	    msg.x_mean.push_back(_local_grid_map_new[i][0]);
-	    msg.y_mean.push_back(_local_grid_map_new[i][1]);
-	    msg.z_mean.push_back(_local_grid_map_new[i][2]);
-	    msg.var_z.push_back(_local_grid_map_new[i][3]);
+	    msg.x_mean.push_back(_local_grid_map[i][0]);
+	    msg.y_mean.push_back(_local_grid_map[i][1]);
+	    msg.z_mean.push_back(_local_grid_map[i][2]);
+	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    //msg.ground_adjacent.push_back(1);
-	    msg.ground_adjacent.push_back(_local_grid_map_new[i][4]);
+	    msg.ground_adjacent.push_back(1);
 	    //ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
@@ -318,7 +318,7 @@ void LidarFilter::doMathMapping()
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (1); //ground detection threshold parameter
+	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
@@ -356,22 +356,22 @@ void LidarFilter::doMathMapping()
 	}
 
 
-	if(visualizerCounter == 10)
-	{
-		//pcl::visualization::PCLVisualizer viewer;
-	    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
-	    viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
-	    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
-	    viewer.spinOnce(spintime);
-	    //viewer.removePointCloud("object_RGB");
-	    visualizerCounter =0;
-	    //visualization_flag = 2;
-	    viewer.removePointCloud("object_RGB");
-	} 
-	else
-	{
-		visualizerCounter = visualizerCounter + 1;
-	}
+	// if(visualizerCounter == 10)
+	// {
+	// 	//pcl::visualization::PCLVisualizer viewer;
+	//     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
+	//     viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
+	//     viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
+	//     viewer.spinOnce(spintime);
+	//     //viewer.removePointCloud("object_RGB");
+	//     visualizerCounter =0;
+	//     //visualization_flag = 2;
+	//     viewer.removePointCloud("object_RGB");
+	// } 
+	// else
+	// {
+	// 	visualizerCounter = visualizerCounter + 1;
+	// }
 	
 
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -398,7 +398,7 @@ void LidarFilter::doMathMapping()
 	}
 
 	//clear it up before using it
-	_local_grid_map.clear();
+	// _local_grid_map.clear();
 
 	//do the calculation
 	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
@@ -437,9 +437,12 @@ void LidarFilter::doMathMapping()
 	        point.push_back(average_y);
 	        point.push_back(average_z);
 	        point.push_back(variance_z);
-	        //_local_grid_map.push_back(point);
+	        _local_grid_map.push_back(point);
 	    }
 	}
+
+	//copy filtered point cloud after hard thresholding and ground removal
+	_object_filtered = *object_filtered; 
 }
 
 void LidarFilter::doMathHoming()
