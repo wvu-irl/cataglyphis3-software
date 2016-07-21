@@ -107,6 +107,10 @@ protected:
 	float pre_y;
 	float pre_heading;
 
+	float x_filter_sub;
+	float y_filter_sub;
+	float heading_filter_sub;
+
 
 
 	//timer definition
@@ -115,6 +119,7 @@ protected:
 
 	//recored position data
 	std::vector<Position> position_data;
+	std::vector<Position> position_data_IMU;
 
 	void getlocalmapcallback(const messages::NavFilterOut& LocalMapMsgIn);
 	void getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgIn);
@@ -147,6 +152,7 @@ void Localization::Initialization()
 	//initialize all vectors
 	LocalMap_All_s.clear();
 	position_data.clear();
+	position_data_IMU.clear();
 
 	//index for ICP calculation
 	ref_index = 0;
@@ -159,6 +165,10 @@ void Localization::Initialization()
 	pre_x = 0;
 	pre_y = 0;
 	pre_heading = 0;
+
+	x_filter_sub = 0;
+	y_filter_sub = 0;
+	heading_filter_sub = 0;
 
 	//transformation matrix
 	TreadTokey = Eigen::Matrix<float, 4, 4>::Identity();
@@ -310,6 +320,10 @@ void Localization::getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgI
 	y = TkeyTomapMsgIn.y;
 	heading = TkeyTomapMsgIn.heading;
 
+	x_filter_sub = TkeyTomapMsgIn.x_filter;
+	y_filter_sub = TkeyTomapMsgIn.y_filter;
+	heading_filter_sub = TkeyTomapMsgIn.heading_filter;
+
 }
 
 void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsgIn)
@@ -329,9 +343,9 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 		messages::SLAMPoseOut slamposeout;
 		if(pre_x != x || pre_y != y || pre_heading != heading)
 		{
-			LocalMap_All_s[ref_index].x_filter = LocalMap_All_s[read_index].x_filter;
-			LocalMap_All_s[ref_index].y_filter = LocalMap_All_s[read_index].y_filter;
-			LocalMap_All_s[ref_index].heading_filter = LocalMap_All_s[read_index].heading_filter;
+			LocalMap_All_s[ref_index].x_filter = x_filter_sub;
+			LocalMap_All_s[ref_index].y_filter = y_filter_sub;
+			LocalMap_All_s[ref_index].heading_filter = heading_filter_sub;
 
 			slamposeout.globalX = x;
 			slamposeout.globalY = y;
@@ -392,23 +406,37 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 			position.heading = position_heading;
 			position_data.push_back(position);
 				
-			// Position position_test;
-			// position_test.x = LocalMap_All_s[read_index].x_filter;
-			// position_test.y = LocalMap_All_s[read_index].y_filter;
-			// position_test.heading = LocalMap_All_s[read_index].heading_filter;
-			// position_data.push_back(position_test);
+			Position position_IMU;
+			position_IMU.x = LocalMap_All_s[read_index].x_filter;
+			position_IMU.y = LocalMap_All_s[read_index].y_filter;
+			position_IMU.heading = LocalMap_All_s[read_index].heading_filter;
+			position_data_IMU.push_back(position_IMU);
 
 			//output position data to txt file
 			if(position_data.size() > 1300)
 			{
 			std::ofstream outFile;
 
-			outFile.open("test.txt");
+			outFile.open("test_SLAM.txt");
 
-			for(int j = 1; j < position_data.size(); j++)
+			for(int i = 1; i < position_data.size(); i++)
 			{
 			// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-				outFile << position_data[j].x << "\t" << position_data[j].y << "\n";
+				outFile << position_data[i].x << "\t" << position_data[i].y << "\n";
+			}
+			outFile.close();
+			}
+
+			if(position_data_IMU.size() > 1300)
+			{
+			std::ofstream outFile;
+
+			outFile.open("test_IMU.txt");
+
+			for(int j = 1; j < position_data_IMU.size(); j++)
+			{
+			// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
+				outFile << position_data_IMU[j].x << "\t" << position_data_IMU[j].y << "\n";
 			}
 			outFile.close();
 			}

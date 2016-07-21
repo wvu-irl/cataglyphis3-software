@@ -303,6 +303,8 @@ protected:
 	double Update_GlobalMap(LocalMap_Information localmap_information_update, matrix4f transformation_matrix_update);
 	void Coordinate_Normalize(float x0, float y0, float heading0, float x1, float y1, float heading1, double &theta, double &diff_x, double &diff_y);
 	matrix4f inverse4f(matrix4f Transformation_matrix);
+	matrix4f get_g2o_transformation_matrix(std::vector<Position> Vertex_g2o);
+
 
 
 
@@ -440,6 +442,11 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 {	
 	//timer, debug
 	start = clock();
+
+	float x_filter_pub = 0;
+	float y_filter_pub = 0;
+	float heading_filter_pub = 0;
+
 	
 	if(LocalMapMsgIn.new_data) //if the localmap data is new, update
 	{	
@@ -530,6 +537,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				TreadToprekey.from_index = icp_result.from_index;
 				TreadToprekey.to_index = icp_result.to_index;
 				TreadToprekey_s.push_back(TreadToprekey);	//save all transformation between frame to previous keyframe in one time find a new keyframe
+				
 				if(Vertex_sub.size() > threshold_g2o_min_vertex)	//make sure after turn, the robot have to move a little then do g2o
 				{
 					// ROS_INFO_STREAM("doing g2o..........");
@@ -538,16 +546,16 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 					ICP_Result icp_result_icp;
 					ICP_Result icp_result_g2o;
 
+					matrix4f transformation_matrix_g2o;
+
+					transformation_matrix_g2o = get_g2o_transformation_matrix(Vertex_sub);
+
 					icp_result_icp = ICP_compute(ref_index, read_index - 1, 0, 0);
-					icp_result_g2o = ICP_compute(ref_index, read_index - 1, 0, 3, Edges_sub[Edges_sub.size() - 1].transformation_matrix);
+					icp_result_g2o = ICP_compute(ref_index, read_index - 1, 0, 3, transformation_matrix_g2o);
 
-					if(icp_result_g2o.verification_result < icp_result_icp.verification_result)
+					if(icp_result_g2o.verification_result > icp_result_icp.verification_result)
 					{
-						Edges_sub[Edges_sub.size() - 1].transformation_matrix = TreadToprekey_s[TreadToprekey_s.size() - 2].transformation_matrix;
-					}
-
-					else
-					{
+						Edges_sub[Edges_sub.size() - 1].transformation_matrix = transformation_matrix_g2o;
 						use_g2o_counter++;
 					}
 	
@@ -570,6 +578,11 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				position.y = TkeyTomap(1,3);
 				position.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
 
+				//publish the IMU data to localization node
+				x_filter_pub = LocalMap_All_s[key_index].x_filter;
+				y_filter_pub = LocalMap_All_s[key_index].y_filter;
+				heading_filter_pub = LocalMap_All_s[key_index].heading_filter;
+
 				//store keyframe position into vertex_temp 
 				Vertex_temp.push_back(position);
 
@@ -584,6 +597,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				keyframe_pointcloud.heading = position.heading;
 				keyframe_pointcloud.z_mean = LocalMap_Information_s[key_index].z_mean;
 				keyframe_pointcloud.var_z = LocalMap_Information_s[key_index].var_z;
+
+
 
 				//store keyframe point cloud into keyframe maps
 				KeyframeMap_temp_s.push_back(keyframe_pointcloud);
@@ -638,7 +653,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 					if(discard_temp_keyframe)
 					{
 
-							//clear temp data
+						//clear temp data
 						position = Vertex_temp[Vertex_temp.size() - 1];
 						edges.transformation_matrix = Edges_temp[Edges_temp.size() -2].transformation_matrix * Edges_temp[Edges_temp.size() -1].transformation_matrix;	//add transformation matrxi together
 						edges.from_index = Vertex_temp.size() - 1;
@@ -715,6 +730,11 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				tkeytomap_msg.y = TkeyTomap(1,3);
 				tkeytomap_msg.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
 
+				tkeytomap_msg.x_filter = x_filter_pub;
+				tkeytomap_msg.y_filter = y_filter_pub;
+				tkeytomap_msg.heading_filter = heading_filter_pub;
+
+
 				TkeyTomapPub.publish(tkeytomap_msg);
 					
 
@@ -759,6 +779,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				position.x = TkeyTomap(0,3);
 				position.y = TkeyTomap(1,3);
 				position.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+
+
 
 				//store keyframe position into vertex 
 				Vertex.push_back(position);
@@ -812,6 +834,11 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 					position.x = TkeyTomap(0,3);
 					position.y = TkeyTomap(1,3);
 					position.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+
+					//publish the IMU data to localization node
+					x_filter_pub = LocalMap_All_s[key_index].x_filter;
+					y_filter_pub = LocalMap_All_s[key_index].y_filter;
+					heading_filter_pub = LocalMap_All_s[key_index].heading_filter;
 
 					//store keyframe position into vertex_temp 
 						Vertex_temp.push_back(position);
@@ -961,6 +988,10 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 					tkeytomap_msg.y = TkeyTomap(1,3);
 					tkeytomap_msg.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
 
+					tkeytomap_msg.x_filter = x_filter_pub;
+					tkeytomap_msg.y_filter = y_filter_pub;
+					tkeytomap_msg.heading_filter = heading_filter_pub;
+
 					TkeyTomapPub.publish(tkeytomap_msg);
 					
 
@@ -1035,20 +1066,19 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 						ICP_Result icp_result_icp;
 						ICP_Result icp_result_g2o;
 
+						matrix4f transformation_matrix_g2o;
+
+						transformation_matrix_g2o = get_g2o_transformation_matrix(Vertex_sub);
+
 						icp_result_icp = ICP_compute(ref_index, read_index - 1, 0, 0);
-						icp_result_g2o = ICP_compute(ref_index, read_index - 1, 0, 3, Edges_sub[Edges_sub.size() - 1].transformation_matrix);
+						icp_result_g2o = ICP_compute(ref_index, read_index - 1, 0, 3, transformation_matrix_g2o);
 
-						if(icp_result_g2o.verification_result < icp_result_icp.verification_result)
+						if(icp_result_g2o.verification_result > icp_result_icp.verification_result)
 						{
-							Edges_sub[Edges_sub.size() - 1].transformation_matrix = TreadToprekey_s[TreadToprekey_s.size() - 2].transformation_matrix;
-						}
-
-						else
-						{
+							Edges_sub[Edges_sub.size() - 1].transformation_matrix = transformation_matrix_g2o;
 							use_g2o_counter++;
 						}
-
-
+						
 						Keyframe_Pointcloud keyframe_pointcloud;
 						Position position;
 						Transformation_Matrix edges;
@@ -1067,6 +1097,11 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 						position.x = TkeyTomap(0,3);
 						position.y = TkeyTomap(1,3);
 						position.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+
+						//publish the IMU data to localization node
+						x_filter_pub = LocalMap_All_s[key_index].x_filter;
+						y_filter_pub = LocalMap_All_s[key_index].y_filter;
+						heading_filter_pub = LocalMap_All_s[key_index].heading_filter;
 
 						//store keyframe position into vertex_temp 
 						Vertex_temp.push_back(position);
@@ -1339,6 +1374,10 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 						tkeytomap_msg.x = TkeyTomap(0,3);
 						tkeytomap_msg.y = TkeyTomap(1,3);
 						tkeytomap_msg.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+
+						tkeytomap_msg.x_filter = x_filter_pub;
+						tkeytomap_msg.y_filter = y_filter_pub;
+						tkeytomap_msg.heading_filter = heading_filter_pub;
 
 						TkeyTomapPub.publish(tkeytomap_msg);
 
@@ -2821,6 +2860,31 @@ Keyframe::matrix4f Keyframe::inverse4f(matrix4f Transformation_matrix)
 	inverseT(3,3) = 1;
 
 	return inverseT;
+
+}
+
+Keyframe::matrix4f Keyframe::get_g2o_transformation_matrix(std::vector<Position> Vertex_g2o)
+{
+	//local x, y, heading for calculating g2o transformation matrix
+	float x0, y0, heading0;
+	float x1, y1, heading1;
+	double theta, diff_x, diff_y;
+
+	matrix4f transformation_matrix_g2o;
+
+	x0 = Vertex_g2o[0].x;
+	y0 = Vertex_g2o[0].y;
+	heading0 = Vertex_g2o[0].heading;
+
+	x1 = Vertex_g2o[Vertex_g2o.size() - 1].x;
+	y1 = Vertex_g2o[Vertex_g2o.size() - 1].y;
+	heading1 = Vertex_g2o[Vertex_g2o.size() - 1].heading;
+
+	Coordinate_Normalize(x0, y0, heading0, x1, y1, heading1, theta, diff_x, diff_y);
+	transformation_matrix_g2o = angle_to_TransformationMatrix(diff_x, diff_y, theta);
+
+	return transformation_matrix_g2o;
+
 
 }
 
