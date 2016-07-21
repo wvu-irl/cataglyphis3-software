@@ -147,8 +147,11 @@ public:
 	float randomValueFloor;
 	int searchLocalMapNumPoints;
 	int candidateRandomWaypointIndex;
+	int numRandomWaypointsToSelect;
 	int numRandomWaypointsSelected;
 	bool randomWaypointDistanceCriteriaFailed;
+	int numRandomWaypointSearchDistanceCriteriaFailed;
+	const int randomWaypointDistanceCriteriaFailedLimit = 100;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m
