@@ -14,6 +14,10 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <boost/cstdint.hpp>
+#include <boost/crc.hpp>
+#include <cstdint>
+
 #include <boost/filesystem/path.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
@@ -41,6 +45,7 @@ namespace base_classes
     {
 
     public:
+        typedef boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type> matcherIterator;
         //const boost::shared_ptr<boost::asio::io_service> interfaceService
 
         std::string pluginName;
@@ -48,14 +53,23 @@ namespace base_classes
         bool interfaceStarted;
         bool enabled;
 
-        boost::shared_ptr<ros::Publisher> rosDataPub; //publisher, data from interface to ros
-        boost::shared_ptr<ros::Subscriber> rosDataSub;//subscriber, data from ros to interface
+        bool enableCompletionFunctor;
+        bool enableStreamMatcher;
+
+        ros::Publisher rosDataPub; //publisher, data from interface to ros
+        ros::Subscriber rosDataSub;//subscriber, data from ros to interface
+
+        boost::function<std::size_t(const boost::system::error_code& error,
+                                    std::size_t totalBytesRecevied)> streamCompletionChecker;
+        boost::function<std::pair<matcherIterator, bool> (matcherIterator begin, matcherIterator end) >
+                                    streamSequenceMatcher;
 
         //hw_interface will call to check if work can continue
         virtual bool interfaceReady() {}
 
         //called after io_service init
-        virtual bool initPlugin(const boost::shared_ptr<boost::asio::io_service> ioService) {}
+        virtual bool initPlugin(ros::NodeHandlePtr nhPtr,
+                                const boost::shared_ptr<boost::asio::io_service> ioService) {}
 
         //called after init, used to start interface and restart listen
         virtual bool startWork() {}
@@ -63,13 +77,33 @@ namespace base_classes
         //called to stop interface
         virtual bool stopWork() {}
 
-        //plugin provided data handler that moves data into ROS
-        virtual bool interfaceDataHandler() {}
-
         //called by hw_interface
         virtual bool verifyChecksum() {}
 
+        //beware that size_t is UNSIGNED. Operations should not underflow!
         virtual bool handleIORequest(const boost::system::error_code &ec, size_t bytesReceived) {}
+
+        uint16_t calcCRC16Block(const void * const buf, std::size_t numOfBytes);
+        uint32_t calcCRC32Block(const void * const buf, std::size_t numOfBytes);
+
+        void setupStreamMatcherDelimAndLength(const int packetLengthInBytes, const char *headerSequence,
+                                              const char *footerSequence, void *dataStartPosPtr)
+        {
+            streamCompletionChecker =
+                    boost::bind(&base_interface::streamMatcherDelimAndLength, this,
+                                    _1, _2, packetLengthInBytes, headerSequence,
+                                    footerSequence, dataStartPosPtr);
+            enableCompletionFunctor =! streamCompletionChecker.empty();
+        }
+
+        //this definition is called repeatedly and used to check if a packet on the stream
+        //has been received.
+        //a return of 0 means the read has completed and the ASIO Services should call the plugin IO Handle
+
+        //Plugins should overide this function if it intends on using this functionality
+        std::size_t streamMatcherDelimAndLength(const boost::system::error_code &error, long totalBytesInBuffer,
+                                                    const int packetLengthInBytes, const char *headerSequence,
+                                                    const char *footerSequence, void *dataStartPosPtr);
 
         bool enableMetrics();
         bool disableMetrics();
@@ -77,15 +111,16 @@ namespace base_classes
 
         base_interface() :
             lastTimeMetric(ros::Time::now().toNSec()),
-            acc(boost::accumulators::tag::rolling_window::window_size = 300)
+            acc(boost::accumulators::tag::rolling_window::window_size = 150)
         {
             enabled = true;
         }
         virtual ~base_interface(){}
 
     protected:
-        
-        boost::shared_ptr<char> receivedData;
+
+        boost::shared_array<uint8_t> receivedData;
+        void *dataStartPositionPtr;
 
     private:
 

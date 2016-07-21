@@ -8,9 +8,12 @@ base_classes::base_serial_interface::base_serial_interface()
     interfaceType = base_classes::Serial;
     interfaceStarted = false;
 
+    enableCompletionFunctor = false;
+    enableStreamMatcher = false;
+
     enableMetrics();
 
-    receivedData = boost::shared_ptr<char>(new char[500]);
+    receivedData = boost::shared_array<uint8_t>(new uint8_t[500]);
 
     interfacePort = boost::shared_ptr<boost::asio::serial_port>();
 
@@ -26,7 +29,8 @@ bool base_classes::base_serial_interface::interfaceReady()
     return interfacePort->is_open();
 }
 
-bool base_classes::base_serial_interface::initPlugin(const boost::shared_ptr<boost::asio::io_service> ioService)
+bool base_classes::base_serial_interface::initPlugin(ros::NodeHandlePtr nhPtr,
+                                                        const boost::shared_ptr<boost::asio::io_service> ioService)
 {
     //to use the base classes option settings, a blank port must be provided before
     //initilizing plugin
@@ -34,7 +38,7 @@ bool base_classes::base_serial_interface::initPlugin(const boost::shared_ptr<boo
 
     //call plugin setup
     ROS_DEBUG_EXTRA_SINGLE("Calling Plugin's Init");
-    subPluginInit();
+    subPluginInit(nhPtr);
 
     interfacePort->open(deviceName);
 
@@ -52,13 +56,30 @@ bool base_classes::base_serial_interface::startWork()
         interfaceStarted = true;
     }
 
-    boost::asio::async_read(*interfacePort, boost::asio::buffer(receivedData.get(), MAX_SERIAL_READ),
-//                                    boost::bind(&base_serial_interface::completionCheck,this,
-//                                                    boost::asio::placeholders::error(),
-//                                                    boost::asio::placeholders::bytes_transferred()),
-                                    boost::bind(&base_serial_interface::handleIORequest,this,
-                                                    boost::asio::placeholders::error(),
-                                                    boost::asio::placeholders::bytes_transferred()));
+    if(enableCompletionFunctor)
+    {
+        ROS_DEBUG_ONCE("%s %d:: Async Read custom Functor", __FILE__, __LINE__);
+        boost::asio::async_read(*interfacePort, boost::asio::buffer(receivedData.get(), 250),
+                                        streamCompletionChecker,
+                                        boost::bind(&base_serial_interface::handleIORequest,this,
+                                                        boost::asio::placeholders::error(),
+                                                        boost::asio::placeholders::bytes_transferred()));
+    }
+//    else if(enableStreamMatcher)
+//    {
+//        boost::asio::async_read_until(*interfacePort, boost::asio::buffer(receivedData.get(), MAX_SERIAL_READ),
+//                                        streamSequenceMatcher,
+//                                        boost::bind(&base_serial_interface::handleIORequest,this,
+//                                                        boost::asio::placeholders::error(),
+//                                                        boost::asio::placeholders::bytes_transferred()));
+//    }
+    else
+    {
+        boost::asio::async_read(*interfacePort, boost::asio::buffer(receivedData.get(), MAX_SERIAL_READ),
+                                        boost::bind(&base_serial_interface::handleIORequest,this,
+                                                        boost::asio::placeholders::error(),
+                                                        boost::asio::placeholders::bytes_transferred()));
+    }
     return true;
 }
 
@@ -80,7 +101,8 @@ bool base_classes::base_serial_interface::handleIORequest(const boost::system::e
     ROS_INFO("Thread <%s>:: %s:: Received Packet!:: Size %lu", THREAD_ID_TO_C_STR, this->pluginName.c_str(), bytesReceived);
 
     //call plugin's data handler
-    if(!interfaceDataHandler())
+    //SHORTCUT, if the first boolean check fails, the other is not called and avoids the worry of a null pointer
+    if((dataStartPositionPtr != 0) && !interfaceDataHandler(MAX_SERIAL_READ, dataStartPositionPtr))
     {
         ROS_ERROR("Error Occurred in plugin data Handler <%s>", this->pluginName.c_str());
     }
@@ -89,9 +111,5 @@ bool base_classes::base_serial_interface::handleIORequest(const boost::system::e
     return startWork();
 }
 
-std::size_t base_classes::base_serial_interface::completionCheck(const boost::system::error_code &error, std::size_t bytesReceived)
-{
-    return MAX_SERIAL_READ-bytesReceived;
-}
 
 

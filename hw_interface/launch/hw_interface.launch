@@ -11,7 +11,7 @@
 		type = "hw_interface_node"
 		output="screen"
 		ns = "hw_interface"
-		
+
 		respawn="true"
 		respawn_delay = "10" 
 	/>

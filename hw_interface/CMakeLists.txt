@@ -91,6 +91,8 @@ find_package(catkin REQUIRED COMPONENTS
 #   cfg/DynReconf2.cfg
 # )
 
+add_definitions("-std=gnu++11")
+
 ###################################
 ## catkin specific configuration ##
 ###################################

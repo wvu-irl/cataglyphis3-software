@@ -10,6 +10,8 @@ netburner_UDP:
     
 NB1_UDP:
     {
+        subscribeToTopic       : "",
+        publishToTopic          : "hw_interface/nb1in/nb1in",
         remoteAddress           : "192.168.2.122",
         remotePort              : 9001,
         localPort               : 9003,

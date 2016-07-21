@@ -1,5 +1,12 @@
-<library path="lib/libhw_interface_plugin_roboteq">
-  <class type="hw_interface_plugin_roboteq::roboteq_serial" base_class_type="base_classes::base_interface">
-    <description>Roboteq Serial Interface</description>
+<library path="lib/libhw_interface_plugin_roboteq_drive">
+  <class type="hw_interface_plugin_roboteq::roboteq_drive" base_class_type="base_classes::base_interface">
+    <description>Roboteq Drive Serial Interface</description>
   </class>
 </library>
+
+<library path="lib/libhw_interface_plugin_roboteq_grabber">
+  <class type="hw_interface_plugin_roboteq::roboteq_grabber" base_class_type="base_classes::base_interface">
+    <description>Roboteq Grabber Serial Interface</description>
+  </class>
+</library>
+

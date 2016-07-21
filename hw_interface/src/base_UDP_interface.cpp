@@ -10,7 +10,7 @@ base_classes::base_UDP_interface::base_UDP_interface()
     interfaceType = base_classes::UDP;
     interfaceStarted = false;
 
-    receivedData = boost::shared_ptr<char>(new char[500]);
+    receivedData = boost::shared_array<uint8_t>(new uint8_t[500]);
     remoteEndpoint = boost::shared_ptr<boost::asio::ip::udp::endpoint>();
     localEndpoint = boost::shared_ptr<boost::asio::ip::udp::endpoint>();
     interfaceSocket = boost::shared_ptr<boost::asio::ip::udp::socket>();
@@ -25,11 +25,12 @@ bool base_classes::base_UDP_interface::interfaceReady()
     return interfaceSocket->is_open();
 }
 
-bool base_classes::base_UDP_interface::initPlugin(const boost::shared_ptr<boost::asio::io_service> ioService)
+bool base_classes::base_UDP_interface::initPlugin(ros::NodeHandlePtr nhPtr,
+                                                    const boost::shared_ptr<boost::asio::io_service> ioService)
 {
     //call plugin setup
     ROS_DEBUG_EXTRA_SINGLE("Calling Plugin's Init");
-    subPluginInit();
+    subPluginInit(nhPtr);
 
     ROS_DEBUG_EXTRA_SINGLE("Creating Endpoints");
     remoteEndpoint = boost::shared_ptr<boost::asio::ip::udp::endpoint>(new boost::asio::ip::udp::endpoint(remoteAddress, remotePort));
@@ -54,7 +55,7 @@ bool base_classes::base_UDP_interface::startWork()
         interfaceStarted = true;
     }
 
-    interfaceSocket.get()->async_receive(boost::asio::buffer(receivedData.get(), UDP_FRAME_BUFFER_SIZE),
+    interfaceSocket.get()->async_receive(boost::asio::buffer(receivedData.get(), 100),
                                             boost::bind(&base_UDP_interface::handleIORequest, this,
                                                             boost::asio::placeholders::error(),
                                                             boost::asio::placeholders::bytes_transferred()));
@@ -82,7 +83,7 @@ bool base_classes::base_UDP_interface::handleIORequest(const boost::system::erro
     ROS_INFO("Thread <%s>:: %s:: Received Packet!:: Size %lu", THREAD_ID_TO_C_STR, this->pluginName.c_str(), bytesReceived);
 
     //call plugin's data handler
-    if(!interfaceDataHandler())
+    if((dataStartPositionPtr != 0) && !interfaceDataHandler(bytesReceived, dataStartPositionPtr))
     {
         ROS_ERROR("Error Occurred in plugin data Handler <%s>", this->pluginName.c_str());
     }

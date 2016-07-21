@@ -27,6 +27,8 @@ class hw_interface {
     //friend class interface_worker;
 
 private:
+    ros::NodeHandlePtr node;
+
     boost::shared_ptr<boost::asio::io_service> interfaceService;
     boost::shared_ptr<boost::asio::io_service::work> interfaceWork;
 
@@ -46,11 +48,12 @@ public:
 
 
     hw_interface();
-    hw_interface(int maxNumOfThreads);
+    hw_interface(ros::NodeHandlePtr nhArg);
+    //hw_interface(int maxNumOfThreads);
 
     virtual ~hw_interface();
 
-    void addInterfacePlugins();  //TODO implement
+    void addInterfacePlugins();
 
     bool startInterfaces();
     bool stopInterfaces();      //once node has stopped, reset interfaceWork ptr.

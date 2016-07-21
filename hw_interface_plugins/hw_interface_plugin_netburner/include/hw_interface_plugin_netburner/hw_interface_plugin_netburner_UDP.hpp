@@ -18,9 +18,11 @@ namespace hw_interface_plugin_netburner {
         virtual ~netburner_UDP() {}
 
     protected:
-        bool subPluginInit();
-        bool interfaceDataHandler();
+        bool subPluginInit(ros::NodeHandlePtr nhPtr);
+        bool interfaceDataHandler(const long &bufferSize, void *buf);
         bool verifyChecksum();
+
+
     };
 
 }

@@ -1,19 +1,18 @@
 plugin_names: 
     {
-        hw_interface_plugin_roboteq : roboteq_serial,
+        hw_interface_plugin_roboteq : roboteq_drive,
     }
 
-roboteq_serial:
+roboteq_drive:
     {
         Left_Roboteq  : Left_Roboteq,
     }
-    
     
 Left_Roboteq:
     {
         deviceName         : "/dev/ttyS0",
         baudrate           : 115200,
-        topicSubscription  : "/control/actuatorout/all",
-        topicPublisher     : "roboteq/drivemotorin/left",
+        subscribeToTopic   : "/control/actuatorout/all",
+        publishToTopic     : "/roboteq/drivemotorin/left",
     }
 

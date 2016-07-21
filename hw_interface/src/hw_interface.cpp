@@ -7,6 +7,27 @@
 hw_interface::hw_interface() :
     pluginLoader("hw_interface", "base_classes::base_interface")
 {
+    node = ros::NodeHandlePtr(new ros::NodeHandle());
+    ROS_DEBUG_EXTRA_SINGLE("Creating ASIO Services");
+    interfaceService = boost::shared_ptr<boost::asio::io_service>
+                                    (new boost::asio::io_service);
+    ROS_DEBUG_EXTRA_SINGLE("Generating Work");
+    interfaceWork = boost::shared_ptr<boost::asio::io_service::work>
+                                    (new boost::asio::io_service::work(*interfaceService));
+
+    ROS_DEBUG_EXTRA_SINGLE("Loading Plugins");
+    addInterfacePlugins();
+
+    ROS_DEBUG_EXTRA_SINGLE("Starting Thread Pool");
+    initThreadPool();
+    ROS_DEBUG_EXTRA_SINGLE("Starting Interfaces");
+    startInterfaces();
+}
+
+hw_interface::hw_interface(ros::NodeHandlePtr nhArg) :
+    node(nhArg),
+    pluginLoader("hw_interface", "base_classes::base_interface")
+{
     ROS_DEBUG_EXTRA_SINGLE("Creating ASIO Services");
     interfaceService = boost::shared_ptr<boost::asio::io_service>
                                     (new boost::asio::io_service);
@@ -26,17 +47,20 @@ hw_interface::hw_interface() :
 hw_interface::~hw_interface()
 {
     std::printf("HW Interfaces are stopping.\r\n");
-    interfaceWork.reset();
+    //interfaceWork.reset();
+    node.reset();
     interfaceService->stop();
     interfaceWorkerGroup.join_all();
+    //interfaceService->reset();
 
     for(std::vector<boost::shared_ptr<base_classes::base_interface> >::iterator vectorIterator = interfacePluginVector.begin();
             vectorIterator < interfacePluginVector.end();
-            vectorIterator++)
+            /*vectorIterator++*/)
     {
         std::printf("Destroying Plugin: %s\r\n", vectorIterator->get()->pluginName.c_str());
         vectorIterator->get()->stopWork();
-        vectorIterator->reset();
+        vectorIterator = interfacePluginVector.erase(vectorIterator);
+        //std::printf("plugin destroyed\r\n");
     }
 }
 
@@ -46,7 +70,7 @@ bool hw_interface::initPlugin(boost::shared_ptr<base_classes::base_interface> pl
     {
         pluginPtr->pluginName = pluginName;
         ROS_INFO("Initilizing Plugin: %s", pluginPtr->pluginName.c_str());
-        pluginPtr->initPlugin(interfaceService);
+        pluginPtr->initPlugin(node, interfaceService);
     }
     catch(const boost::system::error_code &ec)
     {
@@ -77,10 +101,10 @@ void hw_interface::addInterfacePlugins()
         {
             try
             {
-                ROS_DEBUG_EXTRA("Found Plugin Class %s::%s", mapIterator->first.c_str(), mapIterator->second.c_str());
+                ROS_INFO("Found Plugin Class %s::%s", mapIterator->first.c_str(), mapIterator->second.c_str());
                 std::string pluginClassName = "";
                 pluginClassName += mapIterator->first + "::" + mapIterator->second;
-
+                ROS_INFO("Description: %s", pluginLoader.getClassDescription(pluginClassName).c_str());
                 std::map<std::string, std::string> instanceNameMap;
                 if(ros::param::get(mapIterator->second, instanceNameMap))
                 {
@@ -90,14 +114,16 @@ void hw_interface::addInterfacePlugins()
                     {
                         //ros param with name of derived class
                         interfacePluginVector.push_back(pluginLoader.createInstance(pluginClassName.c_str()));
-                        if(!interfacePluginVector.back().get()) //if the last added plugin is valid
+
+                        //if the plugin ptr is invalid OR the plugin initilization returns false, remove plugin
+                        if(!interfacePluginVector.back().get() ||
+                                !initPlugin(interfacePluginVector.back(), nameIterator->second)) //if the last added plugin is valid
                         {
                             ROS_ERROR("The plugin failed to instantiate");
                             interfacePluginVector.pop_back();
                         }
                         else
                         {
-                            initPlugin(interfacePluginVector.back(), nameIterator->second);
                             ROS_INFO("Instatiated Interface Plugin: %s", interfacePluginVector.back()->pluginName.c_str());
                         }
                     }
@@ -138,7 +164,7 @@ void hw_interface::initInterfacePlugins()
         try
         {
             ROS_INFO("Initilizing Plugin: %s", vectorIterator->get()->pluginName.c_str());
-            vectorIterator->get()->initPlugin(interfaceService);
+            vectorIterator->get()->initPlugin(node, interfaceService);
         }
         catch(const boost::system::error_code &ec)
         {

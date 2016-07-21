@@ -7,27 +7,40 @@
 #include <hw_interface/base_interface.hpp>
 #include <hw_interface/base_serial_interface.hpp>
 
-
+#include <messages/ActuatorOut.h>
+#include <messages/encoder_data.h>
+#include <messages/GrabberFeedback.h>
 
 namespace hw_interface_plugin_roboteq {
 
     class roboteq_serial : public base_classes::base_serial_interface
     {
     public:
+        typedef boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type> matcherIterator;
+
+
         roboteq_serial();
         virtual ~roboteq_serial() {} //need to implement closing of the port here
 
     protected:
-        bool subPluginInit();
-        bool interfaceDataHandler();
+        ros::NodeHandlePtr nh;
+
+        messages::ActuatorOut latestActuatorCmd;
+
+        bool subPluginInit(ros::NodeHandlePtr nhPtr);
+        bool interfaceDataHandler(const long &bufferSize, void* buf);
         bool verifyChecksum();
+
+        virtual bool implInit() = 0;
+        virtual bool implStart() = 0;
+        virtual bool implStop() = 0;
+        virtual void rosMsgCallback(const messages::ActuatorOut::ConstPtr &msgIn) = 0;
+
+        //since the function prototype is different from the required one for ASIO, we must use boost::bind
+        //to reassign parameters and create a functor that we can pass into ASIO.
+        std::pair<matcherIterator, bool> matchFooter(matcherIterator begin, matcherIterator end, const char *sequence);
     };
 }
-
-
-
-PLUGINLIB_EXPORT_CLASS(hw_interface_plugin_roboteq::roboteq_serial, base_classes::base_interface)
-
 
 
 #endif //HW_INTERFACE_PLUGIN_ROBOTEQ_HPP__

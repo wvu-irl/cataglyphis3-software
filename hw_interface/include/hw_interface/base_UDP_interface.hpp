@@ -27,7 +27,8 @@ namespace base_classes
         boost::shared_ptr<boost::asio::ip::udp::endpoint> remoteEndpoint;
 
         bool interfaceReady();
-        bool initPlugin(const boost::shared_ptr<boost::asio::io_service> ioService);
+        bool initPlugin(ros::NodeHandlePtr nhPtr,
+                            const boost::shared_ptr<boost::asio::io_service> ioService);
         bool startWork(); //probably set some flag and start listening on port
         bool stopWork();  //probably unset some flag
 
@@ -42,12 +43,15 @@ namespace base_classes
         //this function calls the plugin's function to read in ROS params,
         //subscribe to topics, publish topics. This function should fill
         //in the protected member's info
-        virtual bool subPluginInit() = 0;
+        virtual bool subPluginInit(ros::NodeHandlePtr nhPtr) = 0;
 
         boost::asio::ip::address localAddress;
         int localPort;
         boost::asio::ip::address remoteAddress;
         int remotePort;
+
+        //plugin provided data handler that moves data into ROS
+        virtual bool interfaceDataHandler(const long &bufferSize, void* buf) = 0;
 
     public:
         bool handleIORequest(const boost::system::error_code &ec, size_t bytesReceived);

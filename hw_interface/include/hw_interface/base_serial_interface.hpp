@@ -24,19 +24,25 @@ namespace base_classes
 
     private:
 
-        boost::shared_ptr<boost::asio::serial_port> interfacePort;
-
         bool interfaceReady();
-        bool initPlugin(const boost::shared_ptr<boost::asio::io_service> ioService);
+        bool initPlugin(ros::NodeHandlePtr nhPtr,
+                            const boost::shared_ptr<boost::asio::io_service> ioService);
         bool startWork(); //probably set some flag and start listening on port
         bool stopWork();  //probably unset some flag
 
         //will receive request, then run plugin readHandler(), check work flag,
             //if work flag restart async read
 
+
+        //this ptr is used to pass the beginning of data to the plugin data handler.
+        //  its void because we don't type discriminate around here.
+        //But mainly so the plugin can interpret the data however it wants to.
+
     protected:
+        boost::shared_ptr<boost::asio::serial_port> interfacePort;
 
         std::string deviceName;
+        boost::asio::streambuf streamBuffer;
 
         base_serial_interface();
 
@@ -44,7 +50,9 @@ namespace base_classes
         //this function calls the plugin's function to read in ROS params,
         //subscribe to topics, publish topics. This function should fill
         //in the protected member's info
-        virtual bool subPluginInit() = 0;
+        virtual bool subPluginInit(ros::NodeHandlePtr nhPtr) = 0;
+
+        virtual bool interfaceDataHandler(const long &bufferSize, void *buf) = 0;
 
         template<typename Option>
         boost::system::error_code setOption(const Option * newOption)
@@ -68,8 +76,22 @@ namespace base_classes
 
     public:
         bool handleIORequest(const boost::system::error_code &ec, size_t bytesReceived);
-        std::size_t completionCheck(const boost::system::error_code& error,
-                                    std::size_t bytesReceived);
+
+
+        //this definition is used to check if a certain character sequence has been encountered
+        //on the stream. The begin and end iterators represent positions in the stream that this
+        //current functor is working. The return iterator represents where the next function call
+        //(if needed) will begin in the buffer stream. The return bool indicates if the ASIO Service
+        //is complete and should call the plugin IO Handler. (true = yes, call handler)
+
+        //Plugins should overide this function if it intends on using this functionality
+
+        virtual std::pair<matcherIterator, bool> matchFooter(matcherIterator begin, matcherIterator end, const char* sequence)
+        {
+            return std::make_pair(end, true);
+        }
+
+
 
     };
 };
