@@ -2,19 +2,22 @@
 
 Wait::Wait()
 {
-	timer = nh.createTimer(ros::Duration(10.0), &Wait::waitTimeCallback_, this);
+	waitTimer = nh.createTimer(ros::Duration(10.0), &Wait::waitTimeCallback_, this);
+	waitTimer.stop();
+	waitTimerActive = false;
 }
 
 void Wait::init()
 {
 	waitTime_ = params.float1;
 	timeExpired_ = false;
-	timer.stop();
-	timer.setPeriod(ros::Duration(waitTime_));
+	waitTimer.stop();
+	waitTimer.setPeriod(ros::Duration(waitTime_));
 	clearDeques();
 	driveHalt.init();
 	visionHalt.init();
-	timer.start();
+	waitTimer.start();
+	waitTimerActive = true;
 }
 
 int Wait::run()
@@ -31,5 +34,6 @@ int Wait::run()
 void Wait::waitTimeCallback_(const ros::TimerEvent &event)
 {
 	timeExpired_ = true;
-	timer.stop();
+	waitTimer.stop();
+	waitTimerActive = false;
 }

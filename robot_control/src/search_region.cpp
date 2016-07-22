@@ -2,15 +2,15 @@
 
 SearchRegion::SearchRegion()
 {
-	roiTimer = nh.createTimer(ros::Duration(480.0), &SearchRegion::roiTimeExpiredCallback_, this); // 480 sec == 8 min; implement smarter way to compute
-	roiTimer.stop();
+	timers[_roiTimer_] = nh.createTimer(ros::Duration(480.0), &SearchRegion::roiTimeExpiredCallback_, this); // 480 sec == 8 min; implement smarter way to compute
+	stopTimer(_roiTimer_);
 }
 
 bool SearchRegion::runProc()
 {
 	//ROS_INFO("searchRegion state = %i", state);
-	//ROS_INFO_THROTTLE(1,"roiTimer.isValid = %i",roiTimer.isValid());
-	//ROS_INFO_THROTTLE(1,"roiTimer.hasPending = %i",roiTimer.hasPending());
+	//ROS_INFO_THROTTLE(1,"timers[_roiTimer_].isValid = %i",timers[_roiTimer_].isValid());
+	//ROS_INFO_THROTTLE(1,"timers[_roiTimer_].hasPending = %i",timers[_roiTimer_].hasPending());
 	switch(state)
 	{
 	case _init_:
@@ -33,14 +33,14 @@ bool SearchRegion::runProc()
 			roiKeyframed = true;
 			// start timer based on allocated time
 			roiTimeExpired = false;
-			roiTimer.stop();
-			roiTimer.setPeriod(ros::Duration(allocatedROITime));
-			roiTimer.start();
+			stopTimer(_roiTimer_);
+			setPeriodTimer(_roiTimer_, allocatedROITime);
+			startTimer(_roiTimer_);
 		}
 		if(roiTimeExpired)
 		{
 			roiTimeExpired = false;
-			roiTimer.stop();
+			stopTimer(_roiTimer_);
 			// Set ROI to searched
 			modROISrv.request.setSearchedROI = true;
 			modROISrv.request.searchedROIState = true;
