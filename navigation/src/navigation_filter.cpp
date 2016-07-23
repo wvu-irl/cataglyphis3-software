@@ -2,16 +2,17 @@
 
 NavigationFilter::NavigationFilter()
 {
-	sub_exec = nh.subscribe("/control/exec/info", 1, &NavigationFilter::getExecInfoCallback, this);
+    //this probably shouldn't be subscribing to "topicname" -Matt G.
+	sub_exec = nh.subscribe("/topicname", 1, &NavigationFilter::getExecInfoCallback, this);
 	pause_switch = false;
 	stopFlag = false;
 	turnFlag = false;
 
 	sub_lidar = nh.subscribe("lidar/lidarfilteringout/lidarfilteringout", 1, &NavigationFilter::getLidarFilterOutCallback, this);
-    homing_x=0;
+	homing_x=0;
 	homing_y=0;
 	homing_heading=0;
-    homing_found=false;
+	homing_found=false;
 
 	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 	filter.set_imu_offset(0,0);
@@ -601,21 +602,30 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		filter3.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		homing_updated = true;
 	}
+	else if (!stopFlag)
+	{
+		homing_updated = false;
+	}
+	else
+	{
+
+	}
+	
 }
 
 void NavigationFilter::getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg)
 {
 	this->pause_switch = msg->pause;
-	this->turnFlag = msg->turnFlag;
-	this->stopFlag = msg->stopFlag;
+	this->turnFlag = 0;
+	this->stopFlag = 0;
 }
 
 void NavigationFilter::getLidarFilterOutCallback(const messages::LidarFilterOut::ConstPtr &msg)
 {
-	double l_dist = 0.44;
-	this->homing_x = msg->homing_x-l_dist*cos(msg->homing_heading);
-	this->homing_y = msg->homing_y-l_dist*sin(msg->homing_heading);
+	this->homing_x = msg->homing_x;
+	this->homing_y = msg->homing_y;
 	this->homing_heading = msg->homing_heading;
 	this->homing_found = msg->homing_found;
 }

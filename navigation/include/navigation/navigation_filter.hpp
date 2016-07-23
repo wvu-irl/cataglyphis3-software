@@ -61,6 +61,7 @@ public:
 	bool collected_gyro2_data = false;
 	bool collected_gyro3_data = false;
 	bool first_pass = true;
+	bool homing_updated = false;
 	double drop_off_dist = 10000;
 	int nav_status_output = 0;
 
