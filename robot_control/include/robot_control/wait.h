@@ -8,10 +8,11 @@ public:
 	Wait(); // constructor
 	void init();
 	int run();
+	ros::Timer waitTimer;
+	bool waitTimerActive;
 private:
 	ros::NodeHandle nh;
 	float waitTime_; // sec
-	ros::Timer timer;
 	bool timeExpired_;
 	void waitTimeCallback_(const ros::TimerEvent &event);
 };

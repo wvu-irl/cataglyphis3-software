@@ -1,10 +1,10 @@
 #ifndef PROCEDURE_H
 #define PROCEDURE_H
-#include "mission_planning_process_share.h"
+#include "mission_planning_procedure_share.h"
 
 enum PROC_STATE_T {_init_, _exec_, _interrupt_, _finish_};
 
-class Procedure : public MissionPlanningProcessShare
+class Procedure : public MissionPlanningProcedureShare
 {
 public:
     // Members
@@ -36,6 +36,9 @@ public:
 	void findHighestConfSample();
 	void computeDriveSpeeds();
 	void serviceAvoidCounterDecrement();
+	void startTimer(TIMER_NAMES_T timerName);
+	void stopTimer(TIMER_NAMES_T timerName);
+	void setPeriodTimer(TIMER_NAMES_T timerName, float period);
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -488,6 +491,23 @@ void Procedure::serviceAvoidCounterDecrement()
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
 	}
+}
+
+void Procedure::startTimer(TIMER_NAMES_T timerName)
+{
+	timers[timerName].start();
+	timersActive[timerName] = true;
+}
+
+void Procedure::stopTimer(TIMER_NAMES_T timerName)
+{
+	timers[timerName].stop();
+	timersActive[timerName] = false;
+}
+
+void Procedure::setPeriodTimer(TIMER_NAMES_T timerName, float period)
+{
+	timers[timerName].setPeriod(ros::Duration(period));
 }
 
 #endif // PROCEDURE_H

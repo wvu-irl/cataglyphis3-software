@@ -1,7 +1,7 @@
 #ifndef MISSION_PLANNING_H
 #define MISSION_PLANNING_H
 #include <ros/ros.h>
-#include "mission_planning_process_share.h"
+#include "mission_planning_procedure_share.h"
 #include <messages/RobotPose.h>
 #include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
@@ -22,7 +22,7 @@
 #include "pause.h"
 #include "bit_utils.h"
 
-class MissionPlanning : public MissionPlanningProcessShare
+class MissionPlanning : public MissionPlanningProcedureShare
 {
 public:
 	// Methods
@@ -69,6 +69,8 @@ private:
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
+	void stopAllTimers_();
+	void resumeTimers_();
 	void calcnumProcsBeingOrToBeExec_();
 	void updateSampleFlags_();
 	void packAndPubInfoMsg_();

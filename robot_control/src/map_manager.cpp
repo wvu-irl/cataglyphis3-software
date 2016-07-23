@@ -292,11 +292,11 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
-                ROS_INFO("searchLocalMapCoord: x = %f; y = %f",searchLocalMapCoord[0], searchLocalMapCoord[1]);
+                //ROS_INFO("searchLocalMapCoord: x = %f; y = %f",searchLocalMapCoord[0], searchLocalMapCoord[1]);
                 rotateCoord(searchLocalMapCoord[0], searchLocalMapCoord[1], ROIX, ROIY, searchLocalMapToROIAngle);
                 //ROIX = searchLocalMapCoord[0]*cos(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*sin(DEG2RAD*searchLocalMapToROIAngle);
                 //ROIY = -searchLocalMapCoord[0]*sin(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*cos(DEG2RAD*searchLocalMapToROIAngle);
-                ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
+                //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
                 {
                     searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = ROIKeyframe.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)), searchLocalMapCoord);
@@ -372,7 +372,8 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         searchLocalMapNumPoints = searchLocalMap.getSize()[0]*searchLocalMap.getSize()[1];
         possibleRandomWaypointValues.resize(searchLocalMapNumPoints);
         possibleRandomWaypointValuesNormalized.resize(searchLocalMapNumPoints);
-        res.waypointList.resize(req.numSearchWaypoints);
+        numRandomWaypointsToSelect = req.numSearchWaypoints;
+        res.waypointList.resize(numRandomWaypointsToSelect);
         possibleRandomWaypointValuesSum = 0.0;
         //ROS_INFO("after initial setup");
         for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
@@ -387,12 +388,13 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         }
         //ROS_INFO("after normalizing values");
         numRandomWaypointsSelected = 0;
-        while(numRandomWaypointsSelected<req.numSearchWaypoints)
+        numRandomWaypointSearchDistanceCriteriaFailed = 0;
+        while(numRandomWaypointsSelected<numRandomWaypointsToSelect)
         {
             //ROS_INFO("numRandomWaypointsSelected = %i",numRandomWaypointsSelected);
             randomValueFloor = 0.0;
             randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-            ROS_INFO("random value = %f",randomValue);
+            //ROS_INFO("random value = %f",randomValue);
             for(int j=0; j<searchLocalMapNumPoints; j++)
             {
                 if((randomValue >= randomValueFloor) && (randomValue < (randomValueFloor + possibleRandomWaypointValuesNormalized.at(j))))
@@ -411,10 +413,13 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 randomWaypointDistanceCriteriaFailed = false;
                 for(int j=0; j<(numRandomWaypointsSelected-1); j++)
                 {
+                    //ROS_INFO("randomWaypoint: x=%f, y=%f\twaypointList.at(%i).x=%f, y=%f", randomWaypointPosition[0], randomWaypointPosition[1], j, res.waypointList.at(j).x, res.waypointList.at(j).y);
                     //ROS_INFO("distance to %i = %f", j, hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y));
                     if(hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y) < randomWaypointMinDistance)
                     {
+                        //ROS_INFO("randomWaypoint distance criterial failed");
                         numRandomWaypointsSelected--;
+                        numRandomWaypointSearchDistanceCriteriaFailed++;
                         randomWaypointDistanceCriteriaFailed = true;
                         break;
                     }
@@ -423,14 +428,30 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             else randomWaypointDistanceCriteriaFailed = false;
             if(!randomWaypointDistanceCriteriaFailed)
             {
-                rotateCoord(randomWaypointPosition[0], randomWaypointPosition[1], res.waypointList.at(numRandomWaypointsSelected-1).x, res.waypointList.at(numRandomWaypointsSelected-1).y, searchLocalMapHeading);
-                res.waypointList.at(numRandomWaypointsSelected-1).x += searchLocalMapXPos;
-                res.waypointList.at(numRandomWaypointsSelected-1).y += searchLocalMapYPos;
+                //ROS_INFO("randomWaypoint passed, xLocal = %f, yLocal = %f",randomWaypointPosition[0], randomWaypointPosition[1]);
+                numRandomWaypointSearchDistanceCriteriaFailed = 0;
+                res.waypointList.at(numRandomWaypointsSelected-1).x = randomWaypointPosition[0];
+                res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
                 res.waypointList.at(numRandomWaypointsSelected-1).sampleProb = searchLocalMap.at(layerToString(_sampleProb), randomWaypointIndex);
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
             }
+            if(numRandomWaypointSearchDistanceCriteriaFailed > randomWaypointDistanceCriteriaFailedLimit)
+            {
+                numRandomWaypointsToSelect--;
+                //ROS_INFO("too many random waypoint distance criteria failed, numRandomWaypointToSelect = %i",numRandomWaypointsToSelect);
+            }
         }
-        //ROS_INFO("after selecting waypoints");
+        if(res.waypointList.size() > numRandomWaypointsToSelect)
+        {
+            res.waypointList.erase(res.waypointList.end()-(res.waypointList.size()-numRandomWaypointsToSelect),res.waypointList.end());
+        }
+        //ROS_INFO("after selecting waypoints, vector size = %u",res.waypointList.size());
+        for(int i=0; i<res.waypointList.size(); i++) // Transform random waypoint coordinates into global map coordinates
+        {
+            rotateCoord(res.waypointList.at(i).x, res.waypointList.at(i).y, res.waypointList.at(i).x, res.waypointList.at(i).y, searchLocalMapHeading);
+            res.waypointList.at(i).x += searchLocalMapXPos;
+            res.waypointList.at(i).y += searchLocalMapYPos;
+        }
     }
     else return false;
     return true;

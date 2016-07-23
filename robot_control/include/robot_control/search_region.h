@@ -8,7 +8,6 @@ public:
 	// Members
 	ros::NodeHandle nh;
 	bool allWaypointsVisited;
-	ros::Timer roiTimer;
 	const int numRandomWaypoints = 5;
 	// Methods
 	bool runProc();
