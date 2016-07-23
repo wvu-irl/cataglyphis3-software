@@ -7,4 +7,6 @@ float32 x_filter
 float32 y_filter
 float32 heading_filter
 bool turnFlag
+bool stopFlag
+bool homing_updated_flag
 bool new_data

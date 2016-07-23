@@ -89,11 +89,13 @@ private:
 	float _navigation_filter_roll;
 	float _navigation_filter_pitch;
 	float _navigation_filter_heading;
+	bool _homing_updated_flag;
 	//short int _navigation_filter_counter;
 	//short int _navigation_filter_counter_prev;
 
 	//ExecInfo callback
 	bool _execinfo_turnflag;
+	bool _execinfo_stopflag;
 
 	//transform points from lidar frame to robot body
 	Eigen::Matrix3f _R_tilt_robot_to_beacon; //robot to homing beacon rotation (pitch and roll rotation only)
@@ -154,7 +156,7 @@ private:
     //for the visualizer
     int visualizerCounter = 0;
     int spintime = 1000;
-    pcl::visualization::PCLVisualizer viewer;
+    // pcl::visualization::PCLVisualizer viewer;
     //pcl::PointCloud<pcl::PointXYZI> _object_filtered_projection_display;
 
 	//callback functions

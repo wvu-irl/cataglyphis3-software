@@ -10,10 +10,12 @@ LidarFilter::LidarFilter()
 	_navigation_filter_heading = 0;
 	_navigation_filter_counter = 0;
 	_navigation_filter_counter_prev = 0;
+	_homing_updated_flag = false;
 	_sub_navigation = _nh.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &LidarFilter::navigationFilterCallback, this);
 
 	//ExecInfo callback initialization
 	_execinfo_turnflag = false;
+	_execinfo_stopflag = false;
 	_sub_execinfo = _nh.subscribe("control/exec/info", 1, &LidarFilter::execinforCallback, this);
 
 	//rotation from robot to homing beacon (pitch and roll rotation only)
@@ -54,7 +56,9 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_navigation_filter_roll = msg->roll*3.14159265/180.0; //radians
 	_navigation_filter_pitch = msg->pitch*3.14159265/180.0; //radians
 	_navigation_filter_heading = msg->heading*3.14159265/180.0; //radians
+	_homing_updated_flag = msg->homing_updated;
 	_navigation_filter_counter = _navigation_filter_counter + 1;
+
 
 	//roll rotation using navigation data
 	Eigen::Matrix3f _R_roll;
@@ -109,6 +113,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 void LidarFilter::execinforCallback(const messages::ExecInfo::ConstPtr &exec_msg)
 {
 	_execinfo_turnflag = exec_msg->turnFlag;
+	_execinfo_stopflag = exec_msg->stopFlag;
 }
 
 void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
@@ -204,9 +209,11 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	msg.x_filter = this->_navigation_filter_x;
 	msg.y_filter = this->_navigation_filter_y;
 	msg.heading_filter = this->_navigation_filter_heading;
+	msg.homing_updated_flag = this-> _homing_updated_flag;
 
-	//forward relavent turing flag information
+	//forward relavent turing and stop flag information
 	msg.turnFlag = this->_execinfo_turnflag;
+	msg.stopFlag = this->_execinfo_stopflag;
 
 	//flag the data as new
 	msg.new_data = _registration_new;
