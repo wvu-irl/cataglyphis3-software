@@ -126,6 +126,7 @@ include_directories(
  add_library(hw_interface_plugin_roboteq            src/hw_interface_plugin_roboteq.cpp)
  add_library(hw_interface_plugin_roboteq_grabber    src/hw_interface_plugin_roboteq_grabber.cpp)
  add_library(hw_interface_plugin_roboteq_drive      src/hw_interface_plugin_roboteq_drive.cpp)
+ add_library(roboteq_drive_packet                   src/roboteq_drive_packet.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -146,6 +147,7 @@ include_directories(
    ${catkin_LIBRARIES}
    base_interface
    base_serial_interface
+   roboteq_drive_packet
  )
  
  target_link_libraries(hw_interface_plugin_roboteq_grabber
@@ -153,6 +155,7 @@ include_directories(
    base_interface
    base_serial_interface
    hw_interface_plugin_roboteq
+   roboteq_drive_packet
  )
  
  target_link_libraries(hw_interface_plugin_roboteq_drive
@@ -160,6 +163,7 @@ include_directories(
    base_interface
    base_serial_interface
    hw_interface_plugin_roboteq
+   roboteq_drive_packet
  )
 
 #############

@@ -51,7 +51,7 @@ namespace base_classes
         int remotePort;
 
         //plugin provided data handler that moves data into ROS
-        virtual bool interfaceDataHandler(const long &bufferSize, void* buf) = 0;
+        virtual bool interfaceReadHandler(const long &bufferSize, int arrayStartPos) = 0;
 
     public:
         bool handleIORequest(const boost::system::error_code &ec, size_t bytesReceived);

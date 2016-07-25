@@ -19,7 +19,7 @@ namespace hw_interface_plugin_netburner {
 
     protected:
         bool subPluginInit(ros::NodeHandlePtr nhPtr);
-        bool interfaceDataHandler(const long &bufferSize, void *buf);
+        bool interfaceReadHandler(const long &bufferSize, int arrayStartPos);
         bool verifyChecksum();
 
 

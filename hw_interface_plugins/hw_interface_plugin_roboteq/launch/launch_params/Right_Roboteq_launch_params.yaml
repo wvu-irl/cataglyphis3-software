@@ -14,4 +14,5 @@ Right_Roboteq:
         baudrate           : 115200,
         subscribeToTopic   : "/control/actuatorout/all",
         publishToTopic     : "/roboteq/drivemotorin/right",
+        controllerType     : "Right_Drive"
     }

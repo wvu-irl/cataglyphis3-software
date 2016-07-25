@@ -83,7 +83,7 @@ bool base_classes::base_UDP_interface::handleIORequest(const boost::system::erro
     ROS_INFO("Thread <%s>:: %s:: Received Packet!:: Size %lu", THREAD_ID_TO_C_STR, this->pluginName.c_str(), bytesReceived);
 
     //call plugin's data handler
-    if((dataStartPositionPtr != 0) && !interfaceDataHandler(bytesReceived, dataStartPositionPtr))
+    if(!interfaceReadHandler(bytesReceived, dataArrayStart))
     {
         ROS_ERROR("Error Occurred in plugin data Handler <%s>", this->pluginName.c_str());
     }

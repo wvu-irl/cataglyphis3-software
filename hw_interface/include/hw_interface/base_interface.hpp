@@ -14,6 +14,8 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <hw_interface/shared_const_buffer.hpp>
+
 #include <boost/cstdint.hpp>
 #include <boost/crc.hpp>
 #include <cstdint>
@@ -59,6 +61,11 @@ namespace base_classes
         ros::Publisher rosDataPub; //publisher, data from interface to ros
         ros::Subscriber rosDataSub;//subscriber, data from ros to interface
 
+        //This ASIO strand is used for writing data to the interface.
+        //If this object is not used for writing data to the interface, data writes could happen
+        //  in any order, meaning output data packets can be sent in reverse order (bad for control packets).
+        boost::shared_ptr<boost::asio::strand> interfaceSynchronousStrand;
+
         boost::function<std::size_t(const boost::system::error_code& error,
                                     std::size_t totalBytesRecevied)> streamCompletionChecker;
         boost::function<std::pair<matcherIterator, bool> (matcherIterator begin, matcherIterator end) >
@@ -83,18 +90,22 @@ namespace base_classes
         //beware that size_t is UNSIGNED. Operations should not underflow!
         virtual bool handleIORequest(const boost::system::error_code &ec, size_t bytesReceived) {}
 
+        virtual void postInterfaceWriteRequest(const hw_interface_support_types::shared_const_buffer &buffer) {}
+        virtual void interfaceWriteHandler(const hw_interface_support_types::shared_const_buffer &buffer) {}
+
         uint16_t calcCRC16Block(const void * const buf, std::size_t numOfBytes);
         uint32_t calcCRC32Block(const void * const buf, std::size_t numOfBytes);
 
         void setupStreamMatcherDelimAndLength(const int packetLengthInBytes, const char *headerSequence,
-                                              const char *footerSequence, void *dataStartPosPtr)
+                                              const char *footerSequence)
         {
             streamCompletionChecker =
                     boost::bind(&base_interface::streamMatcherDelimAndLength, this,
                                     _1, _2, packetLengthInBytes, headerSequence,
-                                    footerSequence, dataStartPosPtr);
+                                    footerSequence);
             enableCompletionFunctor =! streamCompletionChecker.empty();
         }
+
 
         //this definition is called repeatedly and used to check if a packet on the stream
         //has been received.
@@ -103,24 +114,19 @@ namespace base_classes
         //Plugins should overide this function if it intends on using this functionality
         std::size_t streamMatcherDelimAndLength(const boost::system::error_code &error, long totalBytesInBuffer,
                                                     const int packetLengthInBytes, const char *headerSequence,
-                                                    const char *footerSequence, void *dataStartPosPtr);
+                                                    const char *footerSequence);
 
         bool enableMetrics();
         bool disableMetrics();
         std::string printMetrics(bool printSideEffect);
 
-        base_interface() :
-            lastTimeMetric(ros::Time::now().toNSec()),
-            acc(boost::accumulators::tag::rolling_window::window_size = 150)
-        {
-            enabled = true;
-        }
+        base_interface();
         virtual ~base_interface(){}
 
     protected:
 
         boost::shared_array<uint8_t> receivedData;
-        void *dataStartPositionPtr;
+        int dataArrayStart;
 
     private:
 

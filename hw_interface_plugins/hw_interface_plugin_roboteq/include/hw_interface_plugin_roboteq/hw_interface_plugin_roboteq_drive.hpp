@@ -7,15 +7,18 @@
 
 #include <hw_interface_plugin_roboteq/hw_interface_plugin_roboteq.hpp>
 
-#include <messages/ActuatorOut.h>
-#include <messages/encoder_data.h>
+#include <hw_interface_plugin_roboteq/roboteq_drive_packet.hpp>
 
 namespace hw_interface_plugin_roboteq {
 
     class roboteq_drive : public hw_interface_plugin_roboteq::roboteq_serial
     {
         public:
-            roboteq_drive(){}
+            roboteq_drive(){
+                if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+                       ros::console::notifyLoggerLevelsChanged();
+                    }
+            }
 
             void rosMsgCallback(const messages::ActuatorOut::ConstPtr &msgIn);
 
@@ -25,6 +28,9 @@ namespace hw_interface_plugin_roboteq {
             bool implInit();
             bool implStart();
             bool implStop();
+            bool implDataHandler(const long &length, int arrayStartPos);
+
+            bool implChecksum();
     };
 
 }

@@ -45,3 +45,10 @@ bool hw_interface_plugin_roboteq::roboteq_grabber::implStop()
 
     return true;
 }
+
+bool hw_interface_plugin_roboteq::roboteq_grabber::implDataHandler(const long &bufferSize,
+                                                                        int arrayStartPos)
+{
+
+    return true;
+}

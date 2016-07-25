@@ -15,7 +15,7 @@
 #include <boost/asio/basic_serial_port.hpp>
 #include <boost/asio/serial_port.hpp>
 
-#define MAX_SERIAL_READ 28
+#define MAX_SERIAL_READ 250
 
 namespace base_classes
 {
@@ -42,7 +42,10 @@ namespace base_classes
         boost::shared_ptr<boost::asio::serial_port> interfacePort;
 
         std::string deviceName;
-        boost::asio::streambuf streamBuffer;
+        boost::asio::streambuf interfaceDataBuffer;
+
+        int readLength;
+        std::string headerString, footerString;
 
         base_serial_interface();
 
@@ -52,7 +55,10 @@ namespace base_classes
         //in the protected member's info
         virtual bool subPluginInit(ros::NodeHandlePtr nhPtr) = 0;
 
-        virtual bool interfaceDataHandler(const long &bufferSize, void *buf) = 0;
+        virtual bool interfaceReadHandler(const long &bufferSize, int arrayStartPos) = 0;
+
+        void interfaceWriteHandler(const hw_interface_support_types::shared_const_buffer &buffer);
+        void postInterfaceWriteRequest(const hw_interface_support_types::shared_const_buffer &buffer);
 
         template<typename Option>
         boost::system::error_code setOption(const Option * newOption)

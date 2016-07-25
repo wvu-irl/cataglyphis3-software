@@ -17,21 +17,23 @@ namespace hw_interface_plugin_roboteq {
     class roboteq_grabber : public hw_interface_plugin_roboteq::roboteq_serial
     {
         public:
-            roboteq_grabber(){}
+            roboteq_grabber(){
+                if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+                       ros::console::notifyLoggerLevelsChanged();
+                    }
+            }
 
             void rosMsgCallback(const messages::ActuatorOut::ConstPtr &msgIn);
 
         protected:
-
-            messages::GrabberFeedback lastMsgPub;
+            messages::encoder_data lastMsgPub;
 
             bool implInit();
             bool implStart();
             bool implStop();
+            bool implDataHandler(const long &length, int arrayStartPos);
 
-    private:
-
-
+            bool implChecksum();
     };
 
 

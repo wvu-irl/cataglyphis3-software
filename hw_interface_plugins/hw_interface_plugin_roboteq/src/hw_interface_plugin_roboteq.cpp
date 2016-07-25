@@ -15,19 +15,28 @@ bool hw_interface_plugin_roboteq::roboteq_serial::subPluginInit(ros::NodeHandleP
 {
     nh = ros::NodeHandlePtr(nhPtr);
 
-    implInit();
+    std::string tempString = "";
+    if(ros::param::get(pluginName+"/controllerType", tempString))
+    {
+        if(tempString.compare("Right_Drive")) { roboteqType = controller_t::Right_Drive_Roboteq; }
+        else if(tempString.compare("Left_Drive")) { roboteqType = controller_t::Left_Drive_Roboteq; }
+        else { roboteqType = controller_t::Other; }
+    }
+    else
+    {
+        ROS_ERROR("%s:: No Controller Type Specified!", pluginName.c_str());
+    }
 
+    ROS_DEBUG("%s:: Implementation Init", pluginName.c_str());
+    implInit();
     ROS_INFO_EXTRA_SINGLE("Roboteq Plugin Init");
     enableMetrics();
-
-    setupStreamMatcherDelimAndLength(28, "Az", "P1fC", dataStartPositionPtr);
-
+    setupStreamMatcherDelimAndLength(readLength, headerString.c_str(),
+                                        footerString.c_str());
     deviceName = "";
     ros::param::get(pluginName+"/deviceName", deviceName);
-
     int tempBaudRate = 0;
     ros::param::get(pluginName+"/baudrate", tempBaudRate);
-
     setOption<boost::asio::serial_port_base::baud_rate>(
                 new boost::asio::serial_port_base::baud_rate(tempBaudRate));
 
@@ -35,12 +44,14 @@ bool hw_interface_plugin_roboteq::roboteq_serial::subPluginInit(ros::NodeHandleP
     return true;
 }
 
-bool hw_interface_plugin_roboteq::roboteq_serial::interfaceDataHandler(const long &bufferSize, void* buf)
+bool hw_interface_plugin_roboteq::roboteq_serial::interfaceReadHandler(const long &length,
+                                                                            int arrayStartPos)
 {
-    ROS_DEBUG_EXTRA_SINGLE("Roboteq Plugin Data Handler");
-
-    //for(int i = 0; )
-
+    ROS_INFO_EXTRA_SINGLE("Roboteq Plugin Data Handler");
+    if(! implDataHandler(length, arrayStartPos))
+    {
+        ROS_ERROR("%s :: Implementation Data Handler returned a BAD Return", pluginName.c_str());
+    }
     return true;
 }
 

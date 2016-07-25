@@ -45,7 +45,7 @@ bool hw_interface_plugin_netburner::netburner_UDP::subPluginInit(ros::NodeHandle
 }
 
 
-bool hw_interface_plugin_netburner::netburner_UDP::interfaceDataHandler(const long &bufferSize, void* buf)
+bool hw_interface_plugin_netburner::netburner_UDP::interfaceReadHandler(const long &bufferSize, int arrayStartPos)
 {
     ROS_INFO_EXTRA_SINGLE("NB Plugin Data Handler");
     return true;
