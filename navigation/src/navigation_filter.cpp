@@ -1,18 +1,17 @@
 #include <navigation/navigation_filter.hpp>
 
 NavigationFilter::NavigationFilter()
-{
-    //this probably shouldn't be subscribing to "topicname" -Matt G.
-	sub_exec = nh.subscribe("/topicname", 1, &NavigationFilter::getExecInfoCallback, this);
+{ 
+	sub_exec = nh.subscribe("/control/exec/info", 1, &NavigationFilter::getExecInfoCallback, this);
 	pause_switch = false;
 	stopFlag = false;
 	turnFlag = false;
 
 	sub_lidar = nh.subscribe("lidar/lidarfilteringout/lidarfilteringout", 1, &NavigationFilter::getLidarFilterOutCallback, this);
-	homing_x=0;
+    homing_x=0;
 	homing_y=0;
 	homing_heading=0;
-	homing_found=false;
+    homing_found=false;
 
 	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 	filter.set_imu_offset(0,0);
@@ -612,20 +611,20 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 	{
 
 	}
-	
 }
 
 void NavigationFilter::getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg)
 {
 	this->pause_switch = msg->pause;
-	this->turnFlag = 0;
-	this->stopFlag = 0;
+	this->turnFlag = msg->turnFlag;
+	this->stopFlag = msg->stopFlag;
 }
 
 void NavigationFilter::getLidarFilterOutCallback(const messages::LidarFilterOut::ConstPtr &msg)
 {
-	this->homing_x = msg->homing_x;
-	this->homing_y = msg->homing_y;
+	double l_dist = 0.44;
+	this->homing_x = msg->homing_x-l_dist*cos(msg->homing_heading);
+	this->homing_y = msg->homing_y-l_dist*sin(msg->homing_heading);
 	this->homing_heading = msg->homing_heading;
 	this->homing_found = msg->homing_found;
 }

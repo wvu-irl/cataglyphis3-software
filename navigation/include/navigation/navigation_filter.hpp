@@ -8,7 +8,7 @@
 #include <messages/NavFilterOut.h>
 #include <messages/LidarFilterOut.h>
 #include <hsm/user_input_nav_act_class.h>
-
+ 
 #include <messages/NavFilterControl.h> //added for new User Interface -Matt G.
 
 class NavigationFilter
