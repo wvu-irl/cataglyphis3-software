@@ -71,7 +71,7 @@ bool NextBestRegion::runProc()
             callIntermediateWaypoints();
             //sendDriveGlobal(false);
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            sendWait(10.0);
+            //sendWait(10.0);
             currentROIIndex = bestROINum;
             allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
             tempGoHome = false;

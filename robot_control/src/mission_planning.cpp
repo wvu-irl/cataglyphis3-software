@@ -89,7 +89,6 @@ MissionPlanning::MissionPlanning()
         //ROS_INFO("procsToInterrupt.at(i) = %d",procsToInterrupt.at(i));
         //ROS_INFO("procsBeingExecuted.at(i) = %d",procsBeingExecuted.at(i));
     }
-    for(int i=0; i<NUM_TIMERS; i++) timersActive[i] = false;
 }
 
 void MissionPlanning::run()
@@ -301,18 +300,18 @@ void MissionPlanning::runProcesses_()
 
 void MissionPlanning::runPause_()
 {
-    if(pauseStarted == false) {pause.sendPause(); stopAllTimers_();}
+    if(pauseStarted == false) {pause.sendPause(); pauseAllTimers_();}
     pauseStarted = true;
 }
 
-void MissionPlanning::stopAllTimers_()
+void MissionPlanning::pauseAllTimers_()
 {
-    for(int i=0; i<NUM_TIMERS; i++) timers[i].stop();
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->pause();
 }
 
 void MissionPlanning::resumeTimers_()
 {
-    for(int i=0; i<NUM_TIMERS; i++) if(timersActive[i]) timers[i].start();
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
 }
 
 void MissionPlanning::calcnumProcsBeingOrToBeExec_()

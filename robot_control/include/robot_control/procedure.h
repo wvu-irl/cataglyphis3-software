@@ -493,21 +493,4 @@ void Procedure::serviceAvoidCounterDecrement()
 	}
 }
 
-void Procedure::startTimer(TIMER_NAMES_T timerName)
-{
-	timers[timerName].start();
-	timersActive[timerName] = true;
-}
-
-void Procedure::stopTimer(TIMER_NAMES_T timerName)
-{
-	timers[timerName].stop();
-	timersActive[timerName] = false;
-}
-
-void Procedure::setPeriodTimer(TIMER_NAMES_T timerName, float period)
-{
-	timers[timerName].setPeriod(ros::Duration(period));
-}
-
 #endif // PROCEDURE_H

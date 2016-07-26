@@ -69,7 +69,7 @@ private:
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
-	void stopAllTimers_();
+	void pauseAllTimers_();
 	void resumeTimers_();
 	void calcnumProcsBeingOrToBeExec_();
 	void updateSampleFlags_();

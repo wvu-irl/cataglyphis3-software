@@ -9,6 +9,7 @@
 #include <robot_control/SearchMap.h>
 #include <robot_control/RandomSearchWaypoints.h>
 #include <robot_control/DriveSpeeds.h>
+#include <robot_control/cataglyphis_timer.h>
 #include <messages/GlobalMapPathHazards.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
@@ -63,8 +64,7 @@ public:
 	static robot_control::DriveSpeeds driveSpeedsMsg;
 	static robot_control::DriveSpeeds driveSpeedsMsgPrev;
     static RobotStatus robotStatus;
-	static ros::Timer timers[NUM_TIMERS];
-	static bool timersActive[NUM_TIMERS];
+	static CataglyphisTimerBase* timers[NUM_TIMERS];
     static std::vector<robot_control::Waypoint> waypointsToTravel;
     static int numWaypointsToTravel;
     static bool execDequeEmpty;
@@ -154,8 +154,7 @@ ros::Publisher MissionPlanningProcedureShare::driveSpeedsPub;
 robot_control::DriveSpeeds MissionPlanningProcedureShare::driveSpeedsMsg;
 robot_control::DriveSpeeds MissionPlanningProcedureShare::driveSpeedsMsgPrev;
 RobotStatus MissionPlanningProcedureShare::robotStatus;
-ros::Timer MissionPlanningProcedureShare::timers[NUM_TIMERS];
-bool MissionPlanningProcedureShare::timersActive[NUM_TIMERS];
+CataglyphisTimerBase* MissionPlanningProcedureShare::timers[NUM_TIMERS];
 std::vector<robot_control::Waypoint> MissionPlanningProcedureShare::waypointsToTravel;
 int MissionPlanningProcedureShare::numWaypointsToTravel;
 bool MissionPlanningProcedureShare::execDequeEmpty;
