@@ -154,6 +154,8 @@ include_directories(
  add_library(deposit_sample src/deposit_sample.cpp)
  
  add_library(safe_pathing src/safe_pathing.cpp)
+ 
+ add_library(cataglyphis_timer src/cataglyphis_timer.cpp)
 
 ## Declare a cpp executable
  add_executable(keyboard_control_node src/keyboard_control_node.cpp)
@@ -224,6 +226,7 @@ include_directories(
    go_home
    deposit_approach
    deposit_sample
+   cataglyphis_timer
  )
  
  target_link_libraries(safe_pathing_node
