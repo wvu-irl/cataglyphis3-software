@@ -35,6 +35,8 @@
 #include "messages/KeyframeList.h"
 #include "messages/Keyframe.h"
 
+#include "messages/CreateROIKeyframe.h"
+
 //g2o library
 #include "g2o/core/sparse_optimizer.h"
 #include "g2o/core/block_solver.h"
@@ -173,6 +175,9 @@ protected:
 
 	ros::NodeHandle node;
 
+	//service
+	ros::ServiceServer createROIKeyframeServer;
+
 	//publish 
 	ros::Publisher keyframePub;
 	ros::Publisher TkeyTomapPub;
@@ -282,9 +287,11 @@ protected:
 	Cell_Global GlobalMap[500][500];	//global map size has to be changed here, it will be maplength / cell_resolution
 	bool firstscan;
 	bool homing_updated;
+	bool ServerSwitch;
 
 	//definition for publish
 	std::vector<PointCloud> Keyframe_Pointcloud_pub;
+	messages::KeyframeList keyframelist_msg;
 
 
 	//timer definition
@@ -309,12 +316,13 @@ protected:
 	double TransformationMatrix_to_angle(matrix4f matrix);
 	matrix4f angle_to_TransformationMatrix(double diff_x, double diff_y,double theta);
 	bool Do_g2o(std::vector<Position> &Vertex, std::vector<Transformation_Matrix> &Edges);
-	void Pcak_Keyframe_message(Keyframe_Pointcloud keyframe_pointcloud_pub);
+	messages::Keyframe Pcak_Keyframe_message(Keyframe_Pointcloud keyframe_pointcloud_pub);
 	void getOverlap(LocalMap_ICP ICP_localmap_read, LocalMap_ICP ICP_localmap_ref, matrix4f Transformation_matrix, int &overlap_check_counter, std::vector<Cell_Local> &read_Correspondences_cells, std::vector<Cell_Local> &ref_Correspondences_cells);
 	double Update_GlobalMap(LocalMap_Information localmap_information_update, matrix4f transformation_matrix_update);
 	void Coordinate_Normalize(float x0, float y0, float heading0, float x1, float y1, float heading1, double &theta, double &diff_x, double &diff_y);
 	matrix4f inverse4f(matrix4f Transformation_matrix);
 	matrix4f get_g2o_transformation_matrix(std::vector<Position> Vertex_g2o);
+	bool create_ROIKeyframe(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res);
 
 
 
@@ -330,6 +338,8 @@ Keyframe::Keyframe()
 {
 	//topic initialization
 	localmapSub = node.subscribe("/lidar/lidarfilteringnode/localmap", 1, &Keyframe::getlocalmapcallback, this);
+
+	createROIKeyframeServer = node.advertiseService("/slam/keyframesnode/keyframelist", &Keyframe::create_ROIKeyframe, this);
 
 	keyframePub = node.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, true); //need to change the message file
 	TkeyTomapPub = node.advertise<slam::TkeyTomap_msg>("/slam/TkeyTomap_msg", 1, true);
@@ -367,7 +377,7 @@ void Keyframe::Initialization()
 	threshold_permanent_keyframe = 10; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
 
 	//overlap
-	LocalMap_size = 80; // localmap size will be 80 * 80
+	LocalMap_size = 120; // localmap size will be 80 * 80
 
 	//parameter for k nearest neighbor
 	neighbor_number = 5; //find 5 nearest neighbor to build edge, include the search point and the previous keyframe
@@ -384,6 +394,7 @@ void Keyframe::Initialization()
 	update_thershold = 0.1;
 	firstscan = true;
 	homing_updated = false;
+	ServerSwitch = false;
 
 
 	//initialize all vectors
@@ -460,7 +471,9 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	float y_filter_pub = 0;
 	float heading_filter_pub = 0;
 
-	
+	if(!ServerSwitch)
+	{
+
 	if(LocalMapMsgIn.new_data) //if the localmap data is new, update
 	{	
 		ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
@@ -537,6 +550,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			if(LocalMap_All_s[messages_input_index].homing_updatedFlag)
 			{
 				homing_updated = true;
+				ROS_INFO_STREAM("***********************************************************************************************************************************************");
 			}
 		}
 
@@ -549,7 +563,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 					read_index = messages_input_index;
 					key_index = read_index;	//the pre frame will be as a keyframe
 
-					
+
 
 					//get position of the keyframe in global coordinate, map will be the fix frame (0, 0, 0) (x, y, heading)
 					TkeyTomap = angle_to_TransformationMatrix(LocalMap_All_s[key_index].x_filter, LocalMap_All_s[key_index].y_filter, LocalMap_All_s[key_index].heading_filter);	//transformation from current keyframe to map
@@ -681,7 +695,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 							int update_Rate = 0;
 							update_Rate = Update_GlobalMap(LocalMap_Information_temp_s[LocalMap_Information_temp_s.size() - 2], TpermanentkeyTomap);	//segmatation fault (core dumped) problem is here, size too big
 
-							Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]);
+							keyframelist_msg.keyframeList.push_back(Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]));
+							keyframePub.publish(keyframelist_msg);
 
 
 							//clear temp data
@@ -929,7 +944,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 								int update_Rate = 0;
 								update_Rate = Update_GlobalMap(LocalMap_Information_temp_s[LocalMap_Information_temp_s.size() - 2], TpermanentkeyTomap);	//segmatation fault (core dumped) problem is here, size too big
 
-								Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]);
+								keyframelist_msg.keyframeList.push_back(Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]));
+								keyframePub.publish(keyframelist_msg);
 
 
 								//clear temp data
@@ -1203,7 +1219,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 								int update_Rate = 0;
 								update_Rate = Update_GlobalMap(LocalMap_Information_temp_s[LocalMap_Information_temp_s.size() - 2], TpermanentkeyTomap);	//segmatation fault (core dumped) problem is here, size too big
 
-								Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]);
+								keyframelist_msg.keyframeList.push_back(Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]));
+								keyframePub.publish(keyframelist_msg);
 
 								//clear temp data
 								position = Vertex_temp[Vertex_temp.size() - 1];
@@ -1467,7 +1484,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 								int update_Rate = 0;
 								update_Rate = Update_GlobalMap(LocalMap_Information_temp_s[LocalMap_Information_temp_s.size() - 2], TpermanentkeyTomap);	//segmatation fault (core dumped) problem is here, size too big
 
-								Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]);
+								keyframelist_msg.keyframeList.push_back(Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]));
+								keyframePub.publish(keyframelist_msg);
 
 								//clear temp data
 								position = Vertex_temp[Vertex_temp.size() - 1];
@@ -1758,6 +1776,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 		ROS_INFO_STREAM("use_ICP_counter: " << use_ICP_counter << " use_IMU_counter: " << use_IMU_counter << " use_g2o_counter: " << use_g2o_counter);
 
 	}
+	}	
 	
 }
 
@@ -2705,10 +2724,10 @@ Keyframe::matrix4f Keyframe::angle_to_TransformationMatrix(double diff_x, double
 // 	// ......
 // }
 
-void Keyframe::Pcak_Keyframe_message(Keyframe_Pointcloud keyframe_pointcloud_pub)
+messages::Keyframe Keyframe::Pcak_Keyframe_message(Keyframe_Pointcloud keyframe_pointcloud_pub)
 {
 	messages::Keyframe keyframe_msg;
-	messages::KeyframeList keyframelist_msg;
+	
 
 	grid_map::GridMap keyframe_map;
 
@@ -2746,10 +2765,12 @@ void Keyframe::Pcak_Keyframe_message(Keyframe_Pointcloud keyframe_pointcloud_pub
 	keyframe_msg.heading = keyframe_pointcloud_pub.heading;
 	keyframe_msg.associatedROI = -1;
 
-	keyframelist_msg.keyframeList.push_back(keyframe_msg);
+	return keyframe_msg;
+
+	// keyframelist_msg.keyframeList.push_back(keyframe_msg);
 
 
-	keyframePub.publish(keyframelist_msg);
+	// keyframePub.publish(keyframelist_msg);
 
 
 
@@ -3190,6 +3211,131 @@ Keyframe::matrix4f Keyframe::get_g2o_transformation_matrix(std::vector<Position>
 
 	return transformation_matrix_g2o;
 
+
+}
+
+bool Keyframe::create_ROIKeyframe(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res)
+{
+	ServerSwitch = true;
+	float x_filter_pub = 0;
+	float y_filter_pub = 0;
+	float heading_filter_pub = 0;
+	LocalMap_All localmap_all;
+	LocalMap_ICP localmap_icp;
+	LocalMap_Information localmap_information;
+
+	//ref_index will be 0 all time
+	read_index = messages_input_index;
+					
+	ICP_Result icp_result;
+	icp_result = ICP_compute(ref_index, read_index, 0, 0);	//using IMU data to get transformation matrix
+
+	Transformation_Matrix TreadToprekey;
+
+	TreadToprekey.transformation_matrix = icp_result.transformation_matrix;
+	TreadToprekey.from_index = icp_result.from_index;
+	TreadToprekey.to_index = icp_result.to_index;
+	TreadToprekey_s.push_back(TreadToprekey);	//save all transformation between frame to previous keyframe in one time find a new keyframe
+
+	Keyframe_Pointcloud keyframe_pointcloud;
+	Position position;
+	Transformation_Matrix edges;
+
+	key_index = read_index;	//the previous frame will be as a keyframe
+
+	//get position of the keyframe in global coordinate, map will be the fix frame (0, 0, 0) (x, y, heading)
+	TkeyTomap = TkeyTomap * TreadToprekey_s[TreadToprekey_s.size() - 1].transformation_matrix;	//transformation from current keyframe to map 
+
+	position.x = TkeyTomap(0,3);
+	position.y = TkeyTomap(1,3);
+	position.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+
+	//publish the IMU data to localization node
+	x_filter_pub = LocalMap_All_s[key_index].x_filter;
+	y_filter_pub = LocalMap_All_s[key_index].y_filter;
+	heading_filter_pub = LocalMap_All_s[key_index].heading_filter;
+
+	//store keyframe position into vertex_temp 
+	Vertex.push_back(position);
+
+	//store keyframe position into vertex in pointcloudXYZ datatype
+	Vertex_pointcloud.push_back(pcl::PointXYZ(position.x, position.y, 0.0));
+
+	//get point cloud of the keyframe, save icp pointcloud and verification pointcloud
+	keyframe_pointcloud.keyframe_icp_cloud = LocalMap_ICP_s[key_index].ICP_cloudMsgIn;
+	keyframe_pointcloud.keyframe_cloud = LocalMap_Information_s[key_index].Information_cloudMsgIn;
+	keyframe_pointcloud.x = position.x;
+	keyframe_pointcloud.y = position.y;
+	keyframe_pointcloud.heading = position.heading;
+	keyframe_pointcloud.z_mean = LocalMap_Information_s[key_index].z_mean;
+	keyframe_pointcloud.var_z = LocalMap_Information_s[key_index].var_z;
+
+	//store keyframe point cloud into keyframe maps
+	KeyframeMap_s.push_back(keyframe_pointcloud);
+
+	edges.transformation_matrix = TreadToprekey_s[TreadToprekey_s.size() - 1].transformation_matrix;
+	edges.from_index = Vertex.size() - 1;
+	edges.to_index = Vertex.size() - 2;
+	//store transformation between current keyframe and previous keyframe into edges temp
+	Edges.push_back(edges);
+
+	//store temp Information to update global map
+	LocalMap_Information_s.push_back(LocalMap_Information_s[key_index]);
+
+		// ROS_INFO_STREAM("Vertex number:" << Vertex.size());
+
+	//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<pack keyframe message>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//	
+
+	messages::Keyframe keyframe_msg;
+
+	keyframe_msg = Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]);
+
+	keyframe_msg.associatedROI = req.roiIndex;
+
+	res.keyframe = keyframe_msg;
+
+
+	//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<publish TkeyTomap message>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
+	slam::TkeyTomap_msg tkeytomap_msg; 
+					
+	tkeytomap_msg.x = TkeyTomap(0,3);
+	tkeytomap_msg.y = TkeyTomap(1,3);
+	tkeytomap_msg.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+
+	tkeytomap_msg.x_filter = x_filter_pub;
+	tkeytomap_msg.y_filter = y_filter_pub;
+	tkeytomap_msg.heading_filter = heading_filter_pub;
+
+	TkeyTomapPub.publish(tkeytomap_msg);
+					
+
+	//after generating a new keyframe, clean all map data for free storage
+	//keep all information about the keyframe
+	localmap_all = LocalMap_All_s[key_index];
+	localmap_icp = LocalMap_ICP_s[key_index];
+	localmap_information = LocalMap_Information_s[key_index];
+
+	//clean all data
+	LocalMap_All_s.clear();
+	LocalMap_ICP_s.clear();
+	LocalMap_Information_s.clear();
+	TreadToprekey_s.clear();
+	Vertex_sub.clear();
+	Edges_sub.clear();
+	Vertex_temp.clear();
+	Edges_temp.clear();
+
+	//restore the keyframe information as the initial data for next keyframe 
+	LocalMap_All_s.push_back(localmap_all);
+	LocalMap_ICP_s.push_back(localmap_icp);
+	LocalMap_Information_s.push_back(localmap_information);
+
+	//reset all index 
+	messages_input_index = 0;
+
+	ServerSwitch = false;
+
+	return true;
 
 }
 
