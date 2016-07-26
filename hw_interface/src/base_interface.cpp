@@ -74,46 +74,52 @@ std::size_t base_classes::base_interface::streamMatcherDelimAndLength(const boos
     //ROS_DEBUG("Candidate Footer: %s", footerSequence);
     if(totalBytesInBuffer <= std::strlen(footerSequence))
     {
-        //ROS_DEBUG("%s:: Matcher Returning Early", pluginName.c_str());
+        ROS_DEBUG("%s:: Matcher Returning Early", pluginName.c_str());
         return packetLengthInBytes - totalBytesInBuffer;
     }
     if((packetLengthInBytes - totalBytesInBuffer) <= 0)
     {
-        //ROS_DEBUG("%s:: Full Length Packet Received", pluginName.c_str());
+        ROS_DEBUG("%s:: Full Length Packet Received", pluginName.c_str());
+        std::printf("Contents: ");
+	    for(int i = 0; i < totalBytesInBuffer; i++)
+	    {
+	        std::printf("%c | ", receivedData[i]);
+	    }
+	    std::printf("\r\n");
         const int footerLength = std::strlen(footerSequence);
         int i = 0;
         int j = footerLength-1;
-        //std::cout << "Footer: ";
+        std::cout << "Footer: ";
         for(i = 0; i < footerLength; i++)
         {
-            //std::printf("%c | ", receivedData[ totalBytesInBuffer - 1 - i ]);
+            std::printf("%c | ", receivedData[ totalBytesInBuffer - 1 - i ]);
             if(receivedData[ totalBytesInBuffer - 1 - i ] != footerSequence[j])
             {
                 //THIS IS WHERE AN HSM invalid message can be sent
-                //std::printf("\r\n");
+                std::printf("\r\n");
                 ROS_ERROR("%s:: Invalid Footer\r\n", pluginName.c_str());
                 return footerLength;
             }
             j--;
         }
-        //std::cout << std::endl;
+        std::cout << std::endl;
         const int headerLength = std::strlen(headerSequence);
-        //std::cout << "Header: ";
+        std::cout << "Header: ";
         for(i = 0; i < headerLength; i++)
         {
-            //std::printf("%c | ", receivedData[totalBytesInBuffer - packetLengthInBytes + i] );
+            std::printf("%c | ", receivedData[totalBytesInBuffer - packetLengthInBytes + i] );
             if(receivedData[totalBytesInBuffer - packetLengthInBytes + i] != headerSequence[i])
             {
                 //THIS IS WHERE AN HSM invalid message can be sent
-                //std::printf("\r\n");
+                std::printf("\r\n");
                 ROS_ERROR("%s:: Invalid Header\r\n", pluginName.c_str());
                 return packetLengthInBytes;
             }
         }
-        //std::cout << std::endl;
+        std::cout << std::endl;
         //should post something to HSM here.
 
-        //ROS_DEBUG("%s:: Header Found, Footer Found, Correct Length, Good Packet", pluginName.c_str());
+        ROS_DEBUG("%s:: Header Found, Footer Found, Correct Length, Good Packet", pluginName.c_str());
 
         dataArrayStart = ( totalBytesInBuffer - packetLengthInBytes );
         return 0;

@@ -147,7 +147,6 @@ include_directories(
    ${catkin_LIBRARIES}
    base_interface
    base_serial_interface
-   roboteq_drive_packet
  )
  
  target_link_libraries(hw_interface_plugin_roboteq_grabber
@@ -155,7 +154,6 @@ include_directories(
    base_interface
    base_serial_interface
    hw_interface_plugin_roboteq
-   roboteq_drive_packet
  )
  
  target_link_libraries(hw_interface_plugin_roboteq_drive

@@ -45,6 +45,8 @@ bool base_classes::base_serial_interface::initPlugin(ros::NodeHandlePtr nhPtr,
 
     interfacePort->open(deviceName);
 
+    setInterfaceOptions();
+
     return interfaceReady();
 }
 

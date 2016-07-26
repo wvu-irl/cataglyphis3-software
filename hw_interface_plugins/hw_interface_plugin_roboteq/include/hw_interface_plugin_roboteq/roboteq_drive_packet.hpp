@@ -1,4 +1,4 @@
-#ifndef ROBOTEQ_DRIVE_PACKET_HPP__
+ #ifndef ROBOTEQ_DRIVE_PACKET_HPP__
 #define ROBOTEQ_DRIVE_PACKET_HPP__
 
 #include <ros/ros.h>
@@ -13,7 +13,7 @@ namespace hw_interface_plugin_roboteq {
 
         struct drive_packet_struct_t 
         {
-            char header[2];
+            uint8_t header[2];
             uint8_t senderID;
             uint8_t counter;
             uint16_t clock;
@@ -24,8 +24,11 @@ namespace hw_interface_plugin_roboteq {
             uint8_t motor1_amps;
             uint8_t motor2_amps;
             uint8_t motor3_amps;
+            uint8_t iMarkers4_10;
+            uint8_t iMarkers11_16;
             uint32_t crc32;
-            char footer[4];
+            uint8_t iMarkerCRC;
+            uint8_t footer[4];
         } __attribute__((packed));
 
         const int PACKET_SIZE_MINUS_CRC_AND_FOOTER = sizeof(drive_packet_struct_t) - 8;

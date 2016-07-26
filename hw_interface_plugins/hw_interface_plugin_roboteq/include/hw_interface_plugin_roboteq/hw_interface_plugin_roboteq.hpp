@@ -31,6 +31,7 @@ namespace hw_interface_plugin_roboteq {
         controller_t roboteqType;
 
         bool subPluginInit(ros::NodeHandlePtr nhPtr);
+        void setInterfaceOptions();
         bool interfaceReadHandler(const long &length, int arrayStartPos);
         bool verifyChecksum();
 

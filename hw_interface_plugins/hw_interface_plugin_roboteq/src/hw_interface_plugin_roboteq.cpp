@@ -24,7 +24,7 @@ bool hw_interface_plugin_roboteq::roboteq_serial::subPluginInit(ros::NodeHandleP
     }
     else
     {
-        ROS_ERROR("%s:: No Controller Type Specified!", pluginName.c_str());
+        ROS_ERROR("%s:: No Controller Type Specifiecompleted!", pluginName.c_str());
     }
 
     ROS_DEBUG("%s:: Implementation Init", pluginName.c_str());
@@ -35,13 +35,36 @@ bool hw_interface_plugin_roboteq::roboteq_serial::subPluginInit(ros::NodeHandleP
                                         footerString.c_str());
     deviceName = "";
     ros::param::get(pluginName+"/deviceName", deviceName);
-    int tempBaudRate = 0;
+
+    return true;
+}
+
+void hw_interface_plugin_roboteq::roboteq_serial::setInterfaceOptions()
+{
+	int tempBaudRate = 0;
     ros::param::get(pluginName+"/baudrate", tempBaudRate);
     setOption<boost::asio::serial_port_base::baud_rate>(
                 new boost::asio::serial_port_base::baud_rate(tempBaudRate));
+    //8 bits per character
+    setOption<boost::asio::serial_port_base::character_size>(
+    			new boost::asio::serial_port_base::character_size( 8 ));
+
+    //flow control
+    setOption<boost::asio::serial_port_base::flow_control>(
+    			new boost::asio::serial_port_base::flow_control(
+    										boost::asio::serial_port_base::flow_control::type::none));
+
+    //parity
+    setOption<boost::asio::serial_port_base::parity>(
+    			new boost::asio::serial_port_base::parity(
+    										boost::asio::serial_port_base::parity::type::none));
+
+    //stop-bits
+    setOption<boost::asio::serial_port_base::stop_bits>(
+    			new boost::asio::serial_port_base::stop_bits(
+    										boost::asio::serial_port_base::stop_bits::type::one));
 
     ROS_INFO("%s :: Device: %s :: Baudrate %d", pluginName.c_str(), deviceName.c_str(), tempBaudRate);
-    return true;
 }
 
 bool hw_interface_plugin_roboteq::roboteq_serial::interfaceReadHandler(const long &length,

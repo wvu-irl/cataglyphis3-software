@@ -54,6 +54,7 @@ namespace base_classes
         //subscribe to topics, publish topics. This function should fill
         //in the protected member's info
         virtual bool subPluginInit(ros::NodeHandlePtr nhPtr) = 0;
+        virtual void setInterfaceOptions() = 0;
 
         virtual bool interfaceReadHandler(const long &bufferSize, int arrayStartPos) = 0;
 

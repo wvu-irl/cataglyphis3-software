@@ -32,6 +32,7 @@ bool hw_interface_plugin_roboteq::roboteq_drive::implInit()
 {
 
     readLength = sizeof(roboteq_drive_packet::drive_packet_struct_t);
+    
     headerString = roboteq_drive_packet::HEADER;
     footerString = roboteq_drive_packet::FOOTER;
 
