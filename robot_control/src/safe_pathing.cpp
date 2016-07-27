@@ -3,6 +3,7 @@
 SafePathing::SafePathing()
 {
 	ppServ = nh.advertiseService("/control/safepathing/intermediatewaypoints", &SafePathing::FindPath, this);
+    robotPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &SafePathing::robotPoseCallback, this);
     startRadialDistance = 0.0;
     finishRadialDistance = 0.0;
     transitionWaypoint1.x = 8.0;
@@ -10,7 +11,7 @@ SafePathing::SafePathing()
     transitionWaypoint1.sampleProb = 0.0;
     transitionWaypoint1.terrainHazard = 0.0;
     transitionWaypoint1.searchable = false;
-    transitionWaypoint2.x = 15.2711;;
+    transitionWaypoint2.x = 15.2711;
     transitionWaypoint2.y = 17.9457;
     transitionWaypoint2.sampleProb = 0.0;
     transitionWaypoint2.terrainHazard = 0.0;
@@ -70,4 +71,21 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 
 	res.waypointArray = intermediateWaypoints;
 	return true;
+}
+
+void SafePathing::robotPoseCallback(const messages::RobotPose::ConstPtr &msg)
+{
+    globalPose = *msg;
+    if(globalPose.northAngle != northAnglePrev)
+    {
+        rotateCoord(transitionWaypoint2.x, transitionWaypoint2.y, transitionWaypoint2.x, transitionWaypoint2.y, globalPose.northAngle-90.0);
+        rotateCoord(transitionWaypoint3.x, transitionWaypoint3.y, transitionWaypoint3.x, transitionWaypoint3.y, globalPose.northAngle-90.0);
+    }
+    northAnglePrev = globalPose.northAngle;
+}
+
+void SafePathing::rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg)
+{
+    newX = origX*cos(DEG2RAD*angleDeg)+origY*sin(DEG2RAD*angleDeg);
+    newY = -origX*sin(DEG2RAD*angleDeg)+origY*cos(DEG2RAD*angleDeg);
 }

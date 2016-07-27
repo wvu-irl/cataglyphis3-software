@@ -3,6 +3,7 @@
 void Idle::init()
 {
     clearDeques();
+    driveHalt.init();
     visionHalt.init();
 }
 

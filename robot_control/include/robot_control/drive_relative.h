@@ -14,6 +14,7 @@ private:
 	float rMax_;
 	float desiredEndHeading_;
 	bool endHeading_;
+	bool pushedToFront_;
 };
 
 #endif // DRIVE_RELATIVE_H

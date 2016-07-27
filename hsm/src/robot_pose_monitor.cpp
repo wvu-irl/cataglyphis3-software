@@ -4,7 +4,7 @@ RobotPoseMonitor::RobotPoseMonitor()
 {
 	bestPosePub = nh.advertise<messages::RobotPose>("/hsm/masterexec/globalpose", 1);
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &RobotPoseMonitor::navCallback, this);
-	slamSub = nh.subscribe<messages::SLAMPoseOut>("/slam/keyframesnode/slamposeout", 1, &RobotPoseMonitor::slamCallback, this);
+	slamSub = nh.subscribe<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, &RobotPoseMonitor::slamCallback, this);
 	setNorthAngleServ = nh.advertiseService("/hsm/masterexec/setnorthangle", &RobotPoseMonitor::setNorthAngleCallback, this);
 	poseMonitorTimer = nh.createTimer(ros::Duration(poseMonitorPeriod), &RobotPoseMonitor::serviceMonitor, this);
 	// Trust dead reckoning right at beginning before any keyframes have been generated
@@ -27,6 +27,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.heading = slamMsg.globalHeading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
 		bestPoseMsg.northAngle = northAngle;
+		bestPoseMsg.homingUpdated = false; // !!! Need an output from SLAM saying if this occured
 	}
 	else
 	{
@@ -35,6 +36,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.heading = navMsg.heading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
 		bestPoseMsg.northAngle = northAngle;
+		bestPoseMsg.homingUpdated = navMsg.homing_updated;
 	}
 	bestPosePub.publish(bestPoseMsg);
 }

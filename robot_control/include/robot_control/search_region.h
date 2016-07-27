@@ -8,7 +8,6 @@ public:
 	// Members
 	ros::NodeHandle nh;
 	bool allWaypointsVisited;
-	ros::Timer roiTimer;
 	const int numRandomWaypoints = 5;
 	// Methods
 	bool runProc();
@@ -30,11 +29,12 @@ private:
 	arma::Mat<float> terrainHazard;
 	const float sampleProbGain = 1.0;
 	const float pheromoneGain = 0.5;
-	const float distanceGain = 0.5;
-	const float terrainGain = 0.7;
+	const float distanceGain = 0.05;
+	const float terrainGain = 0.2;
 	const float pheroDepoGain = 0.8;
 	const float pheroDecayValue = 0.01;
 	const float initialPheromone = 0.5;
+	const float maxPheromoneValue = 1.0;
 	const int maxAntNum = 100;
 	int antNum;
 	int i;

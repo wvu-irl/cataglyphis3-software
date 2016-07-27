@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <navigation/navigation_filter.hpp>
-#include <hsm/user_input_nav_act_class.h>
+#include <hsm/user_input_nav_act_class.h> 
 #include <messages/NavFilterOut.h>
 
 int main(int argc, char **argv)
@@ -71,7 +71,8 @@ int main(int argc, char **argv)
 		msg_NavFilterOut.roll_init = navigationfilter.init_filter.phi*180.0/navigationfilter.PI;
 		msg_NavFilterOut.pitch_init = navigationfilter.init_filter.theta*180.0/navigationfilter.PI;
 		msg_NavFilterOut.heading_init = navigationfilter.init_filter.psi*180.0/navigationfilter.PI;
-		msg_NavFilterOut.north_angle = navigationfilter.filter.north_angle*180.0/navigationfilter.PI; //128.0; // deg
+		msg_NavFilterOut.north_angle = navigationfilter.filter.north_angle*180.0/navigationfilter.PI; //128.0; // deg+
+		msg_NavFilterOut.homing_updated = navigationfilter.homing_updated;
 		//msg_NavFilterOut.drop_off_distance = drop_off_dist;
 
 		pub.publish(msg_NavFilterOut);

@@ -32,8 +32,10 @@ MissionPlanning::MissionPlanning()
     sampleInCollectPosition = false;
     confirmedPossession = false;
     atHome = false;
+    homingUpdateFailed = false;
     inDepositPosition = false;
     missionEnded = false;
+    useDeadReckoning = false;
     multiProcLockout = false;
     lockoutSum = 0;
     initComplete = false;
@@ -68,6 +70,7 @@ MissionPlanning::MissionPlanning()
     examineCount = 0;
     backUpCount = 0;
     confirmCollectFailedCount = 0;
+    homingUpdatedFailedCount = 0;
     driveSpeedsMsg.vMax = defaultVMax;
     driveSpeedsMsg.rMax = defaultRMax;
     driveSpeedsMsgPrev.vMax = 0.0;
@@ -127,7 +130,7 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        ROS_INFO("=========================================");
+        /*ROS_INFO("=========================================");
         ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
@@ -154,7 +157,7 @@ void MissionPlanning::evalConditions_()
         std::printf(")\n");
         std::printf("actionFloat2: (");
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
-        std::printf(")\n");
+        std::printf(")\n");*/
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
         calcnumProcsBeingOrToBeExec_();
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
@@ -166,21 +169,22 @@ void MissionPlanning::evalConditions_()
         //calcnumProcsBeingOrToBeExec_();
         if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
         {
+            ROS_INFO("avoid case");
             shouldExecuteAvoidManeuver = true;
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             procsToInterrupt[__avoid__] = false;
             if(procsToInterrupt[__emergencyEscape__]) avoid.dequeClearFront = true; // If avoid occured during emergency escape, just treat the avoid maneuver as the offset drive in emergency escape
             if(procsToInterrupt[__nextBestRegion__] || procsToInterrupt[__searchRegion__] || procsToInterrupt[__goHome__]) // If avoid occured while driving to a waypoint globally (which occurs in these procedures), check if the remaining distance to the waypoint is small enough to just end the drive there
             {
-                ROS_INFO("was executing proc with driveGlobal");
+                //ROS_INFO("was executing proc with driveGlobal");
                 if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[0]) == _driveGlobal)
                 {
-                    ROS_INFO("was executing driveGlobal");
+                    //ROS_INFO("was executing driveGlobal");
                     avoidRemainingWaypointDistance = hypot(execInfoMsg.actionFloat1[0] - robotStatus.xPos, execInfoMsg.actionFloat2[0] - robotStatus.yPos);
-                    ROS_INFO("avoidRemainingWaypointDistance = %f",avoidRemainingWaypointDistance);
+                    //ROS_INFO("avoidRemainingWaypointDistance = %f",avoidRemainingWaypointDistance);
                     if(avoidRemainingWaypointDistance <= minAvoidRemainingWaypointDistance)
                     {
-                        ROS_INFO("closer than avoid remaining waypoint distance. End drive here");
+                        //ROS_INFO("closer than avoid remaining waypoint distance. End drive here");
                         avoid.sendDequeClearFront();
                         shouldExecuteAvoidManeuver = false;
                         avoidLockout = true;
@@ -282,7 +286,7 @@ void MissionPlanning::evalConditions_()
 
 void MissionPlanning::runProcesses_()
 {
-    if(pauseStarted == true) pause.sendUnPause();
+    if(pauseStarted == true) {pause.sendUnPause(); resumeTimers_();}
     pauseStarted = false;
     emergencyEscape.run();
     avoid.run();
@@ -299,8 +303,18 @@ void MissionPlanning::runProcesses_()
 
 void MissionPlanning::runPause_()
 {
-    if(pauseStarted == false) pause.sendPause();
+    if(pauseStarted == false) {pause.sendPause(); pauseAllTimers_();}
     pauseStarted = true;
+}
+
+void MissionPlanning::pauseAllTimers_()
+{
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->pause();
+}
+
+void MissionPlanning::resumeTimers_()
+{
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
 }
 
 void MissionPlanning::calcnumProcsBeingOrToBeExec_()
@@ -338,6 +352,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.sampleInCollectPosition = sampleInCollectPosition;
     infoMsg.confirmedPossession = confirmedPossession;
     infoMsg.atHome = atHome;
+    infoMsg.homingUpdateFailed = homingUpdateFailed;
     infoMsg.inDepositPosition = inDepositPosition;
     infoMsg.samplesCollected = samplesCollected;
     infoMsg.avoidCount = avoidCount;
@@ -354,6 +369,7 @@ void MissionPlanning::packAndPubInfoMsg_()
         infoMsg.procsBeingExecuted.at(i) = procsBeingExecuted[i];
     }
     infoMsg.missionEnded = missionEnded;
+    infoMsg.useDeadReckoning = useDeadReckoning;
     infoPub.publish(infoMsg);
 }
 
@@ -363,6 +379,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
     robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
+    robotStatus.homingUpdated = msg->homingUpdated;
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)

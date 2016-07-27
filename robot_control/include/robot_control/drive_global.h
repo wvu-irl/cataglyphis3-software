@@ -23,6 +23,7 @@ private:
 	float uXAct_;
 	float uYAct_;
 	float newHeadingSign_;
+	bool pushedToFront_;
 	void calculatePath_();
 };
 

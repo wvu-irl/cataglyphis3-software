@@ -71,3 +71,10 @@ void Action::clearDeques()
     //grabberDequeEmptyPrev = 1;
     //visionDequeEmptyPrev = 1;
 }
+
+void Action::initDequesFront()
+{
+    if(!driveDeque.empty()) driveDeque.front()->init();
+    if(!grabberDeque.empty()) grabberDeque.front()->init();
+    if(!visionDeque.empty()) visionDeque.front()->init();
+}

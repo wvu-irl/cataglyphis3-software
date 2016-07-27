@@ -13,6 +13,7 @@
 #include "grab.h"
 #include "open.h"
 #include "search.h"
+#include "wait.h"
 #include <messages/ExecAction.h>
 #include <messages/ActuatorOut.h>
 #include <messages/ExecInfo.h>
@@ -53,7 +54,7 @@ private:
 	bool clearFrontFlag_ = false;
 	bool pause_ = false;
 	bool pausePrev_ = false;
-	bool actionDequeEmpty_ = false;
+	bool actionDequeEmptyPrev_;
 	int currentActionDone_ = 0;
 	size_t actionDequeSize_ = 0;
 	unsigned int actionPoolIndex_[NUM_ACTIONS];

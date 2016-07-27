@@ -16,7 +16,9 @@ find_package(catkin REQUIRED
 	message_filters
 	#pcl_conversions 
   	pcl_ros
-	eigen_conversions 
+	eigen_conversions
+	grid_map_ros
+  	grid_map_msgs 
 )
 
 find_package(PCL 1.7 REQUIRED COMPONENTS common kdtree)
@@ -135,6 +137,7 @@ add_definitions("-std=gnu++11")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
  include_directories(include
+		     
 		     ${catkin_INCLUDE_DIRS}
 		     ${PCL_INCLUDE_DIRS}
 		     ${Eigen_INCLUDE_DIRS}

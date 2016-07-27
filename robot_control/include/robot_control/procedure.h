@@ -1,10 +1,10 @@
 #ifndef PROCEDURE_H
 #define PROCEDURE_H
-#include "mission_planning_process_share.h"
+#include "mission_planning_procedure_share.h"
 
 enum PROC_STATE_T {_init_, _exec_, _interrupt_, _finish_};
 
-class Procedure : public MissionPlanningProcessShare
+class Procedure : public MissionPlanningProcedureShare
 {
 public:
     // Members
@@ -23,11 +23,13 @@ public:
     void callIntermediateWaypoints();
 	void sendDriveGlobal(bool pushToFront);
 	void sendDriveAndSearch(uint8_t typeMux);
+	void sendDriveAndWait(float waitTime); // sec
 	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
 	void sendDrop();
 	void sendOpen();
+	void sendWait(float waitTime); // sec
 	void sendDequeClearFront();
 	void sendDequeClearAll();
 	void computeSampleValuesWithExpectedDistance();
@@ -35,6 +37,9 @@ public:
 	void findHighestConfSample();
 	void computeDriveSpeeds();
 	void serviceAvoidCounterDecrement();
+	void startTimer(TIMER_NAMES_T timerName);
+	void stopTimer(TIMER_NAMES_T timerName);
+	void setPeriodTimer(TIMER_NAMES_T timerName, float period);
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -111,7 +116,7 @@ void Procedure::sendDriveGlobal(bool pushToFront)
         execActionSrv.request.float5 = 0.0;
         execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
-		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool2 = pushToFront;
 		execActionSrv.request.bool3 = false;
 		execActionSrv.request.bool4 = false;
 		execActionSrv.request.bool5 = false;
@@ -187,6 +192,65 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 	}
 }
 
+void Procedure::sendDriveAndWait(float waitTime)
+{
+	for(int i=0; i<numWaypointsToTravel; i++)
+	{
+		// Drive Global
+		this->serialNum++;
+		execActionSrv.request.nextActionType = _driveGlobal;
+		execActionSrv.request.newActionFlag = 1;
+		execActionSrv.request.pushToFrontFlag = false;
+		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.clearFrontFlag = false;
+		execActionSrv.request.pause = false;
+		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
+		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
+		execActionSrv.request.float3 = 1.5;
+		execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.int1 = 0;
+		execActionSrv.request.bool1 = false;
+		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool3 = false;
+		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool5 = false;
+		execActionSrv.request.bool6 = false;
+		execActionSrv.request.bool7 = false;
+		execActionSrv.request.bool8 = false;
+		execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+		execActionSrv.request.serialNum = this->serialNum;
+		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+		else ROS_ERROR("exec action service call unsuccessful");
+		// Wait
+		this->serialNum++;
+		execActionSrv.request.nextActionType = _wait;
+		execActionSrv.request.newActionFlag = 1;
+		execActionSrv.request.pushToFrontFlag = false;
+		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.clearFrontFlag = false;
+		execActionSrv.request.pause = false;
+		execActionSrv.request.float1 = waitTime;
+		execActionSrv.request.float2 = 0.0;
+		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float4 = 0.0;
+		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.int1 = 0;
+		execActionSrv.request.bool1 = false;
+		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool3 = false;
+		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool5 = false;
+		execActionSrv.request.bool6 = false;
+		execActionSrv.request.bool7 = false;
+		execActionSrv.request.bool8 = false;
+		execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+		execActionSrv.request.serialNum = this->serialNum;
+		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+		else ROS_ERROR("exec action service call unsuccessful");
+	}
+}
+
 void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
 {
 	this->serialNum++;
@@ -203,7 +267,7 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
 	execActionSrv.request.float5 = 0.0;
     execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = endHeadingFlag;
-	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool2 = frontOfDeque;
 	execActionSrv.request.bool3 = false;
 	execActionSrv.request.bool4 = false;
 	execActionSrv.request.bool5 = false;
@@ -313,6 +377,35 @@ void Procedure::sendOpen()
 	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
 	execActionSrv.request.float1 = 0.0;
+	execActionSrv.request.float2 = 0.0;
+	execActionSrv.request.float3 = 0.0;
+	execActionSrv.request.float4 = 0.0;
+	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.int1 = 0;
+	execActionSrv.request.bool1 = false;
+	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool3 = false;
+	execActionSrv.request.bool4 = false;
+	execActionSrv.request.bool5 = false;
+	execActionSrv.request.bool6 = false;
+	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
+	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+	execActionSrv.request.serialNum = this->serialNum;
+	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+	else ROS_ERROR("exec action service call unsuccessful");
+}
+
+void Procedure::sendWait(float waitTime)
+{
+	this->serialNum++;
+	execActionSrv.request.nextActionType = _wait;
+	execActionSrv.request.newActionFlag = 1;
+	execActionSrv.request.pushToFrontFlag = false;
+	execActionSrv.request.clearDequeFlag = false;
+	execActionSrv.request.clearFrontFlag = false;
+	execActionSrv.request.pause = false;
+	execActionSrv.request.float1 = waitTime;
 	execActionSrv.request.float2 = 0.0;
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;

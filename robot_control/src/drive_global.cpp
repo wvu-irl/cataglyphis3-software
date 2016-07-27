@@ -6,6 +6,7 @@ void DriveGlobal::init()
 	desiredY_ = params.float2;
     desiredEndHeading_ = params.float3;
 	endHeading_ = params.bool1;
+    pushedToFront_ = params.bool2;
 	ROS_DEBUG("before task deque clears");
     clearDeques();
 	calculatePath_();
@@ -24,6 +25,7 @@ void DriveGlobal::init()
         driveDeque.back()->params.float1 = desiredEndHeading_ - (robotStatus.heading + angleToTurn_);
 		driveDeque.back()->params.float2 = rMax_;
 	}
+    if(pushedToFront_) initDequesFront();
 }
 
 int DriveGlobal::run()

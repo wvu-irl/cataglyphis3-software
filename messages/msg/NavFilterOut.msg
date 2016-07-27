@@ -39,3 +39,4 @@ float32 heading_init
 float32 sun_north_angle
 float32 north_angle
 float32 drop_off_distance
+bool homing_updated

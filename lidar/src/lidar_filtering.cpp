@@ -10,10 +10,12 @@ LidarFilter::LidarFilter()
 	_navigation_filter_heading = 0;
 	_navigation_filter_counter = 0;
 	_navigation_filter_counter_prev = 0;
+	_homing_updated_flag = false;
 	_sub_navigation = _nh.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &LidarFilter::navigationFilterCallback, this);
 
 	//ExecInfo callback initialization
 	_execinfo_turnflag = false;
+	_execinfo_stopflag = false;
 	_sub_execinfo = _nh.subscribe("control/exec/info", 1, &LidarFilter::execinforCallback, this);
 
 	//rotation from robot to homing beacon (pitch and roll rotation only)
@@ -54,7 +56,9 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_navigation_filter_roll = msg->roll*3.14159265/180.0; //radians
 	_navigation_filter_pitch = msg->pitch*3.14159265/180.0; //radians
 	_navigation_filter_heading = msg->heading*3.14159265/180.0; //radians
+	_homing_updated_flag = msg->homing_updated;
 	_navigation_filter_counter = _navigation_filter_counter + 1;
+
 
 	//roll rotation using navigation data
 	Eigen::Matrix3f _R_roll;
@@ -109,6 +113,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 void LidarFilter::execinforCallback(const messages::ExecInfo::ConstPtr &exec_msg)
 {
 	_execinfo_turnflag = exec_msg->turnFlag;
+	_execinfo_stopflag = exec_msg->stopFlag;
 }
 
 void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
@@ -189,14 +194,14 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 
 	//populate local map
 	//for(int i=0; i<_local_grid_map.size(); i++)
-	for(int i=0; i<_local_grid_map_new.size(); i++)
+	for(int i=0; i<_local_grid_map.size(); i++)
 	{
-	    msg.x_mean.push_back(_local_grid_map_new[i][0]);
-	    msg.y_mean.push_back(_local_grid_map_new[i][1]);
-	    msg.z_mean.push_back(_local_grid_map_new[i][2]);
-	    msg.var_z.push_back(_local_grid_map_new[i][3]);
+	    msg.x_mean.push_back(_local_grid_map[i][0]);
+	    msg.y_mean.push_back(_local_grid_map[i][1]);
+	    msg.z_mean.push_back(_local_grid_map[i][2]);
+	    msg.var_z.push_back(_local_grid_map[i][3]);
 	    //msg.ground_adjacent.push_back(1);
-	    msg.ground_adjacent.push_back(_local_grid_map_new[i][4]);
+	    msg.ground_adjacent.push_back(1);
 	    //ROS_INFO_STREAM("x: "<<msg.x_mean[i]);
 	}
 
@@ -204,9 +209,11 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	msg.x_filter = this->_navigation_filter_x;
 	msg.y_filter = this->_navigation_filter_y;
 	msg.heading_filter = this->_navigation_filter_heading;
+	msg.homing_updated_flag = this-> _homing_updated_flag;
 
-	//forward relavent turing flag information
+	//forward relavent turing and stop flag information
 	msg.turnFlag = this->_execinfo_turnflag;
+	msg.stopFlag = this->_execinfo_stopflag;
 
 	//flag the data as new
 	msg.new_data = _registration_new;
@@ -318,7 +325,7 @@ void LidarFilter::doMathMapping()
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (1); //ground detection threshold parameter
+	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
@@ -356,22 +363,22 @@ void LidarFilter::doMathMapping()
 	}
 
 
-	if(visualizerCounter == 10)
-	{
-		//pcl::visualization::PCLVisualizer viewer;
-	    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
-	    viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
-	    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
-	    viewer.spinOnce(spintime);
-	    //viewer.removePointCloud("object_RGB");
-	    visualizerCounter =0;
-	    //visualization_flag = 2;
-	    viewer.removePointCloud("object_RGB");
-	} 
-	else
-	{
-		visualizerCounter = visualizerCounter + 1;
-	}
+	// if(visualizerCounter == 10)
+	// {
+	// 	//pcl::visualization::PCLVisualizer viewer;
+	//     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
+	//     viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
+	//     viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
+	//     viewer.spinOnce(spintime);
+	//     //viewer.removePointCloud("object_RGB");
+	//     visualizerCounter =0;
+	//     //visualization_flag = 2;
+	//     viewer.removePointCloud("object_RGB");
+	// } 
+	// else
+	// {
+	// 	visualizerCounter = visualizerCounter + 1;
+	// }
 	
 
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -398,7 +405,7 @@ void LidarFilter::doMathMapping()
 	}
 
 	//clear it up before using it
-	_local_grid_map.clear();
+	// _local_grid_map.clear();
 
 	//do the calculation
 	for (int i = 0; i < grid_map_cells.size(); i++) // for every cell
@@ -429,7 +436,7 @@ void LidarFilter::doMathMapping()
 	    variance_z = sqrt(variance_z);
 
 	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
-	    if (total_x || total_y || total_z) //this is strange, what is this supposed to do?
+	    if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
 	    {
 	        // switch the coordinate of the LIDAR (this shouldn't need switched because the transformation takes care of this, i deleted these lines of code)
 	        point.clear(); //should always clear before pushing back if the vector is supposed to be empty before pushing back, previously this was being done after pushing back...
@@ -437,9 +444,12 @@ void LidarFilter::doMathMapping()
 	        point.push_back(average_y);
 	        point.push_back(average_z);
 	        point.push_back(variance_z);
-	        //_local_grid_map.push_back(point);
+	        _local_grid_map.push_back(point);
 	    }
 	}
+
+	//copy filtered point cloud after hard thresholding and ground removal
+	_object_filtered = *object_filtered; 
 }
 
 void LidarFilter::doMathHoming()
@@ -951,7 +961,7 @@ void LidarFilter::fitCylinderLong()
 	//double dist = 2.0-12.0*0.0254;
 	double r = 6.0*0.0254;
 	std::cout << "r = " << r << std::endl;
-	double dist = 2.0-2*r-14.5*0.0254;
+	double dist = 1.82-2*r;
 	double t, c1_x, c1_y, c2_x, c2_y, x, y, ax1, ay1, ax2, ay2, x_mean, y_mean, d, bearing, c1_mag, c2_mag;
 	double v1_x, v1_y, v2_x, v2_y, v1_mag, v2_mag, v_dot, X1s_x, X1s_y, X2s_x, X2s_y, X1s_mag, X2s_mag;
 	double cx1, cx2, cy1, cy2;
@@ -1104,9 +1114,20 @@ void LidarFilter::fitCylinderLong()
 		v2_y = v2_y/v2_mag;
 
 		v_dot = v1_x*v2_x+v1_y*v2_y;
-		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
-		double x_est_k = d*cos(bearing);
-		double y_est_k = d*sin(bearing);
+
+		double x_est, y_est, x_est_k, y_est_k;
+		if (X(0)*X(3)-X(1)*X(2)<0)
+		{
+			bearing = -acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est_k = d*cos(bearing);
+			y_est_k = d*sin(bearing);
+		}
+		else
+		{
+			bearing = acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est_k = d*cos(bearing);
+			y_est_k = d*sin(bearing);
+		}
 		double b_h_diff_k = atan2(-v1_y,-v1_x); 
 		double heading_est_k = -(b_h_diff_k-bearing);
 		std::cout << "x_est_k = " << x_est_k << std::endl;
@@ -1127,9 +1148,18 @@ void LidarFilter::fitCylinderLong()
 		v2_y = v2_y/v2_mag;
 
 		v_dot = v1_x*v2_x+v1_y*v2_y;
-		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
-		double x_est = d*cos(bearing);
-		double y_est = d*sin(bearing);
+		if (cx1*cy2-cy1*cx2<0)
+		{
+			bearing = -acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est = d*cos(bearing);
+			y_est = d*sin(bearing);
+		}
+		else
+		{
+			bearing = acos(v_dot)+3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2.0;
+			x_est = d*cos(bearing);
+			y_est = d*sin(bearing);
+		}
 		double b_h_diff = atan2(-v1_y,-v1_x); 
 		double heading_est = -(b_h_diff-bearing);
 		std::cout << "x_est = " << x_est << std::endl;
@@ -1137,13 +1167,13 @@ void LidarFilter::fitCylinderLong()
 		std::cout << "heading_est = " << heading_est*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
 
 		ROS_INFO("\nHOMING UPDATE!");
-		ROS_INFO("x = %f", x_est);
-		ROS_INFO("y = %f", y_est);
-		ROS_INFO("heading = %f", heading_est*180.0/3.14159265);
+		ROS_INFO("x = %f", x_est_k);
+		ROS_INFO("y = %f", y_est_k);
+		ROS_INFO("heading = %f", heading_est_k*180.0/3.14159265);
 
-		_homing_x=x_est;
-		_homing_y=y_est;
-		_homing_heading=heading_est;
+		_homing_x=x_est_k;
+		_homing_y=y_est_k;
+		_homing_heading=heading_est_k;
 		_homing_found=true;
 		ROS_INFO("********************");
 		ROS_INFO("x_est = %f",x_est);

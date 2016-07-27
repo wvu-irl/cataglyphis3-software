@@ -27,6 +27,7 @@ Exec::Exec()
 		actionPool_[_drop][j] = new Drop;
 		actionPool_[_open][j] = new Open;
         actionPool_[_search][j] = new Search;
+        actionPool_[_wait][j] = new Wait;
 	}
 	for(int k=0; k<NUM_TASKS; k++)
 	{
@@ -47,6 +48,7 @@ Exec::Exec()
 		// remaining vision tasks
 	}
     execStartTime_ = ros::Time::now().toSec();
+    actionDequeEmptyPrev_ = true;
 }
 
 void Exec::run()
@@ -73,6 +75,7 @@ void Exec::run()
 	if(pause_) pauseIdle_.run(); // If pause switch is true, run pause action
     else // Else, run actions from deque
     {
+        //if(actionDeque_.empty() && !actionDequeEmptyPrev_) pauseIdle_.init();
         if(actionDeque_.empty()) // Check if deque is empty
         {
 			pauseIdle_.run(); // Perform pause action to halt the robot
@@ -97,6 +100,7 @@ void Exec::run()
 			else currentActionDone_ = 0;
         }
     }
+    actionDequeEmptyPrev_ = actionDeque_.empty();
     clearDequeFlag_ = false;
     clearFrontFlag_ = false;
     newActionFlag_ = false;
