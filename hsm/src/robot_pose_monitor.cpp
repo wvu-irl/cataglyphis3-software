@@ -16,9 +16,9 @@ RobotPoseMonitor::RobotPoseMonitor()
 void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 {
 	// compute confidence in nav filter solution
-	navFilterConf = 1.0;
+	navFilterConf = 0.0;
 	// compute confidence in slam solution
-	slamConf = 0.0;
+	slamConf = 1.0;
 	// compare confidences in soltions and choose the one with the higher confidence
 	if(slamConf > navFilterConf)
 	{
@@ -27,6 +27,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.heading = slamMsg.globalHeading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
 		bestPoseMsg.northAngle = northAngle;
+		bestPoseMsg.homingUpdated = false; // !!! Need an output from SLAM saying if this occured
 	}
 	else
 	{
@@ -35,6 +36,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.heading = navMsg.heading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
 		bestPoseMsg.northAngle = northAngle;
+		bestPoseMsg.homingUpdated = navMsg.homing_updated;
 	}
 	bestPosePub.publish(bestPoseMsg);
 }

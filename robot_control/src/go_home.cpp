@@ -2,7 +2,7 @@
 
 bool GoHome::runProc()
 {
-	ROS_INFO("goHomeState = %i", state);
+    //ROS_INFO("goHomeState = %i", state);
 	switch(state)
 	{
 	case _init_:
@@ -17,10 +17,11 @@ bool GoHome::runProc()
         confirmCollectFailedCount = 0;
 		numWaypointsToTravel = 1;
 		clearAndResizeWTT();
-		waypointsToTravel.at(0).x = 5.0;
-		waypointsToTravel.at(0).y = 0.0;
+        waypointsToTravel.at(0).x = homeWaypointX;
+        waypointsToTravel.at(0).y = homeWaypointY;
 		callIntermediateWaypoints();
         sendDriveGlobal(false);
+        sendWait(lidarUpdateWaitTime);
 		state = _exec_;
 		break;
 	case _exec_:
@@ -40,6 +41,17 @@ bool GoHome::runProc()
 	case _finish_:
 		avoidLockout = false;
 		atHome = true;
+        if(robotStatus.homingUpdated)
+        {
+            homingUpdatedFailedCount = 0;
+            homingUpdateFailed = false;
+            useDeadReckoning = false;
+        }
+        else
+        {
+            homingUpdatedFailedCount++;
+            homingUpdateFailed = true;
+        }
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
 		state = _init_;

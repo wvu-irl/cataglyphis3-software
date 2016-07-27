@@ -10,6 +10,7 @@ public:
 	float yPos = 0.0; // m
 	float heading = 0.0; // deg
 	float bearing = 0.0; // deg
+	bool homingUpdated = false;
 	float distToOrigin = 0.0; // m
 	float yawRate = 0.0; // deg/s
 	float rollAngle = 0.0; // deg

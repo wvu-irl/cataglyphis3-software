@@ -32,8 +32,10 @@ MissionPlanning::MissionPlanning()
     sampleInCollectPosition = false;
     confirmedPossession = false;
     atHome = false;
+    homingUpdateFailed = false;
     inDepositPosition = false;
     missionEnded = false;
+    useDeadReckoning = false;
     multiProcLockout = false;
     lockoutSum = 0;
     initComplete = false;
@@ -68,6 +70,7 @@ MissionPlanning::MissionPlanning()
     examineCount = 0;
     backUpCount = 0;
     confirmCollectFailedCount = 0;
+    homingUpdatedFailedCount = 0;
     driveSpeedsMsg.vMax = defaultVMax;
     driveSpeedsMsg.rMax = defaultRMax;
     driveSpeedsMsgPrev.vMax = 0.0;
@@ -349,6 +352,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.sampleInCollectPosition = sampleInCollectPosition;
     infoMsg.confirmedPossession = confirmedPossession;
     infoMsg.atHome = atHome;
+    infoMsg.homingUpdateFailed = homingUpdateFailed;
     infoMsg.inDepositPosition = inDepositPosition;
     infoMsg.samplesCollected = samplesCollected;
     infoMsg.avoidCount = avoidCount;
@@ -365,6 +369,7 @@ void MissionPlanning::packAndPubInfoMsg_()
         infoMsg.procsBeingExecuted.at(i) = procsBeingExecuted[i];
     }
     infoMsg.missionEnded = missionEnded;
+    infoMsg.useDeadReckoning = useDeadReckoning;
     infoPub.publish(infoMsg);
 }
 
@@ -374,6 +379,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
     robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
+    robotStatus.homingUpdated = msg->homingUpdated;
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)

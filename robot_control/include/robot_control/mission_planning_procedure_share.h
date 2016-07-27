@@ -93,8 +93,10 @@ public:
 	static bool sampleInCollectPosition;
 	static bool confirmedPossession;
 	static bool atHome;
+	static bool homingUpdateFailed;
 	static bool inDepositPosition;
 	static bool missionEnded;
+	static bool useDeadReckoning;
 	static unsigned int samplesCollected;
 	static bool avoidLockout;
 	static bool escapeLockout;
@@ -116,12 +118,18 @@ public:
 	static unsigned int examineCount;
 	static unsigned int backUpCount;
 	static unsigned int confirmCollectFailedCount;
+	static unsigned int homingUpdatedFailedCount;
+	const unsigned int maxHomingUpdatedFailedCount = 2;
+	const unsigned int homingFailedSwitchToDeadReckoningCount = 1;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 1.0;
 	const float defaultVMax = 1.2; // m/s
 	const float fastVMax = 1.4; // m/s
 	const float slowVMax = 0.6; // m/s
 	const float defaultRMax = 45.0; // deg/s
+	const float homeWaypointX = 5.0; // m
+	const float homeWaypointY = 0.0; // m
+	const float lidarUpdateWaitTime = 1.0; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -176,8 +184,10 @@ bool MissionPlanningProcedureShare::sampleDataActedUpon;
 bool MissionPlanningProcedureShare::sampleInCollectPosition;
 bool MissionPlanningProcedureShare::confirmedPossession;
 bool MissionPlanningProcedureShare::atHome;
+bool MissionPlanningProcedureShare::homingUpdateFailed;
 bool MissionPlanningProcedureShare::inDepositPosition;
 bool MissionPlanningProcedureShare::missionEnded;
+bool MissionPlanningProcedureShare::useDeadReckoning;
 unsigned int MissionPlanningProcedureShare::samplesCollected;
 bool MissionPlanningProcedureShare::avoidLockout;
 bool MissionPlanningProcedureShare::escapeLockout;
@@ -197,5 +207,6 @@ float MissionPlanningProcedureShare::allocatedROITime;
 unsigned int MissionPlanningProcedureShare::examineCount;
 unsigned int MissionPlanningProcedureShare::backUpCount;
 unsigned int MissionPlanningProcedureShare::confirmCollectFailedCount;
+unsigned int MissionPlanningProcedureShare::homingUpdatedFailedCount;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H
