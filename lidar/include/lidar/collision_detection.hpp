@@ -59,6 +59,8 @@ public:
 	void packCollisionMessage(messages::CollisionOut &msg);
 	int doMathSafeEnvelope();
 	int doMathRANSAC();
+	bool doPredictiveAovidance();
+
 private:
 	//transform points from lidar frame to robot body
 	Eigen::Matrix3f _R_lidar_to_robot; //lidar body from to robot body frame (rotation)

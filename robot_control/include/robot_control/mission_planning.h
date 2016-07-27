@@ -8,6 +8,7 @@
 #include <messages/EmergencyEscapeTrigger.h>
 #include <messages/MissionPlanningInfo.h>
 #include <messages/MissionPlanningControl.h>
+#include <messages/NavFilterOut.h>
 #include "emergency_escape.h"
 #include "avoid.h"
 #include "next_best_region.h"
@@ -35,6 +36,7 @@ public:
 	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
+	ros::Subscriber navSub;
 	ros::ServiceServer emergencyEscapeServ;
 	ros::ServiceServer controlServ;
 	messages::MissionPlanningInfo infoMsg;
@@ -69,7 +71,7 @@ private:
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
-	void stopAllTimers_();
+	void pauseAllTimers_();
 	void resumeTimers_();
 	void calcnumProcsBeingOrToBeExec_();
 	void updateSampleFlags_();

@@ -2,15 +2,12 @@
 
 SearchRegion::SearchRegion()
 {
-	timers[_roiTimer_] = nh.createTimer(ros::Duration(480.0), &SearchRegion::roiTimeExpiredCallback_, this); // 480 sec == 8 min; implement smarter way to compute
-	stopTimer(_roiTimer_);
+	timers[_roiTimer_] = new CataglyphisTimer<SearchRegion>(&SearchRegion::roiTimeExpiredCallback_, this);
 }
 
 bool SearchRegion::runProc()
 {
 	//ROS_INFO("searchRegion state = %i", state);
-	//ROS_INFO_THROTTLE(1,"timers[_roiTimer_].isValid = %i",timers[_roiTimer_].isValid());
-	//ROS_INFO_THROTTLE(1,"timers[_roiTimer_].hasPending = %i",timers[_roiTimer_].hasPending());
 	switch(state)
 	{
 	case _init_:
@@ -33,14 +30,14 @@ bool SearchRegion::runProc()
 			roiKeyframed = true;
 			// start timer based on allocated time
 			roiTimeExpired = false;
-			stopTimer(_roiTimer_);
-			setPeriodTimer(_roiTimer_, allocatedROITime);
-			startTimer(_roiTimer_);
+			timers[_roiTimer_]->stop();
+			timers[_roiTimer_]->setPeriod(allocatedROITime);
+			timers[_roiTimer_]->start();
 		}
 		if(roiTimeExpired)
 		{
 			roiTimeExpired = false;
-			stopTimer(_roiTimer_);
+			timers[_roiTimer_]->stop();
 			// Set ROI to searched
 			modROISrv.request.setSearchedROI = true;
 			modROISrv.request.searchedROIState = true;

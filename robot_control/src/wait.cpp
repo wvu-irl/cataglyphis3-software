@@ -2,8 +2,7 @@
 
 Wait::Wait()
 {
-	waitTimer = nh.createTimer(ros::Duration(10.0), &Wait::waitTimeCallback_, this);
-	waitTimer.stop();
+	waitTimer = new CataglyphisTimer<Wait>(&Wait::waitTimeCallback_, this);
 	waitTimerActive = false;
 }
 
@@ -11,12 +10,12 @@ void Wait::init()
 {
 	waitTime_ = params.float1;
 	timeExpired_ = false;
-	waitTimer.stop();
-	waitTimer.setPeriod(ros::Duration(waitTime_));
+	waitTimer->stop();
+	waitTimer->setPeriod(waitTime_);
 	clearDeques();
 	driveHalt.init();
 	visionHalt.init();
-	waitTimer.start();
+	waitTimer->start();
 	waitTimerActive = true;
 }
 
@@ -34,6 +33,5 @@ int Wait::run()
 void Wait::waitTimeCallback_(const ros::TimerEvent &event)
 {
 	timeExpired_ = true;
-	waitTimer.stop();
 	waitTimerActive = false;
 }

@@ -23,6 +23,7 @@ public:
     void callIntermediateWaypoints();
 	void sendDriveGlobal(bool pushToFront);
 	void sendDriveAndSearch(uint8_t typeMux);
+	void sendDriveAndWait(float waitTime); // sec
 	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
@@ -188,6 +189,65 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 			if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 			else ROS_ERROR("exec action service call unsuccessful");
 		}
+	}
+}
+
+void Procedure::sendDriveAndWait(float waitTime)
+{
+	for(int i=0; i<numWaypointsToTravel; i++)
+	{
+		// Drive Global
+		this->serialNum++;
+		execActionSrv.request.nextActionType = _driveGlobal;
+		execActionSrv.request.newActionFlag = 1;
+		execActionSrv.request.pushToFrontFlag = false;
+		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.clearFrontFlag = false;
+		execActionSrv.request.pause = false;
+		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
+		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
+		execActionSrv.request.float3 = 1.5;
+		execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.int1 = 0;
+		execActionSrv.request.bool1 = false;
+		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool3 = false;
+		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool5 = false;
+		execActionSrv.request.bool6 = false;
+		execActionSrv.request.bool7 = false;
+		execActionSrv.request.bool8 = false;
+		execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+		execActionSrv.request.serialNum = this->serialNum;
+		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+		else ROS_ERROR("exec action service call unsuccessful");
+		// Wait
+		this->serialNum++;
+		execActionSrv.request.nextActionType = _wait;
+		execActionSrv.request.newActionFlag = 1;
+		execActionSrv.request.pushToFrontFlag = false;
+		execActionSrv.request.clearDequeFlag = false;
+		execActionSrv.request.clearFrontFlag = false;
+		execActionSrv.request.pause = false;
+		execActionSrv.request.float1 = waitTime;
+		execActionSrv.request.float2 = 0.0;
+		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float4 = 0.0;
+		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.int1 = 0;
+		execActionSrv.request.bool1 = false;
+		execActionSrv.request.bool2 = false;
+		execActionSrv.request.bool3 = false;
+		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool5 = false;
+		execActionSrv.request.bool6 = false;
+		execActionSrv.request.bool7 = false;
+		execActionSrv.request.bool8 = false;
+		execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+		execActionSrv.request.serialNum = this->serialNum;
+		if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+		else ROS_ERROR("exec action service call unsuccessful");
 	}
 }
 
@@ -491,23 +551,6 @@ void Procedure::serviceAvoidCounterDecrement()
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
 	}
-}
-
-void Procedure::startTimer(TIMER_NAMES_T timerName)
-{
-	timers[timerName].start();
-	timersActive[timerName] = true;
-}
-
-void Procedure::stopTimer(TIMER_NAMES_T timerName)
-{
-	timers[timerName].stop();
-	timersActive[timerName] = false;
-}
-
-void Procedure::setPeriodTimer(TIMER_NAMES_T timerName, float period)
-{
-	timers[timerName].setPeriod(ros::Duration(period));
 }
 
 #endif // PROCEDURE_H

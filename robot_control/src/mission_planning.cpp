@@ -32,8 +32,10 @@ MissionPlanning::MissionPlanning()
     sampleInCollectPosition = false;
     confirmedPossession = false;
     atHome = false;
+    homingUpdateFailed = false;
     inDepositPosition = false;
     missionEnded = false;
+    useDeadReckoning = false;
     multiProcLockout = false;
     lockoutSum = 0;
     initComplete = false;
@@ -68,6 +70,7 @@ MissionPlanning::MissionPlanning()
     examineCount = 0;
     backUpCount = 0;
     confirmCollectFailedCount = 0;
+    homingUpdatedFailedCount = 0;
     driveSpeedsMsg.vMax = defaultVMax;
     driveSpeedsMsg.rMax = defaultRMax;
     driveSpeedsMsgPrev.vMax = 0.0;
@@ -89,7 +92,6 @@ MissionPlanning::MissionPlanning()
         //ROS_INFO("procsToInterrupt.at(i) = %d",procsToInterrupt.at(i));
         //ROS_INFO("procsBeingExecuted.at(i) = %d",procsBeingExecuted.at(i));
     }
-    for(int i=0; i<NUM_TIMERS; i++) timersActive[i] = false;
 }
 
 void MissionPlanning::run()
@@ -301,18 +303,18 @@ void MissionPlanning::runProcesses_()
 
 void MissionPlanning::runPause_()
 {
-    if(pauseStarted == false) {pause.sendPause(); stopAllTimers_();}
+    if(pauseStarted == false) {pause.sendPause(); pauseAllTimers_();}
     pauseStarted = true;
 }
 
-void MissionPlanning::stopAllTimers_()
+void MissionPlanning::pauseAllTimers_()
 {
-    for(int i=0; i<NUM_TIMERS; i++) timers[i].stop();
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->pause();
 }
 
 void MissionPlanning::resumeTimers_()
 {
-    for(int i=0; i<NUM_TIMERS; i++) if(timersActive[i]) timers[i].start();
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
 }
 
 void MissionPlanning::calcnumProcsBeingOrToBeExec_()
@@ -350,6 +352,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.sampleInCollectPosition = sampleInCollectPosition;
     infoMsg.confirmedPossession = confirmedPossession;
     infoMsg.atHome = atHome;
+    infoMsg.homingUpdateFailed = homingUpdateFailed;
     infoMsg.inDepositPosition = inDepositPosition;
     infoMsg.samplesCollected = samplesCollected;
     infoMsg.avoidCount = avoidCount;
@@ -366,6 +369,7 @@ void MissionPlanning::packAndPubInfoMsg_()
         infoMsg.procsBeingExecuted.at(i) = procsBeingExecuted[i];
     }
     infoMsg.missionEnded = missionEnded;
+    infoMsg.useDeadReckoning = useDeadReckoning;
     infoPub.publish(infoMsg);
 }
 
@@ -375,6 +379,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
     robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
+    robotStatus.homingUpdated = msg->homingUpdated;
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)

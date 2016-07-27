@@ -15,6 +15,7 @@ int main(int argc, char **argv)
 		if(collision_detection.newPointCloudAvailable())
 		{
 			collision_detection.doMathSafeEnvelope();
+			collision_detection.doPredictiveAovidance();
 			collision_detection.packCollisionMessage(msg_CollisionOut);
 		}
 		collision_detection.setPreviousCounters();

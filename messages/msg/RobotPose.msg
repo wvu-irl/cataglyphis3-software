@@ -3,3 +3,4 @@ float32 y
 float32 heading
 float32 humanHeading
 float32 northAngle
+bool homingUpdated

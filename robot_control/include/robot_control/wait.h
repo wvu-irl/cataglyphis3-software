@@ -8,7 +8,7 @@ public:
 	Wait(); // constructor
 	void init();
 	int run();
-	ros::Timer waitTimer;
+	CataglyphisTimer<Wait>* waitTimer;
 	bool waitTimerActive;
 private:
 	ros::NodeHandle nh;
