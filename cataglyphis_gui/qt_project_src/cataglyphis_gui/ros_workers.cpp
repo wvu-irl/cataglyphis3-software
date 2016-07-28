@@ -3,7 +3,7 @@
 ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
 {
     nh = nhArg;
-    navControlClient = nh->serviceClient<messages::NavFilterControl>("/nav/nav_filter_control_service");
+    navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
     navInfoTime = ros::Time::now();
     navInfoSubStarted = false;
