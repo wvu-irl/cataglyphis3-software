@@ -14,6 +14,7 @@
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/console/parse.h>
 #include <pcl/console/print.h>
 #include <pcl/io/pcd_io.h>
@@ -329,6 +330,101 @@ private:
 			collision_point_counter = 0;
 			collision_left_counter = 0;
 			collision_right_counter = 0;
+
+
+			//predictive 
+			int preditive_region_length = 7;
+			int preditive_region_wide = 5; //this is on each side, so the total is 5*2 =10
+
+			//remove points based on hard thresholds (too far, too high, too low)
+			pcl::PassThrough<pcl::PointXYZI> pass;
+			pass.setInputCloud(cloud);
+			pass.setFilterFieldName("x");
+			pass.setFilterLimits(0,preditive_region_length);
+			pass.filter(*cloud);
+			pass.setFilterFieldName("y");
+			pass.setFilterLimits(-preditive_region_wide,preditive_region_wide);
+			pass.filter(*cloud);
+			pass.setFilterFieldName("z");
+			pass.setFilterLimits(-5,5); //positive z is down, negative z is up
+			pass.filter(*cloud);
+
+			//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
+			pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
+			seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
+			seg_plane.setModelType (pcl::SACMODEL_PLANE);
+			seg_plane.setMethodType (pcl::SAC_RANSAC);
+			seg_plane.setMaxIterations (1000); //max iterations for RANSAC
+			seg_plane.setDistanceThreshold (0.75); //ground detection threshold parameter
+			seg_plane.setInputCloud (cloud); //was raw_cloud
+
+			//segment the points fitted to the plane using ransac
+			pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ()); //what is this? (coefficients for fitted plane?)
+			pcl::PointIndices::Ptr inliers (new pcl::PointIndices ()); //what is this? (inliers for points that fit the plane?)
+			seg_plane.segment (*inliers, *coefficients);
+
+			//seperate the ground points and the points above the ground (object points)
+			pcl::ExtractIndices<pcl::PointXYZI> extract;
+			extract.setInputCloud (cloud);
+			extract.setIndices (inliers);
+
+			extract.setNegative (false);
+			pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+			extract.filter (*ground_filtered);
+
+			extract.setNegative (true);
+			pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+			extract.filter (*object_filtered);
+
+			//project points on the xy plane, and that is the local hazard map
+			pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered_projection (new pcl::PointCloud<pcl::PointXYZI>);
+			*object_filtered_projection = *object_filtered;
+			for (int i=0; i<object_filtered->points.size(); i++)
+			{
+				object_filtered_projection->points[i].z=0;
+			}
+
+
+			int bin_num = 10;
+			int bin_counter[bin_num];
+			for (int i=0; i<bin_num; i++)
+			{
+				bin_counter[i] = 0;
+			}
+
+			cout << object_filtered_projection->points.size() << endl;
+			for(int i=0; i<object_filtered_projection->points.size(); i++)//every point in the predictive region
+			{
+				bin_counter[(int)ceil((floor(object_filtered_projection->points[i].y) + preditive_region_wide)/(preditive_region_wide*2/bin_num))] += 1; 
+			}
+
+			int bin_checker = 0;
+			for(int i=0; i<bin_num; i++)
+			{
+				if(bin_counter[i] == 0)
+				{
+					bin_checker += 1;
+				}
+			}
+
+			cout << "Value of bin_checker is " << bin_checker << endl;
+			float threshold_ratio = 0.7;
+			if(bin_checker <= (int)(bin_num*threshold_ratio)) //less than 70% of the bins are clear
+			{
+				//return true;//high risk area in front
+				cout << "High risk area in front" << endl;
+
+				//trigger the hazard map generation function
+
+
+			}
+			else
+			{
+				cout << "No risk in front" << endl;
+				//return false;
+				//relative safe region
+			}
+			bin_checker = 0; 
 		}
 		else
 		{

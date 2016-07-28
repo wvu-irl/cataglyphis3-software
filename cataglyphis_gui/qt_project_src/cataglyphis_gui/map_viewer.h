@@ -20,7 +20,8 @@ public:
     explicit map_viewer(QWidget *parent = 0, int startIndex = 0);
     ~map_viewer();
 
-    boost::shared_ptr<Ui::map_viewer> ui;
+    //boost::shared_ptr<Ui::map_viewer> ui;
+    Ui::map_viewer* ui;
 private slots:
     void on_fieldSelector_currentIndexChanged(int index);
 

@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -71,6 +71,9 @@
             <width>123</width>
             <height>26</height>
            </size>
+          </property>
+          <property name="maximum">
+           <double>360.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -135,6 +138,9 @@
           </property>
           <property name="buttonSymbols">
            <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="maximum">
+           <double>360.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -261,11 +267,6 @@
     </item>
    </layout>
   </widget>
-  <zorder>layoutWidget</zorder>
-  <zorder>current_NA_label</zorder>
-  <zorder>input_NA_spinbox</zorder>
-  <zorder>current_NA_label</zorder>
-  <zorder>input_NA_label</zorder>
  </widget>
  <resources/>
  <connections/>
