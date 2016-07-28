@@ -80,6 +80,7 @@ private:
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
+	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);
 	void cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr& msg);
 	void lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr& msg);

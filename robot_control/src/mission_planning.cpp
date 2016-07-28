@@ -18,6 +18,7 @@ MissionPlanning::MissionPlanning()
     lidarFilterSub = nh.subscribe<messages::LidarFilterOut>("lidar/lidarfilteringout/lidarfilteringout", 1, &MissionPlanning::lidarFilterCallback_, this);
     hsmMasterStatusSub = nh.subscribe<messages::MasterStatus>("hsm/masterexecutive/masterstatus", 1, &MissionPlanning::hsmMasterStatusCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
+    navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
     controlServ = nh.advertiseService("/control/missionplanning/control", &MissionPlanning::controlCallback_, this);
     infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
@@ -411,6 +412,11 @@ void MissionPlanning::nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg)
 void MissionPlanning::collisionCallback_(const messages::CollisionOut::ConstPtr &msg)
 {
     collisionMsg = *msg;
+}
+
+void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
+{
+    navStatus = msg->nav_status;
 }
 
 void MissionPlanning::execInfoCallback_(const messages::ExecInfo::ConstPtr &msg)
