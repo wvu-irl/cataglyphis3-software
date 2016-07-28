@@ -16,7 +16,7 @@ CollisionDetection::CollisionDetection()
 	//velodyne callback initializations
 	_registration_counter = 0;
 	_registration_counter_prev = 0;
-	_registration_new = false;
+	//_registration_new = false;
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &CollisionDetection::registrationCallback, this);
 
 	//collision output
@@ -63,12 +63,12 @@ bool CollisionDetection::newPointCloudAvailable()
 {
 	if(_registration_counter != _registration_counter_prev)
 	{
-		_registration_new = true;
+		//_registration_new = true;
 		return true;
 	}
 	else
 	{
-		_registration_new = false;
+		//_registration_new = false;
 		return false;
 	}
 }
@@ -99,7 +99,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			if(cloud->points[i].x > 0 && cloud->points[i].x < _CORRIDOR_LENGTH)
 			{
 				//check if point is outside of safe envelope
-				if(fabs(atan2( (_LIDAR_HEIGHT + cloud->points[i].z),cloud->points[i].x )) > _SAFE_ENVELOPE_ANGLE )
+				if(fabs(atan2( (_LIDAR_HEIGHT - cloud->points[i].z),cloud->points[i].x )) > _SAFE_ENVELOPE_ANGLE )
 				{
 					//increment collision counter
 					collision_point_counter++;
@@ -153,15 +153,17 @@ bool CollisionDetection::doPredictiveAovidance()
 	*cloud = _input_cloud;
 
 	int hazard_map_size = 30; //so each side is 30*2 = 60 m
+	int preditive_region_length = 7;
+	int preditive_region_wide = 5; //this is on each side, so the total is 5*2 =10
 
 	//remove points based on hard thresholds (too far, too high, too low)
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.setFilterLimits(0,preditive_region_length);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.setFilterLimits(-preditive_region_wide,preditive_region_wide);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("z");
 	pass.setFilterLimits(-5,5); //positive z is down, negative z is up
@@ -173,7 +175,7 @@ bool CollisionDetection::doPredictiveAovidance()
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (1.5); //ground detection threshold parameter
+	seg_plane.setDistanceThreshold (0.75); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
@@ -202,31 +204,22 @@ bool CollisionDetection::doPredictiveAovidance()
 		object_filtered_projection->points[i].z=0;
 	}
 
-	
 
-	//start from here is the predictive avoidance region
-	pcl::PointCloud<pcl::PointXYZI>::Ptr predictive_region (new pcl::PointCloud<pcl::PointXYZI>);
-	pass.setInputCloud(object_filtered_projection);
-	pass.setFilterFieldName("x");
-	pass.setFilterLimits(0,10);//may change later
-	pass.filter(*predictive_region);
-	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-5,5);//may change later
-	pass.filter(*predictive_region);
-
-	int bin_counter[20];
-	for (int i=0; i<20; i++)
+	int bin_num = 10;
+	int bin_counter[bin_num];
+	for (int i=0; i<bin_num; i++)
 	{
 		bin_counter[i] = 0;
 	}
 
-	for(int i=0; i<predictive_region->points.size(); i++)//every point in the predictive region
+	cout << object_filtered_projection->points.size() << endl;
+	for(int i=0; i<object_filtered_projection->points.size(); i++)//every point in the predictive region
 	{
-		bin_counter[int(ceil((floor(predictive_region->points[i].y) + 5)/0.5))] += 1; 
+		bin_counter[(int)ceil((floor(object_filtered_projection->points[i].y) + preditive_region_wide)/(preditive_region_wide*2/bin_num))] += 1; 
 	}
 
 	int bin_checker = 0;
-	for(int i=0; i<20; i++)
+	for(int i=0; i<bin_num; i++)
 	{
 		if(bin_counter[i] == 0)
 		{
@@ -234,14 +227,21 @@ bool CollisionDetection::doPredictiveAovidance()
 		}
 	}
 
-	if(bin_checker <= 14) //less than 70% of the bins are clear
+	cout << "Value of bin_checker is " << bin_checker << endl;
+	float threshold_ratio = 0.7;
+	if(bin_checker <= (int)(bin_num*threshold_ratio)) //less than 70% of the bins are clear
 	{
-		return true;//high risk area in front
+		//return true;//high risk area in front
 		cout << "High risk area in front" << endl;
+
+		//trigger the hazard map generation function
+
+
 	}
 	else
 	{
-		return false;
+		cout << "No risk in front" << endl;
+		//return false;
 		//relative safe region
 	}
 	bin_checker = 0; 
