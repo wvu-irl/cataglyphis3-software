@@ -2,11 +2,13 @@
 
 Encoders::Encoders()
 {
-	counter_front=0;
-	counter_back=0;
-	counter_middle=0;
+	// counter_front=0;
+	// counter_back=0;
+	// counter_middle=0;
 	counter_left=0;
 	counter_right=0;
+	counter_left_prev=0;
+	counter_right_prev=0;
 	fl=0;
 	fr=0;
 	bl=0;
@@ -30,9 +32,9 @@ Encoders::Encoders()
 	spike_diff = 1000;
 	wheel_radius=0;
 	counts_per_revolution=1;
-	subscriber_encoder_front = node.subscribe("roboteq/drivemotorin/front", 1, &Encoders::getEncoderFrontCallback,this);
-	subscriber_encoder_back = node.subscribe("roboteq/drivemotorin/back", 1, &Encoders::getEncoderBackCallback,this);
-	subscriber_encoder_middle = node.subscribe("roboteq/drivemotorin/middle", 1, &Encoders::getEncoderMiddleCallback,this);
+	// subscriber_encoder_front = node.subscribe("roboteq/drivemotorin/front", 1, &Encoders::getEncoderFrontCallback,this);
+	// subscriber_encoder_back = node.subscribe("roboteq/drivemotorin/back", 1, &Encoders::getEncoderBackCallback,this);
+	// subscriber_encoder_middle = node.subscribe("roboteq/drivemotorin/middle", 1, &Encoders::getEncoderMiddleCallback,this);
 	subscriber_encoder_left = node.subscribe("roboteq/drivemotorin/left", 1, &Encoders::getEncoderLeftCallback,this);
 	subscriber_encoder_right = node.subscribe("roboteq/drivemotorin/right", 1, &Encoders::getEncoderRightCallback,this);
 }
@@ -94,12 +96,33 @@ void Encoders::adjustEncoderWrapError()
 
 void Encoders::calculateWheelDistancesFromEncoders()
 {
-	fl_dist = (double)fl_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
-	fr_dist = (double)fr_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
-	bl_dist = (double)bl_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
-	br_dist = (double)br_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
-	ml_dist = (double)ml_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
-	mr_dist = (double)mr_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
+	if(this->counter_left_prev != this->counter_left)
+	{
+		fl_dist = (double)fl_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
+		bl_dist = (double)bl_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
+		ml_dist = (double)ml_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
+	}
+	else
+	{
+		fl_dist=0;
+		bl_dist=0;
+		ml_dist=0;
+	}
+	this->counter_left_prev = this->counter_left;
+
+	if(this->counter_right_prev != this->counter_right)
+	{
+		fr_dist = (double)fr_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
+		br_dist = (double)br_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
+		mr_dist = (double)mr_diff/(double)counts_per_revolution*2.0*wheel_radius*3.14159265;
+	}
+	else
+	{
+		fr_dist=0;
+		br_dist=0;
+		mr_dist=0;
+	}
+	this->counter_right_prev = this->counter_right;
 }
 
 void Encoders::calculateDeltaDistance4Wheels(int turnFlag, int stopFlag)

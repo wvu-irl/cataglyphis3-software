@@ -1,13 +1,14 @@
 #ifndef MISSION_PLANNING_H
 #define MISSION_PLANNING_H
 #include <ros/ros.h>
-#include "mission_planning_process_share.h"
+#include "mission_planning_procedure_share.h"
 #include <messages/RobotPose.h>
 #include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
 #include <messages/EmergencyEscapeTrigger.h>
 #include <messages/MissionPlanningInfo.h>
 #include <messages/MissionPlanningControl.h>
+#include <messages/NavFilterOut.h>
 #include "emergency_escape.h"
 #include "avoid.h"
 #include "next_best_region.h"
@@ -22,7 +23,7 @@
 #include "pause.h"
 #include "bit_utils.h"
 
-class MissionPlanning : public MissionPlanningProcessShare
+class MissionPlanning : public MissionPlanningProcedureShare
 {
 public:
 	// Methods
@@ -35,6 +36,7 @@ public:
 	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
 	ros::Subscriber collisionSub;
+	ros::Subscriber navSub;
 	ros::ServiceServer emergencyEscapeServ;
 	ros::ServiceServer controlServ;
 	messages::MissionPlanningInfo infoMsg;
@@ -69,6 +71,8 @@ private:
 	void evalConditions_();
 	void runProcesses_();
 	void runPause_();
+	void pauseAllTimers_();
+	void resumeTimers_();
 	void calcnumProcsBeingOrToBeExec_();
 	void updateSampleFlags_();
 	void packAndPubInfoMsg_();
@@ -76,12 +80,15 @@ private:
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
+	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);
 	void cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr& msg);
 	void lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr& msg);
 	void hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
+	void biasRemovalTimerCallback_(const ros::TimerEvent& event);
+	void homingTimerCallback_(const ros::TimerEvent& event);
 };
 
 #endif // MISSION_PLANNING_H

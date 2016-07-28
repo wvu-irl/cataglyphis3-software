@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 	{
 		if(lidar_filter.newPointCloudAvailable())
 		{
-			ROS_INFO_STREAM("New cloud is available");
+			//ROS_INFO_STREAM("New cloud is available");
 
 			if (low_sampling_freq == true)
 			{

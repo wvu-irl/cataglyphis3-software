@@ -11,7 +11,7 @@ MapManager::MapManager()
     createROIKeyframeClient = nh.serviceClient<messages::CreateROIKeyframe>("/slam/keyframesnode/createroikeyframe");
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, &MapManager::keyframesCallback, this);
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
-    keyframeRelPoseSub = nh.subscribe<messages::SLAMPoseOut>("/slam/keyframesnode/slamposeout", 1, &MapManager::keyframeRelPoseCallback, this);
+    keyframeRelPoseSub = nh.subscribe<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, &MapManager::keyframeRelPoseCallback, this);
     currentROIPub = nh.advertise<robot_control::CurrentROI>("/control/mapmanager/currentroi", 1);
     globalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/globalmapviz", 1);
     searchLocalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/searchlocalmapviz", 1);
@@ -25,42 +25,42 @@ MapManager::MapManager()
     srand(time(NULL));
 
     // Temporary ROIs. Rectangle around starting platform
-    /*ROI.e = 8.0;
-    ROI.s = 5.0;
+    ROI.e = 7.0;
+    ROI.s = 7.0;
     ROI.sampleProb = 0.6;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    ROI.e = -8.0;
-    ROI.s = 5.0;
+    ROI.e = -7.0;
+    ROI.s = 7.0;
     ROI.sampleProb = 0.5;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    ROI.e = -8.0;
-    ROI.s = -5.0;
+    ROI.e = -7.0;
+    ROI.s = -7.0;
     ROI.sampleProb = 0.4;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    ROI.e = 8.0;
-    ROI.s = -5.0;
+    ROI.e = 7.0;
+    ROI.s = -7.0;
     ROI.sampleProb = 0.3;
     ROI.sampleSig = 10.0;
     ROI.radialAxis = 15.0;
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();*/
+    northTransformROIs();
 
     // Temporary ROIs. Search in front of library
-    ROI.e = 35.0826;
+    /*ROI.e = 35.0826;
     ROI.s = 20.9706;
     ROI.sampleProb = 0.6;
     ROI.sampleSig = 10.0;
@@ -148,7 +148,7 @@ MapManager::MapManager()
     ROI.tangentialAxis = 10.0;
     ROI.searched = false;
     regionsOfInterest.push_back(ROI);
-    northTransformROIs();
+    northTransformROIs();*/
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -292,11 +292,11 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
-                ROS_INFO("searchLocalMapCoord: x = %f; y = %f",searchLocalMapCoord[0], searchLocalMapCoord[1]);
+                //ROS_INFO("searchLocalMapCoord: x = %f; y = %f",searchLocalMapCoord[0], searchLocalMapCoord[1]);
                 rotateCoord(searchLocalMapCoord[0], searchLocalMapCoord[1], ROIX, ROIY, searchLocalMapToROIAngle);
                 //ROIX = searchLocalMapCoord[0]*cos(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*sin(DEG2RAD*searchLocalMapToROIAngle);
                 //ROIY = -searchLocalMapCoord[0]*sin(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*cos(DEG2RAD*searchLocalMapToROIAngle);
-                ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
+                //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
                 {
                     searchLocalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it) = ROIKeyframe.atPosition(layerToString(static_cast<MAP_LAYERS_T>(j)), searchLocalMapCoord);
@@ -318,8 +318,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
 bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // tested
 {
     globalMapPathHazardsPolygon.removeVertices();
-    res.numHazards = 0;
-    res.hazardList.clear();
+    res.hazardValue = 0.0;
     globalMapPathHazardsPolygonHeading = atan2(req.yEnd - req.yStart, req.xEnd - req.xStart); // radians
     globalMapPathHazardsVertices.at(0)[0] = req.xStart + req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
     globalMapPathHazardsVertices.at(0)[1] = req.yStart - req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
@@ -333,30 +332,26 @@ bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Re
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(1));
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(2));
     globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(3));
+    globalMapPathHazardNumCellsInPolygon = 0;
     for(grid_map::PolygonIterator it(globalMap, globalMapPathHazardsPolygon); !it.isPastEnd(); ++it)
     {
-        if(globalMap.at(layerToString(_keyframeDriveabilityConf), *it) > globalMap.at(layerToString(_satDriveabilityConf), *it))
+        /*if(globalMap.at(layerToString(_keyframeDriveabilityConf), *it) > globalMap.at(layerToString(_satDriveabilityConf), *it))
         {
             globalMapPathHazardValue = globalMap.at(layerToString(_keyframeDriveability), *it);
             globalMapPathHazardHeight = globalMap.at(layerToString(_keyframeObjectHeight), *it);
         }
         else
-        {
-            globalMapPathHazardValue = globalMap.at(layerToString(_satDriveability), *it);
-            globalMapPathHazardHeight = globalMap.at(layerToString(_satObjectHeight), *it);
-        }
+        {*/
+        globalMapPathHazardValue = globalMap.at(layerToString(_satDriveability), *it);
+        globalMapPathHazardHeight = globalMap.at(layerToString(_satObjectHeight), *it);
+        //}
         if(globalMapPathHazardValue > 0.0)
         {
-            res.numHazards++;
-            globalMap.getPosition(*it, globalMapPathHazardPosition);
-            res.hazardList.push_back(messages::DriveabilityHazards());
-            res.hazardList.at(res.numHazards-1).type = (int)globalMapPathHazardValue;
-            res.hazardList.at(res.numHazards-1).localX = globalMapPathHazardPosition[0] - req.xStart;
-            res.hazardList.at(res.numHazards-1).localY = globalMapPathHazardPosition[1] - req.yStart;
-            rotateCoord(res.hazardList.at(res.numHazards-1).localX,res.hazardList.at(res.numHazards-1).localY, res.hazardList.at(res.numHazards-1).localX, res.hazardList.at(res.numHazards-1).localY, RAD2DEG*globalMapPathHazardsPolygonHeading);
-            res.hazardList.at(res.numHazards-1).height = globalMapPathHazardHeight;
+            res.hazardValue += globalMapPathHazardValue;
         }
+        globalMapPathHazardNumCellsInPolygon++;
     }
+    res.hazardValue /= (float)globalMapPathHazardNumCellsInPolygon;
     return true;
 }
 
@@ -377,7 +372,8 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         searchLocalMapNumPoints = searchLocalMap.getSize()[0]*searchLocalMap.getSize()[1];
         possibleRandomWaypointValues.resize(searchLocalMapNumPoints);
         possibleRandomWaypointValuesNormalized.resize(searchLocalMapNumPoints);
-        res.waypointList.resize(req.numSearchWaypoints);
+        numRandomWaypointsToSelect = req.numSearchWaypoints;
+        res.waypointList.resize(numRandomWaypointsToSelect);
         possibleRandomWaypointValuesSum = 0.0;
         //ROS_INFO("after initial setup");
         for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
@@ -392,12 +388,13 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         }
         //ROS_INFO("after normalizing values");
         numRandomWaypointsSelected = 0;
-        while(numRandomWaypointsSelected<req.numSearchWaypoints)
+        numRandomWaypointSearchDistanceCriteriaFailed = 0;
+        while(numRandomWaypointsSelected<numRandomWaypointsToSelect)
         {
             //ROS_INFO("numRandomWaypointsSelected = %i",numRandomWaypointsSelected);
             randomValueFloor = 0.0;
             randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-            ROS_INFO("random value = %f",randomValue);
+            //ROS_INFO("random value = %f",randomValue);
             for(int j=0; j<searchLocalMapNumPoints; j++)
             {
                 if((randomValue >= randomValueFloor) && (randomValue < (randomValueFloor + possibleRandomWaypointValuesNormalized.at(j))))
@@ -416,10 +413,13 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 randomWaypointDistanceCriteriaFailed = false;
                 for(int j=0; j<(numRandomWaypointsSelected-1); j++)
                 {
+                    //ROS_INFO("randomWaypoint: x=%f, y=%f\twaypointList.at(%i).x=%f, y=%f", randomWaypointPosition[0], randomWaypointPosition[1], j, res.waypointList.at(j).x, res.waypointList.at(j).y);
                     //ROS_INFO("distance to %i = %f", j, hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y));
                     if(hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y) < randomWaypointMinDistance)
                     {
+                        //ROS_INFO("randomWaypoint distance criterial failed");
                         numRandomWaypointsSelected--;
+                        numRandomWaypointSearchDistanceCriteriaFailed++;
                         randomWaypointDistanceCriteriaFailed = true;
                         break;
                     }
@@ -428,14 +428,30 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             else randomWaypointDistanceCriteriaFailed = false;
             if(!randomWaypointDistanceCriteriaFailed)
             {
-                rotateCoord(randomWaypointPosition[0], randomWaypointPosition[1], res.waypointList.at(numRandomWaypointsSelected-1).x, res.waypointList.at(numRandomWaypointsSelected-1).y, searchLocalMapHeading);
-                res.waypointList.at(numRandomWaypointsSelected-1).x += searchLocalMapXPos;
-                res.waypointList.at(numRandomWaypointsSelected-1).y += searchLocalMapYPos;
+                //ROS_INFO("randomWaypoint passed, xLocal = %f, yLocal = %f",randomWaypointPosition[0], randomWaypointPosition[1]);
+                numRandomWaypointSearchDistanceCriteriaFailed = 0;
+                res.waypointList.at(numRandomWaypointsSelected-1).x = randomWaypointPosition[0];
+                res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
                 res.waypointList.at(numRandomWaypointsSelected-1).sampleProb = searchLocalMap.at(layerToString(_sampleProb), randomWaypointIndex);
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
             }
+            if(numRandomWaypointSearchDistanceCriteriaFailed > randomWaypointDistanceCriteriaFailedLimit)
+            {
+                numRandomWaypointsToSelect--;
+                //ROS_INFO("too many random waypoint distance criteria failed, numRandomWaypointToSelect = %i",numRandomWaypointsToSelect);
+            }
         }
-        //ROS_INFO("after selecting waypoints");
+        if(res.waypointList.size() > numRandomWaypointsToSelect)
+        {
+            res.waypointList.erase(res.waypointList.end()-(res.waypointList.size()-numRandomWaypointsToSelect),res.waypointList.end());
+        }
+        //ROS_INFO("after selecting waypoints, vector size = %u",res.waypointList.size());
+        for(int i=0; i<res.waypointList.size(); i++) // Transform random waypoint coordinates into global map coordinates
+        {
+            rotateCoord(res.waypointList.at(i).x, res.waypointList.at(i).y, res.waypointList.at(i).x, res.waypointList.at(i).y, searchLocalMapHeading);
+            res.waypointList.at(i).x += searchLocalMapXPos;
+            res.waypointList.at(i).y += searchLocalMapYPos;
+        }
     }
     else return false;
     return true;

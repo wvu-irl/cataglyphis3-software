@@ -4,5 +4,4 @@ float32 xEnd
 float32 yEnd
 float32 width
 ---
-uint32 numHazards
-DriveabilityHazards[] hazardList
+float32 hazardValue

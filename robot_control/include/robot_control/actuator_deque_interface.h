@@ -57,5 +57,4 @@ int ActuatorDequeInterface::grabberDequeEmptyPrev = 1;
 int ActuatorDequeInterface::visionDequeEnded;
 int ActuatorDequeInterface::visionDequeEmpty;
 int ActuatorDequeInterface::visionDequeEmptyPrev = 1;
-
 #endif // ACTUATOR_DEQUE_INTERFACE_H

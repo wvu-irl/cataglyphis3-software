@@ -104,6 +104,7 @@ public:
 	float globalMapPathHazardsPolygonHeading;
 	float globalMapPathHazardValue;
 	float globalMapPathHazardHeight;
+	unsigned int globalMapPathHazardNumCellsInPolygon;
 	grid_map::Position globalMapPathHazardPosition;
 	messages::RobotPose globalPose;
 	float previousNorthAngle; // deg
@@ -146,8 +147,11 @@ public:
 	float randomValueFloor;
 	int searchLocalMapNumPoints;
 	int candidateRandomWaypointIndex;
+	int numRandomWaypointsToSelect;
 	int numRandomWaypointsSelected;
 	bool randomWaypointDistanceCriteriaFailed;
+	int numRandomWaypointSearchDistanceCriteriaFailed;
+	const int randomWaypointDistanceCriteriaFailedLimit = 100;
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 40.0; // m
 	const float searchLocalMapWidth = 40.0; // m

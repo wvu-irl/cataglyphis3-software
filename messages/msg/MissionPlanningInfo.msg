@@ -3,6 +3,8 @@ bool escapeCondition
 bool escapeLockout
 int32 collisionCondition
 bool avoidLockout
+bool performBiasRemoval
+bool performHoming
 bool inSearchableRegion
 bool roiTimeExpired
 bool possessingSample
@@ -10,6 +12,7 @@ bool possibleSample
 bool definiteSample
 bool sampleInCollectPosition
 bool confirmedPossession
+bool homingUpdateFailed
 bool atHome
 bool inDepositPosition
 uint32 samplesCollected
@@ -24,3 +27,4 @@ bool[] procsToExecute
 bool[] procsToInterrupt
 bool[] procsBeingExecuted
 bool missionEnded
+bool useDeadReckoning

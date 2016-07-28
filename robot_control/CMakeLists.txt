@@ -124,6 +124,7 @@ include_directories(
  add_library(drop src/drop.cpp)
  add_library(open src/open.cpp)
  add_library(search src/search.cpp)
+ add_library(wait src/wait.cpp)
  
  add_library(drive_straight src/drive_straight.cpp)
  add_library(drive_straight_cl src/drive_straight_cl.cpp)
@@ -149,6 +150,7 @@ include_directories(
  add_library(collect src/collect.cpp)
  add_library(confirm_collect src/confirm_collect.cpp)
  add_library(go_home src/go_home.cpp)
+ add_library(square_update src/square_update.cpp)
  add_library(deposit_approach src/deposit_approach.cpp)
  add_library(deposit_sample src/deposit_sample.cpp)
  
@@ -189,6 +191,7 @@ include_directories(
    drop
    open
    search
+   wait
    drive_straight
    drive_straight_cl
    drive_pivot
@@ -220,6 +223,7 @@ include_directories(
    collect
    confirm_collect
    go_home
+   square_update
    deposit_approach
    deposit_sample
  )

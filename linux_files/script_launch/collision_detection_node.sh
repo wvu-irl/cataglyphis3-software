@@ -1,2 +1,2 @@
 #!/bin/bash
-rosrun lidar collision_detection_node
+rosrun lidar collision_detection_node_updated
