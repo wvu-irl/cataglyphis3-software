@@ -24,7 +24,7 @@ NavigationFilter::NavigationFilter()
     if(!(ros::param::get("NavControlServiceName", tempServiceName)))
     {
         //if the parameter does not exist, use this default one
-        tempServiceName = "/nav/nav_filter_control_service";
+        tempServiceName = "/navigation/navigationfilter/control";
     }
     nav_control_server = nh.advertiseService(tempServiceName,
                                                 &NavigationFilter::navFilterControlServiceCallback,

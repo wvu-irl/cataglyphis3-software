@@ -19,6 +19,7 @@
 #include <messages/CVSamplesFound.h>
 #include <messages/LidarFilterOut.h>
 #include <messages/MasterStatus.h>
+#include <messages/NavFilterControl.h>
 #include <armadillo>
 #include <math.h>
 #include <time.h>
@@ -30,7 +31,7 @@
 #define NUM_TIMERS 3
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
 enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
-enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_};
+enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
 
 class MissionPlanningProcedureShare
 {
@@ -61,6 +62,8 @@ public:
 	static robot_control::RandomSearchWaypoints randomSearchWaypointsSrv;
 	static ros::ServiceClient globalMapPathHazardsClient;
 	static messages::GlobalMapPathHazards globalMapPathHazardsSrv;
+	static ros::ServiceClient navControlClient;
+	static messages::NavFilterControl navControlSrv;
 	static ros::Publisher driveSpeedsPub;
 	static robot_control::DriveSpeeds driveSpeedsMsg;
 	static robot_control::DriveSpeeds driveSpeedsMsgPrev;
@@ -163,6 +166,8 @@ ros::ServiceClient MissionPlanningProcedureShare::randomSearchWaypointsClient;
 robot_control::RandomSearchWaypoints MissionPlanningProcedureShare::randomSearchWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::globalMapPathHazardsClient;
 messages::GlobalMapPathHazards MissionPlanningProcedureShare::globalMapPathHazardsSrv;
+ros::ServiceClient MissionPlanningProcedureShare::navControlClient;
+messages::NavFilterControl MissionPlanningProcedureShare::navControlSrv;
 ros::Publisher MissionPlanningProcedureShare::driveSpeedsPub;
 robot_control::DriveSpeeds MissionPlanningProcedureShare::driveSpeedsMsg;
 robot_control::DriveSpeeds MissionPlanningProcedureShare::driveSpeedsMsgPrev;
