@@ -16,7 +16,7 @@ CollisionDetection::CollisionDetection()
 	//velodyne callback initializations
 	_registration_counter = 0;
 	_registration_counter_prev = 0;
-	//_registration_new = false;
+	_registration_new = false;
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &CollisionDetection::registrationCallback, this);
 
 	//collision output
@@ -63,12 +63,12 @@ bool CollisionDetection::newPointCloudAvailable()
 {
 	if(_registration_counter != _registration_counter_prev)
 	{
-		//_registration_new = true;
+		_registration_new = true;
 		return true;
 	}
 	else
 	{
-		//_registration_new = false;
+		_registration_new = false;
 		return false;
 	}
 }
@@ -99,7 +99,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			if(cloud->points[i].x > 0 && cloud->points[i].x < _CORRIDOR_LENGTH)
 			{
 				//check if point is outside of safe envelope
-				if(fabs(atan2( (_LIDAR_HEIGHT - cloud->points[i].z),cloud->points[i].x )) > _SAFE_ENVELOPE_ANGLE )
+				if(fabs(atan2( (_LIDAR_HEIGHT + cloud->points[i].z),cloud->points[i].x )) > _SAFE_ENVELOPE_ANGLE )
 				{
 					//increment collision counter
 					collision_point_counter++;
@@ -201,6 +201,8 @@ bool CollisionDetection::doPredictiveAovidance()
 	{
 		object_filtered_projection->points[i].z=0;
 	}
+
+	
 
 	//start from here is the predictive avoidance region
 	pcl::PointCloud<pcl::PointXYZI>::Ptr predictive_region (new pcl::PointCloud<pcl::PointXYZI>);
