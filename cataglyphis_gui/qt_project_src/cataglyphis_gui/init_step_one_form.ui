@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>init_step_one</class>
- <widget class="QWidget" name="init_step_one">
+ <class>init_step_one_form</class>
+ <widget class="QWidget" name="init_step_one_form">
   <property name="geometry">
    <rect>
     <x>0</x>

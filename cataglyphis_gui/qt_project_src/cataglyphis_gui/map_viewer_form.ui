@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>map_viewer</class>
- <widget class="QWidget" name="map_viewer">
+ <class>map_viewer_form</class>
+ <widget class="QWidget" name="map_viewer_form">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -71,11 +71,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>fieldDisplay</zorder>
-  <zorder>fieldSelector</zorder>
-  <zorder>fieldDisplay</zorder>
-  <zorder>fieldDisplay</zorder>
-  <zorder>fieldSelector</zorder>
  </widget>
  <resources/>
  <connections/>

@@ -9,8 +9,8 @@
 #include <ros/ros.h>
 
 #include <init_step_one.h>
-#include <bias_removal_form.h>
-#include <generic_error_dialog_form.h>
+#include <init_step_two.h>
+#include <generic_error_dialog.h>
 
 #include <messages/NavFilterOut.h>
 #include <messages/NavFilterControl.h>
@@ -18,25 +18,25 @@
 #include <ros_workers.h>
 
 namespace Ui {
-class cataglyphis_startup_form_main;
+class init_container_form;
 }
 
-class cataglyphis_startup_form_main : public QWidget
+class init_container : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit cataglyphis_startup_form_main(QWidget *parent = 0,
-                                            boost::shared_ptr<ros::NodeHandle> nh_arg =
+    explicit init_container(QWidget *parent = 0,
+                                            boost::shared_ptr<ros::NodeHandle> nhArg =
                                                 boost::shared_ptr<ros::NodeHandle>());
-    ~cataglyphis_startup_form_main();
+    ~init_container();
 
-    boost::shared_ptr<Ui::cataglyphis_startup_form_main> ui;
-    //Ui::cataglyphis_startup_form_main ui;
+    //boost::shared_ptr<Ui::cataglyphis_startup_form_main> ui;
+    Ui::init_container_form *ui;
 
 public slots:
-    void step_one_returned();
-    void step_two_returned();
+    void onStepOneReturned();
+    void onStepTwoReturned();
 
 private slots:
     void on_start_up_button_clicked();
@@ -49,11 +49,11 @@ private:
     boost::shared_ptr<ros_workers> rosWorker;
     boost::shared_ptr<ros::NodeHandle> nh;
     boost::shared_ptr<init_step_one> stepOneTab;
-    boost::shared_ptr<bias_removal_form> stepTwoTab;
+    boost::shared_ptr<init_step_two> stepTwoTab;
     QAtomicPointer<boost::shared_ptr<messages::NavFilterControl> > atomicNavControlSrv;
     QAtomicPointer<boost::shared_ptr<messages::NavFilterOut> > atomicNavOutMsg;
 
-    void nav_callback(const messages::NavFilterOut::ConstPtr& callbackMsg);
+    void navCallback(const messages::NavFilterOut::ConstPtr& callbackMsg);
 };
 
 #endif // CATAGLYPHIS_STARTUP_FORM_MAIN_H

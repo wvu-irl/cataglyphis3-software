@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>bias_removal_form</class>
- <widget class="QWidget" name="bias_removal_form">
+ <class>init_step_two_form</class>
+ <widget class="QWidget" name="init_step_two_form">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>

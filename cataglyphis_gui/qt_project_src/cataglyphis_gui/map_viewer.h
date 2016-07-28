@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 namespace Ui {
-class map_viewer;
+class map_viewer_form;
 }
 
 class map_viewer : public QWidget
@@ -21,7 +21,7 @@ public:
     ~map_viewer();
 
     //boost::shared_ptr<Ui::map_viewer> ui;
-    Ui::map_viewer* ui;
+    Ui::map_viewer_form* ui;
 private slots:
     void on_fieldSelector_currentIndexChanged(int index);
 

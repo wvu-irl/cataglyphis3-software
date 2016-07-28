@@ -1,21 +1,19 @@
-#include "cataglyphis_gui.h"
-#include "ui_cataglyphis_gui.h"
+#include "core_app.h"
+#include "ui_core_app_form.h"
 
-cataglyphis_gui::cataglyphis_gui(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
+core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
     QMainWindow(parent),
-    ui(new Ui::cataglyphis_gui)
+    ui(new Ui::core_app_form)
 {
     ROS_DEBUG("Cataglyphis_GUI:: Core app init");
     ui->setupUi(this);
 
-
-
-    cataglyphis_gui::gui_nh = nh;
+    guiNhPtr = nh;
     ROS_DEBUG("Cataglypis_GUI:: Starting %d callback theads", NUM_MSG_CALLBACK_THREADS);
-    cataglyphis_gui::async_spinner = boost::shared_ptr<ros::AsyncSpinner>(new ros::AsyncSpinner(NUM_MSG_CALLBACK_THREADS));
-    if(async_spinner->canStart())
+    asyncSpinnerPtr = boost::shared_ptr<ros::AsyncSpinner>(new ros::AsyncSpinner(NUM_MSG_CALLBACK_THREADS));
+    if(asyncSpinnerPtr->canStart())
     {
-        async_spinner->start();
+        asyncSpinnerPtr->start();
     }
     else
     {
@@ -40,22 +38,22 @@ cataglyphis_gui::cataglyphis_gui(QWidget *parent, boost::shared_ptr<ros::NodeHan
 #endif
 
 
-    cataglyphis_gui::cataglyphis_startup_form =
-            boost::shared_ptr<cataglyphis_startup_form_main>
-                            (new cataglyphis_startup_form_main(ui->guiTabber,
+    cataglyphisStartupFormPtr =
+            boost::shared_ptr<init_container>
+                            (new init_container(ui->guiTabber,
                                                                     nh));
 
-    cataglyphis_gui::map_view_form =
+    mapViewFormPtr =
             boost::shared_ptr<map_viewer>(new map_viewer(ui->guiTabber, 0));
 
-    ui->guiTabber->addTab(cataglyphis_gui::cataglyphis_startup_form.get(), "Startup");
-    ui->guiTabber->addTab(cataglyphis_gui::map_view_form.get(), "Map");
+    ui->guiTabber->addTab(cataglyphisStartupFormPtr.get(), "Startup");
+    ui->guiTabber->addTab(mapViewFormPtr.get(), "Map");
 }
 
-cataglyphis_gui::~cataglyphis_gui()
+core_app::~core_app()
 {
-    //delete ui;
-    cataglyphis_gui::async_spinner->stop();
+    asyncSpinnerPtr->stop();
+    delete ui;
     //ui.reset();
 }
 

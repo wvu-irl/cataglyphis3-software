@@ -14,38 +14,38 @@
 #define INIT_STEP2_ID 2
 
 namespace Ui {
-class bias_removal_form;
+class init_step_two_form;
 }
 
-class bias_removal_form : public QWidget
+class init_step_two : public QWidget
 {
     Q_OBJECT
 
 signals:
-    void start_bias_removal();
-    void start_dead_reckoning();
-    void bias_removal_finished();
-    void start_nav_info_subscriber();
-    void stop_nav_info_subscriber();
+    void startBiasRemoval();
+    void startDeadReckoning();
+    void biasRemovalFinished();
+    void startNavInfoSubscriber();
+    void stopNavInfoSubscriber();
 
 public:
-    explicit bias_removal_form(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
+    explicit init_step_two(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
                                                             boost::shared_ptr<ros_workers>());
-    ~bias_removal_form();
+    ~init_step_two();
 
-    //Ui::bias_removal_form *ui;
-    boost::shared_ptr<Ui::bias_removal_form> ui;
+    Ui::init_step_two_form *ui;
+    //boost::shared_ptr<Ui::bias_removal_form> ui;
 
 public slots:
 
-    void update_bias_removal_display(messages::NavFilterControl serviceResponse,
+    void onUpdateBiasRemovalDisplay(messages::NavFilterControl serviceResponse,
                                         bool wasSucessful);
-    void nav_info_callback(const messages::NavFilterOut navInfo);
+    void onNavInfoCallback(const messages::NavFilterOut navInfo);
 
 private slots:
-    void on_begin_dead_reckoning_button_clicked();
+    void onBeginDeadReckoningButtonClicked();
 
-    void on_perform_bias_removal_button_clicked();
+    void onPerformBiasRemovalButtonClicked();
 
 private:
 

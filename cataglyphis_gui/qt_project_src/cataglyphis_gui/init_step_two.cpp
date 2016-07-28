@@ -1,57 +1,57 @@
-#include "bias_removal_form.h"
-#include "ui_bias_removal_form.h"
+#include "init_step_two.h"
+#include "ui_init_step_two_form.h"
 
-bias_removal_form::bias_removal_form(QWidget *parent, boost::shared_ptr<ros_workers> workerArg) :
+init_step_two::init_step_two(QWidget *parent, boost::shared_ptr<ros_workers> workerArg) :
     QWidget(parent),
-    ui(new Ui::bias_removal_form)
+    ui(new Ui::init_step_two_form)
 {
     ui->setupUi(this);
     worker = workerArg;
     previousDeadReckButtonEnabled = false;
 
-    connect(this, &bias_removal_form::start_bias_removal,
-                worker.get(), &ros_workers::run_bias_removal_service);
-    connect(this, &bias_removal_form::start_dead_reckoning,
-                worker.get(), &ros_workers::run_start_dead_reckoning_service);
+    connect(this, &init_step_two::startBiasRemoval,
+                worker.get(), &ros_workers::runBiasRemovalService);
+    connect(this, &init_step_two::startDeadReckoning,
+                worker.get(), &ros_workers::runStartDeadReckoningService);
 
-    connect(this, &bias_removal_form::start_nav_info_subscriber,
-                worker.get(), &ros_workers::run_nav_info_subscriber_start);
-    connect(this, &bias_removal_form::stop_nav_info_subscriber,
-                worker.get(), &ros_workers::run_nav_info_subscriber_stop);
+    connect(this, &init_step_two::startNavInfoSubscriber,
+                worker.get(), &ros_workers::runNavInfoSubscriberStart);
+    connect(this, &init_step_two::stopNavInfoSubscriber,
+                worker.get(), &ros_workers::runNavInfoSubscriberStop);
 
-    connect(worker.get(), &ros_workers::bias_removal_returned,
-                this, &bias_removal_form::update_bias_removal_display);
-    connect(worker.get(), &ros_workers::dead_reckoning_service_returned,
-                this, &bias_removal_form::update_bias_removal_display);
+    connect(worker.get(), &ros_workers::biasRemovalReturned,
+                this, &init_step_two::onUpdateBiasRemovalDisplay);
+    connect(worker.get(), &ros_workers::deadReckoningServiceReturned,
+                this, &init_step_two::onUpdateBiasRemovalDisplay);
 
-    connect(worker.get(), &ros_workers::nav_info_callback,
-                this, &bias_removal_form::nav_info_callback);
+    connect(worker.get(), &ros_workers::navInfoCallback,
+                this, &init_step_two::onNavInfoCallback);
 }
 
-bias_removal_form::~bias_removal_form()
+init_step_two::~init_step_two()
 {
-    //delete ui;
+    delete ui;
 }
 
-void bias_removal_form::on_begin_dead_reckoning_button_clicked()
+void init_step_two::onBeginDeadReckoningButtonClicked()
 {
     ROS_DEBUG("bias_removal_form:: bias removal finished, starting dead reckoning");
     //send service
-    emit start_dead_reckoning();
-    emit bias_removal_finished();
-    emit stop_nav_info_subscriber();
+    emit startDeadReckoning();
+    emit biasRemovalFinished();
+    emit stopNavInfoSubscriber();
 }
 
-void bias_removal_form::on_perform_bias_removal_button_clicked()
+void init_step_two::onPerformBiasRemovalButtonClicked()
 {
     ROS_DEBUG("bias_removal_form:: starting bias removal");
     //when min and max of a progress bar are the same, it simply sits there and moves
     ui->progressBar->setMaximum(0);
-    emit start_bias_removal();
-    emit start_nav_info_subscriber();
+    emit startBiasRemoval();
+    emit startNavInfoSubscriber();
 }
 
-void bias_removal_form::update_bias_removal_display(messages::NavFilterControl serviceResponse,
+void init_step_two::onUpdateBiasRemovalDisplay(messages::NavFilterControl serviceResponse,
                                                         bool wasSucessful)
 {
     ROS_DEBUG("bias_removal_form:: Updating Bias Removal Display");
@@ -75,7 +75,7 @@ void bias_removal_form::update_bias_removal_display(messages::NavFilterControl s
     }
 }
 
-void bias_removal_form::nav_info_callback(const messages::NavFilterOut navInfo)
+void init_step_two::onNavInfoCallback(const messages::NavFilterOut navInfo)
 {
     ROS_DEBUG("bias_removal_form:: nav_info_callback");
     ui->p1_offset_spinbox->setValue(navInfo.p1_offset);
@@ -91,7 +91,7 @@ void bias_removal_form::nav_info_callback(const messages::NavFilterOut navInfo)
     ui->r3_offset_spinbox->setValue(navInfo.r3_offset);
 }
 
-void bias_removal_form::keyPressEvent(QKeyEvent *event)
+void init_step_two::keyPressEvent(QKeyEvent *event)
 {
     ROS_DEBUG("bias_removal_form:: Key Pressed");
     if((event->modifiers() & Qt::ControlModifier) == Qt::ControlModifier)
@@ -103,7 +103,7 @@ void bias_removal_form::keyPressEvent(QKeyEvent *event)
 
 }
 
-void bias_removal_form::keyReleaseEvent(QKeyEvent *event)
+void init_step_two::keyReleaseEvent(QKeyEvent *event)
 {
     if((event->modifiers() & Qt::ControlModifier) != Qt::ControlModifier)
     {

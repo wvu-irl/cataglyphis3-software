@@ -6,7 +6,7 @@
 
 
 #include <QApplication>
-#include "cataglyphis_gui.h"
+#include "core_app.h"
 
 int main(int argc, char **argv)
 {
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     ROS_INFO("GUI_Node - node handle created");
 
     QApplication qCoreApp(argc, argv);
-    cataglyphis_gui cataglyphis_gui(0, nh);
+    core_app cataglyphis_gui(0, nh);
     cataglyphis_gui.show();
 
     return qCoreApp.exec();

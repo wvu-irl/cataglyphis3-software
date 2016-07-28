@@ -1,31 +1,31 @@
 #include "init_step_one.h"
-#include "ui_init_step_one.h"
+#include "ui_init_step_one_form.h"
 
 init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> workerArg) :
     QWidget(parent),
-    ui(new Ui::init_step_one)
+    ui(new Ui::init_step_one_form)
 {
     ui->setupUi(this);
     worker = workerArg;
     connect(this, &init_step_one::init_nav_filter,
-                worker.get(), &ros_workers::run_nav_init_service);
-    connect(worker.get(), &ros_workers::nav_init_returned,
-                this, &init_step_one::when_nav_init_return);
+                worker.get(), &ros_workers::runNavInitService);
+    connect(worker.get(), &ros_workers::navInitReturned,
+                this, &init_step_one::on_nav_init_return);
 
     connect(this, &init_step_one::start_nav_info_subscriber,
-                worker.get(), &ros_workers::run_nav_info_subscriber_start);
+                worker.get(), &ros_workers::runNavInfoSubscriberStart);
     connect(this, &init_step_one::stop_nav_info_subscriber,
-                worker.get(), &ros_workers::run_nav_info_subscriber_stop);
+                worker.get(), &ros_workers::runNavInfoSubscriberStop);
 
-    connect(worker.get(), &ros_workers::nav_info_callback,
-                this, &init_step_one::nav_info_callback);
+    connect(worker.get(), &ros_workers::navInfoCallback,
+                this, &init_step_one::on_nav_info_callback);
 
     emit start_nav_info_subscriber();
 }
 
 init_step_one::~init_step_one()
 {
-    //delete ui;
+    delete ui;
 }
 
 void init_step_one::on_skip_init_button_clicked()
@@ -44,7 +44,7 @@ void init_step_one::on_continue_button_clicked()
     emit init_nav_filter(navInitService);
 }
 
-void init_step_one::when_nav_init_return(const messages::NavFilterControl navResponse,
+void init_step_one::on_nav_init_return(const messages::NavFilterControl navResponse,
                                             bool sucessful)
 {
     if(sucessful)
@@ -58,7 +58,7 @@ void init_step_one::when_nav_init_return(const messages::NavFilterControl navRes
     }
 }
 
-void init_step_one::nav_info_callback(const messages::NavFilterOut navInfo)
+void init_step_one::on_nav_info_callback(const messages::NavFilterOut navInfo)
 {
     ROS_DEBUG("init_step_one:: nav_info_callback");
     ui->current_NA_spinbox->setValue(navInfo.north_angle);

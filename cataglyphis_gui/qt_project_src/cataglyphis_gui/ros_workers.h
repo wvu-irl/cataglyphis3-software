@@ -21,20 +21,20 @@ class ros_workers : public QObject
     Q_OBJECT
 
 signals:
-    void nav_service_returned(const messages::NavFilterControl navResponse,
+    void navServiceReturned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful,
                                     const int callerID);
 
-    void nav_init_returned(const messages::NavFilterControl navResponse,
+    void navInitReturned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful);
 
-    void bias_removal_returned(const messages::NavFilterControl navResponse,
+    void biasRemovalReturned(const messages::NavFilterControl navResponse,
                                            bool wasSucessful);
 
-    void dead_reckoning_service_returned(const messages::NavFilterControl navResponse,
+    void deadReckoningServiceReturned(const messages::NavFilterControl navResponse,
                                             bool wasSucessful);
 
-    void nav_info_callback(const messages::NavFilterOut navInfo);
+    void navInfoCallback(const messages::NavFilterOut navInfo);
 
 private:
     boost::shared_ptr<ros::NodeHandle> nh;
@@ -63,12 +63,12 @@ public slots:
 //    void run_service(const QString serviceName,
 //                              ros::SerializedMessage &request,
 //                              ros::SerializedMessage &response);
-    void run_nav_service(messages::NavFilterControl serviceRequest, const int callerID);
-    void run_bias_removal_service();
-    void run_start_dead_reckoning_service();
-    void run_nav_init_service(messages::NavFilterControl serviceRequest);
-    void run_nav_info_subscriber_start();
-    void run_nav_info_subscriber_stop();
+    void runNavService(messages::NavFilterControl serviceRequest, const int callerID);
+    void runBiasRemovalService();
+    void runStartDeadReckoningService();
+    void runNavInitService(messages::NavFilterControl serviceRequest);
+    void runNavInfoSubscriberStart();
+    void runNavInfoSubscriberStop();
 
 };
 

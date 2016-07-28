@@ -7,35 +7,36 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/atomic.hpp>
 #include <ros/ros.h>
-#include "cataglyphis_startup_form_main.h"
+#include "init_container.h"
 #include "map_viewer.h"
 
 #define NUM_MSG_CALLBACK_THREADS 2
 #define CATAGLYPHIS_GUI_ID 3
 
 namespace Ui {
-class cataglyphis_gui;
+class core_app_form;
 }
 
-class cataglyphis_gui : public QMainWindow
+class core_app : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit cataglyphis_gui(QWidget *parent = 0, boost::shared_ptr<ros::NodeHandle> nh =
+    explicit core_app(QWidget *parent = 0, boost::shared_ptr<ros::NodeHandle> nh =
                                                     boost::shared_ptr<ros::NodeHandle>(new ros::NodeHandle()));
-    ~cataglyphis_gui();
+    ~core_app();
 
-    boost::shared_ptr<Ui::cataglyphis_gui> ui;
+    Ui::core_app_form *ui;
+    //boost::shared_ptr<Ui::cataglyphis_gui> ui;
 private slots:
 
 private:
 
-    boost::shared_ptr<cataglyphis_startup_form_main> cataglyphis_startup_form;
-    boost::shared_ptr<map_viewer> map_view_form;
+    boost::shared_ptr<init_container> cataglyphisStartupFormPtr;
+    boost::shared_ptr<map_viewer> mapViewFormPtr;
 
-    boost::shared_ptr<ros::NodeHandle> gui_nh;
-    boost::shared_ptr<ros::AsyncSpinner> async_spinner;
+    boost::shared_ptr<ros::NodeHandle> guiNhPtr;
+    boost::shared_ptr<ros::AsyncSpinner> asyncSpinnerPtr;
 
 };
 

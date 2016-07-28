@@ -28,31 +28,31 @@ CONFIG(debug, debug|release|static):{
 }
 
 SOURCES +=\
-    cataglyphis_startup_form_main.cpp \
     map_viewer.cpp \
-    cataglyphis_gui.cpp \
     init_step_one.cpp \
-    bias_removal_form.cpp \
     ros_workers.cpp \
-    generic_error_dialog_form.cpp \
-    ../../src/cataglyphis_gui_node.cpp
+    ../../src/cataglyphis_gui_node.cpp \
+    init_step_two.cpp \
+    core_app.cpp \
+    generic_error_dialog.cpp \
+    init_container.cpp
 
 HEADERS  += \
-    cataglyphis_startup_form_main.h \
     map_viewer.h \
-    cataglyphis_gui.h \
     init_step_one.h \
-    bias_removal_form.h \
     ros_workers.h \
-    generic_error_dialog_form.h
+    init_step_two.h \
+    core_app.h \
+    generic_error_dialog.h \
+    init_container.h
 
 FORMS    += \
-    cataglyphis_startup_form_main.ui \
-    map_viewer.ui \
-    cataglyphis_gui.ui \
-    init_step_one.ui \
-    bias_removal_form.ui \
-    generic_error_dialog_form.ui
+    generic_error_dialog_form.ui \
+    init_step_two_form.ui \
+    init_step_one_form.ui \
+    map_viewer_form.ui \
+    core_app_form.ui \
+    init_container_form.ui
 
 RESOURCES += \
     resources.qrc

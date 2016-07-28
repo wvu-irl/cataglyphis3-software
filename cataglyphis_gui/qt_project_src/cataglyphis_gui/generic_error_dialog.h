@@ -7,13 +7,13 @@ namespace Ui {
 class generic_error_dialog_form;
 }
 
-class generic_error_dialog_form : public QDialog
+class generic_error_dialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit generic_error_dialog_form(QWidget *parent = 0);
-    ~generic_error_dialog_form();
+    explicit generic_error_dialog(QWidget *parent = 0);
+    ~generic_error_dialog();
 
 private:
     Ui::generic_error_dialog_form *ui;

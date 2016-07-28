@@ -11,7 +11,7 @@
 #define INIT_STEP1_ID 1
 
 namespace Ui {
-class init_step_one;
+class init_step_one_form;
 }
 
 class init_step_one : public QWidget
@@ -29,14 +29,14 @@ public:
                                                     boost::shared_ptr<ros_workers>());
     ~init_step_one();
 
-    //Ui::init_step_one *ui;
-    boost::shared_ptr<Ui::init_step_one> ui;
+    Ui::init_step_one_form *ui;
+    //boost::shared_ptr<Ui::init_step_one> ui;
 
 public slots:
-    void when_nav_init_return(const messages::NavFilterControl navResponse,
+    void on_nav_init_return(const messages::NavFilterControl navResponse,
                                 bool sucessful);
 
-    void nav_info_callback(const messages::NavFilterOut navInfo);
+    void on_nav_info_callback(const messages::NavFilterOut navInfo);
 
 private slots:
 

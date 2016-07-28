@@ -1,11 +1,11 @@
-#include "cataglyphis_startup_form_main.h"
-#include "ui_cataglyphis_startup_form_main.h"
+#include "init_container.h"
+#include "ui_init_container_form.h"
 #include <QLabel>
 
-cataglyphis_startup_form_main::cataglyphis_startup_form_main(QWidget *parent,
-                                                             boost::shared_ptr<ros::NodeHandle> nhArg) :
+init_container::init_container(QWidget *parent,
+                                    boost::shared_ptr<ros::NodeHandle> nhArg) :
     QWidget(parent),
-    ui(new Ui::cataglyphis_startup_form_main)
+    ui(new Ui::init_container_form)
 {
     ui->setupUi(this);
 
@@ -29,23 +29,24 @@ cataglyphis_startup_form_main::cataglyphis_startup_form_main(QWidget *parent,
 
     stepOneTab = boost::shared_ptr<init_step_one>(new init_step_one(ui->input_tabber, rosWorker));
     stepOneTab->hide();
-    stepTwoTab = boost::shared_ptr<bias_removal_form>(new bias_removal_form(ui->input_tabber, rosWorker));
+    stepTwoTab = boost::shared_ptr<init_step_two>(new init_step_two(ui->input_tabber, rosWorker));
     stepTwoTab->hide();
     connect(stepOneTab.get(), &init_step_one::step_one_finished,
-                this, &cataglyphis_startup_form_main::step_one_returned);
-    connect(stepTwoTab.get(), &bias_removal_form::bias_removal_finished,
-                this, &cataglyphis_startup_form_main::step_two_returned);
+                this, &init_container::onStepOneReturned);
+    connect(stepTwoTab.get(), &init_step_two::biasRemovalFinished,
+                this, &init_container::onStepTwoReturned);
 
     rosWorkerThread.start();
 }
 
-cataglyphis_startup_form_main::~cataglyphis_startup_form_main()
+init_container::~init_container()
 {
     rosWorkerThread.quit();
     rosWorkerThread.wait();
+    delete ui;
 }
 
-void cataglyphis_startup_form_main::on_start_up_button_clicked()
+void init_container::on_start_up_button_clicked()
 {
     ROS_DEBUG("Startup Form:: Startup Button Clicked");
 
@@ -68,26 +69,26 @@ void cataglyphis_startup_form_main::on_start_up_button_clicked()
     ui->input_tabber->setCurrentWidget(stepOneTab.get());
 }
 
-void cataglyphis_startup_form_main::step_one_returned()
+void init_container::onStepOneReturned()
 {
     ROS_DEBUG("Startup form:: step one finished");
     ui->input_tabber->addTab(stepTwoTab.get(), "Bias Removal");
     ui->input_tabber->setCurrentWidget(stepTwoTab.get());
 }
 
-void cataglyphis_startup_form_main::step_two_returned()
+void init_container::onStepTwoReturned()
 {
     ROS_DEBUG("Startup form:: step two finished");
 }
 
-void cataglyphis_startup_form_main::on_reboot_recovery_button_clicked()
+void init_container::on_reboot_recovery_button_clicked()
 {
     ROS_DEBUG("Startup Form:: reboot recovery clicked");
 }
 
 
 
-void cataglyphis_startup_form_main::on_input_tabber_currentChanged(int index)
+void init_container::on_input_tabber_currentChanged(int index)
 {
     if(ui->input_tabber->currentWidget() != 0)
     {

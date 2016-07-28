@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>cataglyphis_startup_form_main</class>
- <widget class="QWidget" name="cataglyphis_startup_form_main">
+ <class>init_container_form</class>
+ <widget class="QWidget" name="init_container_form">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -47,7 +47,7 @@
     <number>-1</number>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>

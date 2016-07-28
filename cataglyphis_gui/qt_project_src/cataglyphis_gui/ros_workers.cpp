@@ -11,7 +11,7 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
     //workerMutex = boost::shared_ptr<QMutex>(new QMutex);
 }
 
-void ros_workers::run_nav_service(messages::NavFilterControl serviceRequest,
+void ros_workers::runNavService(messages::NavFilterControl serviceRequest,
                                     const int callerID)
 {
     bool wasSucessful = false;
@@ -35,10 +35,10 @@ void ros_workers::run_nav_service(messages::NavFilterControl serviceRequest,
         ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
         pause.sleep();
     }
-    emit nav_service_returned(serviceRequest, wasSucessful, callerID);
+    emit navServiceReturned(serviceRequest, wasSucessful, callerID);
 }
 
-void ros_workers::run_nav_init_service(messages::NavFilterControl serviceRequest)
+void ros_workers::runNavInitService(messages::NavFilterControl serviceRequest)
 {
     bool wasSucessful = false;
     messages::NavFilterControl navControl = serviceRequest;
@@ -81,10 +81,10 @@ void ros_workers::run_nav_init_service(messages::NavFilterControl serviceRequest
     {
         ROS_WARN("ros_workers::nav_init_service:: HSM Service Does not Exist!");
     }
-    emit nav_init_returned(navControl, wasSucessful);
+    emit navInitReturned(navControl, wasSucessful);
 }
 
-void ros_workers::run_bias_removal_service()
+void ros_workers::runBiasRemovalService()
 {
     ROS_DEBUG("ros_workers:: Bias RemovalService Handler");
     messages::NavFilterControl navControl;
@@ -121,10 +121,10 @@ void ros_workers::run_bias_removal_service()
         navControl.response.r3Offset = NAN;
     }
     ROS_DEBUG("ros_workers:: before bias_removal emit");
-    emit bias_removal_returned(navControl, wasSucessful);
+    emit biasRemovalReturned(navControl, wasSucessful);
 }
 
-void ros_workers::run_start_dead_reckoning_service()
+void ros_workers::runStartDeadReckoningService()
 {
     ROS_DEBUG("ros_workers:: starting dead reckoning");
     messages::NavFilterControl navControl;
@@ -162,7 +162,7 @@ void ros_workers::run_start_dead_reckoning_service()
         navControl.response.r3Offset = NAN;
     }
     ROS_DEBUG("ros_workers::dead_reckoning_service call finished");
-    emit dead_reckoning_service_returned(navControl, wasSucessful);
+    emit deadReckoningServiceReturned(navControl, wasSucessful);
 }
 
 void ros_workers::getNavInfoCallback(const messages::NavFilterOut::ConstPtr &msg)
@@ -172,11 +172,11 @@ void ros_workers::getNavInfoCallback(const messages::NavFilterOut::ConstPtr &msg
     if(navInfoTime.toSec() - ros::Time::now().toSec() > NAV_INFO_MIN_PUB_TIME)
     {
         navInfoTime = ros::Time::now();
-        emit nav_info_callback(this->lastNavMsg);
+        emit navInfoCallback(this->lastNavMsg);
     }
 }
 
-void ros_workers::run_nav_info_subscriber_start()
+void ros_workers::runNavInfoSubscriberStart()
 {
     ROS_DEBUG("ros_workers:: Entered nav info subscriber start");
     if(!navInfoSubStarted)
@@ -188,7 +188,7 @@ void ros_workers::run_nav_info_subscriber_start()
     }
 }
 
-void ros_workers::run_nav_info_subscriber_stop()
+void ros_workers::runNavInfoSubscriberStop()
 {
     ROS_DEBUG("ros_workers:: Entered nav info subscriber stop");
     if(navInfoSubStarted)

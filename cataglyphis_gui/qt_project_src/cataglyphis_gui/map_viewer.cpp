@@ -1,9 +1,9 @@
 #include "map_viewer.h"
-#include "ui_map_viewer.h"
+#include "ui_map_viewer_form.h"
 
 map_viewer::map_viewer(QWidget *parent, int startIndex) :
     QWidget(parent),
-    ui(new Ui::map_viewer)
+    ui(new Ui::map_viewer_form)
 {
     scene = boost::shared_ptr<QGraphicsScene>(new QGraphicsScene());
     field_pic = boost::shared_array<boost::shared_ptr<QImage> >(new boost::shared_ptr<QImage>[4]);
