@@ -69,10 +69,10 @@ private:
 	pcl::PointCloud<pcl::PointXYZI> _input_cloud;
 	short int _registration_counter;
 	short int _registration_counter_prev;
-	bool _registration_new;
+	//bool _registration_new;
 
 	//safe envelope
-	const float _CORRIDOR_WIDTH = 1.5; //width of virtual corridor (meters)
+	const float _CORRIDOR_WIDTH = 2.0; //width of virtual corridor (meters)
 	const float _CORRIDOR_LENGTH = 5.0; //length of virtual corridor (meters)
 	const float _LIDAR_HEIGHT = 0.76; // height of lidar from ground (meters)
 	const float _SAFE_ENVELOPE_ANGLE = 15.0*3.14159265/180.0; //safe envelope angle (radians)
