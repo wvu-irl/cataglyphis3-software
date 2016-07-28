@@ -3,6 +3,8 @@ bool escapeCondition
 bool escapeLockout
 int32 collisionCondition
 bool avoidLockout
+bool performBiasRemoval
+bool performHoming
 bool inSearchableRegion
 bool roiTimeExpired
 bool possessingSample

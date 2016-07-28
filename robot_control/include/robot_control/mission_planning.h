@@ -86,6 +86,8 @@ private:
 	void hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
+	void biasRemovalTimerCallback_(const ros::TimerEvent& event);
+	void homingTimerCallback_(const ros::TimerEvent& event);
 };
 
 #endif // MISSION_PLANNING_H

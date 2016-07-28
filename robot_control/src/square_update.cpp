@@ -53,10 +53,11 @@ bool SquareUpdate::runProc()
 			homingUpdateFailed = true;
 			if(homingUpdatedFailedCount>=homingFailedSwitchToDeadReckoningCount)
 			{
-				useDeadReckoning = true;
+				useDeadReckoning = true; // !!! This switch in hsm probably won't happen quickly enough before the next cycle of planning a manuever. How to handle this?
 			}
 			else if(homingUpdatedFailedCount>=maxHomingUpdatedFailedCount)
 			{
+				// !!! Just reset and deal with it for now. This really needs to trigger another procedure for "lost"
 				homingUpdatedFailedCount = 0;
 				homingUpdateFailed = false;
 			}

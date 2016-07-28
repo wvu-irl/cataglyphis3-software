@@ -23,6 +23,8 @@ MissionPlanning::MissionPlanning()
     driveSpeedsPub = nh.advertise<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1);
     collisionInterruptTrigger = false;
     escapeCondition = false;
+    performBiasRemoval = false;
+    performHoming = false;
     inSearchableRegion = false;
     roiTimeExpired = false;
     possessingSample = false;
@@ -71,6 +73,12 @@ MissionPlanning::MissionPlanning()
     backUpCount = 0;
     confirmCollectFailedCount = 0;
     homingUpdatedFailedCount = 0;
+    timers[_biasRemovalTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalTimerCallback_, this);
+    timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
+    timers[_biasRemovalTimer_]->setPeriod(biasRemovalTimeoutPeriod);
+    timers[_homingTimer_]->setPeriod(homingTimeoutPeriod);
+    timers[_biasRemovalTimer_]->start();
+    timers[_homingTimer_]->start();
     driveSpeedsMsg.vMax = defaultVMax;
     driveSpeedsMsg.rMax = defaultRMax;
     driveSpeedsMsgPrev.vMax = 0.0;
@@ -135,6 +143,8 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
         ROS_INFO("avoidLockout = %i",avoidLockout);
+        ROS_INFO("performBiasRemoval = %i",performBiasRemoval);
+        ROS_INFO("performHoming = %i",performHoming);
         ROS_INFO("inSearchableRegion = %i",inSearchableRegion);
         ROS_INFO("roiTimeExpired = %i",roiTimeExpired);
         ROS_INFO("possessingSample = %i",possessingSample);
@@ -144,6 +154,7 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("sampleInCollectPosition = %i",sampleInCollectPosition);
         ROS_INFO("confirmedPossession = %i",confirmedPossession);
         ROS_INFO("atHome = %i",atHome);
+        ROS_INFO("homingUpdateFailed = %i",homingUpdateFailed);
         ROS_INFO("inDepositPosition = %i",inDepositPosition);
         ROS_INFO("avoidCount = %u",avoidCount);
         ROS_INFO("turnFlag = %i",execInfoMsg.turnFlag);
@@ -166,7 +177,6 @@ void MissionPlanning::evalConditions_()
             if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape");}
             else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape");}
         }
-        //calcnumProcsBeingOrToBeExec_();
         if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
         {
             ROS_INFO("avoid case");
@@ -203,8 +213,7 @@ void MissionPlanning::evalConditions_()
                 else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid");}
             }
         }
-        //calcnumProcsBeingOrToBeExec_();
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !missionEnded) // Next Best Region
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
@@ -215,8 +224,7 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        //calcnumProcsBeingOrToBeExec_();
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
@@ -227,43 +235,40 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        //calcnumProcsBeingOrToBeExec_();
+        /*if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !missionEnded) // Bias Removal
+        {
+
+        }*/
         if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
         }
-        //calcnumProcsBeingOrToBeExec_();
         if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
         }
-        //calcnumProcsBeingOrToBeExec_();
         if(numProcsBeingOrToBeExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
         }
-        //calcnumProcsBeingOrToBeExec_();
         if(numProcsBeingOrToBeExec==0 && possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
-        //calcnumProcsBeingOrToBeExec_();
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && !atHome && !escapeCondition && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome) || performHoming) && !escapeCondition && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
-        //calcnumProcsBeingOrToBeExec_();
         if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
         }
-        //calcnumProcsBeingOrToBeExec_();
         if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !escapeCondition && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
@@ -344,6 +349,8 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.escapeLockout = escapeLockout;
     infoMsg.collisionCondition = collisionMsg.collision;
     infoMsg.avoidLockout = avoidLockout;
+    infoMsg.performBiasRemoval = performBiasRemoval;
+    infoMsg.performHoming = performHoming;
     infoMsg.inSearchableRegion = inSearchableRegion;
     infoMsg.roiTimeExpired = roiTimeExpired;
     infoMsg.possessingSample = possessingSample;
@@ -380,6 +387,11 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
     robotStatus.homingUpdated = msg->homingUpdated;
+    if(robotStatus.homingUpdated)
+    {
+        timers[_homingTimer_]->stop();
+        timers[_homingTimer_]->start();
+    }
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)
@@ -497,4 +509,16 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
         }
     }
     return true;
+}
+
+void MissionPlanning::biasRemovalTimerCallback_(const ros::TimerEvent &event)
+{
+    performBiasRemoval = true;
+    ROS_INFO("biasRemovalTimer expired");
+}
+
+void MissionPlanning::homingTimerCallback_(const ros::TimerEvent &event)
+{
+    performHoming = true;
+    ROS_INFO("homingTimerExpired");
 }

@@ -27,9 +27,10 @@
 #define RAD2DEG 180.0/PI
 #define NUM_PROC_TYPES 11
 #define MAX_SAMPLES 10
-#define NUM_TIMERS 1
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__}; // If this is ever edited, edit controlCallback_ as well
-enum TIMER_NAMES_T {_roiTimer_};
+#define NUM_TIMERS 3
+// !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
+enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
+enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_};
 
 class MissionPlanningProcedureShare
 {
@@ -84,6 +85,8 @@ public:
 	const float definiteSampleConfThresh = 0.9;
 	static int currentROIIndex;
 	static bool escapeCondition;
+	static bool performBiasRemoval;
+	static bool performHoming;
 	static bool inSearchableRegion;
 	static bool roiTimeExpired;
 	static bool possessingSample;
@@ -130,6 +133,8 @@ public:
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m
 	const float lidarUpdateWaitTime = 1.0; // sec
+	const float biasRemovalTimeoutPeriod = 300.0; // sec = 5 minutes
+	const float homingTimeoutPeriod = 600.0; // sec = 10 minutes
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -175,6 +180,8 @@ messages::CVSamplesFound MissionPlanningProcedureShare::cvSamplesFoundMsg;
 messages::CVSampleProps MissionPlanningProcedureShare::bestSample;
 int MissionPlanningProcedureShare::currentROIIndex;
 bool MissionPlanningProcedureShare::escapeCondition;
+bool MissionPlanningProcedureShare::performBiasRemoval;
+bool MissionPlanningProcedureShare::performHoming;
 bool MissionPlanningProcedureShare::inSearchableRegion;
 bool MissionPlanningProcedureShare::roiTimeExpired;
 bool MissionPlanningProcedureShare::possessingSample;

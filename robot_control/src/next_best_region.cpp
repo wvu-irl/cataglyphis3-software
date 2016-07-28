@@ -10,6 +10,7 @@ bool NextBestRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         execDequeEmpty = false;
+        atHome = false;
         avoidCount = 0;
         prevAvoidCountDecXPos = robotStatus.xPos;
         prevAvoidCountDecYPos = robotStatus.yPos;
