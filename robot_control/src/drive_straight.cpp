@@ -34,7 +34,7 @@ int DriveStraight::run()
 	else if(rDes_<(-rMax_)) rDes_ = -rMax_;
 	errorR_ = rDes_ - robotStatus.yawRate;
 	headingErrorSpeedP_ = kpR_*rDes_;
-	headingErrorSpeedI_ = kiR_*errorR_;
+    headingErrorSpeedI_ += kiR_*errorR_;
 	if(headingErrorSpeedI_>maxHeadingErrorSpeedI_) headingErrorSpeedI_ = maxHeadingErrorSpeedI_;
 	else if(headingErrorSpeedI_<(-maxHeadingErrorSpeedI_)) headingErrorSpeedI_ = -maxHeadingErrorSpeedI_;
 	headingErrorSpeedT_ = headingErrorSpeedP_ + headingErrorSpeedI_;
