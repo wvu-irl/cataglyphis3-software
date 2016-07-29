@@ -19,9 +19,21 @@ CollisionDetection::CollisionDetection()
 	//_registration_new = false;
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &CollisionDetection::registrationCallback, this);
 
+	// ser = _nh.advertiseServise("/ ", &CollisionDetection::service, this);
+
 	//collision output
 	_collision_status = 0;
 }
+
+// void CollisionDetection::service(messages::::Request &req, messages::::Response &res)
+// {
+// 	int index;
+// 	index = req.index;
+
+// 	res.x = x;
+// 	res.y = y;
+// }
+
 
 void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
@@ -152,7 +164,6 @@ bool CollisionDetection::doPredictiveAovidance()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
 	*cloud = _input_cloud;
 
-	int hazard_map_size = 30; //so each side is 30*2 = 60 m
 	int preditive_region_length = 7;
 	int preditive_region_wide = 5; //this is on each side, so the total is 5*2 =10
 
@@ -235,13 +246,80 @@ bool CollisionDetection::doPredictiveAovidance()
 		cout << "High risk area in front" << endl;
 
 		//trigger the hazard map generation function
+		pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+	    *hazard_cloud = _input_cloud;
 
+	    int hazard_map_size = 30; //so each side is 30*2 = 60 
 
+		//remove points based on hard thresholds (too far, too high, too low)
+		//pcl::PassThrough<pcl::PointXYZI> pass;
+		pass.setInputCloud(hazard_cloud);
+		pass.setFilterFieldName("x");
+		pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+		pass.filter(*hazard_cloud);
+		pass.setFilterFieldName("y");
+		pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+		pass.filter(*hazard_cloud);
+		pass.setFilterFieldName("z");
+		pass.setFilterLimits(-5,5); //positive z is down, negative z is up
+		pass.filter(*hazard_cloud);
+
+		//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
+		pcl::SACSegmentation<pcl::PointXYZI> plane;
+		plane.setOptimizeCoefficients (true); //optional (why is this optional??)
+		plane.setModelType (pcl::SACMODEL_PLANE);
+		plane.setMethodType (pcl::SAC_RANSAC);
+		plane.setMaxIterations (1000); //max iterations for RANSAC
+		plane.setDistanceThreshold (0.75); //ground detection threshold parameter
+		plane.setInputCloud (hazard_cloud); //was raw_cloud
+
+		//segment the points fitted to the plane using ransac
+		pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ()); //what is this? (coefficients for fitted plane?)
+		pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ()); //what is this? (inliers for points that fit the plane?)
+		seg_plane.segment (*inliers_hazard, *coefficients_hazard);
+
+		//seperate the ground points and the points above the ground (object points)
+		//pcl::ExtractIndices<pcl::PointXYZI> extract;
+		extract.setInputCloud (hazard_cloud);
+		extract.setIndices (inliers_hazard);
+
+		extract.setNegative (true);
+		pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+		extract.filter (*hazard_filtered);
+
+		//project points on the xy plane, and that is the local hazard map
+		pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_filtered_projection (new pcl::PointCloud<pcl::PointXYZI>);
+		*hazard_filtered_projection = *hazard_filtered;
+		for (int i=0; i<hazard_filtered->points.size(); i++)
+		{
+			hazard_filtered_projection->points[i].z=0;
+		}
+
+		//voxel grid filter
+		pcl::VoxelGrid<pcl::PointXYZI> sor;
+		sor.setInputCloud (hazard_filtered_projection);
+		sor.setLeafSize (1.0f, 1.0f, 1.0f);
+		sor.filter (*hazard_filtered_projection);
+
+		std::vector<float> hazard_x;
+		std::vector<float> hazard_y;
+
+		hazard_x.clear();
+		hazard_y.clear();
+		for(int i = 0; i< hazard_filtered_projection->points.size(); i++)
+		{
+			hazard_x.push_back(hazard_filtered_projection->points[i].x);
+			hazard_y.push_back(hazard_filtered_projection->points[i].y);
+		}
+
+		//the above hazard_filter_projection is the hazard map and we need to publish this map
+		cout << "Hazard map get published !!!" << endl;
+		return true;
 	}
 	else
 	{
 		cout << "No risk in front" << endl;
-		//return false;
+		return false;
 		//relative safe region
 	}
 	bin_checker = 0; 

@@ -46,6 +46,8 @@
 #include "sensor_msgs/PointCloud2.h"
 #include <pcl/common/transforms.h>
 
+// #include <messages::>;
+
 class CollisionDetection
 {
 public:
@@ -54,6 +56,7 @@ public:
 	// Members
 	ros::NodeHandle _nh;
 	ros::Subscriber _sub_velodyne;
+	// ros::ServerService ;
 	void setPreviousCounters();
 	bool newPointCloudAvailable();
 	void packCollisionMessage(messages::CollisionOut &msg);
@@ -82,6 +85,7 @@ private:
 	short int _collision_status;
 
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
+	// void service(messages::::Request &req, messages::::Response &res);
 };
 
 #endif // COLLISION_DETECTION_H
