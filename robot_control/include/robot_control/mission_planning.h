@@ -11,6 +11,7 @@
 #include <messages/NavFilterOut.h>
 #include "emergency_escape.h"
 #include "avoid.h"
+#include "bias_removal.h"
 #include "next_best_region.h"
 #include "search_region.h"
 #include "examine.h"
@@ -18,6 +19,7 @@
 #include "collect.h"
 #include "confirm_collect.h"
 #include "go_home.h"
+#include "square_update.h"
 #include "deposit_approach.h"
 #include "deposit_sample.h"
 #include "pause.h"
@@ -44,6 +46,7 @@ public:
 	const int loopRate = 20; // Hz
 	EmergencyEscape emergencyEscape;
 	Avoid avoid;
+	BiasRemoval biasRemoval;
 	NextBestRegion nextBestRegion;
 	SearchRegion searchRegion;
 	Examine examine;
@@ -51,6 +54,7 @@ public:
 	Collect collect;
 	ConfirmCollect confirmCollect;
 	GoHome goHome;
+	SquareUpdate squareUpdate;
 	DepositApproach depositApproach;
 	DepositSample depositSample;
     Pause pause;

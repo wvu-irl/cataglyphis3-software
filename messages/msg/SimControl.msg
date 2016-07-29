@@ -14,3 +14,4 @@ float32 cvBearing
 float32 cvConfidence
 bool pubKeyframeList
 float32 rollAngle
+bool homingUpdated

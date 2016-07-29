@@ -143,6 +143,7 @@ include_directories(
  add_library(pause src/pause.cpp)
  add_library(emergency_escape src/emergency_escape.cpp)
  add_library(avoid src/avoid.cpp)
+ add_library(bias_removal src/bias_removal.cpp)
  add_library(next_best_region src/next_best_region.cpp)
  add_library(search_region src/search_region.cpp)
  add_library(examine src/examine.cpp)
@@ -216,6 +217,7 @@ include_directories(
    pause
    emergency_escape
    avoid
+   bias_removal
    next_best_region
    search_region
    examine
