@@ -87,7 +87,7 @@ find_package(catkin REQUIRED COMPONENTS
    CVSearchCmd.srv
    MapSegment.srv
    NavFilterControl.srv
-   CreateROIKeyframe.srv
+   CreateROIHazardMap.srv
    SearchLocalMapInfo.srv
    GlobalMapPathHazards.srv
    EmergencyEscapeTrigger.srv
