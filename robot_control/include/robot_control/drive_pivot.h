@@ -28,6 +28,7 @@ private:
 	int taskEnded_;
 	const float kpR_ = 1.0; // deg/(s*deg)
 	const float kiR_ = 0.25;
+	const float rSpeedIMax_ = 100.0;
 	const float kROutput_ = 450/45.0; // 45% of max speed at 45 deg/s
 	const int rSpeedMax_ = 500;
 	const float deltaHeadingThreshold_ = 2.0; // deg

@@ -37,7 +37,7 @@ int DriveStraight::run()
     headingErrorSpeedI_ += kiR_*errorR_;
 	if(headingErrorSpeedI_>maxHeadingErrorSpeedI_) headingErrorSpeedI_ = maxHeadingErrorSpeedI_;
 	else if(headingErrorSpeedI_<(-maxHeadingErrorSpeedI_)) headingErrorSpeedI_ = -maxHeadingErrorSpeedI_;
-	headingErrorSpeedT_ = headingErrorSpeedP_ + headingErrorSpeedI_;
+    headingErrorSpeedT_ = headingErrorSpeedP_ + headingErrorSpeedI_;
 	leftSpeed_ = round(kVOutput_*vDesCoerc_+headingErrorSpeedT_);
 	rightSpeed_ = round(kVOutput_*vDesCoerc_-headingErrorSpeedT_);
 	timeoutCounter_++;

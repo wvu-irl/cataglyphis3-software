@@ -28,6 +28,8 @@ int DrivePivot::run()
 	errorR_ = rDes_ - robotStatus.yawRate;
 	rSpeedP_ = kROutput_*rDes_;
     rSpeedI_ += kiR_*errorR_;
+    if(rSpeedI_>rSpeedIMax_) rSpeedI_ = rSpeedIMax_;
+    else if(rSpeedI_<-rSpeedIMax_) rSpeedI_ = -rSpeedIMax_;
 	rSpeedT_ = (int)round(rSpeedP_ + rSpeedI_);
 	if(rSpeedT_>rSpeedMax_) rSpeedT_ = rSpeedMax_;
 	else if(rSpeedT_<(-rSpeedMax_)) rSpeedT_ = -rSpeedMax_;

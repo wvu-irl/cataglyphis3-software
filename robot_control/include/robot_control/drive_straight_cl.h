@@ -24,7 +24,7 @@ private:
 	float errorR_;
 	int leftSpeed_;
 	int rightSpeed_;
-	int headingErrorSpeedT_;
+	float headingErrorSpeedT_;
 	float headingErrorSpeedP_;
 	float headingErrorSpeedI_;
 	unsigned int timeoutValue_;
@@ -40,8 +40,8 @@ private:
 	const float kiR_ = 0.25;
 	const float kROutput_ = 450/45.0; // 45% of max speed at 45 deg/s
 	const float rMax_ = 30.0; // deg/s
-	const int maxHeadingErrorSpeed_ = 100;
-	const float maxHeadingErrorSpeedI_ = 50;
+	const float maxHeadingErrorSpeed_ = 100.0;
+	const float maxHeadingErrorSpeedI_ = 50.0;
 	const float distanceThreshold_ = 0.02; // m
 	const double thresholdMinTime_ = 0.5; // s
 };
