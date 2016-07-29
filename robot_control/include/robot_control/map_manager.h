@@ -10,7 +10,7 @@
 #include <messages/KeyframeList.h>
 #include <messages/RobotPose.h>
 #include <messages/SLAMPoseOut.h>
-#include <messages/CreateROIKeyframe.h>
+#include <messages/CreateROIHazardMap.h>
 #include <messages/CVSamplesFound.h>
 #include <messages/GlobalMapPathHazards.h>
 #include <messages/SearchLocalMapInfo.h>
@@ -75,7 +75,7 @@ public:
 	ros::ServiceServer globalMapPathHazardsServ;
 	ros::ServiceServer searchLocalMapInfoServ;
 	ros::ServiceServer randomSearchWaypointsServ;
-	ros::ServiceClient createROIKeyframeClient;
+	ros::ServiceClient createROIHazardMapClient;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
 	ros::Subscriber keyframeRelPoseSub;
@@ -110,7 +110,7 @@ public:
 	float previousNorthAngle; // deg
 	messages::SLAMPoseOut keyframeRelPose;
 	messages::KeyframeList keyframes;
-	messages::CreateROIKeyframe createROIKeyframeSrv;
+	messages::CreateROIHazardMap createROIHazardMapSrv;
 	grid_map::GridMap currentKeyframe;
 	float currentCellValue;
 	float possibleNewCellValue;

@@ -9,7 +9,7 @@
 #define MAP_KEYFRAME_LAYERS_START_INDEX 4
 #define MAP_KEYFRAME_LAYERS_END_INDEX 7
 enum MAP_LAYERS_T {_slope, _satDriveability, _satDriveabilityConf, _satObjectHeight, _keyframeDriveability, _keyframeDriveabilityConf, _keyframeObjectHeight,
-				   _reflectivity, _sampleProb, _roiNum, _keyframeWriteIntoGlobalMapSerialNum};
+				   _reflectivity, _sampleProb, _localMapDriveability, _roiNum, _keyframeWriteIntoGlobalMapSerialNum};
 enum DRIVEABILITY_T {_noObject, _passableOverhang, _impassable};
 inline std::string layerToString(MAP_LAYERS_T layer)
 {
@@ -23,6 +23,7 @@ inline std::string layerToString(MAP_LAYERS_T layer)
 	case _keyframeDriveabilityConf: return "keyframeDriveabilityConf";
 	case _keyframeObjectHeight: return "keyframeObjectHeight";
 	case _reflectivity: return "reflectivity";
+	case _localMapDriveability: return "localMapDriveability";
 	case _sampleProb: return "sampleProb";
 	case _roiNum: return "roiNum";
 	case _keyframeWriteIntoGlobalMapSerialNum: return "keyframeWriteIntoGlobalMapSerialNum";
