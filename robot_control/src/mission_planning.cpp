@@ -58,6 +58,7 @@ MissionPlanning::MissionPlanning()
     collisionInterruptThresh = 1.0; // m
     emergencyEscape.reg(__emergencyEscape__);
     avoid.reg(__avoid__);
+    biasRemoval.reg(__biasRemoval__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
     searchRegion.reg(__searchRegion__);
     examine.reg(__examine__);
@@ -65,6 +66,7 @@ MissionPlanning::MissionPlanning()
     collect.reg(__collect__);
     confirmCollect.reg(__confirmCollect__);
     goHome.reg(__goHome__);
+    squareUpdate.reg(__squareUpdate__);
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
     depositSample.sendOpen(); // Make sure the grabber is open initially
@@ -239,7 +241,8 @@ void MissionPlanning::evalConditions_()
         }
         /*if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !missionEnded) // Bias Removal
         {
-
+            procsToExecute[__biasRemoval__] = true;
+            ROS_INFO("to execute bias removal");
         }*/
         if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !missionEnded) // Examine
         {
@@ -261,17 +264,22 @@ void MissionPlanning::evalConditions_()
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
-        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome) || performHoming) && !escapeCondition && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome)/* || performHoming*/) && !escapeCondition && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Deposit Approach
+        /*if(numProcsBeingOrToBeExec==0 && homingUpdateFailed && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Square Update
+        {
+            procsToExecute[__squareUpdate__] = true;
+            ROS_INFO("to execute square update");
+        }*/
+        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !escapeCondition && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !escapeCondition && !missionEnded) // Deposit Sample
+        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !escapeCondition && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
@@ -483,6 +491,9 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
         case __avoid__:
             avoid.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
+        case __biasRemoval__:
+            biasRemoval.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
         case __nextBestRegion__:
             nextBestRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
@@ -504,14 +515,14 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
         case __goHome__:
             goHome.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
+        case __squareUpdate__:
+            squareUpdate.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
         case __depositApproach__:
             depositApproach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
         case __depositSample__:
             depositSample.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
-            break;
-        case __pause__:
-            pause.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
         }
     }

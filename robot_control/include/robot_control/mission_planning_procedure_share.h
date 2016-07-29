@@ -26,11 +26,11 @@
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
-#define NUM_PROC_TYPES 11
+#define NUM_PROC_TYPES 13
 #define MAX_SAMPLES 10
 #define NUM_TIMERS 3
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
+enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__};
 enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
 
 class MissionPlanningProcedureShare

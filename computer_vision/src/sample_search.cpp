@@ -63,8 +63,6 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 
 void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &coordinates)
 {
-	ROS_INFO("drawing output image!");
-
 	//load image
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	cv::Mat src = cv::imread(P.string()+"/data/images/input_image.jpg");
@@ -137,6 +135,9 @@ void SampleSearch::saveLowAndHighProbabilityBlobs(const std::vector<float> &prob
 
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
+	gettimeofday(&this->localTimer, NULL);
+	double startSearchTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
 	/*
 		Call segmentation server
 	*/
@@ -166,7 +167,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 150; //50 will do 50x50 classifier, 150 will do 150x150 classifier
+	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
@@ -179,7 +180,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 	gettimeofday(&this->localTimer, NULL);  
     double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-    ROS_INFO("Time taken in seconds for segmentation service: %f", endClassifierTime - startClassifierTime);
+    ROS_INFO("Time taken in seconds for classifier service: %f", endClassifierTime - startClassifierTime);
 
 	/*
 		Save image, blobs, and blob info if > 0.2 probability of being a sample
@@ -191,7 +192,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 	gettimeofday(&this->localTimer, NULL);  
     double endSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-    ROS_INFO("Time taken in seconds for segmentation service: %f", endSaveBlobsTime - startSaveBlobsTime);
+    ROS_INFO("Time taken in seconds for saving high probability blobs: %f", endSaveBlobsTime - startSaveBlobsTime);
 
 	/*
 		Draw samples and nonsamples on image (the should always be done, this should not be an option)
@@ -215,7 +216,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 	gettimeofday(&this->localTimer, NULL);  
     double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-    ROS_INFO("Time taken in seconds for segmentation service: %f", endDrawTime - startDrawTime);
+    ROS_INFO("Time taken in seconds for drawing output image: %f", endDrawTime - startDrawTime);
 
 	/*
 		Calculate the position of each sample
@@ -243,7 +244,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 	gettimeofday(&this->localTimer, NULL);  
     double endSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-    ROS_INFO("Time taken in seconds for segmentation service: %f", endSampleLocalizationTime - startSampleLocalizationTime);
+    ROS_INFO("Time taken in seconds for sample localization: %f", endSampleLocalizationTime - startSampleLocalizationTime);
 
 	/*
 		Publish results of search
@@ -251,6 +252,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     searchForSamplesMsgOut.procType = req.procType;
     searchForSamplesMsgOut.serialNum = req.serialNum;
     searchForSamplesPub.publish(searchForSamplesMsgOut);
+
+	gettimeofday(&this->localTimer, NULL);
+	double endSearchTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
+	ROS_INFO("Total time for search: %f", endSearchTime - startSearchTime);
+
     ros::spinOnce(); //publish results before completing request (important!)
 	return true;
 }

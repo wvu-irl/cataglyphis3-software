@@ -348,17 +348,18 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 			ROS_ERROR("Error! Must enter valid path to image in request.");
 			return false;
 		}
-        if(image_file.cols!=5792 || image_file.rows!=5792)
-        {
-            ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for (image) segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
-            return false;
-        }   
+        // if(image_file.cols!=5792 || image_file.rows!=5792)
+        // {
+        //     ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for (image) segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
+        //     return false;
+        // }   
 	}
 	else
 	{
 		ROS_ERROR("Invalid request to segmentImageSrv.");
 		return false;
 	}
+
 	cv::Mat image_file_copy = image_file.clone();
 
     //write origional image to file
@@ -389,11 +390,17 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
     //extract blue channel from image (blue channel contains pixel colors)
 	//t = get_wall_time();
-
 	std::vector<cv::Mat> channels(3);
 	split(image_file, channels);
-    //cv::multiply(channels[0],cv::Scalar(255),channels[0]);
-    cv::multiply(channels[0],calibrationMask,channels[0]);
+    if(req.live==true)
+    {
+        cv::multiply(channels[0],calibrationMask,channels[0]);
+    }
+    else
+    {
+        cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
+    }
+
     cv::imwrite(P.string() + "/data/images/segmented.jpg",channels[0].clone());
 
     //t = (get_wall_time() - t)*1000;

@@ -2,7 +2,7 @@
 
 BiasRemoval::BiasRemoval()
 {
-	timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer(&BiasRemoval::callback, this);
+	timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer<BiasRemoval>(&BiasRemoval::callback, this);
 }
 
 bool BiasRemoval::runProc()
