@@ -89,3 +89,98 @@ void SafePathing::rotateCoord(float origX, float origY, float &newX, float &newY
     newX = origX*cos(DEG2RAD*angleDeg)+origY*sin(DEG2RAD*angleDeg);
     newY = -origX*sin(DEG2RAD*angleDeg)+origY*cos(DEG2RAD*angleDeg);
 }
+
+void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, std::vector<grid_map::Position> &goalPointsIn)
+{
+    float delta;
+    float dx;
+    float dy;
+    bool continueLoop;
+    grid_map::Size mapSize;
+    grid_map::Index currentIndex;
+    grid_map::Index offsetIndex;
+    mapOut.add(timeLayer, 10.0);
+    mapOut.add(setLayer, (float)_unknown);
+    mapSize = mapOut.getSize();
+    for(int k=0; k<goalPointsIn.size(); k++)
+    {
+        mapOut.atPosition(timeLayer, goalPointsIn.at(k)) = 0.0;
+        mapOut.atPosition(setLayer, goalPointsIn.at(k)) = (float)_frozen;
+        mapOut.getIndex(goalPointsIn.at(k), currentIndex);
+        // Need to keep going until some termination condition.
+        //while(continueLoop)
+        //{
+            for(int i=-1; i<=1; i++)
+            {
+                for(int j=-1; j<=1; j++)
+                {
+                    if((i != 0 && j == 0) || (i == 0 && j != 0))
+                    {
+                        offsetIndex[0] = currentIndex[0] + i;
+                        offsetIndex[1] = currentIndex[1] + j;
+                        if((offsetIndex[0]<mapSize[0] && offsetIndex[0]>=0) && (offsetIndex[1]<mapSize[1] && offsetIndex[1]>=0))
+                        {
+                            if(mapOut.at(setLayer, offsetIndex)==(float)_unknown) mapOut.at(setLayer, offsetIndex) = (float)_narrowBand; // How to points get set to frozen other than being a goal point?
+
+                            if(mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]) < mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1])) dx = mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]);
+                            else dx = mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1]);
+
+                            if(mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1) < mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1)) dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1);
+                            else dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1);
+
+                            delta = 2.0*mapIn.at(viscosityLayer, currentIndex) - pow(dx-dy, 2.0);
+                            if(delta>=0.0) mapOut.at(timeLayer, currentIndex) = (dx+dy+sqrt(delta))/2.0;
+                            else
+                            {
+                                if(dx+mapIn.at(viscosityLayer, currentIndex) < dy+mapIn.at(viscosityLayer, currentIndex)) mapOut.at(timeLayer, currentIndex) = dx+mapIn.at(viscosityLayer, currentIndex);
+                                else mapOut.at(timeLayer, currentIndex) = dy+mapIn.at(viscosityLayer, currentIndex);
+                            }
+                        }
+                    }
+                }
+            }
+            // evaluate if continueLoop should be true or false
+            // if true, set currentIndex to something new
+        //}
+    }
+}
+
+void SafePathing::gradientDescent(grid_map::GridMap &map, grid_map::Position startPosition, std::vector<grid_map::Index> &pathOut)
+{
+    grid_map::Size mapSize;
+    bool continueLoop = true;
+    float nextBestValue = map.atPosition(timeLayer, startPosition); // Initialize nextBestValue to starting position value
+    grid_map::Index currentIndex;
+    grid_map::Index offsetIndex;
+    grid_map::Index nextBestIndex;
+    pathOut.clear();
+    map.getIndex(startPosition, currentIndex);
+    mapSize = map.getSize();
+    int i, j;
+    while(continueLoop)
+    {
+        for(i=-1; i<=1; i++)
+        {
+            for(j=-1; j<=1; j++)
+            {
+                if((i != 0 && j == 0) || (i == 0 && j != 0))
+                {
+                    offsetIndex[0] = currentIndex[0] + i;
+                    offsetIndex[1] = currentIndex[1] + j;
+                    if((offsetIndex[0]<mapSize[0] && offsetIndex[0]>=0) && (offsetIndex[1]<mapSize[1] && offsetIndex[1]>=0))
+                    {
+                        continueLoop = false;
+                        if(map.at(timeLayer, offsetIndex) < nextBestValue)
+                        {
+                            nextBestValue = map.at(timeLayer, offsetIndex);
+                            nextBestIndex = offsetIndex;
+                            continueLoop = true;
+                        }
+                    }
+                }
+            }
+        }
+        currentIndex = nextBestIndex;
+        pathOut.push_back(currentIndex);
+    }
+}
