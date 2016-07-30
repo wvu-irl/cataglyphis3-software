@@ -2,7 +2,7 @@
 
 bool SquareUpdate::runProc()
 {
-	ROS_INFO("squareUpdateState = %i",state);
+	//ROS_INFO("squareUpdateState = %i",state);
 	switch(state)
 	{
 	case _init_:
@@ -23,7 +23,8 @@ bool SquareUpdate::runProc()
 		waypointsToTravel.at(3).y = -cornerY;
 		waypointsToTravel.at(4).x = homeWaypointX;
 		waypointsToTravel.at(4).y = homeWaypointY;
-		sendDriveAndWait(lidarUpdateWaitTime); // Maybe need to interlace with wait actions?
+		sendDriveAndWait(lidarUpdateWaitTime);
+		//sendDriveRel(0.0, 0.0, true, 180.0, false);
 		state = _exec_;
 		break;
 	case _exec_:
@@ -43,6 +44,9 @@ bool SquareUpdate::runProc()
 		avoidLockout = false;
 		if(robotStatus.homingUpdated)
 		{
+			timers[_homingTimer_]->stop();
+			timers[_homingTimer_]->start();
+			performHoming = false;
 			homingUpdatedFailedCount = 0;
 			homingUpdateFailed = false;
 			useDeadReckoning = false;

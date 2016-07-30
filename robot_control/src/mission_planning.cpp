@@ -239,11 +239,11 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        /*if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !missionEnded) // Bias Removal
+        if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !missionEnded) // Bias Removal
         {
             procsToExecute[__biasRemoval__] = true;
             ROS_INFO("to execute bias removal");
-        }*/
+        }
         if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
@@ -264,16 +264,16 @@ void MissionPlanning::evalConditions_()
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
-        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome)/* || performHoming*/) && !escapeCondition && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !performBiasRemoval && !escapeCondition && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
-        /*if(numProcsBeingOrToBeExec==0 && homingUpdateFailed && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExec==0 && homingUpdateFailed && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
-        }*/
+        }
         if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !escapeCondition && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
@@ -305,6 +305,7 @@ void MissionPlanning::runProcesses_()
     pauseStarted = false;
     emergencyEscape.run();
     avoid.run();
+    biasRemoval.run();
     nextBestRegion.run();
     searchRegion.run();
     examine.run();
@@ -312,6 +313,7 @@ void MissionPlanning::runProcesses_()
     collect.run();
     confirmCollect.run();
     goHome.run();
+    squareUpdate.run();
     depositApproach.run();
     depositSample.run();
 }
@@ -397,11 +399,11 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
     robotStatus.homingUpdated = msg->homingUpdated;
-    if(robotStatus.homingUpdated)
+    /*if(robotStatus.homingUpdated)
     {
         timers[_homingTimer_]->stop();
         timers[_homingTimer_]->start();
-    }
+    }*/
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)

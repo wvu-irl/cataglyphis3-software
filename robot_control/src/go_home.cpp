@@ -21,6 +21,7 @@ bool GoHome::runProc()
         waypointsToTravel.at(0).y = homeWaypointY;
 		callIntermediateWaypoints();
         sendDriveGlobal(false);
+        sendDriveRel(0.0, 0.0, true, 180.0, false);
         sendWait(lidarUpdateWaitTime);
 		state = _exec_;
 		break;
@@ -43,7 +44,10 @@ bool GoHome::runProc()
 		atHome = true;
         if(robotStatus.homingUpdated)
         {
+            timers[_homingTimer_]->stop();
+            timers[_homingTimer_]->start();
             homingUpdatedFailedCount = 0;
+            performHoming = false;
             homingUpdateFailed = false;
             useDeadReckoning = false;
         }

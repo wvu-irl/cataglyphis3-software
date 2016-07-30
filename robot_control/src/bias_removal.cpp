@@ -41,6 +41,8 @@ bool BiasRemoval::runProc()
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
 		timers[_biasRemovalActionTimeoutTimer_]->stop();
+		timers[_biasRemovalTimer_]->stop();
+		timers[_biasRemovalTimer_]->start();
 		state = _init_;
 		break;
 	}

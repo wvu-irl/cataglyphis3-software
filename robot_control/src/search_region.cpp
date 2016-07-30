@@ -140,7 +140,7 @@ void SearchRegion::antColony_()
 			distance(m,n) = hypot(waypointsToPlan.at(m).x - waypointsToPlan.at(n).x,
 								  waypointsToPlan.at(m).y - waypointsToPlan.at(n).y);
 			//ROS_INFO("after distance matrix calc");
-			terrainHazard.fill(0.0); // Temporary until actual terrain hazard calculation implemented
+			terrainHazard.fill(0.0); // !!! Temporary until actual terrain hazard calculation implemented
 			// make service requests to get terrain hazard info
 			// terrainHazard(m,n) = something;
 		}
