@@ -15,8 +15,12 @@ void DriveRelative::init()
 	if(endHeading_)
 	{
 		pushTask(_pivot_);
-		driveDeque.back()->params.float1 = endHeading_ - (robotStatus.heading + angleToTurn_);
-		driveDeque.back()->params.float2 = rMax_;
+        candidateEndHeadingAngleToTurn_[0] = desiredEndHeading_ - (fmod(robotStatus.heading, 360.0) + angleToTurn_);
+        candidateEndHeadingAngleToTurn_[1] = -desiredEndHeading_ - (fmod(robotStatus.heading, 360.0) + angleToTurn_);
+        if(fabs(candidateEndHeadingAngleToTurn_[0]) < fabs(candidateEndHeadingAngleToTurn_[1]))
+            driveDeque.back()->params.float1 = candidateEndHeadingAngleToTurn_[0];
+        else
+            driveDeque.back()->params.float1 = candidateEndHeadingAngleToTurn_[1];
     }
     if(pushedToFront_) initDequesFront();
 }

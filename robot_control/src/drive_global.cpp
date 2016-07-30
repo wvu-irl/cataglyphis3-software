@@ -7,23 +7,27 @@ void DriveGlobal::init()
     desiredEndHeading_ = params.float3;
 	endHeading_ = params.bool1;
     pushedToFront_ = params.bool2;
-	ROS_DEBUG("before task deque clears");
+    //ROS_DEBUG("before task deque clears");
     clearDeques();
 	calculatePath_();
-	ROS_DEBUG("before push task");
+    //ROS_DEBUG("before push task");
 	pushTask(_pivot_);
-	ROS_DEBUG("after push task");
-	ROS_DEBUG("drive deque back: %p",driveDeque.back());
+    //ROS_DEBUG("after push task");
+    //ROS_DEBUG("drive deque back: %p",driveDeque.back());
 	driveDeque.back()->params.float1 = angleToTurn_;
-	ROS_DEBUG("before next push task");
+    //ROS_DEBUG("before next push task");
 	pushTask(_driveStraight_);
-	ROS_DEBUG("after next push task");
+    //ROS_DEBUG("after next push task");
 	driveDeque.back()->params.float1 = distanceToDrive_;
 	if(endHeading_)
 	{
 		pushTask(_pivot_);
-        driveDeque.back()->params.float1 = desiredEndHeading_ - (robotStatus.heading + angleToTurn_);
-		driveDeque.back()->params.float2 = rMax_;
+        candidateEndHeadingAngleToTurn_[0] = desiredEndHeading_ - (fmod(robotStatus.heading, 360.0) + angleToTurn_);
+        candidateEndHeadingAngleToTurn_[1] = -desiredEndHeading_ - (fmod(robotStatus.heading, 360.0) + angleToTurn_);
+        if(fabs(candidateEndHeadingAngleToTurn_[0]) < fabs(candidateEndHeadingAngleToTurn_[1]))
+            driveDeque.back()->params.float1 = candidateEndHeadingAngleToTurn_[0];
+        else
+            driveDeque.back()->params.float1 = candidateEndHeadingAngleToTurn_[1];
 	}
     if(pushedToFront_) initDequesFront();
 }
