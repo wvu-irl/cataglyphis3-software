@@ -23,7 +23,7 @@ bool SquareUpdate::runProc()
 		waypointsToTravel.at(3).y = -cornerY;
 		waypointsToTravel.at(4).x = homeWaypointX;
 		waypointsToTravel.at(4).y = homeWaypointY;
-		sendDriveAndWait(lidarUpdateWaitTime);
+		sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
 		//sendDriveRel(0.0, 0.0, true, 180.0, false);
 		state = _exec_;
 		break;
@@ -59,11 +59,9 @@ bool SquareUpdate::runProc()
 			{
 				useDeadReckoning = true; // !!! This switch in hsm probably won't happen quickly enough before the next cycle of planning a manuever. How to handle this?
 			}
-			else if(homingUpdatedFailedCount>=maxHomingUpdatedFailedCount)
+			if(homingUpdatedFailedCount>=maxHomingUpdatedFailedCount)
 			{
-				// !!! Just reset and deal with it for now. This really needs to trigger another procedure for "lost"
-				homingUpdatedFailedCount = 0;
-				homingUpdateFailed = false;
+				performSafeMode = true;
 			}
 		}
 		atHome = true;

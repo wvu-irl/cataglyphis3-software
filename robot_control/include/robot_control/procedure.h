@@ -21,9 +21,9 @@ public:
     virtual bool runProc() = 0;
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
-	void sendDriveGlobal(bool pushToFront);
+	void sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading);
 	void sendDriveAndSearch(uint8_t typeMux);
-	void sendDriveAndWait(float waitTime); // sec
+	void sendDriveAndWait(float waitTime, bool endHeadingFlag, float endHeading); // sec
 	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
@@ -98,7 +98,7 @@ void Procedure::callIntermediateWaypoints()
     }
 }
 
-void Procedure::sendDriveGlobal(bool pushToFront)
+void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
@@ -111,11 +111,12 @@ void Procedure::sendDriveGlobal(bool pushToFront)
         execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
         execActionSrv.request.float5 = 0.0;
         execActionSrv.request.int1 = 0;
-		execActionSrv.request.bool1 = false;
+		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
+		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = pushToFront;
 		execActionSrv.request.bool3 = false;
 		execActionSrv.request.bool4 = false;
@@ -144,8 +145,8 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-		execActionSrv.request.float3 = 1.5;
-		execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
 		execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
@@ -192,7 +193,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 	}
 }
 
-void Procedure::sendDriveAndWait(float waitTime)
+void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endHeading)
 {
 	for(int i=0; i<numWaypointsToTravel; i++)
 	{
@@ -206,11 +207,12 @@ void Procedure::sendDriveAndWait(float waitTime)
 		execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-		execActionSrv.request.float3 = 1.5;
-		execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float3 = endHeading;
+		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
 		execActionSrv.request.int1 = 0;
-		execActionSrv.request.bool1 = false;
+		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
+		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
 		execActionSrv.request.bool3 = false;
 		execActionSrv.request.bool4 = false;

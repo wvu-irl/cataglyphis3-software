@@ -54,7 +54,7 @@ bool Avoid::runProc()
                 dequeClearFront = false;
                 ROS_INFO("avoid dequeClearFront true");
             }
-            sendDriveGlobal(true);
+            sendDriveGlobal(true, false, 0.0);
             //ROS_INFO("avoid sendDriveGlobal(front)");
 
 		}

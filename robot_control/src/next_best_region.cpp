@@ -70,7 +70,7 @@ bool NextBestRegion::runProc()
 			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
-            //sendDriveGlobal(false);
+            //sendDriveGlobal(false, false, 0.0);
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             sendWait(10.0);
             currentROIIndex = bestROINum;
@@ -96,7 +96,7 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).y = 0.0;
             waypointsToTravel.at(0).searchable = false;
             callIntermediateWaypoints();
-            sendDriveGlobal(false);
+            sendDriveGlobal(false, false, 0.0);
 			procsBeingExecuted[procType] = false;
             tempGoHome = true;
             state = _exec_;

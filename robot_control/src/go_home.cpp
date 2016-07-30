@@ -20,9 +20,7 @@ bool GoHome::runProc()
         waypointsToTravel.at(0).x = homeWaypointX;
         waypointsToTravel.at(0).y = homeWaypointY;
 		callIntermediateWaypoints();
-        sendDriveGlobal(false);
-        sendDriveRel(0.0, 0.0, true, 180.0, false);
-        sendWait(lidarUpdateWaitTime);
+        sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
 		state = _exec_;
 		break;
 	case _exec_:

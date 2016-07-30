@@ -55,7 +55,7 @@ bool DepositApproach::runProc()
 		waypointsToTravel.at(0).x = depositAlignXDistance;
 		waypointsToTravel.at(0).y = depositLocations.at(samplesCollected).y;
 		callIntermediateWaypoints();
-        sendDriveGlobal(false);
+        sendDriveGlobal(false, false, 0.0);
 		state = _exec_;
 		break;
 	case _exec_:

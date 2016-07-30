@@ -37,6 +37,7 @@ MissionPlanning::MissionPlanning()
     confirmedPossession = false;
     atHome = false;
     homingUpdateFailed = false;
+    performSafeMode = false;
     inDepositPosition = false;
     missionEnded = false;
     useDeadReckoning = false;
@@ -69,6 +70,7 @@ MissionPlanning::MissionPlanning()
     squareUpdate.reg(__squareUpdate__);
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
+    safeMode.reg(__safeMode__);
     depositSample.sendOpen(); // Make sure the grabber is open initially
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
@@ -159,6 +161,7 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("confirmedPossession = %i",confirmedPossession);
         ROS_INFO("atHome = %i",atHome);
         ROS_INFO("homingUpdateFailed = %i",homingUpdateFailed);
+        ROS_INFO("performSafeMode = %i,performSafeMode);
         ROS_INFO("inDepositPosition = %i",inDepositPosition);
         ROS_INFO("avoidCount = %u",avoidCount);
         ROS_INFO("turnFlag = %i",execInfoMsg.turnFlag);
@@ -217,7 +220,7 @@ void MissionPlanning::evalConditions_()
                 else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid");}
             }
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !missionEnded) // Next Best Region
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
@@ -228,7 +231,7 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
@@ -239,50 +242,55 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !missionEnded) // Bias Removal
+        if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !performSafeMode && !missionEnded) // Bias Removal
         {
             procsToExecute[__biasRemoval__] = true;
             ROS_INFO("to execute bias removal");
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !missionEnded) // Examine
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !performSafeMode && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !missionEnded) // Approach
+        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !performSafeMode && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
         }
-        if(numProcsBeingOrToBeExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Collect
+        if(numProcsBeingOrToBeExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Confirm Collect
+        if(numProcsBeingOrToBeExec==0 && possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
         }
-        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !performBiasRemoval && !escapeCondition && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
         }
-        if(numProcsBeingOrToBeExec==0 && homingUpdateFailed && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExec==0 && homingUpdateFailed && atHome && !inDepositPosition && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !escapeCondition && !missionEnded) // Deposit Approach
+        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !escapeCondition && !missionEnded) // Deposit Sample
+        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
+        }
+        if(numProcsBeingOrToBeExec==0 && performSafeMode && !escapeCondition && !missionEnded)
+        {
+            procsToExecute[__safeMode__] = true;
+            ROS_INFO("to execute safeMode");
         }
 
         // *************** Multi Proc Lockout for testing *************************
@@ -316,6 +324,7 @@ void MissionPlanning::runProcesses_()
     squareUpdate.run();
     depositApproach.run();
     depositSample.run();
+    safeMode.run();
 }
 
 void MissionPlanning::runPause_()
@@ -372,6 +381,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.confirmedPossession = confirmedPossession;
     infoMsg.atHome = atHome;
     infoMsg.homingUpdateFailed = homingUpdateFailed;
+    infoMsg.performSafeMode = performSafeMode;
     infoMsg.inDepositPosition = inDepositPosition;
     infoMsg.samplesCollected = samplesCollected;
     infoMsg.avoidCount = avoidCount;

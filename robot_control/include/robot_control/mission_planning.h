@@ -22,6 +22,7 @@
 #include "square_update.h"
 #include "deposit_approach.h"
 #include "deposit_sample.h"
+#include "safe_mode.h"
 #include "pause.h"
 #include "bit_utils.h"
 
@@ -57,6 +58,7 @@ public:
 	SquareUpdate squareUpdate;
 	DepositApproach depositApproach;
 	DepositSample depositSample;
+	SafeMode safeMode;
     Pause pause;
 
 	bool collisionInterruptTrigger;

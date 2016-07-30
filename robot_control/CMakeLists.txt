@@ -154,6 +154,7 @@ include_directories(
  add_library(square_update src/square_update.cpp)
  add_library(deposit_approach src/deposit_approach.cpp)
  add_library(deposit_sample src/deposit_sample.cpp)
+ add_library(safe_mode src/safe_mode.cpp)
  
  add_library(safe_pathing src/safe_pathing.cpp)
 
@@ -228,6 +229,7 @@ include_directories(
    square_update
    deposit_approach
    deposit_sample
+   safe_mode
  )
  
  target_link_libraries(safe_pathing_node

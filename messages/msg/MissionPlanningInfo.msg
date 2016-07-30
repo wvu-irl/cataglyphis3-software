@@ -13,6 +13,7 @@ bool definiteSample
 bool sampleInCollectPosition
 bool confirmedPossession
 bool homingUpdateFailed
+bool performSafeMode
 bool atHome
 bool inDepositPosition
 uint32 samplesCollected

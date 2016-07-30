@@ -26,11 +26,11 @@
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
-#define NUM_PROC_TYPES 13
+#define NUM_PROC_TYPES 14
 #define MAX_SAMPLES 10
 #define NUM_TIMERS 3
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__};
+enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
 enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
 
 class MissionPlanningProcedureShare
@@ -100,6 +100,7 @@ public:
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool homingUpdateFailed;
+	static bool performSafeMode;
 	static bool inDepositPosition;
 	static bool missionEnded;
 	static bool useDeadReckoning;
@@ -126,8 +127,8 @@ public:
 	static unsigned int confirmCollectFailedCount;
 	static unsigned int homingUpdatedFailedCount;
 	static unsigned int navStatus;
-	const unsigned int maxHomingUpdatedFailedCount = 2;
-	const unsigned int homingFailedSwitchToDeadReckoningCount = 1;
+	const unsigned int maxHomingUpdatedFailedCount = 3;
+	const unsigned int homingFailedSwitchToDeadReckoningCount = 2;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 1.0;
 	const float defaultVMax = 1.2; // m/s
@@ -198,6 +199,7 @@ bool MissionPlanningProcedureShare::sampleInCollectPosition;
 bool MissionPlanningProcedureShare::confirmedPossession;
 bool MissionPlanningProcedureShare::atHome;
 bool MissionPlanningProcedureShare::homingUpdateFailed;
+bool MissionPlanningProcedureShare::performSafeMode;
 bool MissionPlanningProcedureShare::inDepositPosition;
 bool MissionPlanningProcedureShare::missionEnded;
 bool MissionPlanningProcedureShare::useDeadReckoning;
