@@ -64,15 +64,29 @@ bool NextBestRegion::runProc()
 		if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size()) // Temp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         {
             // Call service to drive to center of the chosen region
+
             numWaypointsToTravel = 1;
             clearAndResizeWTT();
-			waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
-			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
+            waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
+            waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
-            //sendDriveGlobal(false, false, 0.0);
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             sendWait(10.0);
+
+            /*numWaypointsToTravel = 2;
+            clearAndResizeWTT();
+            angleToROI = atan2(regionsOfInterestSrv.response.ROIList.at(bestROINum).y - robotStatus.yPos, regionsOfInterestSrv.response.ROIList.at(bestROINum).x - robotStatus.xPos); // Radians
+            waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x - distanceShortOfROI*cos(angleToROI);
+            waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y - distanceShortOfROI*sin(angleToROI);
+            waypointsToTravel.at(0).searchable = true; // !!!!! NEEDS TO BE TRUE to search
+            waypointsToTravel.at(1).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
+            waypointsToTravel.at(1).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
+            waypointsToTravel.at(1).searchable = true; // !!!!! NEEDS TO BE TRUE to search
+            callIntermediateWaypoints();
+            sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+            //sendWait(10.0);*/
+
             currentROIIndex = bestROINum;
             allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
             tempGoHome = false;
@@ -112,7 +126,7 @@ bool NextBestRegion::runProc()
 		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         if(waypointsToTravel.at(0).searchable)
         {
-            if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
+            if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample) state = _finish_;
             else state = _exec_;
         }
         else
@@ -127,6 +141,7 @@ bool NextBestRegion::runProc()
 		state = _exec_;
         break;
     case _finish_:
+        if(execLastProcType != procType || execLastSerialNum != serialNum) sendDequeClearAll();
         if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
         else
         {

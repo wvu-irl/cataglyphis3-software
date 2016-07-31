@@ -278,8 +278,8 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
         if(searchLocalMapExists) ROS_WARN("MAP MANAGER: tried to create searchLocalMap when it already exists");
         else
         {
-            if(createROIHazardMapClient.call(createROIHazardMapSrv)) ROS_DEBUG("MAP MANAGER: createROIKeyframe service call successful"); // call createROIKeyframe service
-            else {ROS_ERROR("MAP MANAGER: createROIKeyframe service call unsuccessful"); return false;}
+            if(createROIHazardMapClient.call(createROIHazardMapSrv)) ROS_DEBUG("MAP MANAGER: createROIHazardMap service call successful"); // call createROIHazardMap service
+            else {ROS_ERROR("MAP MANAGER: createROIHazardMap service call unsuccessful"); return false;}
             searchLocalMapXPos = globalPose.x;
             searchLocalMapYPos = globalPose.y;
             searchLocalMapHeading = globalPose.heading;
@@ -288,6 +288,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             searchLocalMapToROIAngle = RAD2DEG*atan2(regionsOfInterest.at(req.roiIndex).s, regionsOfInterest.at(req.roiIndex).e) - fmod(globalPose.heading, 360.0);
             sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
             sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
+            searchLocalMap.add(layerToString(_localMapDriveability), 0.0);
             for(int i=0; i<createROIHazardMapSrv.response.x_mean.size(); i++)
             {
                 searchLocalMapCoord[0] = createROIHazardMapSrv.response.x_mean.at(i);
@@ -296,8 +297,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                 //ROIX = searchLocalMapCoord[0]*cos(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*sin(DEG2RAD*searchLocalMapToROIAngle);
                 //ROIY = -searchLocalMapCoord[0]*sin(DEG2RAD*searchLocalMapToROIAngle)+searchLocalMapCoord[1]*cos(DEG2RAD*searchLocalMapToROIAngle);
                 //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
-                searchLocalMap.add(layerToString(_localMapDriveability), 0.0);
-                searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
+                if(searchLocalMap.isInside(searchLocalMapCoord)) searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
             }
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {

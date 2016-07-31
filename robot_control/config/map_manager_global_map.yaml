@@ -48,36 +48,18 @@ grid_map_visualizations:
      layer: reflectivity
      data_min: 0.0
      data_max: 100.0
-  - name: purpleProb
+  - name: sampleProb
     type: occupancy_grid
     params:
-     layer: purpleProb
+     layer: sampleProb
      data_min: 0.0
-     data_max: 1000.0
-  - name: redProb
+     data_max: 1.0
+  - name: localMapDriveability
     type: occupancy_grid
-    params:
-     layer: redProb
-     data_min: 0.0
-     data_max: 1000.0
-  - name: blueProb
-    type: occupancy_grid
-    params:
-     layer: blueProb
-     data_min: 0.0
-     data_max: 1000.0
-  - name: silverProb
-    type: occupancy_grid
-    params:
-     layer: silverProb
-     data_min: 0.0
-     data_max: 1000.0
-  - name: brassProb
-    type: occupancy_grid
-    params:
-     layer: brassProb
-     data_min: 0.0
-     data_max: 1000.0
+  	params:
+  	 layer: localMapDriveability
+  	 data_min: 0.0
+  	 data_max: 10.0
 
   - name: slopePC
     type: point_cloud
@@ -111,23 +93,11 @@ grid_map_visualizations:
     type: point_cloud
     params:
      layer: reflectivity
-  - name: purpleProbPC
+  - name: sampleProbPC
     type: point_cloud
     params:
-     layer: purpleProb
-  - name: redProbPC
+     layer: sampleProb
+  - name: localMapDriveabilityPC
     type: point_cloud
-    params:
-     layer: redProb
-  - name: blueProbPC
-    type: point_cloud
-    params:
-     layer: blueProb
-  - name: silverProbPC
-    type: point_cloud
-    params:
-     layer: silverProb
-  - name: brassProbPC
-    type: point_cloud
-    params:
-     layer: brassProb
+  	params:
+  	 layer: localMapDriveability
