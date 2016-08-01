@@ -22,11 +22,11 @@ class init_step_two : public QWidget
     Q_OBJECT
 
 signals:
-    void startBiasRemoval();
-    void startDeadReckoning();
-    void biasRemovalFinished();
-    void startNavInfoSubscriber();
-    void stopNavInfoSubscriber();
+    void start_bias_removal();
+    void start_dead_reckoning();
+    void bias_removal_finished();
+    void start_nav_info_subscriber();
+    void stop_nav_info_subscriber();
 
 public:
     explicit init_step_two(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
@@ -38,14 +38,14 @@ public:
 
 public slots:
 
-    void onUpdateBiasRemovalDisplay(messages::NavFilterControl serviceResponse,
+    void on_update_bias_removal_display(messages::NavFilterControl serviceResponse,
                                         bool wasSucessful);
-    void onNavInfoCallback(const messages::NavFilterOut navInfo);
+    void on_nav_info_callback(const messages::NavFilterOut navInfo);
 
 private slots:
-    void onBeginDeadReckoningButtonClicked();
+    void on_begin_dead_reckoning_button_clicked();
 
-    void onPerformBiasRemovalButtonClicked();
+    void on_perform_bias_removal_button_clicked();
 
 private:
 

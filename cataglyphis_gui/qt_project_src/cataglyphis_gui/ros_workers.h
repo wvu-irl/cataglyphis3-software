@@ -21,20 +21,20 @@ class ros_workers : public QObject
     Q_OBJECT
 
 signals:
-    void navServiceReturned(const messages::NavFilterControl navResponse,
+    void nav_service_returned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful,
                                     const int callerID);
 
-    void navInitReturned(const messages::NavFilterControl navResponse,
+    void nav_init_returned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful);
 
-    void biasRemovalReturned(const messages::NavFilterControl navResponse,
+    void bias_removal_returned(const messages::NavFilterControl navResponse,
                                            bool wasSucessful);
 
-    void deadReckoningServiceReturned(const messages::NavFilterControl navResponse,
+    void dead_reckoning_service_returned(const messages::NavFilterControl navResponse,
                                             bool wasSucessful);
 
-    void navInfoCallback(const messages::NavFilterOut navInfo);
+    void nav_info_callback(const messages::NavFilterOut navInfo);
 
 private:
     boost::shared_ptr<ros::NodeHandle> nh;
@@ -63,12 +63,12 @@ public slots:
 //    void run_service(const QString serviceName,
 //                              ros::SerializedMessage &request,
 //                              ros::SerializedMessage &response);
-    void runNavService(messages::NavFilterControl serviceRequest, const int callerID);
-    void runBiasRemovalService();
-    void runStartDeadReckoningService();
-    void runNavInitService(messages::NavFilterControl serviceRequest);
-    void runNavInfoSubscriberStart();
-    void runNavInfoSubscriberStop();
+    void on_run_nav_service(messages::NavFilterControl serviceRequest, const int callerID);
+    void on_run_bias_removal_service();
+    void on_run_start_dead_reckoning_service();
+    void on_run_nav_init_service(messages::NavFilterControl serviceRequest);
+    void on_run_nav_info_subscriber_start();
+    void on_run_nav_info_subscriber_stop();
 
 };
 

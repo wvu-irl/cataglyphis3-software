@@ -8,16 +8,16 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
     ui->setupUi(this);
     worker = workerArg;
     connect(this, &init_step_one::init_nav_filter,
-                worker.get(), &ros_workers::runNavInitService);
-    connect(worker.get(), &ros_workers::navInitReturned,
+                worker.get(), &ros_workers::on_run_nav_init_service);
+    connect(worker.get(), &ros_workers::nav_init_returned,
                 this, &init_step_one::on_nav_init_return);
 
     connect(this, &init_step_one::start_nav_info_subscriber,
-                worker.get(), &ros_workers::runNavInfoSubscriberStart);
+                worker.get(), &ros_workers::on_run_nav_info_subscriber_start);
     connect(this, &init_step_one::stop_nav_info_subscriber,
-                worker.get(), &ros_workers::runNavInfoSubscriberStop);
+                worker.get(), &ros_workers::on_run_nav_info_subscriber_stop);
 
-    connect(worker.get(), &ros_workers::navInfoCallback,
+    connect(worker.get(), &ros_workers::nav_info_callback,
                 this, &init_step_one::on_nav_info_callback);
 
     emit start_nav_info_subscriber();

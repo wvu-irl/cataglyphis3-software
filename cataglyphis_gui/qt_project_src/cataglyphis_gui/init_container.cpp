@@ -32,9 +32,9 @@ init_container::init_container(QWidget *parent,
     stepTwoTab = boost::shared_ptr<init_step_two>(new init_step_two(ui->input_tabber, rosWorker));
     stepTwoTab->hide();
     connect(stepOneTab.get(), &init_step_one::step_one_finished,
-                this, &init_container::onStepOneReturned);
-    connect(stepTwoTab.get(), &init_step_two::biasRemovalFinished,
-                this, &init_container::onStepTwoReturned);
+                this, &init_container::on_step_one_returned);
+    connect(stepTwoTab.get(), &init_step_two::bias_removal_finished,
+                this, &init_container::on_step_two_returned);
 
     rosWorkerThread.start();
 }
@@ -69,14 +69,14 @@ void init_container::on_start_up_button_clicked()
     ui->input_tabber->setCurrentWidget(stepOneTab.get());
 }
 
-void init_container::onStepOneReturned()
+void init_container::on_step_one_returned()
 {
     ROS_DEBUG("Startup form:: step one finished");
     ui->input_tabber->addTab(stepTwoTab.get(), "Bias Removal");
     ui->input_tabber->setCurrentWidget(stepTwoTab.get());
 }
 
-void init_container::onStepTwoReturned()
+void init_container::on_step_two_returned()
 {
     ROS_DEBUG("Startup form:: step two finished");
 }

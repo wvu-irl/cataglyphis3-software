@@ -35,8 +35,8 @@ public:
     Ui::init_container_form *ui;
 
 public slots:
-    void onStepOneReturned();
-    void onStepTwoReturned();
+    void on_step_one_returned();
+    void on_step_two_returned();
 
 private slots:
     void on_start_up_button_clicked();
