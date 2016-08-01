@@ -7,6 +7,7 @@ BiasRemoval::BiasRemoval()
 
 bool BiasRemoval::runProc()
 {
+	ROS_INFO_THROTTLE(1, "executing BiasRemoval");
 	switch(state)
 	{
 	case _init_:
@@ -50,5 +51,6 @@ bool BiasRemoval::runProc()
 
 void BiasRemoval::callback(const ros::TimerEvent &event)
 {
+	ROS_WARN("biasRemovalTimedOut");
 	biasRemovalTimedOut = true;
 }

@@ -3,6 +3,7 @@
 bool NextBestRegion::runProc()
 {
     //ROS_INFO("nextBestRegion state = %i",state);
+    ROS_INFO_THROTTLE(1, "executing nextBestRegion");
     switch(state)
     {
     case _init_:
