@@ -6,8 +6,6 @@ class Pause : public Procedure
 {
 public:
     // Methods
-    void sendPause();
-    void sendUnPause();
     bool runProc();
 };
 

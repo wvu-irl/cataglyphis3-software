@@ -14,7 +14,7 @@ bool BiasRemoval::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		sendDequeClearAll();
+		sendPause();
 		biasRemovalTimedOut = false;
 		timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalTimeoutPeriod);
 		timers[_biasRemovalActionTimeoutTimer_]->start();
@@ -33,6 +33,7 @@ bool BiasRemoval::runProc()
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+		sendUnPause();
 		timers[_biasRemovalActionTimeoutTimer_]->stop();
 		state = _init_;
 		break;
@@ -41,6 +42,7 @@ bool BiasRemoval::runProc()
 		performBiasRemoval = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+		sendUnPause();
 		timers[_biasRemovalActionTimeoutTimer_]->stop();
 		timers[_biasRemovalTimer_]->stop();
 		timers[_biasRemovalTimer_]->start();
