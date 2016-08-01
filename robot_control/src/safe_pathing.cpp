@@ -65,13 +65,13 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
     {
         startRadialDistance = hypot(req.start.x, req.start.y);
         finishRadialDistance = hypot(req.finish.x, req.finish.y);
-        if(finishRadialDistance>=transitionWaypointRadius && startRadialDistance<transitionWaypointRadius)
+        if(finishRadialDistance>=transitionWaypointOuterRadius && startRadialDistance<transitionWaypointInnerRadius)
         {
             intermediateWaypoints.push_back(transitionWaypoint1);
             intermediateWaypoints.push_back(transitionWaypoint2);
             intermediateWaypoints.push_back(transitionWaypoint3);
         }
-        else if(finishRadialDistance<transitionWaypointRadius && startRadialDistance>=transitionWaypointRadius)
+        else if(finishRadialDistance<transitionWaypointInnerRadius && startRadialDistance>=transitionWaypointOuterRadius)
         {
             intermediateWaypoints.push_back(transitionWaypoint3);
             intermediateWaypoints.push_back(transitionWaypoint2);

@@ -4,7 +4,7 @@
 ROI.e = 259.3 - satMapStartE;
 ROI.s = 201.0 - satMapStartS;
 ROI.sampleProb = 1.0;
-ROI.sampleSig = 10.0;
+ROI.sampleSig = 1000.0;
 ROI.radialAxis = 5.0;
 ROI.tangentialAxis = 5.0;
 ROI.searched = false;
