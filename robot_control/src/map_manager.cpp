@@ -26,13 +26,13 @@ MapManager::MapManager()
     srand(time(NULL));
 
     // Square around starting platform. Must initialize with north angle = 90.0 degrees
-#include <robot_control/square_rois.h>
+//#include <robot_control/square_rois.h>
 
     // Dense ROIs to search directly in front of library
 //#include <robot_control/evansdale_short_dense_rois.h>
 
     // Limited set of ROIs covering eastern half of Evansdale in front of library
-//#include <robot_control/evansdale_library_rois.h>
+#include <robot_control/evansdale_library_rois.h>
 
     // Full set of ROIs covering Evansdale in front of library and engineering
 //#include <robot_control/evansdale_full_rois.h>
