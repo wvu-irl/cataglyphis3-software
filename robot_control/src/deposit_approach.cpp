@@ -25,10 +25,10 @@ DepositApproach::DepositApproach()
 	depositLocations.at(6).y = 0.483;
 
 	depositLocations.at(7).x = 1.7;
-	depositLocations.at(7).y = 0.0;
+    depositLocations.at(7).y = 0.483;
 
 	depositLocations.at(8).x = 1.7;
-	depositLocations.at(8).y = 0.483;
+    depositLocations.at(8).y = 0.0;
 
 	depositLocations.at(9).x = 1.7;
 	depositLocations.at(9).y = 0.0;
@@ -36,8 +36,8 @@ DepositApproach::DepositApproach()
 
 bool DepositApproach::runProc()
 {
-	ROS_INFO("depositApproachState = %i", state);
-	ROS_INFO("depositApproachStep = %i",step);
+    //ROS_INFO("depositApproachState = %i", state);
+    //ROS_INFO("depositApproachStep = %i",step);
 	switch(state)
 	{
 	case _init_:

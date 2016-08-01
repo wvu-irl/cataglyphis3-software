@@ -9,8 +9,8 @@ Approach::Approach()
 
 bool Approach::runProc()
 {
-	ROS_INFO("approachState = %i", state);
-	ROS_INFO("approachStep = %i", step);
+    //ROS_INFO("approachState = %i", state);
+    //ROS_INFO("approachStep = %i", step);
 	switch(state)
 	{
 	case _init_:

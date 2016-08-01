@@ -140,9 +140,20 @@ void SearchRegion::antColony_()
 			distance(m,n) = hypot(waypointsToPlan.at(m).x - waypointsToPlan.at(n).x,
 								  waypointsToPlan.at(m).y - waypointsToPlan.at(n).y);
 			//ROS_INFO("after distance matrix calc");
-			terrainHazard.fill(0.0); // !!! Temporary until actual terrain hazard calculation implemented
+			//terrainHazard.fill(0.0);
 			// make service requests to get terrain hazard info
-			// terrainHazard(m,n) = something;
+			if(distance(m,n) != 0.0)
+			{
+				searchLocalMapPathHazardsSrv.request.xStart = waypointsToPlan.at(m).x;
+				searchLocalMapPathHazardsSrv.request.yStart = waypointsToPlan.at(m).y;
+				searchLocalMapPathHazardsSrv.request.xEnd = waypointsToPlan.at(n).x;
+				searchLocalMapPathHazardsSrv.request.yEnd = waypointsToPlan.at(n).y;
+				searchLocalMapPathHazardsSrv.request.width = hazardCorridorWidth;
+				if(searchLocalMapPathHazardsClient.call(searchLocalMapPathHazardsSrv)) ROS_DEBUG("searchLocalMapPathHazards service call successful");
+				else ROS_ERROR("searchLocalMapPathHazards service call unsuccessful");
+				terrainHazard(m,n) = searchLocalMapPathHazardsSrv.response.hazardValue;
+			}
+			else terrainHazard(m,n) = 0.0;
 		}
 	}
 	antNum = 0;

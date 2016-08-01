@@ -2,7 +2,7 @@
 
 bool DepositSample::runProc()
 {
-	ROS_INFO("depositSampleState = %i", state);
+    //ROS_INFO("depositSampleState = %i", state);
 	switch(state)
 	{
 	case _init_:

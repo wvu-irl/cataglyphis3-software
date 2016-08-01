@@ -10,7 +10,8 @@ MissionPlanning::MissionPlanning()
     modROIClient = nh.serviceClient<robot_control::ModifyROI>("/control/mapmanager/modifyroi");
     searchMapClient = nh.serviceClient<robot_control::SearchMap>("/control/mapmanager/searchlocalmap");
     randomSearchWaypointsClient = nh.serviceClient<robot_control::RandomSearchWaypoints>("/control/mapmanager/randomsearchwaypoints");
-    globalMapPathHazardsClient = nh.serviceClient<messages::GlobalMapPathHazards>("/control/mapmanager/globalmappathhazards");
+    globalMapPathHazardsClient = nh.serviceClient<messages::MapPathHazards>("/control/mapmanager/globalmappathhazards");
+    searchLocalMapPathHazardsClient = nh.serviceClient<messages::MapPathHazards>("/control/mapmanager/searchlocalmappathhazards");
     navControlClient = nh.serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     nb1Sub = nh.subscribe<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in", 1, &MissionPlanning::nb1Callback_, this);
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);

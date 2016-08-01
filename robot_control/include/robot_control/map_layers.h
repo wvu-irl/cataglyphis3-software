@@ -3,14 +3,13 @@
 #include <string>
 #include <ros/ros.h>
 
-#define NUM_MAP_LAYERS 11
+#define NUM_MAP_LAYERS 12
 #define MAP_SAT_LAYERS_START_INDEX 1
 #define MAP_SAT_LAYERS_END_INDEX 3
 #define MAP_KEYFRAME_LAYERS_START_INDEX 4
 #define MAP_KEYFRAME_LAYERS_END_INDEX 7
 enum MAP_LAYERS_T {_slope, _satDriveability, _satDriveabilityConf, _satObjectHeight, _keyframeDriveability, _keyframeDriveabilityConf, _keyframeObjectHeight,
 				   _reflectivity, _sampleProb, _localMapDriveability, _roiNum, _keyframeWriteIntoGlobalMapSerialNum};
-enum DRIVEABILITY_T {_noObject, _passableOverhang, _impassable};
 inline std::string layerToString(MAP_LAYERS_T layer)
 {
 	switch(layer)

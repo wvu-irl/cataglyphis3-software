@@ -2,7 +2,7 @@
 
 bool ConfirmCollect::runProc()
 {
-	ROS_INFO("confirmCollectState = %i", state);
+    //ROS_INFO("confirmCollectState = %i", state);
 	switch(state)
 	{
 	case _init_:

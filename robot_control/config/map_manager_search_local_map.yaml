@@ -10,8 +10,8 @@ grid_map_visualizations:
     type: occupancy_grid
     params:
      layer: satDriveability
-     data_min: 0.0
-     data_max: 2.0
+     data_min: -2.0
+     data_max: 10.0
   - name: satDriveabilityConf
     type: occupancy_grid
     params:
@@ -28,8 +28,8 @@ grid_map_visualizations:
     type: occupancy_grid
     params:
      layer: keyframeDriveability
-     data_min: 0.0
-     data_max: 2.0
+     data_min: -2.0
+     data_max: 10.0
   - name: keyframeDriveabilityConf
     type: occupancy_grid
     params:
@@ -58,7 +58,7 @@ grid_map_visualizations:
     type: occupancy_grid
     params:
      layer: localMapDriveability
-     data_min: 0.0
+     data_min: -2.0
      data_max: 10.0
 
   - name: slopePC

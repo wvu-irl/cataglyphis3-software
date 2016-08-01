@@ -6,6 +6,7 @@ MapManager::MapManager()
     modROIServ = nh.advertiseService("/control/mapmanager/modifyroi", &MapManager::modROI, this);
     searchMapServ = nh.advertiseService("/control/mapmanager/searchlocalmap", &MapManager::searchMapCallback, this);
     globalMapPathHazardsServ = nh.advertiseService("/control/mapmanager/globalmappathhazards", &MapManager::globalMapPathHazardsCallback, this);
+    searchLocalMapPathHazardsServ = nh.advertiseService("/control/mapmanager/searchlocalmappathhazards", &MapManager::searchLocalMapPathHazardsCallback, this);
     searchLocalMapInfoServ = nh.advertiseService("/control/mapmanager/searchlocalmapinfo", &MapManager::searchLocalMapInfoCallback, this);
     randomSearchWaypointsServ = nh.advertiseService("/control/mapmanager/randomsearchwaypoints", &MapManager::randomSearchWaypointsCallback, this);
     createROIHazardMapClient = nh.serviceClient<messages::CreateROIHazardMap>("/lidar/collisiondetection/createroihazardmap");
@@ -19,136 +20,22 @@ MapManager::MapManager()
     searchLocalMapROINum = 0;
     keyframeWriteIntoGlobalMapSerialNum = 0;
     searchLocalMapExists = false;
-    globalMapPathHazardsVertices.resize(4);
+    mapPathHazardsVertices.resize(4);
     globalPose.northAngle = 90.0; // degrees. initial guess
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
     srand(time(NULL));
 
-    // Temporary ROIs. Rectangle around starting platform
-    ROI.e = 7.0;
-    ROI.s = 7.0;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = -7.0;
-    ROI.s = 7.0;
-    ROI.sampleProb = 0.5;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = -7.0;
-    ROI.s = -7.0;
-    ROI.sampleProb = 0.4;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 7.0;
-    ROI.s = -7.0;
-    ROI.sampleProb = 0.3;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    northTransformROIs();
+    // Square around starting platform. Must initialize with north angle = 90.0 degrees
+#include <robot_control/square_rois.h>
 
-    // Temporary ROIs. Search in front of library
-    /*ROI.e = 35.0826;
-    ROI.s = 20.9706;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 34.9990;
-    ROI.s = 28.0289;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 42.0208;
-    ROI.s = 28.1840;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 48.9591;
-    ROI.s = 28.0289;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 48.9591;
-    ROI.s = 21.0482;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 42.1044;
-    ROI.s = 21.2033;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 41.9373;
-    ROI.s = 34.9320;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 45.7825;
-    ROI.s = 31.5968;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 45.4482;
-    ROI.s = 24.3059;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 38.5099;
-    ROI.s = 24.5385;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    ROI.e = 38.5935;
-    ROI.s = 31.5968;
-    ROI.sampleProb = 0.6;
-    ROI.sampleSig = 10.0;
-    ROI.radialAxis = 15.0;
-    ROI.tangentialAxis = 10.0;
-    ROI.searched = false;
-    regionsOfInterest.push_back(ROI);
-    northTransformROIs();*/
+    // Dense ROIs to search directly in front of library
+//#include <robot_control/evansdale_short_dense_rois.h>
+
+    // Limited set of ROIs covering eastern half of Evansdale in front of library
+//#include <robot_control/evansdale_library_rois.h>
+
+    // Full set of ROIs covering Evansdale in front of library and engineering
+//#include <robot_control/evansdale_full_rois.h>
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -181,7 +68,7 @@ MapManager::MapManager()
 
     globalMap.setFrameId("map");
     globalMapTemp.setFrameId("map");
-#ifdef EVANSDALE
+/*#ifdef EVANSDALE
     satMapSize[0] = 200.0;
     satMapSize[1] = 100.0;
     //globalMapOrigin[0] = 66.667;
@@ -196,7 +83,11 @@ MapManager::MapManager()
     //globalMapOrigin[1] = 65.0;
     globalMapOrigin[0] = 0.0;
     globalMapOrigin[1] = 0.0;
-#endif // INSTUTUTE_PARK
+#endif // INSTUTUTE_PARK*/
+    satMapSize[0] = ((float)driveabilityNumCols)*driveabilityMapRes;
+    satMapSize[1] = ((float)driveabilityNumRows)*driveabilityMapRes;
+    globalMapOrigin[0] = 0.0;
+    globalMapOrigin[1] = 0.0;
     calculateGlobalMapSize();
     //globalMapSize[0] = hypot(satMapSize[0],satMapSize[1]) + std::max(fabs(globalMapOrigin[0]),fabs(globalMapOrigin[1]));
     //globalMapSize[1] = globalMapSize[0];
@@ -212,6 +103,7 @@ MapManager::MapManager()
     searchLocalMap.setFrameId("map");
     searchLocalMap.setGeometry(grid_map::Length(searchLocalMapLength, searchLocalMapWidth), mapResolution, grid_map::Position(0.0, 0.0));
     gridMapAddLayers(0, NUM_MAP_LAYERS-1, searchLocalMap);
+    searchLocalMapPathHazardsPolygon.setFrameId(searchLocalMap.getFrameId());
 
     currentKeyframe.setFrameId("map");
     ROIKeyframe.setFrameId("map");
@@ -317,44 +209,77 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
     return true;
 }
 
-bool MapManager::globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res) // tested
+bool MapManager::globalMapPathHazardsCallback(messages::MapPathHazards::Request &req, messages::MapPathHazards::Response &res) // tested
 {
     globalMapPathHazardsPolygon.removeVertices();
     res.hazardValue = 0.0;
-    globalMapPathHazardsPolygonHeading = atan2(req.yEnd - req.yStart, req.xEnd - req.xStart); // radians
-    globalMapPathHazardsVertices.at(0)[0] = req.xStart + req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsVertices.at(0)[1] = req.yStart - req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsVertices.at(1)[0] = req.xStart - req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsVertices.at(1)[1] = req.yStart + req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsVertices.at(2)[0] = req.xEnd - req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsVertices.at(2)[1] = req.yEnd + req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsVertices.at(3)[0] = req.xEnd + req.width/2.0*sin(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsVertices.at(3)[1] = req.yEnd - req.width/2.0*cos(globalMapPathHazardsPolygonHeading);
-    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(0));
-    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(1));
-    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(2));
-    globalMapPathHazardsPolygon.addVertex(globalMapPathHazardsVertices.at(3));
-    globalMapPathHazardNumCellsInPolygon = 0;
+    mapPathHazardsPolygonHeading = atan2(req.yEnd - req.yStart, req.xEnd - req.xStart); // radians
+    mapPathHazardsVertices.at(0)[0] = req.xStart + req.width/2.0*sin(mapPathHazardsPolygonHeading);
+    mapPathHazardsVertices.at(0)[1] = req.yStart - req.width/2.0*cos(mapPathHazardsPolygonHeading);
+    mapPathHazardsVertices.at(1)[0] = req.xStart - req.width/2.0*sin(mapPathHazardsPolygonHeading);
+    mapPathHazardsVertices.at(1)[1] = req.yStart + req.width/2.0*cos(mapPathHazardsPolygonHeading);
+    mapPathHazardsVertices.at(2)[0] = req.xEnd - req.width/2.0*sin(mapPathHazardsPolygonHeading);
+    mapPathHazardsVertices.at(2)[1] = req.yEnd + req.width/2.0*cos(mapPathHazardsPolygonHeading);
+    mapPathHazardsVertices.at(3)[0] = req.xEnd + req.width/2.0*sin(mapPathHazardsPolygonHeading);
+    mapPathHazardsVertices.at(3)[1] = req.yEnd - req.width/2.0*cos(mapPathHazardsPolygonHeading);
+    globalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(0));
+    globalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(1));
+    globalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(2));
+    globalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(3));
+    mapPathHazardNumCellsInPolygon = 0;
     for(grid_map::PolygonIterator it(globalMap, globalMapPathHazardsPolygon); !it.isPastEnd(); ++it)
     {
-        /*if(globalMap.at(layerToString(_keyframeDriveabilityConf), *it) > globalMap.at(layerToString(_satDriveabilityConf), *it))
+        mapPathHazardValue = globalMap.at(layerToString(_satDriveability), *it);
+        if(mapPathHazardValue > 0.0)
         {
-            globalMapPathHazardValue = globalMap.at(layerToString(_keyframeDriveability), *it);
-            globalMapPathHazardHeight = globalMap.at(layerToString(_keyframeObjectHeight), *it);
+            res.hazardValue += mapPathHazardValue;
         }
-        else
-        {*/
-        globalMapPathHazardValue = globalMap.at(layerToString(_satDriveability), *it);
-        globalMapPathHazardHeight = globalMap.at(layerToString(_satObjectHeight), *it);
-        //}
-        if(globalMapPathHazardValue > 0.0)
-        {
-            res.hazardValue += globalMapPathHazardValue;
-        }
-        globalMapPathHazardNumCellsInPolygon++;
+        mapPathHazardNumCellsInPolygon++;
     }
-    res.hazardValue /= (float)globalMapPathHazardNumCellsInPolygon;
+    res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
     return true;
+}
+
+bool MapManager::searchLocalMapPathHazardsCallback(messages::MapPathHazards::Request &req, messages::MapPathHazards::Response &res) // tested
+{
+    float localXStart;
+    float localYStart;
+    float localXEnd;
+    float localYEnd;
+    if(searchLocalMapExists)
+    {
+        searchLocalMapPathHazardsPolygon.removeVertices();
+        res.hazardValue = 0.0;
+        // Transform global x,y into searchLocalMap x,y
+        rotateCoord(req.xStart - searchLocalMapXPos, req.yStart - searchLocalMapYPos, localXStart, localYStart, -searchLocalMapHeading);
+        rotateCoord(req.xEnd - searchLocalMapXPos, req.yEnd - searchLocalMapYPos, localXEnd, localYEnd, -searchLocalMapHeading);
+        mapPathHazardsPolygonHeading = atan2(localYEnd - localYStart, localXEnd - localXStart); // radians
+        mapPathHazardsVertices.at(0)[0] = localXStart + req.width/2.0*sin(mapPathHazardsPolygonHeading);
+        mapPathHazardsVertices.at(0)[1] = localYStart - req.width/2.0*cos(mapPathHazardsPolygonHeading);
+        mapPathHazardsVertices.at(1)[0] = localXStart - req.width/2.0*sin(mapPathHazardsPolygonHeading);
+        mapPathHazardsVertices.at(1)[1] = localYStart + req.width/2.0*cos(mapPathHazardsPolygonHeading);
+        mapPathHazardsVertices.at(2)[0] = localXEnd - req.width/2.0*sin(mapPathHazardsPolygonHeading);
+        mapPathHazardsVertices.at(2)[1] = localYEnd + req.width/2.0*cos(mapPathHazardsPolygonHeading);
+        mapPathHazardsVertices.at(3)[0] = localXEnd + req.width/2.0*sin(mapPathHazardsPolygonHeading);
+        mapPathHazardsVertices.at(3)[1] = localYEnd - req.width/2.0*cos(mapPathHazardsPolygonHeading);
+        searchLocalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(0));
+        searchLocalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(1));
+        searchLocalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(2));
+        searchLocalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(3));
+        mapPathHazardNumCellsInPolygon = 0;
+        for(grid_map::PolygonIterator it(searchLocalMap, searchLocalMapPathHazardsPolygon); !it.isPastEnd(); ++it)
+        {
+            mapPathHazardValue = searchLocalMap.at(layerToString(_localMapDriveability), *it);
+            if(mapPathHazardValue > 0.0)
+            {
+                res.hazardValue += mapPathHazardValue;
+            }
+            mapPathHazardNumCellsInPolygon++;
+        }
+        res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
+        return true;
+    }
+    else return false;
 }
 
 bool MapManager::searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res) // need to test
@@ -497,9 +422,9 @@ void MapManager::gridMapResetLayers(int startIndex, int endIndex, grid_map::Grid
 {
     for(int i=startIndex; i<=endIndex; i++)
     {
-        if(static_cast<MAP_LAYERS_T>(i)==_satDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        if(static_cast<MAP_LAYERS_T>(i)==_satDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), satDriveabilityInitialValue);
         else if(static_cast<MAP_LAYERS_T>(i)==_satDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), satDriveabilityInitialConf);
-        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_noObject);
+        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialValue);
         else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialConf);
         else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
     }
@@ -509,9 +434,9 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
 {
     for(int i=layerStartIndex; i<=layerEndIndex; i++)
     {
-        if(static_cast<MAP_LAYERS_T>(i)==_satDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_impassable);
+        if(static_cast<MAP_LAYERS_T>(i)==_satDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), satDriveabilityInitialValue);
         else if(static_cast<MAP_LAYERS_T>(i)==_satDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), satDriveabilityInitialConf);
-        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), (float)_noObject);
+        else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialValue);
         else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialConf);
         else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
     }
@@ -533,7 +458,7 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
 {
     int i,j;
     gridMapResetLayers((int)_slope, (int)_satObjectHeight, globalMap);
-    // Slope
+    /*// Slope
     for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
     {
         globalMap.getPosition(*it,globalMapToSatMapPos);
@@ -543,7 +468,7 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
         j = (int)(round(globalMapToSatMapPos[0]-slopeMapRes/2.0)/slopeMapRes);
         i = (int)(round(globalMapToSatMapPos[1]-slopeMapRes/2.0)/slopeMapRes);
         if(j>=0 && j<slopeNumCols && i>=0 && i<slopeNumRows) globalMap.at(layerToString(_slope),*it) = (float)slopeMap[i][j];
-    }
+    }*/
     /*for(int i=0; i<slopeNumRows; i++)
     {
         for(int j=0; j<slopeNumCols; j++)
@@ -565,8 +490,7 @@ void MapManager::writeSatMapIntoGlobalMap() // tested
         i = (int)(round(globalMapToSatMapPos[1]-driveabilityMapRes/2.0)/driveabilityMapRes);
         if(j>=0 && j<driveabilityNumCols && i>=0 && i<driveabilityNumRows)
         {
-            if(driveabilityMap[i][j]==1) globalMap.at(layerToString(_satDriveability),*it) = (float)_impassable;
-            else globalMap.at(layerToString(_satDriveability),*it) = (float)_noObject;
+            globalMap.at(layerToString(_satDriveability),*it) = (float)driveabilityMap[i][j];
         }
     }
     /*for(int i=0; i<driveabilityNumRows; i++)

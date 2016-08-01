@@ -10,7 +10,7 @@
 #include <robot_control/RandomSearchWaypoints.h>
 #include <robot_control/DriveSpeeds.h>
 #include <robot_control/cataglyphis_timer.h>
-#include <messages/GlobalMapPathHazards.h>
+#include <messages/MapPathHazards.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
 #include <messages/ExecAction.h>
@@ -61,7 +61,9 @@ public:
 	static ros::ServiceClient randomSearchWaypointsClient;
 	static robot_control::RandomSearchWaypoints randomSearchWaypointsSrv;
 	static ros::ServiceClient globalMapPathHazardsClient;
-	static messages::GlobalMapPathHazards globalMapPathHazardsSrv;
+	static messages::MapPathHazards globalMapPathHazardsSrv;
+	static ros::ServiceClient searchLocalMapPathHazardsClient;
+	static messages::MapPathHazards searchLocalMapPathHazardsSrv;
 	static ros::ServiceClient navControlClient;
 	static messages::NavFilterControl navControlSrv;
 	static ros::Publisher driveSpeedsPub;
@@ -167,7 +169,9 @@ robot_control::SearchMap MissionPlanningProcedureShare::searchMapSrv;
 ros::ServiceClient MissionPlanningProcedureShare::randomSearchWaypointsClient;
 robot_control::RandomSearchWaypoints MissionPlanningProcedureShare::randomSearchWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::globalMapPathHazardsClient;
-messages::GlobalMapPathHazards MissionPlanningProcedureShare::globalMapPathHazardsSrv;
+messages::MapPathHazards MissionPlanningProcedureShare::globalMapPathHazardsSrv;
+ros::ServiceClient MissionPlanningProcedureShare::searchLocalMapPathHazardsClient;
+messages::MapPathHazards MissionPlanningProcedureShare::searchLocalMapPathHazardsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::navControlClient;
 messages::NavFilterControl MissionPlanningProcedureShare::navControlSrv;
 ros::Publisher MissionPlanningProcedureShare::driveSpeedsPub;

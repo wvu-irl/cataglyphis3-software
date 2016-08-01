@@ -29,3 +29,4 @@ bool[] procsToInterrupt
 bool[] procsBeingExecuted
 bool missionEnded
 bool useDeadReckoning
+bool startSLAM

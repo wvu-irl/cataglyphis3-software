@@ -27,7 +27,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.heading = slamMsg.globalHeading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
 		bestPoseMsg.northAngle = northAngle;
-		bestPoseMsg.homingUpdated = navMsg.homing_updated; // !!! Need an output from SLAM saying if this occured
+		bestPoseMsg.homingUpdated = navMsg.homing_updated;
 	}
 	else
 	{

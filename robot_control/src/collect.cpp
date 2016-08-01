@@ -2,7 +2,7 @@
 
 bool Collect::runProc()
 {
-	ROS_INFO("collectState = %i", state);
+    //ROS_INFO("collectState = %i", state);
 	switch(state)
 	{
 	case _init_:

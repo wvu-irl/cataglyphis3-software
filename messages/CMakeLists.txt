@@ -89,7 +89,7 @@ find_package(catkin REQUIRED COMPONENTS
    NavFilterControl.srv
    CreateROIHazardMap.srv
    SearchLocalMapInfo.srv
-   GlobalMapPathHazards.srv
+   MapPathHazards.srv
    EmergencyEscapeTrigger.srv
    HSMSetNorthAngle.srv
    MissionPlanningControl.srv
