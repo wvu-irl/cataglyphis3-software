@@ -59,6 +59,7 @@ bool Approach::runProc()
 					commandedSearch = true;
 					step = _performManeuver;
 					state = _exec_;
+                    //voiceSay("saw sample. maneuvering");
 				}
 			}
 			else
@@ -68,6 +69,7 @@ bool Approach::runProc()
 				{
 					backUpCount = 0;
 					state = _finish_;
+                    //voiceSay("too many back ups");
 				}
 				else
 				{
@@ -81,6 +83,7 @@ bool Approach::runProc()
 					commandedSearch = true;
 					step = _performManeuver;
 					state = _exec_;
+                    //voiceSay("did not see sample. backing up");
 				}
 			}
 			break;

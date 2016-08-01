@@ -78,6 +78,7 @@ find_package(catkin REQUIRED COMPONENTS
    MasterStatus.msg
    MissionPlanningInfo.msg
    SunSensorOut.msg
+   VoiceSayPhrase.msg
  )
 
 ## Generate services in the 'srv' folder

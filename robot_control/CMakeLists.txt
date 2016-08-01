@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   grid_map_msgs
   geometry_msgs
   sensor_msgs
+  hsm
 )
 
 ## System dependencies are found with CMake's conventions
@@ -170,7 +171,7 @@ include_directories(
  add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
  add_dependencies(exec_node robot_control_generate_messages_cpp)
  add_dependencies(map_manager_node robot_control_generate_messages_cpp)
- add_dependencies(mission_planning_node robot_control_generate_messages_cpp)
+ add_dependencies(mission_planning_node robot_control_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
  add_dependencies(safe_pathing_node robot_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against

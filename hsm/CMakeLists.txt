@@ -90,7 +90,7 @@ add_message_files(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES HSM_Detector user_input_mp_act_class user_input_exec_act_class user_input_nav_act_class HSM_Heartbeat
+  LIBRARIES user_input_nav_act_class voice
   CATKIN_DEPENDS roscpp rospy message_generation messages
 #  DEPENDS system_lib
 )
@@ -105,6 +105,7 @@ add_definitions("-std=gnu++11")
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  /usr/include/speech_tools/
   include/hsm
   ~/cataglyphis_ws/src/robot_control/include
   ${catkin_INCLUDE_DIRS}
@@ -122,6 +123,7 @@ include_directories(
  #add_library(HSM_Heartbeat src/HSM_Heartbeat.cpp)
  #add_library(HSM_Heartbeat_Monitor_class src/HSM_Heartbeat_Monitor_class.cpp)
  add_library(robot_pose_monitor src/robot_pose_monitor.cpp)
+ add_library(voice src/voice.cpp)
 
 ## Declare a cpp executable
  #add_executable(TEST_DRIVER_HSM_Detector src/TEST_DRIVER_HSM_Detector.cpp src/HSM_Detector.cpp)
@@ -129,6 +131,7 @@ include_directories(
  #add_executable(TEST_DRIVER_Timer src/TEST_DRIVER_Timer.cpp src/Timer.cpp)
  add_executable(HSM_Master_Executive src/HSM_Master_Executive_node.cpp)
  add_executable(user_input_node src/user_input_node.cpp)
+ add_executable(voice_node src/voice_node.cpp)
  #add_executable(info_node src/info_node.cpp)
  #add_executable(HSM_NB1_Executive src/HSM_NB1_Executive_node.cpp src/HSM_NB1_Monitor_class src/Counter)
  #add_executable(HSM_HB_Executive src/HSM_HB_Executive_node.cpp src/HSM_Heartbeat_Monitor_class src/Counter)
@@ -145,6 +148,7 @@ include_directories(
  add_dependencies(HSM_Master_Executive hsm_generate_messages_cpp)
  add_dependencies(user_input_node ${catkin_EXPORTED_TARGETS})
  add_dependencies(user_input_node hsm_generate_messages_cpp robot_control_generate_messages_cpp navigation_generate_messages_cpp)
+ add_dependencies(voice_node ${catkin_EXPORTED_TARGETS} hsm_generate_messages_cpp messages_generate_messages_cpp)
  #add_dependencies(HSM_NB1_Executive ${catkin_EXPORTED_TARGETS})
  #add_dependencies(HSM_NB1_Executive HSM_Monitor_class hsm_generate_messages_cpp)
  #add_dependencies(HSM_HB_Executive HSM_Heartbeat_Monitor_class hsm_generate_messages_cpp)
@@ -170,6 +174,8 @@ include_directories(
  											)
  
  target_link_libraries(user_input_node ${catkin_LIBRARIES})
+ 
+ target_link_libraries(voice_node ${catkin_LIBRARIES} Festival estools estbase eststring)
  
  #target_link_libraries(info_node ${catkin_LIBRARIES})
  

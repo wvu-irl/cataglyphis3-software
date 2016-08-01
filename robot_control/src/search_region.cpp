@@ -105,6 +105,7 @@ void SearchRegion::roiTimeExpiredCallback_(const ros::TimerEvent &event)
 {
 	roiTimeExpired = true;
 	ROS_WARN("roiTimeExpiredCallback");
+	//voiceSay("r o i time expired");
 }
 
 void SearchRegion::chooseRandomWaypoints_()

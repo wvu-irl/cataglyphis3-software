@@ -21,12 +21,14 @@ bool DepositSample::runProc()
             sendDriveRel(-3.0, 0.0, false, 0.0, false);
 			missionEnded = false;
 			state = _exec_;
+            //voiceSay("I'll be back");
 		}
 		else
 		{
             sendOpen();
 			missionEnded = true;
 			state = _finish_;
+            //voiceSay("mission ended");
 		}
 		break;
 	case _exec_:

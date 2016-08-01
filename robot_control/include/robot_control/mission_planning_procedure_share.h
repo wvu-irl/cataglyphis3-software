@@ -20,6 +20,7 @@
 #include <messages/LidarFilterOut.h>
 #include <messages/MasterStatus.h>
 #include <messages/NavFilterControl.h>
+#include <hsm/voice.h>
 #include <armadillo>
 #include <math.h>
 #include <time.h>
@@ -66,6 +67,8 @@ public:
 	static messages::MapPathHazards searchLocalMapPathHazardsSrv;
 	static ros::ServiceClient navControlClient;
 	static messages::NavFilterControl navControlSrv;
+	//static Voice voiceSay;
+	//#define voiceObj voiceSay;
 	static ros::Publisher driveSpeedsPub;
 	static robot_control::DriveSpeeds driveSpeedsMsg;
 	static robot_control::DriveSpeeds driveSpeedsMsgPrev;
@@ -172,6 +175,7 @@ ros::ServiceClient MissionPlanningProcedureShare::globalMapPathHazardsClient;
 messages::MapPathHazards MissionPlanningProcedureShare::globalMapPathHazardsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::searchLocalMapPathHazardsClient;
 messages::MapPathHazards MissionPlanningProcedureShare::searchLocalMapPathHazardsSrv;
+//Voice MissionPlanningProcedureShare::voiceSay;
 ros::ServiceClient MissionPlanningProcedureShare::navControlClient;
 messages::NavFilterControl MissionPlanningProcedureShare::navControlSrv;
 ros::Publisher MissionPlanningProcedureShare::driveSpeedsPub;
