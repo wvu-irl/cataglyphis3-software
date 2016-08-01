@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>352</width>
-    <height>374</height>
+    <height>341</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,17 +19,17 @@
   <property name="minimumSize">
    <size>
     <width>352</width>
-    <height>374</height>
+    <height>341</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
+     <y>11</y>
      <width>332</width>
      <height>319</height>
     </rect>
@@ -420,10 +420,13 @@
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>20</width>
-            <height>40</height>
+            <width>0</width>
+            <height>82</height>
            </size>
           </property>
          </spacer>
@@ -442,19 +445,6 @@ Bias Removal</string>
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
          <widget class="QPushButton" name="begin_dead_reckoning_button">
           <property name="enabled">
            <bool>false</bool>
@@ -471,14 +461,14 @@ Dead Reckoning</string>
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_3">
+         <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>20</width>
-            <height>40</height>
+            <width>0</width>
+            <height>0</height>
            </size>
           </property>
          </spacer>

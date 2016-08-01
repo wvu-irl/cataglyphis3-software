@@ -40,8 +40,7 @@ core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
 
     cataglyphisStartupFormPtr =
             boost::shared_ptr<init_container>
-                            (new init_container(ui->guiTabber,
-                                                                    nh));
+                            (new init_container(ui->guiTabber, nh));
 
     mapViewFormPtr =
             boost::shared_ptr<map_viewer>(new map_viewer(ui->guiTabber, 0));

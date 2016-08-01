@@ -41,8 +41,10 @@ init_container::init_container(QWidget *parent,
 
 init_container::~init_container()
 {
+    ui->input_tabber->clear();
     rosWorkerThread.quit();
     rosWorkerThread.wait();
+    std::printf("Init container destructor\r\n");
     delete ui;
 }
 
@@ -90,8 +92,15 @@ void init_container::on_reboot_recovery_button_clicked()
 
 void init_container::on_input_tabber_currentChanged(int index)
 {
-    if(ui->input_tabber->currentWidget() != 0)
+    std::printf("CurrentIndex:: %p\r\n", ui);
+    Q_CHECK_PTR(ui->input_tabber);
+    if(index >= 0 &&
+            ui != 0 &&
+            ui->input_tabber != 0 )
     {
-        ui->input_tabber->resize(ui->input_tabber->currentWidget()->size());
+        if(ui->input_tabber->currentWidget() != 0)
+        {
+            ui->input_tabber->resize(ui->input_tabber->currentWidget()->size());
+        }
     }
 }

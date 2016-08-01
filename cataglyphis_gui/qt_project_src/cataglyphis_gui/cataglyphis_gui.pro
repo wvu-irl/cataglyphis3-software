@@ -35,7 +35,9 @@ SOURCES +=\
     init_step_two.cpp \
     core_app.cpp \
     generic_error_dialog.cpp \
-    init_container.cpp
+    init_container.cpp \
+    map_view_roi_ellipse.cpp \
+    roi_dialog.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -44,7 +46,9 @@ HEADERS  += \
     init_step_two.h \
     core_app.h \
     generic_error_dialog.h \
-    init_container.h
+    init_container.h \
+    map_view_roi_ellipse.h \
+    roi_dialog.h
 
 FORMS    += \
     generic_error_dialog_form.ui \
@@ -52,7 +56,8 @@ FORMS    += \
     init_step_one_form.ui \
     map_viewer_form.ui \
     core_app_form.ui \
-    init_container_form.ui
+    init_container_form.ui \
+    roi_dialog_form.ui
 
 RESOURCES += \
     resources.qrc
@@ -61,6 +66,5 @@ DISTFILES +=
 
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += roscpp
-
 unix: PKGCONFIG += roslib
 
