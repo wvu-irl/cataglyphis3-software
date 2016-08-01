@@ -23,6 +23,7 @@ public:
 	void robotPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 	void FMM(grid_map::GridMap& mapIn, grid_map::GridMap& mapOut, std::vector<grid_map::Position>& goalPointsIn);
+	bool narrowBandNotEmpty(grid_map::GridMap& map);
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	// Members
 	ros::NodeHandle nh;
@@ -39,11 +40,17 @@ public:
 	float startRadialDistance;
 	float finishRadialDistance;
 	float northAnglePrev = 89.1; // deg
-	grid_map::GridMap globalMap;
+	grid_map::GridMap timeOfArrivalMap;
+	std::vector<grid_map::Index> optimalPath;
 	std::vector<grid_map::Position> hazardMapPoints;
+	grid_map::GridMap initialViscosityMap;
+	const float initialViscosityValue = 0.1;
+	grid_map::GridMap resistanceMap;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
-	const std::string viscosityLayer = "viscosityLayer";
+	const float mapResolution = 1.0; // m
+	grid_map::Length mapDimensions;
+	const grid_map::Position mapOrigin;
 };
 
 #endif // SAFE_PATHING_H 

@@ -147,7 +147,7 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        ROS_INFO("=========================================");
+        /*ROS_INFO("=========================================");
         ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
@@ -180,7 +180,7 @@ void MissionPlanning::evalConditions_()
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
         std::printf(")\n");
     	for(int i=0; i<NUM_PROC_TYPES; i++) 
-        //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
+        //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}*/
         calcnumProcsBeingOrToBeExec_();
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
         {

@@ -8,7 +8,7 @@ SearchRegion::SearchRegion()
 bool SearchRegion::runProc()
 {
 	//ROS_INFO("searchRegion state = %i", state);
-	ROS_INFO_THROTTLE(1, "executing searchRegion");
+	//ROS_INFO_THROTTLE(1, "executing searchRegion");
 	switch(state)
 	{
 	case _init_:

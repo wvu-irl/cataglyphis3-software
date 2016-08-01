@@ -7,7 +7,7 @@ BiasRemoval::BiasRemoval()
 
 bool BiasRemoval::runProc()
 {
-	ROS_INFO_THROTTLE(1, "executing BiasRemoval");
+	ROS_INFO("biasRemoval state = %i", state);
 	switch(state)
 	{
 	case _init_:

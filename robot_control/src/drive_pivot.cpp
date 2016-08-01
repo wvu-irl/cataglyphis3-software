@@ -6,7 +6,7 @@ void DrivePivot::init()
 	desiredDeltaHeading_ = params.float1;
 	if(deltaHeading_<0.0) pivotSign_ = -1;
 	else pivotSign_ = 1;
-    timeoutValue_ = (unsigned int)round((30.0 + fabs(desiredDeltaHeading_)/10.0)*robotStatus.loopRate);
+    timeoutValue_ = (unsigned int)round((10.0 + fabs(desiredDeltaHeading_)/10.0)*robotStatus.loopRate);
 	timeoutCounter_ = 0;
 	rSpeedI_ = 0.0;
 	inThreshold_ = false;
