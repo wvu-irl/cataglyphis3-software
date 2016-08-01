@@ -2,10 +2,11 @@
 #define VOICE_H
 #include <ros/ros.h>
 #include <messages/VoiceSayPhrase.h>
+#include "voice_base.h"
 
-//#define VOICESAY(stringPhrase) voiceObj.call(stringPhrase);
+//#define VOICESAY(stringPhrase) {VoiceBase::voiceObj->call(stringPhrase);} // Need to #define voiceObj <obj> where this class is implemented
 
-class Voice
+class Voice : public VoiceBase
 {
 public:
 	Voice();

@@ -231,6 +231,7 @@ include_directories(
    deposit_approach
    deposit_sample
    safe_mode
+   voice
  )
  
  target_link_libraries(safe_pathing_node
