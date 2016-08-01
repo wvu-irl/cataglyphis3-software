@@ -7,10 +7,10 @@
 //PCL library
 #include "pcl_ros/point_cloud.h"
 
-//PCL for icp
-#include "pcl/point_types.h"
-#include "pcl/registration/icp.h"
-#include "pcl/common/transforms.h"	//for transform pointcloud using transformation matrix
+// //PCL for icp
+// #include "pcl/point_types.h"
+// #include "pcl/registration/icp.h"
+// #include "pcl/common/transforms.h"	//for transform pointcloud using transformation matrix
 
 
 
@@ -36,18 +36,13 @@ public:
 
 protected:
 	//define type
-	typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-	typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
 	typedef Eigen::Matrix<float, 4, 4> matrix4f;
-	typedef Eigen::Matrix<float, 3, 3> matrix3f;
-	typedef Eigen::Matrix<float, 3, 1> matrix3f_point;
 	typedef Eigen::Matrix<float, 2, 2> matrix2f;
 	typedef Eigen::Matrix<float, 2, 1> matrix2f_point;
 
 	//define a struct for localmap messages, include whole information
 	typedef struct LocalMap_All
 	{
-
 		float x_filter;
 		float y_filter;
 		float heading_filter;
@@ -77,10 +72,11 @@ protected:
 	ros::Publisher PositionPub;
 
 	//subscribe
-	ros::Subscriber localmapSub;
+	ros::Subscriber NavfilterSub;
 	ros::Subscriber TkeyTomapSub;
 
 	const double PI = 3.1415926;
+	double addition;
 
 
 	//globe matrix
@@ -92,6 +88,7 @@ protected:
 
 	//lists of all maps
 	std::vector<LocalMap_All> LocalMap_All_s;
+	std::vector<double> heading_record;
 
 
 	//ICP index
@@ -113,9 +110,9 @@ protected:
 
 
 
-	//timer definition
-	clock_t start, finish;
-	double totaltime;
+	// //timer definition
+	// clock_t start, finish;
+	// double totaltime;
 
 	//recored position data
 	std::vector<Position> position_data;
@@ -137,7 +134,7 @@ protected:
 Localization::Localization()
 {
 	//topic initialization
-	localmapSub = node.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &Localization::getlocalmapcallback, this);
+	NavfilterSub = node.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &Localization::getlocalmapcallback, this);
 	TkeyTomapSub = node.subscribe("/slam/TkeyTomap_msg", 1, &Localization::getTkeyTomapcallback, this);
 
 	PositionPub = node.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, true); 
@@ -153,6 +150,9 @@ void Localization::Initialization()
 	LocalMap_All_s.clear();
 	position_data.clear();
 	position_data_IMU.clear();
+	heading_record.clear();
+
+	addition = 0;
 
 	//index for ICP calculation
 	ref_index = 0;
@@ -211,7 +211,6 @@ Localization::ICP_Result Localization::ICP_compute(int ICP_ref_index, int ICP_re
 	//if reference frame and read frame are same frame, return indetity matrix
 	if(ICP_ref_index == ICP_read_index)
 	{
-		ROS_INFO_STREAM("start working .....1");
 		icp_result.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
 		icp_result.verification_result = true;
 		icp_result.from_index = ICP_read_index;
@@ -347,9 +346,29 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 			LocalMap_All_s[ref_index].y_filter = y_filter_sub;
 			LocalMap_All_s[ref_index].heading_filter = heading_filter_sub;
 
+			heading_record.push_back(heading * 180 / PI);
+			if(heading_record.size() > 1)
+			{
+			if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 100)
+			{
+				if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
+				{
+					addition = addition - 360;
+				}
+				else
+				{
+					addition = addition + 360;
+				}
+
+				double heading_temp = heading_record[heading_record.size() - 1];
+				heading_record.clear();
+				heading_record.push_back(heading_temp);
+			}
+			}
+
 			slamposeout.globalX = x;
 			slamposeout.globalY = y;
-			slamposeout.globalHeading = heading;
+			slamposeout.globalHeading = heading * 180 / PI + addition;
 
 			PositionPub.publish(slamposeout);
 			
@@ -358,7 +377,7 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 			position.heading = heading;
 			position_data.push_back(position);
 
-			ROS_INFO_STREAM("Position: x:"<< x << " y: "<< y << " heading: "<<heading * 180 / PI);
+			ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
 			ROS_INFO_STREAM("IMU_Position: x:"<< LocalMap_All_s[read_index].x_filter << " y: "<< LocalMap_All_s[read_index].y_filter << " heading: "<<LocalMap_All_s[read_index].heading_filter * 180 / PI);
 		}
 
@@ -387,10 +406,30 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 
 			TreadTomap = TkeyTomap * TreadTokey;
 
-				
+			heading_record.push_back(TransformationMatrix_to_angle(TreadTomap) * 180 / PI);
+
+			if(heading_record.size() > 1)
+			{
+			if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 100)
+			{
+				if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
+				{
+					addition = addition - 360;
+				}
+				else
+				{
+					addition = addition + 360;
+				}
+
+				double heading_temp = heading_record[heading_record.size() - 1];
+				heading_record.clear();
+				heading_record.push_back(heading_temp);
+			}
+			}
+
 			slamposeout.globalX = TreadTomap(0,3);
 			slamposeout.globalY = TreadTomap(1,3);
-			slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI;
+			slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI + addition;
 
 			PositionPub.publish(slamposeout);
 
@@ -398,7 +437,7 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 			double position_y = TreadTomap(1,3);
 			double position_heading = TransformationMatrix_to_angle(TreadTomap);	//radian
 
-			ROS_INFO_STREAM("Position: x:"<< position_x << " y: "<< position_y << " heading: "<<position_heading * 180 / PI);
+			ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
 			ROS_INFO_STREAM("IMU_Position: x:"<< LocalMap_All_s[read_index].x_filter << " y: "<< LocalMap_All_s[read_index].y_filter << " heading: "<<LocalMap_All_s[read_index].heading_filter * 180 / PI);
 			
 			position.x = position_x;
@@ -422,7 +461,7 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 			for(int i = 1; i < position_data.size(); i++)
 			{
 			// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-				outFile << position_data[i].x << "\t" << position_data[i].y << "\n";
+				outFile << position_data[i].x << "\t" << position_data[i].y << "\t" <<position_data[i].heading << "\n";
 			}
 			outFile.close();
 			}
@@ -436,7 +475,7 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 			for(int j = 1; j < position_data_IMU.size(); j++)
 			{
 			// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-				outFile << position_data_IMU[j].x << "\t" << position_data_IMU[j].y << "\n";
+				outFile << position_data_IMU[j].x << "\t" << position_data_IMU[j].y << "\t" <<position_data_IMU[j].heading <<"\n";
 			}
 			outFile.close();
 			}

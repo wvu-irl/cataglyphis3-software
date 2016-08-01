@@ -18,6 +18,9 @@ LidarFilter::LidarFilter()
 	_execinfo_stopflag = false;
 	_sub_execinfo = _nh.subscribe("control/exec/info", 1, &LidarFilter::execinforCallback, this);
 
+	_mission_startSLAM = false;
+	_sub_missionplanning = _nh.subscribe("/control/missionplanning/info", 1, &LidarFilter::missionplanninginforCallback, this);
+
 	//rotation from robot to homing beacon (pitch and roll rotation only)
 	_R_tilt_robot_to_beacon = Eigen::Matrix3f::Identity();
 
@@ -114,6 +117,11 @@ void LidarFilter::execinforCallback(const messages::ExecInfo::ConstPtr &exec_msg
 {
 	_execinfo_turnflag = exec_msg->turnFlag;
 	_execinfo_stopflag = exec_msg->stopFlag;
+}
+
+void LidarFilter::missionplanninginforCallback(const messages::MissionPlanningInfo::ConstPtr &mission_msg)
+{
+	_mission_startSLAM = mission_msg->startSLAM;
 }
 
 void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
@@ -214,6 +222,9 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 	//forward relavent turing and stop flag information
 	msg.turnFlag = this->_execinfo_turnflag;
 	msg.stopFlag = this->_execinfo_stopflag;
+
+	//forward relavent startSLAM information
+	msg.startSLAM = this->_mission_startSLAM;
 
 	//flag the data as new
 	msg.new_data = _registration_new;
