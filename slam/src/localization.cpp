@@ -346,35 +346,43 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 			LocalMap_All_s[ref_index].y_filter = y_filter_sub;
 			LocalMap_All_s[ref_index].heading_filter = heading_filter_sub;
 
-			heading_record.push_back(heading * 180 / PI);
-			if(heading_record.size() > 1)
-			{
-			if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 100)
-			{
-				if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
-				{
-					addition = addition - 360;
-				}
-				else
-				{
-					addition = addition + 360;
-				}
+			// heading_record.push_back(heading_filter_sub * 180 / PI);
+			// if(heading_record.size() > 1)
+			// {
+			// 	if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 180)
+			// 	{
+			// 		if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
+			// 		{
+			// 			addition = addition - 360;
+			// 		}
+			// 		else
+			// 		{
+			// 			addition = addition + 360;
+			// 		}
 
-				double heading_temp = heading_record[heading_record.size() - 1];
-				heading_record.clear();
-				heading_record.push_back(heading_temp);
-			}
-			}
+			// 		double heading_temp = heading_record[heading_record.size() - 1];
+			// 		heading_record.clear();
+			// 		heading_record.push_back(heading_temp);
 
-			slamposeout.globalX = x;
-			slamposeout.globalY = y;
-			slamposeout.globalHeading = heading * 180 / PI + addition;
+			// 		slamposeout.globalHeading = heading * 180 / PI + addition;
+			// 	}
+			// 	else
+			// 	{
+			// 		slamposeout.globalHeading = heading * 180 / PI;
+			// 	}
+			// }
+
+			slamposeout.globalX = x_filter_sub;
+			slamposeout.globalY = y_filter_sub;
+			slamposeout.globalHeading = heading_filter_sub * 180 / PI;
+
+			ROS_INFO_STREAM(TkeyTomap);
 
 			PositionPub.publish(slamposeout);
 			
-			position.x = x;
-			position.y = y;
-			position.heading = heading;
+			position.x = x_filter_sub;
+			position.y = y_filter_sub;
+			position.heading = heading_filter_sub;
 			position_data.push_back(position);
 
 			ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
@@ -410,7 +418,7 @@ void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsg
 
 			if(heading_record.size() > 1)
 			{
-			if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 100)
+			if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 180)
 			{
 				if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
 				{
