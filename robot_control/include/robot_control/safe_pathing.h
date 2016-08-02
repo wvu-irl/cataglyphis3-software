@@ -8,6 +8,8 @@
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <math.h>
+#include "map_layers.h"
+#include <messages/GlobalMapFull.h>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
@@ -29,6 +31,8 @@ public:
 	ros::NodeHandle nh;
 	ros::ServiceServer ppServ;
 	ros::Subscriber robotPoseSub;
+	ros::ServiceClient globalMapFullClient;
+	messages::GlobalMapFull globalMapFullSrv;
 	messages::RobotPose globalPose;
 	std::vector <robot_control::Waypoint> intermediateWaypoints;
 	robot_control::Waypoint waypoint;
@@ -45,8 +49,10 @@ public:
 	std::vector<grid_map::Index> optimalPath;
 	std::vector<grid_map::Position> hazardMapPoints;
 	grid_map::GridMap initialViscosityMap;
-	const float initialViscosityValue = 0.1;
+	const float initialTimeValue = 0.1;
 	grid_map::GridMap resistanceMap;
+	grid_map::GridMap globalMap;
+	std::vector<grid_map::Position> goalPoints;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
 	const float mapResolution = 1.0; // m

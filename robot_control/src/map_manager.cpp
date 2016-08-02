@@ -9,6 +9,7 @@ MapManager::MapManager()
     searchLocalMapPathHazardsServ = nh.advertiseService("/control/mapmanager/searchlocalmappathhazards", &MapManager::searchLocalMapPathHazardsCallback, this);
     searchLocalMapInfoServ = nh.advertiseService("/control/mapmanager/searchlocalmapinfo", &MapManager::searchLocalMapInfoCallback, this);
     randomSearchWaypointsServ = nh.advertiseService("/control/mapmanager/randomsearchwaypoints", &MapManager::randomSearchWaypointsCallback, this);
+    globalMapFullServ = nh.advertiseService("/control/mapmanager/globalmapfull", &MapManager::globalMapFullCallback, this);
     createROIHazardMapClient = nh.serviceClient<messages::CreateROIHazardMap>("/lidar/collisiondetection/createroihazardmap");
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, &MapManager::keyframesCallback, this);
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
@@ -381,6 +382,12 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         }
     }
     else return false;
+    return true;
+}
+
+bool MapManager::globalMapFullCallback(messages::GlobalMapFull::Request &req, messages::GlobalMapFull::Response &res)
+{
+    grid_map::GridMapRosConverter::toMessage(globalMap, res.globalMap);
     return true;
 }
 

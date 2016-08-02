@@ -237,6 +237,7 @@ include_directories(
  target_link_libraries(safe_pathing_node
    ${catkin_LIBRARIES}
    safe_pathing
+   ${grid_map_ros_LIBRARIES}
  )
 
 #############
