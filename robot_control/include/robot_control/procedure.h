@@ -68,7 +68,7 @@ void Procedure::clearAndResizeWTT()
 
 void Procedure::callIntermediateWaypoints()
 {
-	intermediateWaypointsSrv.request.collision = false;
+	intermediateWaypointsSrv.request.collision = 0;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
 	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;

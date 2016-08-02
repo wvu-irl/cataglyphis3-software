@@ -20,6 +20,7 @@
 #include "map_layers.h"
 #include <vector>
 #include <time.h>
+#include <armadillo>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
@@ -156,6 +157,7 @@ public:
 	const float keyframeDriveabilityInitialValue = 0.0;
 	const float keyframeDriveabilityInitialConf = 0.0;
 	const float keyframeSize = 80.0;
+	arma::Mat<float> distanceMat;
 };
 
 #endif // MAP_MANAGER_H

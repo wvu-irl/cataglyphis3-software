@@ -33,7 +33,7 @@ SafePathing::SafePathing()
 
 bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, robot_control::IntermediateWaypoints::Response &res)
 {
-	intermediateWaypoints.clear();
+    res.waypointArrayOut.clear();
 
     if((req.collision==1 || req.collision==2) && req.collisionDistance<minCollisionDistance) // Check if collision distance is less than the minimum. If it is, set it to the minimum.
     {
@@ -47,7 +47,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         waypoint.y = req.current_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
         waypoint.sampleProb = 0.0;
 		waypoint.terrainHazard = 0.0;
-		intermediateWaypoints.push_back(waypoint);	
+        res.waypointArrayOut.resize(1);
+        res.waypointArrayOut.at(0) = waypoint;
 	}
 	else if(req.collision==2) //object on right
 	{
@@ -57,7 +58,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         waypoint.y = req.current_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
         waypoint.sampleProb = 0.0;
 		waypoint.terrainHazard = 0.0;
-		intermediateWaypoints.push_back(waypoint);	
+        res.waypointArrayOut.resize(1);
+        res.waypointArrayOut.at(0) = waypoint;
 	}
     else if(req.collision==3) // Predictive avoidance
     {
@@ -96,30 +98,55 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         initialViscosityMap.add(setLayer, (float)_unknown);
         resistanceMap.add(timeLayer, initialTimeValue);
         resistanceMap.add(setLayer, (float)_unknown);
-        //for(int i=0; i<)
-        //FMM(initialViscosityMap, resistanceMap, goalPoints);
+        goalPoints.resize(req.waypointArrayIn.size());
+        finalDestination.resize(1);
+        finalDestination.back()[0] = req.waypointArrayIn.at(i).x;
+        finalDestination.back()[1] = req.waypointArrayIn.at(i).y;
+        for(int i=0; i<req.waypointArrayIn.size(); i++)
+        {
+            goalPoints.at(i)[0] = req.waypointArrayIn.at(i).x;
+            goalPoints.at(i)[1] = req.waypointArrayIn.at(i).y;
+        }
+        FMM(initialViscosityMap, resistanceMap, goalPoints);
         // resistanceMap + satMap
-       // FMM(resistanceMap, timeOfArrivalMap, finalDestination...);
-        //gradientDescent(timeOfArrivalMap, startPosition..., optimalPath);
+        for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
+        {
+            resistanceMap.at(timeLayer, *it) += globalMap.at(layerToString(_satDriveability), *it); // Just add or average?
+            if(resistanceMap.at(timeLayer, *it) > 10.0) resistanceMap.at(timeLayer, *it) = 10.0;
+        }
+        FMM(resistanceMap, timeOfArrivalMap, finalDestination);
+        gradientDescent(timeOfArrivalMap, req.waypointArrayIn.front(), optimalPath);
         // Back solve on optimal path
 
-        startRadialDistance = hypot(req.start.x, req.start.y);
-        finishRadialDistance = hypot(req.finish.x, req.finish.y);
-        if(finishRadialDistance>=transitionWaypointOuterRadius && startRadialDistance<transitionWaypointInnerRadius)
+
+        for(int i=0; i<(req.waypointArrayIn.size()-1); i++)
         {
-            intermediateWaypoints.push_back(transitionWaypoint1);
-            intermediateWaypoints.push_back(transitionWaypoint2);
-            intermediateWaypoints.push_back(transitionWaypoint3);
-        }
-        else if(finishRadialDistance<transitionWaypointInnerRadius && startRadialDistance>=transitionWaypointOuterRadius)
-        {
-            intermediateWaypoints.push_back(transitionWaypoint3);
-            intermediateWaypoints.push_back(transitionWaypoint2);
-            intermediateWaypoints.push_back(transitionWaypoint1);
+            startRadialDistance = hypot(req.waypointArrayIn.at(i).x, req.waypointArrayIn.at(i).y);
+            finishRadialDistance = hypot(req.waypointArrayIn.at(i+1).x, req.waypointArrayIn.at(i+1).y);
+            if(finishRadialDistance>=transitionWaypointOuterRadius && startRadialDistance<transitionWaypointInnerRadius)
+            {
+                res.waypointArrayOut = req.waypointArrayIn;
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint1);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint2);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint3);
+                //intermediateWaypoints.push_back(transitionWaypoint1);
+                //intermediateWaypoints.push_back(transitionWaypoint2);
+                //intermediateWaypoints.push_back(transitionWaypoint3);
+            }
+            else if(finishRadialDistance<transitionWaypointInnerRadius && startRadialDistance>=transitionWaypointOuterRadius)
+            {
+                //intermediateWaypoints.push_back(transitionWaypoint3);
+                //intermediateWaypoints.push_back(transitionWaypoint2);
+                //intermediateWaypoints.push_back(transitionWaypoint1);
+                res.waypointArrayOut = req.waypointArrayIn;
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint3);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint2);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint1);
+            }
         }
     }
 
-    res.waypointArray = intermediateWaypoints;
+    //res.waypointArrayOut = intermediateWaypoints;
 	return true;
 }
 
