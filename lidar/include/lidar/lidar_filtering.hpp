@@ -119,7 +119,7 @@ private:
 	//mapping function
 	const int map_range = 60; //
 	const float grid_size = 1; // size of the local map grid
-	const float threshold_tree_height = 4.0; // above which the points will be disgarded
+	const float threshold_tree_height = 2.0; // above which the points will be disgarded
 	std::vector<std::vector<float> > _local_grid_map; // local grid map without grond adjacent infomation
 	std::vector<std::vector<float> > _local_grid_map_new; // local grid map with grond adjacent infomation
 	pcl::PointCloud<pcl::PointXYZI> _object_filtered;

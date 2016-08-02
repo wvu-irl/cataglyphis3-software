@@ -975,8 +975,8 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	std::stringstream readPointCloudPtr_pcd;
 	std::stringstream refPointCloudPtr_pcd;
 
-	readPointCloudPtr_pcd << "/home/chizhao/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
-	refPointCloudPtr_pcd << "/home/chizhao/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
+	readPointCloudPtr_pcd << "/home/atlas/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
+	refPointCloudPtr_pcd << "/home/atlas/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
 	pcl::io::savePCDFileASCII (readPointCloudPtr_pcd.str(), *readPointCloudPtr);
 	pcl::io::savePCDFileASCII (refPointCloudPtr_pcd.str(), *refPointCloudPtr);
 	pcd_counter_overlap++;
@@ -1267,8 +1267,8 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	std::stringstream readPointCloudPtr_pcd;
 	std::stringstream refPointCloudPtr_pcd;
 
-	readPointCloudPtr_pcd << "/home/chizhao/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
-	refPointCloudPtr_pcd << "/home/chizhao/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
+	readPointCloudPtr_pcd << "/home/atlas/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
+	refPointCloudPtr_pcd << "/home/atlas/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
 	pcl::io::savePCDFileASCII (readPointCloudPtr_pcd.str(), *readPointCloudPtr);
 	pcl::io::savePCDFileASCII (refPointCloudPtr_pcd.str(), *refPointCloudPtr);
 	pcd_counter_overlap++;
@@ -2135,7 +2135,7 @@ double Keyframe::Update_GlobalMap(LocalMap_Information localmap_information_upda
   	// ROS_INFO_STREAM("global map saving ....." << counter);
 
   	std::stringstream globalMap_pcd;
-  	globalMap_pcd << "/home/chizhao/test_data/globalMap/globalMap" << pcd_counter_globalmap << ".pcd";
+  	globalMap_pcd << "/home/atlas/test_data/globalMap/globalMap" << pcd_counter_globalmap << ".pcd";
   	pcl::io::savePCDFileASCII (globalMap_pcd.str(), *globalMap);
   	pcd_counter_globalmap++;
 

@@ -14,6 +14,7 @@
 #include <messages/CVSamplesFound.h>
 #include <messages/MapPathHazards.h>
 #include <messages/SearchLocalMapInfo.h>
+#include <messages/GlobalMapFull.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
@@ -38,6 +39,7 @@ public:
 	bool searchLocalMapPathHazardsCallback(messages::MapPathHazards::Request &req, messages::MapPathHazards::Response &res);
 	bool searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res);
 	bool randomSearchWaypointsCallback(robot_control::RandomSearchWaypoints::Request &req, robot_control::RandomSearchWaypoints::Response &res);
+	bool globalMapFullCallback(messages::GlobalMapFull::Request &req, messages::GlobalMapFull::Response &res);
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
@@ -64,6 +66,7 @@ public:
 	ros::ServiceServer searchLocalMapPathHazardsServ;
 	ros::ServiceServer searchLocalMapInfoServ;
 	ros::ServiceServer randomSearchWaypointsServ;
+	ros::ServiceServer globalMapFullServ;
 	ros::ServiceClient createROIHazardMapClient;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
@@ -147,7 +150,7 @@ public:
 	const float searchLocalMapWidth = 40.0; // m
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
-	const float randomWaypointMinDistance = 5.0; // m
+	const float randomWaypointMinDistance = 2.0; // m
 	const float satDriveabilityInitialValue = 10.0;
 	const float satDriveabilityInitialConf = 0.5;
 	const float keyframeDriveabilityInitialValue = 0.0;

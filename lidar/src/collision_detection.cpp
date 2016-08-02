@@ -147,7 +147,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	}
 	else
 	{
-		_collision_status = 3;
+		_collision_status = 0;
 		ROS_INFO("No Collision...");
 		return 0;
 	}

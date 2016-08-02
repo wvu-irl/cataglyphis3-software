@@ -164,7 +164,7 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("confirmedPossession = %i",confirmedPossession);
         ROS_INFO("atHome = %i",atHome);
         ROS_INFO("homingUpdateFailed = %i",homingUpdateFailed);
-        ROS_INFO("performSafeMode = %i,performSafeMode);
+        ROS_INFO("performSafeMode = %i",performSafeMode);
         ROS_INFO("inDepositPosition = %i",inDepositPosition);
         ROS_INFO("avoidCount = %u",avoidCount);
         ROS_INFO("turnFlag = %i",execInfoMsg.turnFlag);
@@ -178,8 +178,9 @@ void MissionPlanning::evalConditions_()
         std::printf(")\n");
         std::printf("actionFloat2: (");
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
-        std::printf(")\n");*/
-        //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
+        std::printf(")\n");
+    	for(int i=0; i<NUM_PROC_TYPES; i++) 
+        //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}*/
         calcnumProcsBeingOrToBeExec_();
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
         {

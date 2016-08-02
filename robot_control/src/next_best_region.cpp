@@ -3,6 +3,7 @@
 bool NextBestRegion::runProc()
 {
     //ROS_INFO("nextBestRegion state = %i",state);
+    //ROS_INFO_THROTTLE(1, "executing nextBestRegion");
     switch(state)
     {
     case _init_:
@@ -65,16 +66,16 @@ bool NextBestRegion::runProc()
         {
             // Call service to drive to center of the chosen region
 
-            numWaypointsToTravel = 1;
+            /*numWaypointsToTravel = 1;
             clearAndResizeWTT();
             waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
             waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            sendWait(10.0);
+            sendWait(10.0);*/
 
-            /*numWaypointsToTravel = 2;
+            numWaypointsToTravel = 2;
             clearAndResizeWTT();
             angleToROI = atan2(regionsOfInterestSrv.response.ROIList.at(bestROINum).y - robotStatus.yPos, regionsOfInterestSrv.response.ROIList.at(bestROINum).x - robotStatus.xPos); // Radians
             waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x - distanceShortOfROI*cos(angleToROI);
@@ -85,10 +86,10 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(1).searchable = true; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            //sendWait(10.0);*/
+            //sendWait(10.0);
 
             currentROIIndex = bestROINum;
-            allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
+            allocatedROITime = 270.0; // sec == 4.5 min; implement specific times in ROIs as properties
             tempGoHome = false;
             state = _exec_;
         }

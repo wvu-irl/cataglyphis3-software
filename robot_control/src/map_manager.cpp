@@ -9,6 +9,7 @@ MapManager::MapManager()
     searchLocalMapPathHazardsServ = nh.advertiseService("/control/mapmanager/searchlocalmappathhazards", &MapManager::searchLocalMapPathHazardsCallback, this);
     searchLocalMapInfoServ = nh.advertiseService("/control/mapmanager/searchlocalmapinfo", &MapManager::searchLocalMapInfoCallback, this);
     randomSearchWaypointsServ = nh.advertiseService("/control/mapmanager/randomsearchwaypoints", &MapManager::randomSearchWaypointsCallback, this);
+    globalMapFullServ = nh.advertiseService("/control/mapmanager/globalmapfull", &MapManager::globalMapFullCallback, this);
     createROIHazardMapClient = nh.serviceClient<messages::CreateROIHazardMap>("/lidar/collisiondetection/createroihazardmap");
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, &MapManager::keyframesCallback, this);
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
@@ -26,13 +27,13 @@ MapManager::MapManager()
     srand(time(NULL));
 
     // Square around starting platform. Must initialize with north angle = 90.0 degrees
-#include <robot_control/square_rois.h>
+//#include <robot_control/square_rois.h>
 
     // Dense ROIs to search directly in front of library
 //#include <robot_control/evansdale_short_dense_rois.h>
 
     // Limited set of ROIs covering eastern half of Evansdale in front of library
-//#include <robot_control/evansdale_library_rois.h>
+#include <robot_control/evansdale_library_rois.h>
 
     // Full set of ROIs covering Evansdale in front of library and engineering
 //#include <robot_control/evansdale_full_rois.h>
@@ -381,6 +382,12 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         }
     }
     else return false;
+    return true;
+}
+
+bool MapManager::globalMapFullCallback(messages::GlobalMapFull::Request &req, messages::GlobalMapFull::Response &res)
+{
+    grid_map::GridMapRosConverter::toMessage(globalMap, res.globalMap);
     return true;
 }
 
