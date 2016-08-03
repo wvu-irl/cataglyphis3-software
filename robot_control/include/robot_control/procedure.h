@@ -68,13 +68,24 @@ void Procedure::clearAndResizeWTT()
 
 void Procedure::callIntermediateWaypoints()
 {
-	intermediateWaypointsSrv.request.collision = false;
+	intermediateWaypointsSrv.request.collision = 0;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
 	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
 	intermediateWaypointsSrv.request.current_y = robotStatus.yPos;
 	intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
-    for(int i = 0; i < initNumWaypointsToTravel; i++)
+	intermediateWaypointsSrv.request.waypointArrayIn.resize(numWaypointsToTravel);
+	intermediateWaypointsSrv.request.waypointArrayIn = waypointsToTravel;
+	if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful, size = %u", intermediateWaypointsSrv.response.waypointArrayOut.size());
+	else ROS_ERROR("intermediateWaypoints service call unsuccessful");
+	if(intermediateWaypointsSrv.response.waypointArrayOut.size() != numWaypointsToTravel)
+	{
+		waypointsToTravel.clear();
+		waypointsToTravel = intermediateWaypointsSrv.response.waypointArrayOut;
+		numWaypointsToTravel = waypointsToTravel.size();
+		//for(int i=0; i<numWaypointsToTravel; i++) ROS_INFO("waypointsToTravel(%i) = (%f,%f)",i,waypointsToTravel.at(i).x,waypointsToTravel.at(i).y);
+	}
+	/*for(int i = 0; i < initNumWaypointsToTravel; i++)
     {
         intermWaypointsIt = waypointsToTravel.begin() + i + totalIntermWaypoints;
         if(i == 0)
@@ -97,7 +108,7 @@ void Procedure::callIntermediateWaypoints()
             totalIntermWaypoints += intermediateWaypointsSrv.response.waypointArray.size();
             numWaypointsToTravel += intermediateWaypointsSrv.response.waypointArray.size();
         }
-    }
+	}*/
 }
 
 void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading)
