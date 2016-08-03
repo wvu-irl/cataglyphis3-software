@@ -53,11 +53,15 @@ public:
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
 	std::vector<grid_map::Position> goalPoints;
+	std::vector<grid_map::Position> finalDestination;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
 	const float mapResolution = 1.0; // m
 	grid_map::Length mapDimensions;
 	const grid_map::Position mapOrigin;
+	grid_map::Position startPosition;
+	unsigned int origNumWaypointsIn;
+	unsigned int numInsertedWaypoints;
 };
 
 #endif // SAFE_PATHING_H 
