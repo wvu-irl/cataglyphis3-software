@@ -225,7 +225,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     {
         boundingBoxonBlob = boundingRect(cv::Mat(contourPoints[i]));
 
-        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 350 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 350 )
+        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 500 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 500 ) //used to be 350
         {
         	//ignore blob
         	ROS_INFO("ignoring blob (size) %i",i);
@@ -252,24 +252,25 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         float segmentAreaInPixels = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)*(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
         ROS_INFO("distance, area, index = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
         tempCounter++;
-        if( distanceFromCenterOfImageInPixels > 2000 )
-        {
-            if(segmentAreaInPixels < 750)
-            {
-                //ignore blob
-                ROS_INFO("ignoring (near area thresh) %i",i);
-                continue;
-            }
-        }
-        if(distanceFromCenterOfImageInPixels < 2000)
-        {
-            if(segmentAreaInPixels < 1000)
-            {
-                //ignore blob
-                ROS_INFO("ignoring (far area thresh) %i",i);
-                continue;              
-            }
-        }
+
+        // if( distanceFromCenterOfImageInPixels > 2000 )
+        // {
+        //     if(segmentAreaInPixels < 750)
+        //     {
+        //         //ignore blob
+        //         ROS_INFO("ignoring (near area thresh) %i",i);
+        //         continue;
+        //     }
+        // }
+        // if(distanceFromCenterOfImageInPixels < 2000)
+        // {
+        //     if(segmentAreaInPixels < 1000)
+        //     {
+        //         //ignore blob
+        //         ROS_INFO("ignoring (far area thresh) %i",i);
+        //         continue;              
+        //     }
+        // }
 
         blob_list.push_back(boundingBoxonBlob);
     }
