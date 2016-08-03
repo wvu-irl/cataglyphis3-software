@@ -7,7 +7,7 @@ SearchRegion::SearchRegion()
 
 bool SearchRegion::runProc()
 {
-	ROS_INFO("searchRegion state = %i", state);
+	//ROS_INFO("searchRegion state = %i", state);
 	//ROS_INFO_THROTTLE(1, "executing searchRegion");
 	switch(state)
 	{
@@ -58,19 +58,19 @@ bool SearchRegion::runProc()
 		}
 		else
 		{
-			ROS_INFO("current ROI index = %i",currentROIIndex);
-			ROS_INFO("choose random waypoints");
+			//ROS_INFO("current ROI index = %i",currentROIIndex);
+			//ROS_INFO("choose random waypoints");
 			chooseRandomWaypoints_(); // Select random waypoint locations based on sample prob distro on search local map
 			numWaypointsToTravel = waypointsToPlan.size(); // Set number of waypoints to choose
-			ROS_INFO("numWaypointsToTravel = %i", numWaypointsToTravel);
-			for(int i=0; i<numWaypointsToTravel; i++) ROS_INFO("waypointsToPlan(%i) = (%f,%f)", i, waypointsToPlan.at(i).x, waypointsToPlan.at(i).y);
+			//ROS_INFO("numWaypointsToTravel = %i", numWaypointsToTravel);
+			//for(int i=0; i<numWaypointsToTravel; i++) ROS_INFO("waypointsToPlan(%i) = (%f,%f)", i, waypointsToPlan.at(i).x, waypointsToPlan.at(i).y);
 			numWaypointsToPlan = numWaypointsToTravel+1; // Number to plan path through is one more, because it includes the starting location
 			// Add current location as last entry in waypointsToPlan
 			currentLocation.x = robotStatus.xPos;
 			currentLocation.y = robotStatus.yPos;
 			waypointsToPlan.push_back(currentLocation);
 			clearAndResizeWTT(); // waypointsToPlan minus the current location will get written into waypointsToTravel. Clear and resize to accomodate
-			ROS_INFO("ant colony");
+			//ROS_INFO("ant colony");
 			antColony_(); // Plan path through waypoints with ant colongy optimization algorithm
 			// Do we really want to do this? Waypoints are very close together. callIntermediateWaypoints(); // Plan around obastacles.
 			sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
@@ -121,7 +121,7 @@ void SearchRegion::chooseRandomWaypoints_()
 		ROS_DEBUG("randomSearchWaypoints service call successful");
 		waypointsToPlan.clear();
 		waypointsToPlan = randomSearchWaypointsSrv.response.waypointList;
-		ROS_INFO("waypointsToPlan = %u", waypointsToPlan.size());
+		//ROS_INFO("waypointsToPlan = %u", waypointsToPlan.size());
 	}
 	else ROS_ERROR("randomSearchWaypoints service call unsuccessful");
 }
@@ -139,7 +139,7 @@ void SearchRegion::antColony_()
 	//ROS_INFO("distance rows = %i, distance cols = %i",distance.n_rows,distance.n_cols);
 	//ROS_INFO("waypointsToPlan.size() = %i",waypointsToPlan.size());
 	terrainHazard.set_size(numWaypointsToPlan,numWaypointsToPlan);
-    ROS_INFO("after mat inits");
+	//ROS_INFO("after mat inits");
 	for(int m=0; m<numWaypointsToPlan; m++)
 	{
 		for(int n=0; n<numWaypointsToPlan; n++)

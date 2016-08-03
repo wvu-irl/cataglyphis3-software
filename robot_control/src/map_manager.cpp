@@ -214,6 +214,8 @@ bool MapManager::globalMapPathHazardsCallback(messages::MapPathHazards::Request 
 {
     globalMapPathHazardsPolygon.removeVertices();
     res.hazardValue = 0.0;
+    //ROS_INFO("global start = (%f,%f)",req.xStart,req.yStart);
+    //ROS_INFO("global end = (%f,%f)",req.xEnd,req.yEnd);
     mapPathHazardsPolygonHeading = atan2(req.yEnd - req.yStart, req.xEnd - req.xStart); // radians
     mapPathHazardsVertices.at(0)[0] = req.xStart + req.width/2.0*sin(mapPathHazardsPolygonHeading);
     mapPathHazardsVertices.at(0)[1] = req.yStart - req.width/2.0*cos(mapPathHazardsPolygonHeading);
@@ -237,7 +239,7 @@ bool MapManager::globalMapPathHazardsCallback(messages::MapPathHazards::Request 
         }
         mapPathHazardNumCellsInPolygon++;
     }
-    if(mapPathHazardNumCellsInPolygon == 0) {res.hazardValue = 0.1; ROS_WARN("globalMapPathHazards numCellsInPolygon == 0");} // Something small as a defualt to avoid divide by zero issue
+    if(mapPathHazardNumCellsInPolygon == 0) {res.hazardValue = 0.0; ROS_WARN("globalMapPathHazards numCellsInPolygon == 0");} // Something small as a defualt to avoid divide by zero issue
     else res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
     return true;
 }
@@ -289,7 +291,7 @@ bool MapManager::searchLocalMapPathHazardsCallback(messages::MapPathHazards::Req
             mapPathHazardNumCellsInPolygon++;
         }
         //ROS_INFO("mapPathHazardNumCellsInPolygon = %u",mapPathHazardNumCellsInPolygon);
-        if(mapPathHazardNumCellsInPolygon == 0) {res.hazardValue = 0.1; ROS_WARN("searchLocalMapPathHazards numCellsInPolygon == 0");} // Something small as a defualt to avoid divide by zero issue
+        if(mapPathHazardNumCellsInPolygon == 0) {res.hazardValue = 0.0; ROS_WARN("searchLocalMapPathHazards numCellsInPolygon == 0");} // Something small as a defualt to avoid divide by zero issue
         else res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
         return true;
     }
@@ -404,8 +406,8 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         for(int i=0; i<res.waypointList.size(); i++)
             for(int j=0; j<res.waypointList.size(); j++)
                 distanceMat(i,j) = hypot(res.waypointList.at(i).x-res.waypointList.at(j).x, res.waypointList.at(i).y-res.waypointList.at(j).y);
-        ROS_INFO("distances:");
-        distanceMat.print();
+        //ROS_INFO("distances:");
+        //distanceMat.print();
     }
     else return false;
     return true;

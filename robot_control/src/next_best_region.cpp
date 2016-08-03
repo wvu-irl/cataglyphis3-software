@@ -62,7 +62,7 @@ bool NextBestRegion::runProc()
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
 			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
         }
-		if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size()) // Temp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size())
         {
             // Call service to drive to center of the chosen region
 
@@ -93,9 +93,9 @@ bool NextBestRegion::runProc()
             tempGoHome = false;
             state = _exec_;
         }
-		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        else // !!! Temporary condition. End mission if all ROIs have been searched
         {
-			for(int i=0; i<regionsOfInterestSrv.response.ROIList.size(); i++)
+            /*for(int i=0; i<regionsOfInterestSrv.response.ROIList.size(); i++)
             {
 				modROISrv.request.setSearchedROI = true;
 				modROISrv.request.searchedROIState = false;
@@ -113,8 +113,9 @@ bool NextBestRegion::runProc()
             callIntermediateWaypoints();
             sendDriveGlobal(false, false, 0.0);
 			procsBeingExecuted[procType] = false;
-            tempGoHome = true;
-            state = _exec_;
+            tempGoHome = true;*/
+            missionEnded = true;
+            state = _finish_;
         }
         computeDriveSpeeds();
         break;
@@ -143,7 +144,8 @@ bool NextBestRegion::runProc()
         break;
     case _finish_:
         if(execLastProcType != procType || execLastSerialNum != serialNum) sendDequeClearAll();
-        if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
+        inSearchableRegion = true;
+        /*if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
         else
         {
             // ************************ THIS IS TEMPORARY TO ALLOW FOR DRIVING WITHOUT SEARCHING
@@ -158,7 +160,7 @@ bool NextBestRegion::runProc()
                 else ROS_ERROR("modify ROI service call unsuccessful");
             }
             // ********************************************
-        }
+        }*/
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

@@ -63,9 +63,9 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 	}
     else if(req.collision==3) // Predictive avoidance
     {
-        waypoint.x = req.current_x;
+        /*waypoint.x = req.current_x;
         waypoint.y = req.current_y;
-        req.waypointArrayIn.push_front(waypoint);
+        req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
         if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
         else ROS_ERROR("globalMapFull service call unsuccessful");
         grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
@@ -80,18 +80,20 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         initialViscosityMap.add(setLayer, (float)_unknown);
         resistanceMap.add(timeLayer, initialTimeValue);
         resistanceMap.add(setLayer, (float)_unknown);
-        /*FMM(initialViscosityMap, resistanceMap, goalPoints...);
+        FMM(initialViscosityMap, resistanceMap, goalPoints...);
         // resistanceMap + satMap + localHazardMap
         FMM(resistanceMap, timeOfArrivalMap, finalDestination...);
-        gradientDescent(timeOfArrivalMap, startPosition..., optimalPath);
-        // Back solve on optimal path*/
-        res.waypointArrayOut.pop_front(); // Do not send current location as a waypoint to travel
+        gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
+        // Back solve on optimal path
+        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel*/
     }
     else if(req.collision==0) // No collision
     {
-        waypoint.x = req.current_x;
+        /*waypoint.x = req.current_x;
         waypoint.y = req.current_y;
-        req.waypointArrayIn.push_front(waypoint);
+        req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
+        startPosition[0] = req.current_x;
+        startPosition[1] = req.current_y;
         if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
         else ROS_ERROR("globalMapFull service call unsuccessful");
         grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
@@ -107,8 +109,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         resistanceMap.add(setLayer, (float)_unknown);
         goalPoints.resize(req.waypointArrayIn.size());
         finalDestination.resize(1);
-        finalDestination.back()[0] = req.waypointArrayIn.at(i).x;
-        finalDestination.back()[1] = req.waypointArrayIn.at(i).y;
+        finalDestination.back()[0] = req.waypointArrayIn.back().x;
+        finalDestination.back()[1] = req.waypointArrayIn.back().y;
         for(int i=0; i<req.waypointArrayIn.size(); i++)
         {
             goalPoints.at(i)[0] = req.waypointArrayIn.at(i).x;
@@ -122,37 +124,44 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
             if(resistanceMap.at(timeLayer, *it) > 10.0) resistanceMap.at(timeLayer, *it) = 10.0;
         }
         FMM(resistanceMap, timeOfArrivalMap, finalDestination);
-        gradientDescent(timeOfArrivalMap, req.waypointArrayIn.front(), optimalPath);
+        gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
         // Back solve on optimal path
-        res.waypointArrayOut.pop_front(); // Do not send current location as a waypoint to travel
+        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel*/
 
-        for(int i=0; i<(req.waypointArrayIn.size()-1); i++)
+        waypoint.x = req.current_x;
+        waypoint.y = req.current_y;
+        req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
+        res.waypointArrayOut = req.waypointArrayIn;
+        origNumWaypointsIn = req.waypointArrayIn.size();
+        numInsertedWaypoints = 0;
+        for(int i=0; i<(origNumWaypointsIn-1); i++)
         {
             startRadialDistance = hypot(req.waypointArrayIn.at(i).x, req.waypointArrayIn.at(i).y);
             finishRadialDistance = hypot(req.waypointArrayIn.at(i+1).x, req.waypointArrayIn.at(i+1).y);
             if(finishRadialDistance>=transitionWaypointOuterRadius && startRadialDistance<transitionWaypointInnerRadius)
             {
-                res.waypointArrayOut = req.waypointArrayIn;
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint1);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint2);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint3);
-                res.waypointArrayOut.pop_front(); // Do not send current location as a waypoint to travel
+                ROS_INFO("going out transition waypoints");
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+1+numInsertedWaypoints, transitionWaypoint1);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+2+numInsertedWaypoints, transitionWaypoint2);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+3+numInsertedWaypoints, transitionWaypoint3);
+                numInsertedWaypoints+=3;
                 //intermediateWaypoints.push_back(transitionWaypoint1);
                 //intermediateWaypoints.push_back(transitionWaypoint2);
                 //intermediateWaypoints.push_back(transitionWaypoint3);
             }
             else if(finishRadialDistance<transitionWaypointInnerRadius && startRadialDistance>=transitionWaypointOuterRadius)
             {
+                ROS_INFO("going back transition waypoints");
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+1+numInsertedWaypoints, transitionWaypoint3);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+2+numInsertedWaypoints, transitionWaypoint2);
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+3+numInsertedWaypoints, transitionWaypoint1);
+                numInsertedWaypoints+=3;
                 //intermediateWaypoints.push_back(transitionWaypoint3);
                 //intermediateWaypoints.push_back(transitionWaypoint2);
                 //intermediateWaypoints.push_back(transitionWaypoint1);
-                res.waypointArrayOut = req.waypointArrayIn; // Do not send current location as a waypoint to travel
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint3);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint2);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint1);
-                res.waypointArrayOut.pop_front();
             }
         }
+        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
     }
 
     //res.waypointArrayOut = intermediateWaypoints;

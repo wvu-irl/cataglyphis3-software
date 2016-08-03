@@ -59,6 +59,9 @@ public:
 	const float mapResolution = 1.0; // m
 	grid_map::Length mapDimensions;
 	const grid_map::Position mapOrigin;
+	grid_map::Position startPosition;
+	unsigned int origNumWaypointsIn;
+	unsigned int numInsertedWaypoints;
 };
 
 #endif // SAFE_PATHING_H 

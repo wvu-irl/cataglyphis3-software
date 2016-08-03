@@ -2,7 +2,7 @@
 
 bool Avoid::runProc()
 {
-	ROS_INFO("avoid state = %i",state);
+    //ROS_INFO("avoid state = %i",state);
 	switch(state)
 	{
 	case _init_:
@@ -26,28 +26,27 @@ bool Avoid::runProc()
 		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
 		intermediateWaypointsSrv.request.collision = collisionMsg.collision;
 		intermediateWaypointsSrv.request.collisionDistance = collisionMsg.distance_to_collision;
-		intermediateWaypointsSrv.request.start.x = robotStatus.xPos;
-		intermediateWaypointsSrv.request.start.y = robotStatus.yPos;
 		intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
 		intermediateWaypointsSrv.request.current_y = robotStatus.yPos;
 		intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
+        intermediateWaypointsSrv.request.waypointArrayIn.resize(1);
 		if(execInfoMsg.actionDeque[0]==_driveGlobal)
 		{
-			intermediateWaypointsSrv.request.finish.x = execInfoMsg.actionFloat1[0];
-			intermediateWaypointsSrv.request.finish.y = execInfoMsg.actionFloat2[0];
+            intermediateWaypointsSrv.request.waypointArrayIn.at(0).x = execInfoMsg.actionFloat1[0];
+            intermediateWaypointsSrv.request.waypointArrayIn.at(0).y = execInfoMsg.actionFloat2[0];
 		}
 		else // _driveRelative // Else if? Don't want undefined behavior, but should not happen for anything other than driveGlobal and driveRelative
 		{
-			intermediateWaypointsSrv.request.finish.x = robotStatus.xPos + execInfoMsg.actionFloat1[0]*cos(execInfoMsg.actionFloat2[0]*DEG2RAD);
-			intermediateWaypointsSrv.request.finish.y = robotStatus.yPos + execInfoMsg.actionFloat1[0]*sin(execInfoMsg.actionFloat2[0]*DEG2RAD);
+            intermediateWaypointsSrv.request.waypointArrayIn.at(0).x = robotStatus.xPos + execInfoMsg.actionFloat1[0]*cos(execInfoMsg.actionFloat2[0]*DEG2RAD);
+            intermediateWaypointsSrv.request.waypointArrayIn.at(0).y = robotStatus.yPos + execInfoMsg.actionFloat1[0]*sin(execInfoMsg.actionFloat2[0]*DEG2RAD);
 		}
 		if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful");
 		else ROS_ERROR("intermediateWaypoints service call unsuccessful");
-		if(intermediateWaypointsSrv.response.waypointArray.size() > 0)
+        if(intermediateWaypointsSrv.response.waypointArrayOut.size() > 0)
 		{
-			numWaypointsToTravel = intermediateWaypointsSrv.response.waypointArray.size();
+            numWaypointsToTravel = intermediateWaypointsSrv.response.waypointArrayOut.size();
 			clearAndResizeWTT();
-			for(int i=0; i<numWaypointsToTravel; i++) waypointsToTravel.at(i) = intermediateWaypointsSrv.response.waypointArray.at(numWaypointsToTravel-1-i);
+            for(int i=0; i<numWaypointsToTravel; i++) waypointsToTravel.at(i) = intermediateWaypointsSrv.response.waypointArrayOut.at(numWaypointsToTravel-1-i);
             if(dequeClearFront)
             {
                 sendDequeClearFront();
