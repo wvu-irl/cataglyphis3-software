@@ -26,7 +26,7 @@ private:
 	double thresholdTime_;
 	bool inThreshold_;
 	int taskEnded_;
-	const float kpR_ = 1.0; // deg/(s*deg)
+	const float kpR_ = 0.85; // deg/(s*deg)
 	const float kiR_ = 0.25;
 	const float rSpeedIMax_ = 100.0;
 	const float kROutput_ = 450/45.0; // 45% of max speed at 45 deg/s

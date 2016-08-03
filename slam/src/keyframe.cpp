@@ -75,6 +75,7 @@ protected:
 	typedef Eigen::Matrix<float, 4, 1> matrix4f_point;
 	typedef Eigen::Matrix<float, 3, 3> matrix3f;
 	typedef Eigen::Matrix<float, 3, 1> matrix3f_point;
+	typedef Eigen::Matrix<double, 3, 3> matrix3d;
 	typedef Eigen::Matrix<float, 2, 2> matrix2f;
 	typedef Eigen::Matrix<float, 2, 1> matrix2f_point;
 
@@ -121,6 +122,7 @@ protected:
 		int from_index;
 		int to_index;
 		double overlap;
+		matrix3f information_matrix;
 	}ICP_Result;
 
 	//define a struct for keyframe information
@@ -144,6 +146,7 @@ protected:
 		matrix4f transformation_matrix;
 		int from_index;
 		int to_index;
+		matrix3f information_matrix;
 	}Transformation_Matrix;
 
 	//define a struct for position
@@ -276,6 +279,9 @@ protected:
 	int maxiteration;
 	int threshold_g2o_min_vertex;
 
+	//condition for ICP
+	int min_points_ICP_threshold;
+
 	//definition for temp keyframe
 	double threshold_permanent_keyframe;
 
@@ -312,7 +318,7 @@ protected:
 	bool outside_rectangle(float rectangle_x, float rectangle_y);		//determine if the point is inside 2.24m rectangle
 	LocalMap_ICP remove_block_area(float b_x1, float b_y1, float b_heading1, float b_x0, float b_y0, float b_heading0, LocalMap_ICP before_remove_localmap_icp);	//remove points blocks by masks in pre frame
 	// bool ICP_verification(int ref_v_index, int read_v_index, matrix4f T, double &overlap, int PointDataType);
-	double ICP_verification(std::vector<Cell_Local> read_Correspondences_cells_verify, std::vector<Cell_Local> ref_Correspondences_cells_verify);
+	double ICP_verification(std::vector<Cell_Local> read_Correspondences_cells_verify, std::vector<Cell_Local> ref_Correspondences_cells_verify, matrix3f& information_matrix);
 	double TransformationMatrix_to_angle(matrix4f matrix);
 	matrix4f angle_to_TransformationMatrix(double diff_x, double diff_y,double theta);
 	bool Do_g2o(std::vector<Position> &Vertex, std::vector<Transformation_Matrix> &Edges);
@@ -327,7 +333,7 @@ protected:
 	void getSubVertexEdges();
 	void DetectNearestKeyframe();
 	void TkeyTomap_Pub();
-	void Store_temp_vertex_edges();
+	void Store_temp_vertex_edges(int option);
 	void Vector_Clean();
 	void getg2oResult();
 
@@ -356,7 +362,7 @@ void Keyframe::Initialization()
 {
 	//parameters for icp
 	// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-	icp.setMaxCorrespondenceDistance (20);
+	icp.setMaxCorrespondenceDistance (5);
 	// Set the maximum number of iterations (criterion 1)
 	icp.setMaximumIterations (1000);
 	// Set the transformation epsilon (criterion 2)
@@ -394,6 +400,9 @@ void Keyframe::Initialization()
 	trigger_g2o = false;
 	maxiteration = 10; //max iteration for g2o
 	threshold_g2o_min_vertex = 10;	//vertex_sub number bigger than the threshold, than do g2o, avoid there is no enough vertex to do g2o
+
+	//parameter for ICP
+	min_points_ICP_threshold = 100; //number of points for ICP should bigger than this threshold
 
 	//parameter for global map
 	maplength = 500;	//meter
@@ -552,6 +561,8 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 					TreadToprekey.transformation_matrix = icp_result.transformation_matrix;
 					TreadToprekey.from_index = icp_result.from_index;
 					TreadToprekey.to_index = icp_result.to_index;
+					TreadToprekey.information_matrix = icp_result.information_matrix;
+
 					TreadToprekey_s.push_back(TreadToprekey);	//save all transformation between frame to previous keyframe in one time find a new keyframe
 					getSubVertexEdges();
 
@@ -571,7 +582,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 							//get position of the keyframe in global coordinate, map will be the fix frame (0, 0, 0) (x, y, heading)
 							TkeyTomap = angle_to_TransformationMatrix(LocalMap_All_s[key_index].x_filter, LocalMap_All_s[key_index].y_filter, LocalMap_All_s[key_index].heading_filter);	//transformation from current keyframe to map
 
-							Store_temp_vertex_edges();
+							Store_temp_vertex_edges(0);
 
 							//if second temp keyframe generated, estimate the previous keyframe is permanent or not
 							if(Vertex_temp.size() == 2)
@@ -623,7 +634,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 								
 
-								Store_temp_vertex_edges();
+								Store_temp_vertex_edges(1);
 
 								//if second temp keyframe generated, estimate the previous keyframe is permanent or not
 								if(Vertex_temp.size() == 2)
@@ -671,6 +682,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 								TreadToprekey.transformation_matrix = icp_result.transformation_matrix;
 								TreadToprekey.from_index = icp_result.from_index;
 								TreadToprekey.to_index = icp_result.to_index;
+								TreadToprekey.information_matrix = icp_result.information_matrix;
 								TreadToprekey_s.push_back(TreadToprekey);	//save all transformation between frame to previous keyframe in one time find a new keyframe
 
 								Keyframe_Pointcloud keyframe_pointcloud;
@@ -682,7 +694,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 								//get position of the keyframe in global coordinate, map will be the fix frame (0, 0, 0) (x, y, heading)
 								TkeyTomap = TkeyTomap * TreadToprekey_s[TreadToprekey_s.size() - 1].transformation_matrix;	//transformation from current keyframe to map 
 
-								Store_temp_vertex_edges();
+								Store_temp_vertex_edges(2);
 
 								//if second temp keyframe generated, estimate the previous keyframe is permanent or not
 								if(Vertex_temp.size() == 2)
@@ -722,6 +734,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 								TreadToprekey.transformation_matrix = icp_result.transformation_matrix;
 								TreadToprekey.from_index = icp_result.from_index;
 								TreadToprekey.to_index = icp_result.to_index;
+								TreadToprekey.information_matrix = icp_result.information_matrix;
 								TreadToprekey_s.push_back(TreadToprekey);	//save all transformation between frame to previous keyframe in one time find a new keyframe
 								distance = sqrt(TreadToprekey.transformation_matrix(0,3)*TreadToprekey.transformation_matrix(0,3) 
 												+ TreadToprekey.transformation_matrix(1,3)*TreadToprekey.transformation_matrix(1,3) 
@@ -750,7 +763,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 								
 
-									Store_temp_vertex_edges();
+									Store_temp_vertex_edges(1);
 
 									//if second temp keyframe generated, estimate the previous keyframe is permanent or not
 									if(Vertex_temp.size() == 2)
@@ -846,8 +859,14 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	double verification_result_ICP;
 	ICP_Result icp_result;
 	matrix4f guessT;	//IMU
+	matrix3f information_matrix;
+	matrix3f information_matrix_IMU;
+	matrix3f information_matrix_ICP;
 
 	guessT = Eigen::Matrix<float, 4, 4>::Identity();
+	information_matrix = Eigen::Matrix<float, 3, 3>::Identity();
+	information_matrix_IMU = Eigen::Matrix<float, 3, 3>::Identity();
+	information_matrix_ICP = Eigen::Matrix<float, 3, 3>::Identity();
 
 	PointCloudPtr refPointCloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudPtr readPointCloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
@@ -871,6 +890,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		icp_result.from_index = ICP_read_index;
 		icp_result.to_index = ICP_ref_index;
 		icp_result.overlap = 1.0;
+		icp_result.information_matrix << 99, 99, 99, 99, 99, 99, 99, 99, 99;
 
 		return icp_result;
 	}
@@ -945,116 +965,141 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 
 	if(option == 0)
 	{
-	//***********************get overlap part to do ICP****************************//
-	// std::vector<Cell_Local> read_Correspondences_cells;
-	// std::vector<Cell_Local> ref_Correspondences_cells;
-	getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm, guessT, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
+		//***********************get overlap part to do ICP****************************//
+		// std::vector<Cell_Local> read_Correspondences_cells;
+		// std::vector<Cell_Local> ref_Correspondences_cells;
+		getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm, guessT, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
 
-	verification_result_IMU = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
+		verification_result_IMU = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix_IMU);
 
-	// ROS_INFO_STREAM("verification_result_IMU: " << verification_result_IMU);
-	overlap_IMU = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
-  	// ROS_INFO_STREAM("overlap IMU: "<< overlap);
-	//save all points as pointcloud
-	for(int i = 0; i < read_Correspondences_cells.size(); i++)
-	{
-		readPointCloudPtr->push_back(pcl::PointXYZ(read_Correspondences_cells[i].x_mean, read_Correspondences_cells[i].y_mean, 0));
-	}
+		// ROS_INFO_STREAM("verification_result_IMU: " << verification_result_IMU);
+		overlap_IMU = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
+	  	// ROS_INFO_STREAM("overlap IMU: "<< overlap);
+		//save all points as pointcloud
+		for(int i = 0; i < read_Correspondences_cells.size(); i++)
+		{
+			readPointCloudPtr->push_back(pcl::PointXYZ(read_Correspondences_cells[i].x_mean, read_Correspondences_cells[i].y_mean, 0));
+		}
 
-	for(int i = 0; i < ref_Correspondences_cells.size(); i++)
-	{
-		refPointCloudPtr->push_back(pcl::PointXYZ(ref_Correspondences_cells[i].x_mean, ref_Correspondences_cells[i].y_mean, 0));
+		for(int i = 0; i < ref_Correspondences_cells.size(); i++)
+		{
+			refPointCloudPtr->push_back(pcl::PointXYZ(ref_Correspondences_cells[i].x_mean, ref_Correspondences_cells[i].y_mean, 0));
+		}
+		
+	  	//*************************************************************************//
+
+		PointCloud Final;
+		
+		// ROS_INFO_STREAM("save PCD.........");
+
+		std::stringstream readPointCloudPtr_pcd;
+		std::stringstream refPointCloudPtr_pcd;
+
+		// readPointCloudPtr_pcd << "/home/atlas/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
+		// refPointCloudPtr_pcd << "/home/atlas/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
+		// pcl::io::savePCDFileASCII (readPointCloudPtr_pcd.str(), *readPointCloudPtr);
+		// pcl::io::savePCDFileASCII (refPointCloudPtr_pcd.str(), *refPointCloudPtr);
+		// pcd_counter_overlap++;
+
+		//**************************************************************************//
+		//set min number of points
+		if(readPointCloudPtr -> size() < min_points_ICP_threshold || refPointCloudPtr -> size() < min_points_ICP_threshold)
+		{
+			icp_result.transformation_matrix = guessT;
+			icp_result.verification_result = verification_result_IMU;
+			icp_result.from_index = ICP_read_index;
+			icp_result.to_index = ICP_ref_index;
+			icp_result.overlap = overlap_IMU;
+			icp_result.information_matrix = 10 * information_matrix_IMU;	//add more weight for IMU result, in case the pointcloud is wrong
+
+			return icp_result;
+		}
+		else
+		{
+			icp.setInputSource(readPointCloudPtr);
+			icp.setInputTarget(refPointCloudPtr);
+			icp.align(Final);
+
+			matrix4f FinalTransformation;
+			matrix4f ICPTransformation;
+
+
+			ICPTransformation = icp.getFinalTransformation();
+			// ROS_INFO_STREAM("ICPTransformation: \n" << ICPTransformation);
+			// ROS_INFO_STREAM("guessT: \n" << guessT);
+
+			// FinalTransformation = ICPTransformation * guessT;
+
+
+			matrix2f Ri;
+			matrix2f_point Tg;
+			matrix2f_point Tg_new;
+
+			Ri(0,0) = guessT(0,0);
+			Ri(1,0) = guessT(1,0);
+			Ri(0,1) = guessT(0,1);
+			Ri(1,1) = guessT(1,1);
+
+			Tg(0,0) = ICPTransformation(0,3);
+			Tg(1,0) = ICPTransformation(1,3);
+
+			Tg_new = Ri * Tg;
+
+			FinalTransformation(0,0) = guessT(0,0);  FinalTransformation(0,1) = guessT(0,1);  	FinalTransformation(0,2) = 0;  FinalTransformation(0,3) = guessT(0,3) + Tg_new(0,0);
+			FinalTransformation(1,0) = guessT(1,0);  FinalTransformation(1,1) = guessT(1,1);    FinalTransformation(1,2) = 0;  FinalTransformation(1,3) = guessT(1,3) + Tg_new(1,0);
+			FinalTransformation(2,0) = 0;                 FinalTransformation(2,1) = 0;					 FinalTransformation(2,2) = 1;  FinalTransformation(2,3) = 0;
+			FinalTransformation(3,0) = 0;                 FinalTransformation(3,1) = 0;                    FinalTransformation(3,2) = 0;  FinalTransformation(3,3) = 1;
+			
+
+			// FinalTransformation = guessT;
+
+			getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
+
+			//get ovelap rate
+			//calculate overlap (number of overlap points / number of read points)
+		  	overlap_ICP = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
+		  	// ROS_INFO_STREAM("overlap_ICP: "<< overlap_ICP);
+			//need to change
+			// return icp.getFinalTransformation(); //resutl of ICP_verification
+			verification_result_ICP = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix_ICP);
+			// ROS_INFO_STREAM("verification_result_ICP: " << verification_result_ICP);
+
+			if(verification_result_ICP > verification_result_IMU && verification_result_ICP > threshold_verification)
+			{
+
+				icp_result.transformation_matrix = FinalTransformation;
+				icp_result.verification_result = verification_result_ICP;
+				icp_result.from_index = ICP_read_index;
+				icp_result.to_index = ICP_ref_index;
+				icp_result.overlap = overlap_ICP;
+				icp_result.information_matrix = information_matrix_ICP;
+
+				use_ICP_counter++;
+			}
+			else
+			{
+				icp_result.transformation_matrix = guessT;
+				icp_result.verification_result = verification_result_IMU;
+				icp_result.from_index = ICP_read_index;
+				icp_result.to_index = ICP_ref_index;
+				icp_result.overlap = overlap_IMU;
+				if(verification_result_ICP < threshold_verification)
+				{
+					icp_result.information_matrix = 10 * information_matrix_IMU;
+				}	
+				else
+				{
+					icp_result.information_matrix = information_matrix_IMU;
+					
+				}	
+				use_IMU_counter++;
+				
+			}
+
+			return icp_result;
+		}
 	}
 	
-  	//*************************************************************************//
-
-	PointCloud Final;
-	
-	// ROS_INFO_STREAM("save PCD.........");
-
-	std::stringstream readPointCloudPtr_pcd;
-	std::stringstream refPointCloudPtr_pcd;
-
-	readPointCloudPtr_pcd << "/home/atlas/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
-	refPointCloudPtr_pcd << "/home/atlas/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
-	pcl::io::savePCDFileASCII (readPointCloudPtr_pcd.str(), *readPointCloudPtr);
-	pcl::io::savePCDFileASCII (refPointCloudPtr_pcd.str(), *refPointCloudPtr);
-	pcd_counter_overlap++;
-
-	//**************************************************************************//
-
-	icp.setInputSource(readPointCloudPtr);
-	icp.setInputTarget(refPointCloudPtr);
-	icp.align(Final);
-
-	matrix4f FinalTransformation;
-	matrix4f ICPTransformation;
-
-
-	ICPTransformation = icp.getFinalTransformation();
-	// ROS_INFO_STREAM("ICPTransformation: \n" << ICPTransformation);
-	// ROS_INFO_STREAM("guessT: \n" << guessT);
-
-	// FinalTransformation = ICPTransformation * guessT;
-
-
-	matrix2f Ri;
-	matrix2f_point Tg;
-	matrix2f_point Tg_new;
-
-	Ri(0,0) = guessT(0,0);
-	Ri(1,0) = guessT(1,0);
-	Ri(0,1) = guessT(0,1);
-	Ri(1,1) = guessT(1,1);
-
-	Tg(0,0) = ICPTransformation(0,3);
-	Tg(1,0) = ICPTransformation(1,3);
-
-	Tg_new = Ri * Tg;
-
-	FinalTransformation(0,0) = guessT(0,0);  FinalTransformation(0,1) = guessT(0,1);  	FinalTransformation(0,2) = 0;  FinalTransformation(0,3) = guessT(0,3) + Tg_new(0,0);
-	FinalTransformation(1,0) = guessT(1,0);  FinalTransformation(1,1) = guessT(1,1);    FinalTransformation(1,2) = 0;  FinalTransformation(1,3) = guessT(1,3) + Tg_new(1,0);
-	FinalTransformation(2,0) = 0;                 FinalTransformation(2,1) = 0;					 FinalTransformation(2,2) = 1;  FinalTransformation(2,3) = 0;
-	FinalTransformation(3,0) = 0;                 FinalTransformation(3,1) = 0;                    FinalTransformation(3,2) = 0;  FinalTransformation(3,3) = 1;
-	
-
-	// FinalTransformation = guessT;
-
-	getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
-
-	//get ovelap rate
-	//calculate overlap (number of overlap points / number of read points)
-  	overlap_ICP = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
-  	// ROS_INFO_STREAM("overlap_ICP: "<< overlap_ICP);
-	//need to change
-	// return icp.getFinalTransformation(); //resutl of ICP_verification
-	verification_result_ICP = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
-	// ROS_INFO_STREAM("verification_result_ICP: " << verification_result_ICP);
-
-	if(verification_result_ICP > verification_result_IMU && verification_result_ICP > threshold_verification)
-	{
-
-		icp_result.transformation_matrix = FinalTransformation;
-		icp_result.verification_result = verification_result_ICP;
-		icp_result.from_index = ICP_read_index;
-		icp_result.to_index = ICP_ref_index;
-		icp_result.overlap = overlap_ICP;
-
-		use_ICP_counter++;
-	}
-	else
-	{
-		icp_result.transformation_matrix = guessT;
-		icp_result.verification_result = verification_result_IMU;
-		icp_result.from_index = ICP_read_index;
-		icp_result.to_index = ICP_ref_index;
-		icp_result.overlap = overlap_IMU;
-
-		use_IMU_counter++;
-	}
-
-	return icp_result;
-	}
 
 	else if(option == 1)	//using IMU data to get transformation matrix
 	{
@@ -1072,48 +1117,50 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		//calculate overlap (number of overlap points / number of read points)
   		overlap = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
 
-  		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
+  		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix);
 		
 		icp_result.transformation_matrix = guessT;
 		icp_result.verification_result = verification_result;
 		icp_result.from_index = ICP_read_index;
 		icp_result.to_index = ICP_ref_index;
 		icp_result.overlap = overlap;
+		icp_result.information_matrix = information_matrix;
 
 		return icp_result;
 	}
 
 	else if(option == 2)
 	{
-	*readPointCloudPtr = read_localmap_icp_rm.ICP_cloudMsgIn;
-	*refPointCloudPtr = ref_localmap_icp_rm.ICP_cloudMsgIn;
-	
-	PointCloud Final;
+		*readPointCloudPtr = read_localmap_icp_rm.ICP_cloudMsgIn;
+		*refPointCloudPtr = ref_localmap_icp_rm.ICP_cloudMsgIn;
+		
+		PointCloud Final;
 
-	icp.setInputSource(readPointCloudPtr);
-	icp.setInputTarget(refPointCloudPtr);
-	icp.align(Final);
+		icp.setInputSource(readPointCloudPtr);
+		icp.setInputTarget(refPointCloudPtr);
+		icp.align(Final);
 
-	matrix4f FinalTransformation;
+		matrix4f FinalTransformation;
 
-	FinalTransformation = icp.getFinalTransformation();
+		FinalTransformation = icp.getFinalTransformation();
 
-	getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
+		getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
 
-	//get ovelap rate
-	//calculate overlap (number of overlap points / number of read points)
-  	overlap = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
+		//get ovelap rate
+		//calculate overlap (number of overlap points / number of read points)
+	  	overlap = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
 
-  	verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
+	  	verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix);
 
-	//using old verification and overlap method!!
-	icp_result.transformation_matrix = FinalTransformation;
-	icp_result.verification_result = verification_result;
-	icp_result.from_index = ICP_read_index;
-	icp_result.to_index = ICP_ref_index;
-	icp_result.overlap = overlap;
+		//using old verification and overlap method!!
+		icp_result.transformation_matrix = FinalTransformation;
+		icp_result.verification_result = verification_result;
+		icp_result.from_index = ICP_read_index;
+		icp_result.to_index = ICP_ref_index;
+		icp_result.overlap = overlap;
+		icp_result.information_matrix = information_matrix;
 
-	return icp_result;
+		return icp_result;
 	}
 	//save pcd for debug
 	// pcl::io::savePCDFileASCII ("readPointCloud_rm.pcd", readPointCloud_rm);
@@ -1138,8 +1185,14 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	double verification_result_ICP;
 	ICP_Result icp_result;
 	matrix4f guessT;	//IMU
+	matrix3f information_matrix;
+	matrix3f information_matrix_IMU;
+	matrix3f information_matrix_ICP;
 
 	guessT = Eigen::Matrix<float, 4, 4>::Identity();
+	information_matrix = Eigen::Matrix<float, 3, 3>::Identity();
+	information_matrix_IMU = Eigen::Matrix<float, 3, 3>::Identity();
+	information_matrix_ICP = Eigen::Matrix<float, 3, 3>::Identity();
 
 	PointCloudPtr refPointCloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloudPtr readPointCloudPtr (new pcl::PointCloud<pcl::PointXYZ>);
@@ -1163,6 +1216,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		icp_result.from_index = ICP_read_index;
 		icp_result.to_index = ICP_ref_index;
 		icp_result.overlap = 1.0;
+		icp_result.information_matrix << 99, 99, 99, 99, 99, 99, 99, 99, 99;
 
 		return icp_result;
 	}
@@ -1237,111 +1291,140 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 
 	if(option == 0)
 	{
-	//***********************get overlap part to do ICP****************************//
-	// std::vector<Cell_Local> read_Correspondences_cells;
-	// std::vector<Cell_Local> ref_Correspondences_cells;
-	getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm, guessT, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
+		//***********************get overlap part to do ICP****************************//
+		// std::vector<Cell_Local> read_Correspondences_cells;
+		// std::vector<Cell_Local> ref_Correspondences_cells;
+		getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm, guessT, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
 
-	verification_result_IMU = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
+		verification_result_IMU = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix_IMU);
 
-	// ROS_INFO_STREAM("verification_result_IMU: " << verification_result_IMU);
-	overlap_IMU = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
-  	// ROS_INFO_STREAM("overlap IMU: "<< overlap);
-	//save all points as pointcloud
-	for(int i = 0; i < read_Correspondences_cells.size(); i++)
-	{
-		readPointCloudPtr->push_back(pcl::PointXYZ(read_Correspondences_cells[i].x_mean, read_Correspondences_cells[i].y_mean, 0));
-	}
+		// ROS_INFO_STREAM("verification_result_IMU: " << verification_result_IMU);
+		overlap_IMU = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
+	  	// ROS_INFO_STREAM("overlap IMU: "<< overlap);
+		//save all points as pointcloud
+		for(int i = 0; i < read_Correspondences_cells.size(); i++)
+		{
+			readPointCloudPtr->push_back(pcl::PointXYZ(read_Correspondences_cells[i].x_mean, read_Correspondences_cells[i].y_mean, 0));
+		}
 
-	for(int i = 0; i < ref_Correspondences_cells.size(); i++)
-	{
-		refPointCloudPtr->push_back(pcl::PointXYZ(ref_Correspondences_cells[i].x_mean, ref_Correspondences_cells[i].y_mean, 0));
-	}
-	
-  	//*************************************************************************//
+		for(int i = 0; i < ref_Correspondences_cells.size(); i++)
+		{
+			refPointCloudPtr->push_back(pcl::PointXYZ(ref_Correspondences_cells[i].x_mean, ref_Correspondences_cells[i].y_mean, 0));
+		}
+		
+	  	//*************************************************************************//
 
-	PointCloud Final;
-	
-	// ROS_INFO_STREAM("save PCD.........");
+		PointCloud Final;
+		
+		// ROS_INFO_STREAM("save PCD.........");
 
-	std::stringstream readPointCloudPtr_pcd;
-	std::stringstream refPointCloudPtr_pcd;
+		std::stringstream readPointCloudPtr_pcd;
+		std::stringstream refPointCloudPtr_pcd;
 
-	readPointCloudPtr_pcd << "/home/atlas/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
-	refPointCloudPtr_pcd << "/home/atlas/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
-	pcl::io::savePCDFileASCII (readPointCloudPtr_pcd.str(), *readPointCloudPtr);
-	pcl::io::savePCDFileASCII (refPointCloudPtr_pcd.str(), *refPointCloudPtr);
-	pcd_counter_overlap++;
+		// readPointCloudPtr_pcd << "/home/atlas/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
+		// refPointCloudPtr_pcd << "/home/atlas/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
+		// pcl::io::savePCDFileASCII (readPointCloudPtr_pcd.str(), *readPointCloudPtr);
+		// pcl::io::savePCDFileASCII (refPointCloudPtr_pcd.str(), *refPointCloudPtr);
+		// pcd_counter_overlap++;
 
-	//**************************************************************************//
+		//**************************************************************************//
 
-	icp.setInputSource(readPointCloudPtr);
-	icp.setInputTarget(refPointCloudPtr);
-	icp.align(Final);
+			//set min number of points
+		if(readPointCloudPtr -> size() < min_points_ICP_threshold || refPointCloudPtr -> size() < min_points_ICP_threshold)
+		{
+			icp_result.transformation_matrix = guessT;
+			icp_result.verification_result = verification_result_IMU;
+			icp_result.from_index = ICP_read_index;
+			icp_result.to_index = ICP_ref_index;
+			icp_result.overlap = overlap_IMU;
+			icp_result.information_matrix = 10 * information_matrix_IMU;
 
-	matrix4f FinalTransformation;
-	matrix4f ICPTransformation;
+			return icp_result;
+		}
+		else
+		{
+			icp.setInputSource(readPointCloudPtr);
+			icp.setInputTarget(refPointCloudPtr);
+			icp.align(Final);
+
+			matrix4f FinalTransformation;
+			matrix4f ICPTransformation;
 
 
-	ICPTransformation = icp.getFinalTransformation();
-	// ROS_INFO_STREAM("ICPTransformation: \n" << ICPTransformation);
-	// ROS_INFO_STREAM("guessT: \n" << guessT);
+			ICPTransformation = icp.getFinalTransformation();
+			// ROS_INFO_STREAM("ICPTransformation: \n" << ICPTransformation);
+			// ROS_INFO_STREAM("guessT: \n" << guessT);
 
-	// FinalTransformation = ICPTransformation * guessT;
+			// FinalTransformation = ICPTransformation * guessT;
 
 
-	matrix2f Ri;
-	matrix2f_point Tg;
-	matrix2f_point Tg_new;
+			matrix2f Ri;
+			matrix2f_point Tg;
+			matrix2f_point Tg_new;
 
-	Ri(0,0) = guessT(0,0);
-	Ri(1,0) = guessT(1,0);
-	Ri(0,1) = guessT(0,1);
-	Ri(1,1) = guessT(1,1);
+			Ri(0,0) = guessT(0,0);
+			Ri(1,0) = guessT(1,0);
+			Ri(0,1) = guessT(0,1);
+			Ri(1,1) = guessT(1,1);
 
-	Tg(0,0) = ICPTransformation(0,3);
-	Tg(1,0) = ICPTransformation(1,3);
+			Tg(0,0) = ICPTransformation(0,3);
+			Tg(1,0) = ICPTransformation(1,3);
 
-	Tg_new = Ri * Tg;
+			Tg_new = Ri * Tg;
 
-	FinalTransformation(0,0) = guessT(0,0);  FinalTransformation(0,1) = guessT(0,1);  	FinalTransformation(0,2) = 0;  FinalTransformation(0,3) = guessT(0,3) + Tg_new(0,0);
-	FinalTransformation(1,0) = guessT(1,0);  FinalTransformation(1,1) = guessT(1,1);    FinalTransformation(1,2) = 0;  FinalTransformation(1,3) = guessT(1,3) + Tg_new(1,0);
-	FinalTransformation(2,0) = 0;                 FinalTransformation(2,1) = 0;					 FinalTransformation(2,2) = 1;  FinalTransformation(2,3) = 0;
-	FinalTransformation(3,0) = 0;                 FinalTransformation(3,1) = 0;                    FinalTransformation(3,2) = 0;  FinalTransformation(3,3) = 1;
-	
+			FinalTransformation(0,0) = guessT(0,0);  FinalTransformation(0,1) = guessT(0,1);  	FinalTransformation(0,2) = 0;  FinalTransformation(0,3) = guessT(0,3) + Tg_new(0,0);
+			FinalTransformation(1,0) = guessT(1,0);  FinalTransformation(1,1) = guessT(1,1);    FinalTransformation(1,2) = 0;  FinalTransformation(1,3) = guessT(1,3) + Tg_new(1,0);
+			FinalTransformation(2,0) = 0;                 FinalTransformation(2,1) = 0;					 FinalTransformation(2,2) = 1;  FinalTransformation(2,3) = 0;
+			FinalTransformation(3,0) = 0;                 FinalTransformation(3,1) = 0;                    FinalTransformation(3,2) = 0;  FinalTransformation(3,3) = 1;
+			
 
-	// FinalTransformation = guessT;
+			// FinalTransformation = guessT;
 
-	getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
+			getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
 
-	//get ovelap rate
-	//calculate overlap (number of overlap points / number of read points)
-  	overlap_ICP = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
-  	// ROS_INFO_STREAM("overlap_ICP: "<< overlap_ICP);
-	//need to change
-	// return icp.getFinalTransformation(); //resutl of ICP_verification
-	verification_result_ICP = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
-	// ROS_INFO_STREAM("verification_result_ICP: " << verification_result_ICP);
+			//get ovelap rate
+			//calculate overlap (number of overlap points / number of read points)
+		  	overlap_ICP = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
+		  	// ROS_INFO_STREAM("overlap_ICP: "<< overlap_ICP);
+			//need to change
+			// return icp.getFinalTransformation(); //resutl of ICP_verification
+			verification_result_ICP = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix_ICP);
+			// ROS_INFO_STREAM("verification_result_ICP: " << verification_result_ICP);
 
-	if(verification_result_ICP >= verification_result_IMU && verification_result_ICP > threshold_verification)
-	{
+			if(verification_result_ICP > verification_result_IMU && verification_result_ICP > threshold_verification)
+			{
 
-		icp_result.transformation_matrix = FinalTransformation;
-		icp_result.verification_result = verification_result_ICP;
-		icp_result.from_index = ICP_read_index;
-		icp_result.to_index = ICP_ref_index;
-		icp_result.overlap = overlap_ICP;
-	}
-	else
-	{
-		icp_result.transformation_matrix = guessT;
-		icp_result.verification_result = verification_result_IMU;
-		icp_result.from_index = ICP_read_index;
-		icp_result.to_index = ICP_ref_index;
-		icp_result.overlap = overlap_IMU;
-	}
+				icp_result.transformation_matrix = FinalTransformation;
+				icp_result.verification_result = verification_result_ICP;
+				icp_result.from_index = ICP_read_index;
+				icp_result.to_index = ICP_ref_index;
+				icp_result.overlap = overlap_ICP;
+				icp_result.information_matrix = information_matrix_ICP;
 
-	return icp_result;
+				use_ICP_counter++;
+			}
+			else
+			{
+				icp_result.transformation_matrix = guessT;
+				icp_result.verification_result = verification_result_IMU;
+				icp_result.from_index = ICP_read_index;
+				icp_result.to_index = ICP_ref_index;
+				icp_result.overlap = overlap_IMU;
+				if(verification_result_ICP < threshold_verification)
+				{
+					icp_result.information_matrix = 10 * information_matrix_IMU;
+				}	
+				else
+				{
+					icp_result.information_matrix = information_matrix_IMU;
+					
+				}
+
+				use_IMU_counter++;
+			}
+
+			return icp_result;
+		}
 	}
 
 	else if(option == 1)	//using IMU data to get transformation matrix
@@ -1360,48 +1443,50 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		//calculate overlap (number of overlap points / number of read points)
   		overlap = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
 
-  		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
+  		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix);
 		
 		icp_result.transformation_matrix = guessT;
 		icp_result.verification_result = verification_result;
 		icp_result.from_index = ICP_read_index;
 		icp_result.to_index = ICP_ref_index;
 		icp_result.overlap = overlap;
+		icp_result.information_matrix = information_matrix;
 
 		return icp_result;
 	}
 
 	else if(option == 2)
 	{
-	*readPointCloudPtr = read_localmap_icp_rm.ICP_cloudMsgIn;
-	*refPointCloudPtr = ref_localmap_icp_rm.ICP_cloudMsgIn;
-	
-	PointCloud Final;
+		*readPointCloudPtr = read_localmap_icp_rm.ICP_cloudMsgIn;
+		*refPointCloudPtr = ref_localmap_icp_rm.ICP_cloudMsgIn;
+		
+		PointCloud Final;
 
-	icp.setInputSource(readPointCloudPtr);
-	icp.setInputTarget(refPointCloudPtr);
-	icp.align(Final);
+		icp.setInputSource(readPointCloudPtr);
+		icp.setInputTarget(refPointCloudPtr);
+		icp.align(Final);
 
-	matrix4f FinalTransformation;
+		matrix4f FinalTransformation;
 
-	FinalTransformation = icp.getFinalTransformation();
+		FinalTransformation = icp.getFinalTransformation();
 
-	getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
+		getOverlap(read_localmap_icp_rm, ref_localmap_icp_rm,FinalTransformation, overlap_check_counter, read_Correspondences_cells, ref_Correspondences_cells);
 
-	//get ovelap rate
-	//calculate overlap (number of overlap points / number of read points)
-  	overlap = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
+		//get ovelap rate
+		//calculate overlap (number of overlap points / number of read points)
+	  	overlap = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
 
-  	verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
+	  	verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix);
 
-	//using old verification and overlap method!!
-	icp_result.transformation_matrix = FinalTransformation;
-	icp_result.verification_result = verification_result;
-	icp_result.from_index = ICP_read_index;
-	icp_result.to_index = ICP_ref_index;
-	icp_result.overlap = overlap;
+		//using old verification and overlap method!!
+		icp_result.transformation_matrix = FinalTransformation;
+		icp_result.verification_result = verification_result;
+		icp_result.from_index = ICP_read_index;
+		icp_result.to_index = ICP_ref_index;
+		icp_result.overlap = overlap;
+		icp_result.information_matrix = information_matrix;
 
-	return icp_result;
+		return icp_result;
 	}
 	//save pcd for debug
 	// pcl::io::savePCDFileASCII ("readPointCloud_rm.pcd", readPointCloud_rm);
@@ -1420,7 +1505,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	  	// ROS_INFO_STREAM("overlap_g2o: "<< overlap);
 		//need to change
 		// return icp.getFinalTransformation(); //resutl of ICP_verification
-		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells);
+		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix);
 		// ROS_INFO_STREAM("verification_result_g2o: " << verification_result);
 
 		icp_result.transformation_matrix = transformation_matrix;
@@ -1428,6 +1513,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		icp_result.from_index = ICP_read_index;
 		icp_result.to_index = ICP_ref_index;
 		icp_result.overlap = overlap;
+		icp_result.information_matrix = information_matrix;
 
 		return icp_result;
 
@@ -1499,7 +1585,8 @@ bool Keyframe::outside_rectangle(float rectangle_x, float rectangle_y)
 }
 
 //********************verification**********************//
-double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_cells_verify, std::vector<Cell_Local> ref_Correspondences_cells_verify)
+double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_cells_verify, std::vector<Cell_Local> ref_Correspondences_cells_verify, matrix3f& information_matrix)
+// double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_cells_verify, std::vector<Cell_Local> ref_Correspondences_cells_verify)
 {
 	double score = 0;
 	//define pointer to get the points information
@@ -1570,6 +1657,88 @@ double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_c
   			count++;
   		}
   	}
+
+  	//calculate information matrix for each edge
+  	float diff_x;
+  	float diff_y;
+  	float diff_z;
+
+  	PointCloud diff_points;
+
+  	matrix3f covariance_matrix;
+  	for(int i = 0; i < all_correspondences.size(); i++)
+  	{
+  		diff_x = read_Correspondences_cells_verify[all_correspondences[i].index_query].x_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].x_mean;
+  		diff_y = read_Correspondences_cells_verify[all_correspondences[i].index_query].y_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].y_mean;
+  		diff_z = read_Correspondences_cells_verify[all_correspondences[i].index_query].z_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].z_mean;
+
+  		diff_points.push_back(pcl::PointXYZ(diff_x, diff_y, diff_z));
+  	}
+
+  	pcl::computeCovarianceMatrix (diff_points, covariance_matrix);
+
+  	// ROS_INFO_STREAM("covariance_matrix: \n" << covariance_matrix);
+
+  	// matrix3f test_matrix;
+  	// matrix3f result_test_matrix;
+  	// test_matrix << 400, 0, 0, 0, 10000, 0, 0, 0, 0;
+  	// result_test_matrix = test_matrix.inverse();
+  	// matrix3f information_matrix;
+  	// information_matrix = covariance_matrix.inverse();
+
+  	//if one element of the covariance is 0, set the information_matrix as more weight
+  	// if(information_matrix.sum() > 100000)
+  	// {
+  	// 	information_matrix << 200, 200, 200, 200, 200, 200, 200, 200, 200;
+  	// }
+  	// else if(information_matrix(0,0) < -100000)
+  	// {
+  	// 	information_matrix << 0, 0, 0, 0, 0, 0, 0, 0, 0;
+  	// }
+  	// else if(isnan(information_matrix.sum()))
+  	// {
+  	// 	information_matrix << 200, 200, 200, 200, 200, 200, 200, 200, 200;
+  	// }
+  	if(covariance_matrix(0,0) != 0)
+  	{
+  		information_matrix(0,0) = 1.0 / covariance_matrix(0,0);
+  	}
+  	else
+  	{
+  		information_matrix(0,0) = 500;
+  	}
+
+  	if(covariance_matrix(1,1) != 0)
+  	{
+  		information_matrix(1,1) = 1.0 / covariance_matrix(1,1);
+  	}
+  	else
+  	{
+  		information_matrix(1,1) = 500;
+  	}
+
+  	if(covariance_matrix(2,2) != 0)
+  	{
+  		information_matrix(2,2) = 1.0 / covariance_matrix(2,2);
+  	}
+  	else
+  	{
+  		information_matrix(2,2) = 500;
+  	}
+
+  	information_matrix(0,1) = 0.0;
+  	information_matrix(0,2) = 0.0;
+  	information_matrix(1,0) = 0.0;
+  	information_matrix(1,2) = 0.0;
+  	information_matrix(2,0) = 0.0;
+  	information_matrix(2,1) = 0.0;
+  	
+
+  	ROS_INFO_STREAM("information_matrix: \n" << information_matrix);
+
+
+
+
   	// ROS_INFO_STREAM("height are same: "<< count);
   	// ROS_INFO_STREAM("all correspondence: " << all_correspondences.size());
   	// ROS_INFO_STREAM("read_Correspondences_cells_verify: " << read_Correspondences_cells_verify.size());
@@ -1653,7 +1822,17 @@ bool Keyframe::Do_g2o(std::vector<Position> &Vertex, std::vector<Transformation_
 		double theta = TransformationMatrix_to_angle(Edges[i].transformation_matrix);	//get angle from transformation, angle in radian
 		g2o::SE2 edge_se2(Edges[i].transformation_matrix(0,3), Edges[i].transformation_matrix(1,3), theta);	//edge (x, y, theta) 2d transformation matrix
 		Eigen::Matrix<double, 3, 3> information_matrix;	
-		information_matrix << 400, 0, 0, 0, 10000, 0, 0, 0, 0;	//information matrix, inverse of conversion matrix, need to think about this
+		// information_matrix << 400, 0, 0, 0, 10000, 0, 0, 0, 0;	//information matrix, inverse of conversion matrix, need to think about this
+		// information_matrix = (Eigen::Matrix<double, 3, 3>) Edges[i].information_matrix;
+		information_matrix(0,0) = (double) Edges[i].information_matrix(0,0);
+		information_matrix(0,1) = (double) Edges[i].information_matrix(0,1);
+		information_matrix(0,2) = (double) Edges[i].information_matrix(0,2);
+		information_matrix(1,0) = (double) Edges[i].information_matrix(1,0);
+		information_matrix(1,1) = (double) Edges[i].information_matrix(1,1);
+		information_matrix(1,2) = (double) Edges[i].information_matrix(1,2);
+		information_matrix(2,0) = (double) Edges[i].information_matrix(2,0);
+		information_matrix(2,1) = (double) Edges[i].information_matrix(2,1);
+		information_matrix(2,2) = (double) Edges[i].information_matrix(2,2);
 
 		g2o::EdgeSE2* edge = new g2o::EdgeSE2;
 		edge -> vertices()[0] = optimizer.vertex(Edges[i].to_index);
@@ -2135,8 +2314,8 @@ double Keyframe::Update_GlobalMap(LocalMap_Information localmap_information_upda
   	// ROS_INFO_STREAM("global map saving ....." << counter);
 
   	std::stringstream globalMap_pcd;
-  	globalMap_pcd << "/home/atlas/test_data/globalMap/globalMap" << pcd_counter_globalmap << ".pcd";
-  	pcl::io::savePCDFileASCII (globalMap_pcd.str(), *globalMap);
+  	// globalMap_pcd << "/home/atlas/test_data/globalMap/globalMap" << pcd_counter_globalmap << ".pcd";
+  	// pcl::io::savePCDFileASCII (globalMap_pcd.str(), *globalMap);
   	pcd_counter_globalmap++;
 
   	return update_rate;
@@ -2323,6 +2502,7 @@ void Keyframe::getSubVertexEdges()
 		edges_sub.transformation_matrix = icp_result_sub.transformation_matrix;
 		edges_sub.from_index = icp_result_sub.from_index;
 		edges_sub.to_index = icp_result_sub.to_index;
+		edges_sub.information_matrix = icp_result_sub.information_matrix;
 
 		Edges_sub.push_back(edges_sub);	//edge from current frame to previous frame
 	
@@ -2391,6 +2571,7 @@ void Keyframe::DetectNearestKeyframe()
 		edges.transformation_matrix = Edges_temp[Edges_temp.size() -2].transformation_matrix * Edges_temp[Edges_temp.size() -1].transformation_matrix;	//add transformation matrxi together
 		edges.from_index = Vertex_temp.size() - 1;
 		edges.to_index = Vertex_temp.size() - 2;
+		edges.information_matrix = Edges_temp[Edges_temp.size() -1].information_matrix;
 		keyframe_pointcloud = KeyframeMap_temp_s[KeyframeMap_temp_s.size() - 1];
 		localmap_information = LocalMap_Information_temp_s[LocalMap_Information_temp_s.size() - 1];
 
@@ -2418,6 +2599,7 @@ void Keyframe::DetectNearestKeyframe()
 		edges.transformation_matrix = Edges_temp[Edges_temp.size() - 2].transformation_matrix;
 		edges.from_index = Vertex.size() - 1;
 		edges.to_index = Vertex.size() - 2;
+		edges.information_matrix = Edges_temp[Edges_temp.size() - 2].information_matrix;
 		//store transformation between current permanent keyframe and permanent previous keyframe into edges
 		Edges.push_back(edges);
 
@@ -2483,7 +2665,8 @@ void Keyframe::TkeyTomap_Pub()
 
 }
 
-void Keyframe::Store_temp_vertex_edges()
+//option, 0: homing update information store; 1: Edges_sub update; 2: TreadToprekey_s update
+void Keyframe::Store_temp_vertex_edges(int option)
 {
 	Keyframe_Pointcloud keyframe_pointcloud;
 	Position position;
@@ -2515,7 +2698,21 @@ void Keyframe::Store_temp_vertex_edges()
 	//store keyframe point cloud into keyframe maps
 	KeyframeMap_temp_s.push_back(keyframe_pointcloud);
 
-	edges.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
+	if(option == 0)
+	{
+		edges.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
+	}
+	else if(option == 1)
+	{
+		edges.transformation_matrix = Edges_sub[Edges_sub.size() - 1].transformation_matrix;
+		edges.information_matrix = Edges_sub[Edges_sub.size() - 1].information_matrix;
+	}
+	else if(option == 2)
+	{
+		edges.transformation_matrix = TreadToprekey_s[TreadToprekey_s.size() - 1].transformation_matrix;
+		edges.information_matrix = TreadToprekey_s[TreadToprekey_s.size() - 1].information_matrix;
+	}
+	
 	edges.from_index = Vertex_temp.size() - 1;
 	edges.to_index = Vertex_temp.size() - 2;
 	//store transformation between current keyframe and previous keyframe into edges temp
