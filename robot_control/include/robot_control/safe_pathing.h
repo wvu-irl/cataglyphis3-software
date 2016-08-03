@@ -24,7 +24,7 @@ public:
 	bool FindPath(robot_control::IntermediateWaypoints::Request &req, robot_control::IntermediateWaypoints::Response &res);
 	void robotPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
-	void FMM(grid_map::GridMap& mapIn, grid_map::GridMap& mapOut, std::vector<grid_map::Position>& goalPointsIn);
+	void FMM(grid_map::GridMap& mapIn, grid_map::GridMap& mapOut, grid_map::Position &goalPointIn);
 	bool narrowBandNotEmpty(grid_map::GridMap& map);
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	// Members
@@ -52,8 +52,7 @@ public:
 	const float initialTimeValue = 0.1;
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
-	std::vector<grid_map::Position> goalPoints;
-	std::vector<grid_map::Position> finalDestination;
+	grid_map::Position goalPoint;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
 	const float mapResolution = 1.0; // m
@@ -62,6 +61,9 @@ public:
 	grid_map::Position startPosition;
 	unsigned int origNumWaypointsIn;
 	unsigned int numInsertedWaypoints;
+	float hazardAlongPossiblePath;
+	float hazardAlongPossiblePathThresh;
+	//const float initialHazardAlongPossiblePathThresh =
 };
 
 #endif // SAFE_PATHING_H 

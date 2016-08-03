@@ -66,6 +66,9 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         /*waypoint.x = req.current_x;
         waypoint.y = req.current_y;
         req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
+        res.waypointArrayOut = req.waypointArrayIn;
+        origNumWaypointsIn = req.waypointArrayIn.size();
+        numInsertedWaypoints = 0;
         if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
         else ROS_ERROR("globalMapFull service call unsuccessful");
         grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
@@ -89,11 +92,12 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
     }
     else if(req.collision==0) // No collision
     {
-        /*waypoint.x = req.current_x;
+        waypoint.x = req.current_x;
         waypoint.y = req.current_y;
         req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
-        startPosition[0] = req.current_x;
-        startPosition[1] = req.current_y;
+        res.waypointArrayOut = req.waypointArrayIn;
+        origNumWaypointsIn = req.waypointArrayIn.size();
+        numInsertedWaypoints = 0;
         if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
         else ROS_ERROR("globalMapFull service call unsuccessful");
         grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
@@ -101,32 +105,31 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         timeOfArrivalMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
         initialViscosityMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
         resistanceMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-        timeOfArrivalMap.add(timeLayer, initialTimeValue);
-        timeOfArrivalMap.add(setLayer, (float)_unknown);
-        initialViscosityMap.add(timeLayer, initialTimeValue);
-        initialViscosityMap.add(setLayer, (float)_unknown);
-        resistanceMap.add(timeLayer, initialTimeValue);
-        resistanceMap.add(setLayer, (float)_unknown);
-        goalPoints.resize(req.waypointArrayIn.size());
-        finalDestination.resize(1);
-        finalDestination.back()[0] = req.waypointArrayIn.back().x;
-        finalDestination.back()[1] = req.waypointArrayIn.back().y;
-        for(int i=0; i<req.waypointArrayIn.size(); i++)
+        for(int i=0; i<(origNumWaypointsIn-1); i++)
         {
-            goalPoints.at(i)[0] = req.waypointArrayIn.at(i).x;
-            goalPoints.at(i)[1] = req.waypointArrayIn.at(i).y;
+            timeOfArrivalMap.add(timeLayer, initialTimeValue);
+            timeOfArrivalMap.add(setLayer, (float)_unknown);
+            initialViscosityMap.add(timeLayer, initialTimeValue);
+            initialViscosityMap.add(setLayer, (float)_unknown);
+            resistanceMap.add(timeLayer, initialTimeValue);
+            resistanceMap.add(setLayer, (float)_unknown);
+            startPosition[0] = req.waypointArrayIn.at(i).x;
+            startPosition[1] = req.waypointArrayIn.at(i).y;
+            goalPoint[0] = req.waypointArrayIn.at(i+1).x;
+            goalPoint[1] = req.waypointArrayIn.at(i+1).y;
+            FMM(initialViscosityMap, resistanceMap, goalPoint);
+            // resistanceMap + satMap
+            for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
+            {
+                resistanceMap.at(timeLayer, *it) += globalMap.at(layerToString(_satDriveability), *it); // Just add or average?
+                if(resistanceMap.at(timeLayer, *it) > 10.0) resistanceMap.at(timeLayer, *it) = 10.0;
+            }
+            FMM(resistanceMap, timeOfArrivalMap, goalPoint);
+            gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
+            // Back solve on optimal path
+
         }
-        FMM(initialViscosityMap, resistanceMap, goalPoints);
-        // resistanceMap + satMap
-        for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
-        {
-            resistanceMap.at(timeLayer, *it) += globalMap.at(layerToString(_satDriveability), *it); // Just add or average?
-            if(resistanceMap.at(timeLayer, *it) > 10.0) resistanceMap.at(timeLayer, *it) = 10.0;
-        }
-        FMM(resistanceMap, timeOfArrivalMap, finalDestination);
-        gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
-        // Back solve on optimal path
-        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel*/
+        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
 
         waypoint.x = req.current_x;
         waypoint.y = req.current_y;
@@ -185,7 +188,7 @@ void SafePathing::rotateCoord(float origX, float origY, float &newX, float &newY
     newY = -origX*sin(DEG2RAD*angleDeg)+origY*cos(DEG2RAD*angleDeg);
 }
 
-void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, std::vector<grid_map::Position> &goalPointsIn)
+void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_map::Position &goalPointIn)
 {
     float delta;
     float dx;
@@ -199,61 +202,51 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, std::
     //mapOut.add(timeLayer, 10.0);
     mapOut.add(setLayer, (float)_unknown);
     mapSize = mapOut.getSize();
-    if(goalPointsIn.size()<2)
+    mapOut.atPosition(timeLayer, goalPointIn) = 0.0;
+    mapOut.atPosition(setLayer, goalPointIn) = (float)_narrowBand;
+    mapOut.getIndex(goalPointIn, currentIndex);
+    while(continueLoop)
     {
-        ROS_ERROR("number of goal points passed into FMM less than 2");
-    }
-    else
-    {
-        for(int k=1; k<goalPointsIn.size(); k++)
+        continueLoop = narrowBandNotEmpty(mapOut)/* || currentIndex != startIndex*/;
+        if(continueLoop)
         {
-            mapOut.atPosition(timeLayer, goalPointsIn.at(k)) = 0.0;
-            mapOut.atPosition(setLayer, goalPointsIn.at(k)) = (float)_narrowBand;
-            mapOut.getIndex(goalPointsIn.at(k), currentIndex);
-            while(continueLoop)
+            bestNarrowBandValue = 10.0;
+            for(grid_map::GridMapIterator it(mapOut); !it.isPastEnd(); ++it)
             {
-                continueLoop = narrowBandNotEmpty(mapOut)/* || currentIndex != startIndex*/;
-                if(continueLoop)
+                if(mapOut.at(setLayer, *it) == (float)_narrowBand)
                 {
-                    bestNarrowBandValue = 10.0;
-                    for(grid_map::GridMapIterator it(mapOut); !it.isPastEnd(); ++it)
+                    if(mapOut.at(timeLayer, *it) < bestNarrowBandValue)
                     {
-                        if(mapOut.at(setLayer, *it) == (float)_narrowBand)
-                        {
-                            if(mapOut.at(timeLayer, *it) < bestNarrowBandValue)
-                            {
-                                bestNarrowBandValue = mapOut.at(timeLayer, *it);
-                                bestNarrowBandIndex = grid_map::getIndexFromLinearIndex(it.getLinearIndex(), mapOut.getSize());
-                            }
-                            mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
-                        }
+                        bestNarrowBandValue = mapOut.at(timeLayer, *it);
+                        bestNarrowBandIndex = grid_map::getIndexFromLinearIndex(it.getLinearIndex(), mapOut.getSize());
                     }
-                    for(int i=-1; i<=1; i++)
+                    mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
+                }
+            }
+            for(int i=-1; i<=1; i++)
+            {
+                for(int j=-1; j<=1; j++)
+                {
+                    if((i != 0 && j == 0) || (i == 0 && j != 0))
                     {
-                        for(int j=-1; j<=1; j++)
+                        offsetIndex[0] = currentIndex[0] + i;
+                        offsetIndex[1] = currentIndex[1] + j;
+                        if((offsetIndex[0]<mapSize[0] && offsetIndex[0]>=0) && (offsetIndex[1]<mapSize[1] && offsetIndex[1]>=0))
                         {
-                            if((i != 0 && j == 0) || (i == 0 && j != 0))
+                            if(mapOut.at(setLayer, offsetIndex)==(float)_unknown) mapOut.at(setLayer, offsetIndex) = (float)_narrowBand;
+
+                            if(mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]) < mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1])) dx = mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]);
+                            else dx = mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1]);
+
+                            if(mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1) < mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1)) dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1);
+                            else dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1);
+
+                            delta = 2.0*mapIn.at(timeLayer, currentIndex) - pow(dx-dy, 2.0);
+                            if(delta>=0.0) mapOut.at(timeLayer, currentIndex) = (dx+dy+sqrt(delta))/2.0;
+                            else
                             {
-                                offsetIndex[0] = currentIndex[0] + i;
-                                offsetIndex[1] = currentIndex[1] + j;
-                                if((offsetIndex[0]<mapSize[0] && offsetIndex[0]>=0) && (offsetIndex[1]<mapSize[1] && offsetIndex[1]>=0))
-                                {
-                                    if(mapOut.at(setLayer, offsetIndex)==(float)_unknown) mapOut.at(setLayer, offsetIndex) = (float)_narrowBand;
-
-                                    if(mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]) < mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1])) dx = mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]);
-                                    else dx = mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1]);
-
-                                    if(mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1) < mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1)) dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1);
-                                    else dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1);
-
-                                    delta = 2.0*mapIn.at(timeLayer, currentIndex) - pow(dx-dy, 2.0);
-                                    if(delta>=0.0) mapOut.at(timeLayer, currentIndex) = (dx+dy+sqrt(delta))/2.0;
-                                    else
-                                    {
-                                        if(dx+mapIn.at(timeLayer, currentIndex) < dy+mapIn.at(timeLayer, currentIndex)) mapOut.at(timeLayer, currentIndex) = dx+mapIn.at(timeLayer, currentIndex);
-                                        else mapOut.at(timeLayer, currentIndex) = dy+mapIn.at(timeLayer, currentIndex);
-                                    }
-                                }
+                                if(dx+mapIn.at(timeLayer, currentIndex) < dy+mapIn.at(timeLayer, currentIndex)) mapOut.at(timeLayer, currentIndex) = dx+mapIn.at(timeLayer, currentIndex);
+                                else mapOut.at(timeLayer, currentIndex) = dy+mapIn.at(timeLayer, currentIndex);
                             }
                         }
                     }
