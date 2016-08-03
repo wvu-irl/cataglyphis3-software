@@ -90,27 +90,27 @@ int main(int argc, char **argv)
 
 	//Create Trackbars
 	char TrackbarRobotWidth[50];
-	sprintf( TrackbarRobotWidth, "robotWidth", robotWidthMax );
+	sprintf( TrackbarRobotWidth, "RW", robotWidthMax );
 	cv::createTrackbar( TrackbarRobotWidth, "Current Image", &robotWidthSlider, robotWidthMax, onTrackbarRobotWidth );
 
 	char TrackbarRobotHeight[50];
-	sprintf( TrackbarRobotHeight, "robotHeight", robotHeightMax );
+	sprintf( TrackbarRobotHeight, "RH", robotHeightMax );
 	cv::createTrackbar( TrackbarRobotHeight, "Current Image", &robotHeightSlider, robotHeightMax, onTrackbarRobotHeight );
 
 	char TrackbarRobotShift[50];
-	sprintf( TrackbarRobotShift, "robotShift", robotShiftMax );
+	sprintf( TrackbarRobotShift, "RS", robotShiftMax );
 	cv::createTrackbar( TrackbarRobotShift, "Current Image", &robotShiftSlider, robotShiftMax, onTrackbarRobotShift );
 
 	char TrackbarRadius[50];
-	sprintf( TrackbarRadius, "radius", radiusMax );
+	sprintf( TrackbarRadius, "BR", radiusMax );
 	cv::createTrackbar( TrackbarRadius, "Current Image", &radiusSlider, radiusMax, onTrackbarRadius );
 
 	char TrackbarPoleWidth[50];
-	sprintf( TrackbarPoleWidth, "poleWidth", poleWidthMax );
+	sprintf( TrackbarPoleWidth, "PW", poleWidthMax );
 	cv::createTrackbar( TrackbarPoleWidth, "Current Image", &poleWidthSlider, poleWidthMax, onTrackbarPoleWidth );
 
 	char TrackbarPoleHeight[50];
-	sprintf( TrackbarPoleHeight, "poleHeight", poleHeightMax );
+	sprintf( TrackbarPoleHeight, "PH", poleHeightMax );
 	cv::createTrackbar( TrackbarPoleHeight, "Current Image", &poleHeightSlider, poleHeightMax, onTrackbarPoleHeight );
 
 	//Main Loop
