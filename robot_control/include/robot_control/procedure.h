@@ -74,7 +74,17 @@ void Procedure::callIntermediateWaypoints()
 	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
 	intermediateWaypointsSrv.request.current_y = robotStatus.yPos;
 	intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
-    for(int i = 0; i < initNumWaypointsToTravel; i++)
+	intermediateWaypointsSrv.waypointArrayIn.resize(numWaypointsToTravel);
+	intermediateWaypointsSrv.waypointArrayIn = waypointsToTravel;
+	if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful, size = %u", intermediateWaypointsSrv.response.waypointArray.size());
+	else ROS_ERROR("intermediateWaypoints service call unsuccessful");
+	if(intermediateWaypointsSrv.response.waypointArrayOut.size() > 0)
+	{
+		waypointsToTravel.clear();
+		waypointsToTravel = intermediateWaypointsSrv.response.waypointArrayOut;
+		numWaypointsToTravel = waypointsToTravel.size();
+	}
+	/*for(int i = 0; i < initNumWaypointsToTravel; i++)
     {
         intermWaypointsIt = waypointsToTravel.begin() + i + totalIntermWaypoints;
         if(i == 0)
@@ -97,7 +107,7 @@ void Procedure::callIntermediateWaypoints()
             totalIntermWaypoints += intermediateWaypointsSrv.response.waypointArray.size();
             numWaypointsToTravel += intermediateWaypointsSrv.response.waypointArray.size();
         }
-    }
+	}*/
 }
 
 void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading)

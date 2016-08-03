@@ -63,6 +63,9 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 	}
     else if(req.collision==3) // Predictive avoidance
     {
+        waypoint.x = req.current_x;
+        waypoint.y = req.current_y;
+        req.waypointArrayIn.push_front(waypoint);
         if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
         else ROS_ERROR("globalMapFull service call unsuccessful");
         grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
@@ -82,9 +85,13 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         FMM(resistanceMap, timeOfArrivalMap, finalDestination...);
         gradientDescent(timeOfArrivalMap, startPosition..., optimalPath);
         // Back solve on optimal path*/
+        res.waypointArrayOut.pop_front(); // Do not send current location as a waypoint to travel
     }
     else if(req.collision==0) // No collision
     {
+        waypoint.x = req.current_x;
+        waypoint.y = req.current_y;
+        req.waypointArrayIn.push_front(waypoint);
         if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
         else ROS_ERROR("globalMapFull service call unsuccessful");
         grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
@@ -117,7 +124,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         FMM(resistanceMap, timeOfArrivalMap, finalDestination);
         gradientDescent(timeOfArrivalMap, req.waypointArrayIn.front(), optimalPath);
         // Back solve on optimal path
-
+        res.waypointArrayOut.pop_front(); // Do not send current location as a waypoint to travel
 
         for(int i=0; i<(req.waypointArrayIn.size()-1); i++)
         {
@@ -129,6 +136,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                 res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint1);
                 res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint2);
                 res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint3);
+                res.waypointArrayOut.pop_front(); // Do not send current location as a waypoint to travel
                 //intermediateWaypoints.push_back(transitionWaypoint1);
                 //intermediateWaypoints.push_back(transitionWaypoint2);
                 //intermediateWaypoints.push_back(transitionWaypoint3);
@@ -138,10 +146,11 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                 //intermediateWaypoints.push_back(transitionWaypoint3);
                 //intermediateWaypoints.push_back(transitionWaypoint2);
                 //intermediateWaypoints.push_back(transitionWaypoint1);
-                res.waypointArrayOut = req.waypointArrayIn;
+                res.waypointArrayOut = req.waypointArrayIn; // Do not send current location as a waypoint to travel
                 res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint3);
                 res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint2);
                 res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i, transitionWaypoint1);
+                res.waypointArrayOut.pop_front();
             }
         }
     }

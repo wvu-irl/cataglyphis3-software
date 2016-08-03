@@ -136,6 +136,7 @@ public:
 	float possibleRandomWaypointValuesSum;
 	std::vector<float> possibleRandomWaypointValuesNormalized;
 	grid_map::Position randomWaypointPosition;
+	grid_map::Position globalPoseToSearchLocalMapPosition;
 	grid_map::Index randomWaypointIndex;
 	float randomValue;
 	float randomValueFloor;

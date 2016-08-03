@@ -237,7 +237,8 @@ bool MapManager::globalMapPathHazardsCallback(messages::MapPathHazards::Request 
         }
         mapPathHazardNumCellsInPolygon++;
     }
-    res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
+    if(mapPathHazardNumCellsInPolygon == 0) {res.hazardValue = 0.1; ROS_WARN("globalMapPathHazards numCellsInPolygon == 0");} // Something small as a defualt to avoid divide by zero issue
+    else res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
     return true;
 }
 
@@ -254,12 +255,12 @@ bool MapManager::searchLocalMapPathHazardsCallback(messages::MapPathHazards::Req
         // Transform global x,y into searchLocalMap x,y
         rotateCoord(req.xStart - searchLocalMapXPos, req.yStart - searchLocalMapYPos, localXStart, localYStart, -searchLocalMapHeading);
         rotateCoord(req.xEnd - searchLocalMapXPos, req.yEnd - searchLocalMapYPos, localXEnd, localYEnd, -searchLocalMapHeading);
-        ROS_INFO("searchLocalMap = (%f,%f)",searchLocalMapXPos, searchLocalMapYPos);
-        ROS_INFO("searchLocalMap heading = %f",searchLocalMapHeading);
-        ROS_INFO("global start = (%f,%f)",req.xStart,req.yStart);
-        ROS_INFO("global end = (%f,%f)",req.xEnd,req.yEnd);
-        ROS_INFO("local start = (%f,%f)",localXStart,localYStart);
-        ROS_INFO("local end = (%f,%f)",localXEnd,localYEnd);
+        //ROS_INFO("searchLocalMap = (%f,%f)",searchLocalMapXPos, searchLocalMapYPos);
+        //ROS_INFO("searchLocalMap heading = %f",searchLocalMapHeading);
+        //ROS_INFO("global start = (%f,%f)",req.xStart,req.yStart);
+        //ROS_INFO("global end = (%f,%f)",req.xEnd,req.yEnd);
+        //ROS_INFO("local start = (%f,%f)",localXStart,localYStart);
+        //ROS_INFO("local end = (%f,%f)",localXEnd,localYEnd);
         mapPathHazardsPolygonHeading = atan2(localYEnd - localYStart, localXEnd - localXStart); // radians
         mapPathHazardsVertices.at(0)[0] = localXStart + req.width/2.0*sin(mapPathHazardsPolygonHeading);
         mapPathHazardsVertices.at(0)[1] = localYStart - req.width/2.0*cos(mapPathHazardsPolygonHeading);
@@ -269,10 +270,10 @@ bool MapManager::searchLocalMapPathHazardsCallback(messages::MapPathHazards::Req
         mapPathHazardsVertices.at(2)[1] = localYEnd + req.width/2.0*cos(mapPathHazardsPolygonHeading);
         mapPathHazardsVertices.at(3)[0] = localXEnd + req.width/2.0*sin(mapPathHazardsPolygonHeading);
         mapPathHazardsVertices.at(3)[1] = localYEnd - req.width/2.0*cos(mapPathHazardsPolygonHeading);
-        ROS_INFO("vertex 0 = (%f,%f)", mapPathHazardsVertices.at(0)[0], mapPathHazardsVertices.at(0)[1]);
-        ROS_INFO("vertex 1 = (%f,%f)", mapPathHazardsVertices.at(1)[0], mapPathHazardsVertices.at(1)[1]);
-        ROS_INFO("vertex 2 = (%f,%f)", mapPathHazardsVertices.at(2)[0], mapPathHazardsVertices.at(2)[1]);
-        ROS_INFO("vertex 3 = (%f,%f)", mapPathHazardsVertices.at(3)[0], mapPathHazardsVertices.at(3)[1]);
+        //ROS_INFO("vertex 0 = (%f,%f)", mapPathHazardsVertices.at(0)[0], mapPathHazardsVertices.at(0)[1]);
+        //ROS_INFO("vertex 1 = (%f,%f)", mapPathHazardsVertices.at(1)[0], mapPathHazardsVertices.at(1)[1]);
+        //ROS_INFO("vertex 2 = (%f,%f)", mapPathHazardsVertices.at(2)[0], mapPathHazardsVertices.at(2)[1]);
+        //ROS_INFO("vertex 3 = (%f,%f)", mapPathHazardsVertices.at(3)[0], mapPathHazardsVertices.at(3)[1]);
         searchLocalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(0));
         searchLocalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(1));
         searchLocalMapPathHazardsPolygon.addVertex(mapPathHazardsVertices.at(2));
@@ -287,8 +288,9 @@ bool MapManager::searchLocalMapPathHazardsCallback(messages::MapPathHazards::Req
             }
             mapPathHazardNumCellsInPolygon++;
         }
-        ROS_INFO("mapPathHazardNumCellsInPolygon = %u",mapPathHazardNumCellsInPolygon);
-        res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
+        //ROS_INFO("mapPathHazardNumCellsInPolygon = %u",mapPathHazardNumCellsInPolygon);
+        if(mapPathHazardNumCellsInPolygon == 0) {res.hazardValue = 0.1; ROS_WARN("searchLocalMapPathHazards numCellsInPolygon == 0");} // Something small as a defualt to avoid divide by zero issue
+        else res.hazardValue /= (float)mapPathHazardNumCellsInPolygon;
         return true;
     }
     else return false;
@@ -313,6 +315,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         possibleRandomWaypointValuesNormalized.resize(searchLocalMapNumPoints);
         numRandomWaypointsToSelect = req.numSearchWaypoints;
         res.waypointList.resize(numRandomWaypointsToSelect);
+        rotateCoord(globalPose.x-searchLocalMapXPos, globalPose.y-searchLocalMapYPos, globalPoseToSearchLocalMapPosition[0], globalPoseToSearchLocalMapPosition[1], -searchLocalMapHeading);
         possibleRandomWaypointValuesSum = 0.0;
         //ROS_INFO("after initial setup");
         for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
@@ -354,7 +357,8 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 {
                     //ROS_INFO("randomWaypoint: x=%f, y=%f\twaypointList.at(%i).x=%f, y=%f", randomWaypointPosition[0], randomWaypointPosition[1], j, res.waypointList.at(j).x, res.waypointList.at(j).y);
                     //ROS_INFO("distance to %i = %f", j, hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y));
-                    if(hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y) < randomWaypointMinDistance)
+                    if((hypot(randomWaypointPosition[0]-res.waypointList.at(j).x, randomWaypointPosition[1]-res.waypointList.at(j).y) < randomWaypointMinDistance)
+                            || (hypot(randomWaypointPosition[0]-globalPoseToSearchLocalMapPosition[0], randomWaypointPosition[1]-globalPoseToSearchLocalMapPosition[1]) < randomWaypointMinDistance))
                     {
                         //ROS_INFO("randomWaypoint distance criterial failed");
                         numRandomWaypointsSelected--;
@@ -364,7 +368,12 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                     }
                 }
             }
-            else randomWaypointDistanceCriteriaFailed = false;
+            else
+            {
+                if(hypot(randomWaypointPosition[0]-globalPoseToSearchLocalMapPosition[0], randomWaypointPosition[1]-globalPoseToSearchLocalMapPosition[1]) < randomWaypointMinDistance)
+                    {randomWaypointDistanceCriteriaFailed = true; numRandomWaypointsSelected--;}
+                else randomWaypointDistanceCriteriaFailed = false;
+            }
             if(!randomWaypointDistanceCriteriaFailed)
             {
                 //ROS_INFO("randomWaypoint passed, xLocal = %f, yLocal = %f",randomWaypointPosition[0], randomWaypointPosition[1]);

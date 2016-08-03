@@ -139,6 +139,7 @@ void SearchRegion::antColony_()
 	//ROS_INFO("distance rows = %i, distance cols = %i",distance.n_rows,distance.n_cols);
 	//ROS_INFO("waypointsToPlan.size() = %i",waypointsToPlan.size());
 	terrainHazard.set_size(numWaypointsToPlan,numWaypointsToPlan);
+    ROS_INFO("after mat inits");
 	for(int m=0; m<numWaypointsToPlan; m++)
 	{
 		for(int n=0; n<numWaypointsToPlan; n++)
@@ -146,6 +147,7 @@ void SearchRegion::antColony_()
 			//ROS_INFO("before distance matrix calc: m=%i n=%i",m,n);
 			distance(m,n) = hypot(waypointsToPlan.at(m).x - waypointsToPlan.at(n).x,
 								  waypointsToPlan.at(m).y - waypointsToPlan.at(n).y);
+            if(m!=n && distance(m,n)==0.0) {distance(m,n) = 0.1; ROS_WARN("ant colony calculate distance == 0.0");} // Guard in case of incidental error to prevent divide by zero
 			//ROS_INFO("after distance matrix calc");
 			//terrainHazard.fill(0.0);
 			// make service requests to get terrain hazard info
@@ -162,11 +164,13 @@ void SearchRegion::antColony_()
 			}
 			else terrainHazard(m,n) = 0.0;
 		}
-		ROS_INFO("distance matrix:");
-		distance.print();
-		ROS_INFO("terrainHazard matrix:");
-		terrainHazard.print();
 	}
+    /*ROS_INFO("distance matrix:");
+    distance.print();
+    ROS_INFO("terrainHazard matrix:");
+    terrainHazard.print();
+    std::cout << "enter a character to continue" << std::endl;
+    std::cin >> temp;*/
 	antNum = 0;
 	for(antNum; antNum<maxAntNum; antNum++)
 	{
@@ -184,7 +188,7 @@ void SearchRegion::antColony_()
 			valueNormalizedFloor = 0.0;
 			for(j; j<numWaypointsToPlan; j++)
 			{
-				ROS_INFO("before value computation, i=%i j=%i",i,j);
+                /*ROS_INFO("before value computation, i=%i j=%i",i,j);
 				ROS_INFO("pheromone(i,j) = %f",pheromone(i,j));
 				ROS_INFO("waypointsToPlan.at(j).sampleProb = %f",waypointsToPlan.at(j).sampleProb);
 				ROS_INFO("sampleProbGain*sampleProb = %f",sampleProbGain*waypointsToPlan.at(j).sampleProb);
@@ -193,31 +197,31 @@ void SearchRegion::antColony_()
 				ROS_INFO("distanceGain*distance(i,j) = %f",distanceGain*distance(i,j));
 				ROS_INFO("terrainHazard(i,j) = %f",terrainHazard(i,j));
 				ROS_INFO("terrainGain*terrainHazard(i,j) = %f",terrainGain*terrainHazard(i,j));
-				ROS_INFO("notVisited[j] = %i",notVisited.at(j));
+                ROS_INFO("notVisited[j] = %i",notVisited.at(j));*/
 				computedValue =	(sampleProbGain*waypointsToPlan.at(j).sampleProb +
 								pheromoneGain*pheromone(i,j) -
 								distanceGain*distance(i,j) -
 								terrainGain*terrainHazard(i,j));
-				ROS_INFO("after value computation, before coersion. computedValue = %f",computedValue);
+                //ROS_INFO("after value computation, before coersion. computedValue = %f",computedValue);
 				if(computedValue <= 0.0 && notVisited.at(j)==1) value.at(j) = 0.001;
 				else value.at(j) = ((float)notVisited.at(j))*computedValue;
-				ROS_INFO("after value computation. value[j] = %f",value.at(j));
+                //ROS_INFO("after value computation. value[j] = %f",value.at(j));
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueSum += value.at(k);
-			ROS_INFO("valueSum = %f",valueSum);
+            //ROS_INFO("valueSum = %f",valueSum);
 			for(int k=0; k<numWaypointsToPlan; k++)
 			{
 				valueNormalized.at(k) = value.at(k)/valueSum;
 				if(value.at(k)!=0.0 && valueNormalized.at(k)==0.0) valueNormalized.at(k) = 0.001; // Basement for normalized values. Probability distribution is discrete, not continuous, so there needs to be a basement (0.1%) that even the smallest probabilities get rounded up to so they are included in the distribution and not lost due to discrete rounding down
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueNormalizedSum += valueNormalized.at(k);
-			ROS_INFO("valueNormalizedSum = %f",valueNormalizedSum);
+            //ROS_INFO("valueNormalizedSum = %f",valueNormalizedSum);
 			randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-			ROS_INFO("randomValue = %f",randomValue);
-			for(int z=0; z<valueNormalized.size(); z++) ROS_INFO("valueNormalized.at(%i) = %f",z,valueNormalized.at(z));
+            //ROS_INFO("randomValue = %f",randomValue);
+            //for(int z=0; z<valueNormalized.size(); z++) ROS_INFO("valueNormalized.at(%i) = %f",z,valueNormalized.at(z));
 			if(randomValue>=valueNormalizedSum) // Picked 1.0 as the random value. Boundary condition, just choose the one with the biggest normalized value
 			{
-				ROS_INFO("randomValue >= valueNormalizedSum");
+                //ROS_INFO("randomValue >= valueNormalizedSum");
 				largestNormalizedValue = 0.0;
 				for(int k=0; k<numWaypointsToPlan; k++)
 				{
@@ -226,29 +230,29 @@ void SearchRegion::antColony_()
 			}
 			else // Normal, non-boundary condition behavior where 0.0 <= randomValue < 1.0
 			{
-				ROS_INFO("randomValue < valueNormalizedSum");
+                //ROS_INFO("randomValue < valueNormalizedSum");
 				for(int k=0; k<numWaypointsToPlan; k++)
 				{
-					ROS_INFO("k = %i",k);
+                    /*ROS_INFO("k = %i",k);
 					ROS_INFO("value[k] = %f",value.at(k));
 					ROS_INFO("valueNormalized[k] = %f",valueNormalized.at(k));
 					ROS_INFO("valueNormalizedFloor = %f",valueNormalizedFloor);
 					ROS_INFO("randomValue = %f",randomValue);
-					ROS_INFO("valueNormalizedCeiling = %f\n",valueNormalizedFloor + valueNormalized.at(k));
+                    ROS_INFO("valueNormalizedCeiling = %f\n",valueNormalizedFloor + valueNormalized.at(k));*/
 					if(randomValue >= valueNormalizedFloor && randomValue < (valueNormalizedFloor + valueNormalized.at(k)) && valueNormalized.at(k)!=0.0) {bestJ = k; break; ROS_WARN("found bestJ = %i",bestJ);}
 					else valueNormalizedFloor += valueNormalized.at(k);
 				}
 			}
-			ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
-			ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %f\n", pheroDepoGain/distance(i,bestJ));
+            //ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
+            //ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %f\n", pheroDepoGain/distance(i,bestJ));
 			// Deposit new pheromone
-			ROS_INFO("---------- i = %i, bestJ = %i",i,bestJ);
+            //ROS_INFO("---------- i = %i, bestJ = %i",i,bestJ);
 			pheromone(i,bestJ) += (pheroDepoGain/distance(i,bestJ) + pheroDecayValue);
 			pheromone(bestJ,i) += (pheroDepoGain/distance(bestJ,i) + pheroDecayValue);
-			ROS_INFO("distance(i,bestJ) = %f",distance(bestJ,i));
-			ROS_INFO("pheroDepo = %f",(pheroDepoGain/distance(i,bestJ) + pheroDecayValue));
+            //ROS_INFO("distance(i,bestJ) = %f",distance(bestJ,i));
+            //ROS_INFO("pheroDepo = %f",(pheroDepoGain/distance(i,bestJ) + pheroDecayValue));
 
-			ROS_DEBUG("after pheromone increment");
+            //ROS_DEBUG("after pheromone increment");
 			notVisited.at(bestJ) = 0;
 			i = bestJ;
 			j = 0;
