@@ -15,9 +15,9 @@ private:
 	float rDes_;
 	float errorR_;
 	int pivotSign_;
-	int leftSpeed_;
-	int rightSpeed_;
-	int rSpeedT_;
+	float leftSpeed_;
+	float rightSpeed_;
+	float rSpeedT_;
 	float rSpeedP_;
 	float rSpeedI_;
 	unsigned int timeoutValue_;
@@ -34,6 +34,9 @@ private:
 	const float deltaHeadingThreshold_ = 2.0; // deg
 	const double thresholdMinTime_ = 0.25; // s
 	const float middleWheelReduction_ = 0.65;
+	const float cornerBoostGain_ = 1.15;
+	float ccwBoostGain_;
+	float cwBoostGain_;
 };
 
 #endif // DRIVE_PIVOT_H

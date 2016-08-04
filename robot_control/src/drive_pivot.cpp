@@ -25,12 +25,14 @@ int DrivePivot::run()
 	rDes_ = kpR_*(desiredDeltaHeading_-deltaHeading_);
 	if(rDes_>rMax_) rDes_ = rMax_;
 	else if(rDes_<(-rMax_)) rDes_ = -rMax_;
+    if(rDes_>0.0) {ccwBoostGain_ = cornerBoostGain_; cwBoostGain_ = 1.0;}
+    else {ccwBoostGain_ = 1.0; cwBoostGain_ = cornerBoostGain_;}
 	errorR_ = rDes_ - robotStatus.yawRate;
 	rSpeedP_ = kROutput_*rDes_;
     rSpeedI_ += kiR_*errorR_;
     if(rSpeedI_>rSpeedIMax_) rSpeedI_ = rSpeedIMax_;
     else if(rSpeedI_<-rSpeedIMax_) rSpeedI_ = -rSpeedIMax_;
-	rSpeedT_ = (int)round(rSpeedP_ + rSpeedI_);
+    rSpeedT_ = round(rSpeedP_ + rSpeedI_);
 	if(rSpeedT_>rSpeedMax_) rSpeedT_ = rSpeedMax_;
 	else if(rSpeedT_<(-rSpeedMax_)) rSpeedT_ = -rSpeedMax_;
 	ROS_DEBUG("rSpeedT: %i",rSpeedT_);
@@ -57,12 +59,12 @@ int DrivePivot::run()
 	}
 	else
 	{
-		robotOutputs.flMotorSpeed = leftSpeed_;
-		robotOutputs.mlMotorSpeed = leftSpeed_*middleWheelReduction_;
-		robotOutputs.blMotorSpeed = leftSpeed_;
-		robotOutputs.frMotorSpeed = rightSpeed_;
-		robotOutputs.mrMotorSpeed = rightSpeed_*middleWheelReduction_;
-		robotOutputs.brMotorSpeed = rightSpeed_;
+        robotOutputs.flMotorSpeed = (int)round(leftSpeed_*cwBoostGain_);
+        robotOutputs.mlMotorSpeed = (int)round(leftSpeed_*middleWheelReduction_);
+        robotOutputs.blMotorSpeed = (int)round(leftSpeed_*ccwBoostGain_);
+        robotOutputs.frMotorSpeed = (int)round(rightSpeed_*ccwBoostGain_);
+        robotOutputs.mrMotorSpeed = (int)round(rightSpeed_*middleWheelReduction_);
+        robotOutputs.brMotorSpeed = (int)round(rightSpeed_*cwBoostGain_);
 		taskEnded_ = 0;
 	}
 	return taskEnded_;
