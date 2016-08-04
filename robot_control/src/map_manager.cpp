@@ -567,12 +567,13 @@ void MapManager::writeKeyframesIntoGlobalMap()
             rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], -keyframeHeading);
             if(currentKeyframe.isInside(keyframeCoord))
             {
-                // Driveability, confidence, and height
+            	globalMap.at(layerToString(_keyframeDriveability), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord);
+                /*// Driveability, confidence, and height
                 if(currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf),keyframeCoord)>globalMap.at(layerToString(_keyframeDriveabilityConf),*it))
                 {
                     globalMap.at(layerToString(_keyframeDriveability), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord);
-                    globalMap.at(layerToString(_keyframeDriveabilityConf), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf), keyframeCoord);
-                    globalMap.at(layerToString(_keyframeObjectHeight), *it) = currentKeyframe.atPosition(layerToString(_keyframeObjectHeight), keyframeCoord);
+                    //globalMap.at(layerToString(_keyframeDriveabilityConf), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf), keyframeCoord);
+                    //globalMap.at(layerToString(_keyframeObjectHeight), *it) = currentKeyframe.atPosition(layerToString(_keyframeObjectHeight), keyframeCoord);
                 }
                 else if(currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf),keyframeCoord)==globalMap.at(layerToString(_keyframeDriveabilityConf),*it))
                 {
@@ -582,9 +583,9 @@ void MapManager::writeKeyframesIntoGlobalMap()
                         globalMap.at(layerToString(_keyframeDriveabilityConf), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf), keyframeCoord);
                         globalMap.at(layerToString(_keyframeObjectHeight), *it) = currentKeyframe.atPosition(layerToString(_keyframeObjectHeight), keyframeCoord);
                     }
-                }
+                }*/
                 // Reflectivity
-                globalMap.at(layerToString(_reflectivity), *it) = currentKeyframe.atPosition(layerToString(_reflectivity), keyframeCoord);
+                //globalMap.at(layerToString(_reflectivity), *it) = currentKeyframe.atPosition(layerToString(_reflectivity), keyframeCoord);
                 /*for(int j=MAP_KEYFRAME_LAYERS_START_INDEX; j<=MAP_KEYFRAME_LAYERS_END_INDEX; j++)
                 {
                     currentCellValue = globalMap.at(layerToString(static_cast<MAP_LAYERS_T>(j)), *it);

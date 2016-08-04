@@ -89,8 +89,8 @@ public:
 	const float blindDriveDistance = 0.457; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
-	const float possibleSampleConfThresh = 0.7;
-	const float definiteSampleConfThresh = 0.9;
+	const float possibleSampleConfThresh = 0.6;
+	const float definiteSampleConfThresh = 0.8;
 	static int currentROIIndex;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
