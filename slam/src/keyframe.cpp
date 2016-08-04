@@ -402,7 +402,7 @@ void Keyframe::Initialization()
 	threshold_g2o_min_vertex = 10;	//vertex_sub number bigger than the threshold, than do g2o, avoid there is no enough vertex to do g2o
 
 	//parameter for ICP
-	min_points_ICP_threshold = 100; //number of points for ICP should bigger than this threshold
+	min_points_ICP_threshold = 20; //number of points for ICP should bigger than this threshold
 
 	//parameter for global map
 	maplength = 500;	//meter
@@ -488,7 +488,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	{
 		if(LocalMapMsgIn.new_data) //if the localmap data is new, update
 		{
-			// ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
+			ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
 			//get data
 			Store_Information(LocalMapMsgIn);
 
@@ -829,7 +829,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			// ROS_INFO_STREAM("guessT:  \n" << icp_result.transformation_matrix);
 			// ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
 			// ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
-			// ROS_INFO_STREAM("time: " << totaltime << "s");
+			ROS_INFO_STREAM("time: " << totaltime << "s");
 
 			// if(KeyframeMap_s.size() != 0)
 			// {
@@ -837,7 +837,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			// 	// ROS_INFO_STREAM("x_key of keyframe:  \n" << KeyframeMap_s[KeyframeMap_s.size()-1].x_key);
 			// }
 
-			// ROS_INFO_STREAM("use_ICP_counter: " << use_ICP_counter << " use_IMU_counter: " << use_IMU_counter << " use_g2o_counter: " << use_g2o_counter);
+			ROS_INFO_STREAM("use_ICP_counter: " << use_ICP_counter << " use_IMU_counter: " << use_IMU_counter << " use_g2o_counter: " << use_g2o_counter);
 
 
 		}
@@ -937,7 +937,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 	//icp calculation
 
 	
-	// ROS_INFO_STREAM("Start working......4  " << refPointCloudPtr->size());
+	
 	//remove points blocked in read frame
 	LocalMap_ICP read_localmap_icp_rm;
 	LocalMap_ICP ref_localmap_icp_rm;
@@ -987,7 +987,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		}
 		
 	  	//*************************************************************************//
-
+		ROS_INFO_STREAM("Start working......4  " << refPointCloudPtr->size());
 		PointCloud Final;
 		
 		// ROS_INFO_STREAM("save PCD.........");
@@ -1699,31 +1699,43 @@ double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_c
   	// {
   	// 	information_matrix << 200, 200, 200, 200, 200, 200, 200, 200, 200;
   	// }
-  	if(covariance_matrix(0,0) != 0)
+  	if(covariance_matrix(0,0) > 0.002)
   	{
   		information_matrix(0,0) = 1.0 / covariance_matrix(0,0);
   	}
-  	else
+  	else if(covariance_matrix(0,0) >= 0)
   	{
   		information_matrix(0,0) = 500;
   	}
+  	else if(covariance_matrix(0,0) < 0)
+  	{
+  		information_matrix(0,0) = 0.1;
+  	}
 
-  	if(covariance_matrix(1,1) != 0)
+  	if(covariance_matrix(1,1) > 0.002)
   	{
   		information_matrix(1,1) = 1.0 / covariance_matrix(1,1);
   	}
-  	else
+  	else if(covariance_matrix(1,1) >= 0)
   	{
   		information_matrix(1,1) = 500;
   	}
+  	else if(covariance_matrix(1,1) < 0)
+  	{
+  		information_matrix(1,1) = 0.1;
+  	}
 
-  	if(covariance_matrix(2,2) != 0)
+  	if(covariance_matrix(2,2) > 0.002)
   	{
   		information_matrix(2,2) = 1.0 / covariance_matrix(2,2);
   	}
-  	else
+  	else if(covariance_matrix(2,2) >= 0)
   	{
   		information_matrix(2,2) = 500;
+  	}
+  	else if(covariance_matrix(2,2) < 0)
+  	{
+  		information_matrix(2,2) = 0.1;
   	}
 
   	information_matrix(0,1) = 0.0;
@@ -1734,7 +1746,7 @@ double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_c
   	information_matrix(2,1) = 0.0;
   	
 
-  	ROS_INFO_STREAM("information_matrix: \n" << information_matrix);
+  	// ROS_INFO_STREAM("information_matrix: \n" << information_matrix);
 
 
 
