@@ -87,7 +87,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         // resistanceMap + satMap + localHazardMap
         FMM(resistanceMap, timeOfArrivalMap, finalDestination...);
         gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
-        // Back solve on optimal path
+        chooseWaypointsFromOptimalPath();
+        res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, waypointsToInsert.begin(), waypointsToInsert.end());
         res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel*/
     }
     else if(req.collision==0) // No collision
@@ -126,12 +127,13 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
             }
             FMM(resistanceMap, timeOfArrivalMap, goalPoint);
             gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
-            // Back solve on optimal path
-
+            chooseWaypointsFromOptimalPath();
+            if(waypointsToInsert.size()>0)
+                res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, waypointsToInsert.begin(), waypointsToInsert.end());
         }
         res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
 
-        waypoint.x = req.current_x;
+        /*waypoint.x = req.current_x;
         waypoint.y = req.current_y;
         req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
         res.waypointArrayOut = req.waypointArrayIn;
@@ -164,7 +166,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                 //intermediateWaypoints.push_back(transitionWaypoint1);
             }
         }
-        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
+        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel*/
     }
 
     //res.waypointArrayOut = intermediateWaypoints;
@@ -302,5 +304,82 @@ void SafePathing::gradientDescent(grid_map::GridMap &map, grid_map::Position sta
         }
         currentIndex = nextBestIndex;
         pathOut.push_back(currentIndex);
+    }
+}
+
+void SafePathing::chooseWaypointsFromOptimalPath()
+{
+    grid_map::Index startIndex;
+    grid_map::Index indexToConsider;
+    grid_map::Index prevIndex;
+    grid_map::Position startIndexPos;
+    grid_map::Position considerIndexPos;
+    grid_map::Position prevIndexPos;
+    float distanceBetweenIndices;
+    float hazardAlongPossiblePathThresh;
+    unsigned int numCellsOverThresh;
+    grid_map::Polygon mapPolygon;
+    std::vector<grid_map::Position> polygonVertices;
+    float mapPolygonHeading;
+    bool continueLoop = true;
+    robot_control::Waypoint waypointToPushBack;
+
+    waypointsToInsert.clear();
+    startIndex = optimalPath.front();
+    indexToConsider = optimalPath.back();
+    numCellsOverThresh = 0;
+    while(continueLoop)
+    {
+        hazardAlongPossiblePathThresh = initialHazardAlongPossiblePathThresh;
+        timeOfArrivalMap.getPosition(startIndex, startIndexPos);
+        timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
+        if(hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]) < minWaypointDistance)
+        {
+            continueLoop = false;
+            break;
+        }
+        mapPolygonHeading = atan2(considerIndexPos[1] - startIndexPos[1], considerIndexPos[0] - startIndexPos[0]); // radians
+        polygonVertices.at(0)[0] = startIndexPos[0] + corridorWidth/2.0*sin(mapPolygonHeading);
+        polygonVertices.at(0)[1] = startIndexPos[1] - corridorWidth/2.0*cos(mapPolygonHeading);
+        polygonVertices.at(1)[0] = startIndexPos[0] - corridorWidth/2.0*sin(mapPolygonHeading);
+        polygonVertices.at(1)[1] = startIndexPos[1] + corridorWidth/2.0*cos(mapPolygonHeading);
+        polygonVertices.at(2)[0] = considerIndexPos[0] - corridorWidth/2.0*sin(mapPolygonHeading);
+        polygonVertices.at(2)[1] = considerIndexPos[1] + corridorWidth/2.0*cos(mapPolygonHeading);
+        polygonVertices.at(3)[0] = considerIndexPos[0] + corridorWidth/2.0*sin(mapPolygonHeading);
+        polygonVertices.at(3)[1] = considerIndexPos[1] - corridorWidth/2.0*cos(mapPolygonHeading);
+        mapPolygon.addVertex(polygonVertices.at(0));
+        mapPolygon.addVertex(polygonVertices.at(1));
+        mapPolygon.addVertex(polygonVertices.at(2));
+        mapPolygon.addVertex(polygonVertices.at(3));
+        for(grid_map::PolygonIterator it(timeOfArrivalMap, mapPolygon); !it.isPastEnd(); ++it)
+        {
+            if(timeOfArrivalMap.at(timeLayer, *it) > hazardAlongPossiblePathThresh) numCellsOverThresh++;
+        }
+        if(numCellsOverThresh>=numCellsOverThreshLimit)
+        {
+            prevIndex = indexToConsider;
+            for(int i=optimalPath.size()-1; i>=0; i--)
+            {
+                indexToConsider = optimalPath.at(i);
+                timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
+                timeOfArrivalMap.getPosition(prevIndex, prevIndexPos);
+                distanceBetweenIndices = hypot(considerIndexPos[0]-prevIndexPos[0], considerIndexPos[1]-prevIndexPos[1]);
+                if(indexToConsider[0]==optimalPath.front()[0] && indexToConsider[1]==optimalPath.front()[1]) hazardAlongPossiblePathThresh += hazardThreshIncrementAmount;
+                else if(distanceBetweenIndices>minWaypointDistance)
+                {
+                    numCellsOverThresh = 0;
+                    break;
+                }
+            }
+            continueLoop = true;
+        }
+        else
+        {
+            waypointToPushBack.x = considerIndexPos[0];
+            waypointToPushBack.y = considerIndexPos[1];
+            waypointsToInsert.push_back(waypointToPushBack);
+            if(indexToConsider[0]==optimalPath.back()[0] && indexToConsider[1]==optimalPath.back()[1]) continueLoop = false;
+            else {startIndex = indexToConsider; continueLoop = true;}
+        }
     }
 }

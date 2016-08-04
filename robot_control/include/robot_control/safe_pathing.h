@@ -27,6 +27,7 @@ public:
 	void FMM(grid_map::GridMap& mapIn, grid_map::GridMap& mapOut, grid_map::Position &goalPointIn);
 	bool narrowBandNotEmpty(grid_map::GridMap& map);
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
+	void chooseWaypointsFromOptimalPath();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer ppServ;
@@ -61,9 +62,12 @@ public:
 	grid_map::Position startPosition;
 	unsigned int origNumWaypointsIn;
 	unsigned int numInsertedWaypoints;
-	float hazardAlongPossiblePath;
-	float hazardAlongPossiblePathThresh;
-	//const float initialHazardAlongPossiblePathThresh =
+	std::vector<robot_control::Waypoint> waypointsToInsert;
+	const float initialHazardAlongPossiblePathThresh = 5.0;
+	const float hazardThreshIncrementAmount = 1.0;
+	const unsigned int numCellsOverThreshLimit = 4;
+	const float minWaypointDistance = 5.0; // m
+	const float corridorWidth = 2.0; // m
 };
 
 #endif // SAFE_PATHING_H 
