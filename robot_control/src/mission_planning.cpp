@@ -476,6 +476,16 @@ void MissionPlanning::hsmMasterStatusCallback_(const messages::MasterStatus::Con
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)
 {
     cvSamplesFoundMsg = *msg;
+    if(cvSamplesFoundMsg.sampleList.size()>0)
+    {
+        for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+        {
+            ROS_INFO("\nsampleList[%i]",i);
+            ROS_INFO("conf = %f",cvSamplesFoundMsg.sampleList.at(i).confidence);
+            ROS_INFO("distance = %f",cvSamplesFoundMsg.sampleList.at(i).distance);
+            ROS_INFO("bearing = %f\n",cvSamplesFoundMsg.sampleList.at(i).bearing);
+        }
+    }
     updateSampleFlags_();
     sampleDataActedUpon = false;
 }

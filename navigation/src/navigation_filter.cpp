@@ -603,13 +603,13 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		filter3.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		homing_updated = true;
 	}
-	else if (!stopFlag)
-	{
-		homing_updated = false;
-	}
+	// else if (!stopFlag)
+	// {
+		// 
+	// }
 	else
 	{
-
+		homing_updated = false;
 	}
 }
 

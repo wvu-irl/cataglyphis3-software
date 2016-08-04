@@ -42,6 +42,7 @@
 #include <pcl-1.7/pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
 #include <armadillo>
 #include <messages/CollisionOut.h>
+#include <messages/CreateROIHazardMap.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <pcl/common/transforms.h>
@@ -80,6 +81,12 @@ private:
 	const float _LIDAR_HEIGHT = 0.76; // height of lidar from ground (meters)
 	const float _SAFE_ENVELOPE_ANGLE = 15.0*3.14159265/180.0; //safe envelope angle (radians)
 	const short int _TRIGGER_POINT_THRESHOLD = 10; //number of points in safe envelope that will trigger the avoidance
+
+	//preductive avoidance
+	ros::ServiceServer returnHazardMapServ;
+	std::vector<float> _hazard_x;
+	std::vector<float> _hazard_y;
+	bool returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res);
 
 	//collision output
 	short int _collision_status;

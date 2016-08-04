@@ -16,7 +16,7 @@ bool BiasRemoval::runProc()
 		procsToExecute[procType] = false;
 		sendPause();
 		biasRemovalTimedOut = false;
-		timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalTimeoutPeriod);
+		timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
 		timers[_biasRemovalActionTimeoutTimer_]->start();
 		navControlSrv.request.runBiasRemoval = true;
 		if(navControlClient.call(navControlSrv)) ROS_DEBUG("navFilterControlService call successful");

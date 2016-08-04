@@ -160,6 +160,18 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     double endSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
 
+    //do not call classifier if no blobs were extracted from segmentation
+	if(segmentImageSrv.response.coordinates.size()/2 < 1)
+	{
+		ROS_WARN("No blobs detected in image. Not performing classification.");
+		searchForSamplesMsgOut.sampleList.clear();
+		searchForSamplesMsgOut.procType = req.procType;
+		searchForSamplesMsgOut.serialNum = req.serialNum;
+		searchForSamplesPub.publish(searchForSamplesMsgOut);
+		ros::spinOnce();
+		return true;
+	}
+
 	/*
 		Call classifier server
 	*/
@@ -167,7 +179,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier
+	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier	
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
@@ -175,7 +187,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	else
 	{
 		ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-		return false;
+		searchForSamplesMsgOut.sampleList.clear();
+		searchForSamplesMsgOut.procType = req.procType;
+		searchForSamplesMsgOut.serialNum = req.serialNum;
+		searchForSamplesPub.publish(searchForSamplesMsgOut);
+		ros::spinOnce();
+		return true;
 	}
 
 	gettimeofday(&this->localTimer, NULL);  

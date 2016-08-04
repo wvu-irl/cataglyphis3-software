@@ -15,10 +15,13 @@ bool Examine::runProc()
 		findHighestConfSample();
 		expectedSampleDistance = highestConfSample.distance;
 		expectedSampleAngle = highestConfSample.bearing;
-		distanceToDrive = sqrt(pow(offsetPositionDistance,2.0)+pow(expectedSampleDistance,2.0)-2.0*offsetPositionDistance*expectedSampleDistance*cos(DEG2RAD*offsetPositionAngle));
-		angleToTurn = fabs(expectedSampleAngle)-RAD2DEG*asin(offsetPositionDistance/distanceToDrive*sin(DEG2RAD*offsetPositionAngle));
-		if(expectedSampleAngle < 0.0) angleToTurn = -angleToTurn;
-		sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false);
+		//distanceToDrive = sqrt(pow(offsetPositionDistance,2.0)+pow(expectedSampleDistance,2.0)-2.0*offsetPositionDistance*expectedSampleDistance*cos(DEG2RAD*offsetPositionAngle));
+		distanceToDrive = expectedSampleDistance;
+		//angleToTurn = fabs(expectedSampleAngle)-RAD2DEG*asin(offsetPositionDistance/distanceToDrive*sin(DEG2RAD*offsetPositionAngle));
+		angleToTurn = examineAngleToTurn;
+		//if(expectedSampleAngle < 0.0) angleToTurn = -angleToTurn;
+		finalHeading = robotStatus.heading; + expectedSampleAngle;
+		sendDriveRel(distanceToDrive, angleToTurn, true, finalHeading, false);
 		sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 		state = _exec_;
 		break;

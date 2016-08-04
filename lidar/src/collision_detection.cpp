@@ -19,8 +19,9 @@ CollisionDetection::CollisionDetection()
 	//_registration_new = false;
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &CollisionDetection::registrationCallback, this);
 
-	// ser = _nh.advertiseServise("/ ", &CollisionDetection::service, this);
-
+	//predictive avoidance service
+	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
+	
 	//collision output
 	_collision_status = 0;
 }
@@ -301,15 +302,12 @@ bool CollisionDetection::doPredictiveAovidance()
 		sor.setLeafSize (1.0f, 1.0f, 1.0f);
 		sor.filter (*hazard_filtered_projection);
 
-		std::vector<float> hazard_x;
-		std::vector<float> hazard_y;
-
-		hazard_x.clear();
-		hazard_y.clear();
+		_hazard_x.clear();
+		_hazard_y.clear();
 		for(int i = 0; i< hazard_filtered_projection->points.size(); i++)
 		{
-			hazard_x.push_back(hazard_filtered_projection->points[i].x);
-			hazard_y.push_back(hazard_filtered_projection->points[i].y);
+			_hazard_x.push_back(hazard_filtered_projection->points[i].x);
+			_hazard_y.push_back(hazard_filtered_projection->points[i].y);
 		}
 
 		//the above hazard_filter_projection is the hazard map and we need to publish this map
@@ -323,4 +321,16 @@ bool CollisionDetection::doPredictiveAovidance()
 		//relative safe region
 	}
 	bin_checker = 0; 
+}
+
+bool CollisionDetection::returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res)
+{
+	res.x_mean.clear();
+	res.y_mean.clear();
+	for(int i=0; i<_hazard_x.size();i++)
+	{
+		res.x_mean.push_back(_hazard_x[i]);
+		res.y_mean.push_back(_hazard_y[i]);
+	}
+	return true;
 }

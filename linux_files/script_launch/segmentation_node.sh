@@ -1,2 +1,2 @@
 #!/bin/bash
-rosrun computer_vision segmentation_node
+rosrun computer_vision segmentation_node respawn=true

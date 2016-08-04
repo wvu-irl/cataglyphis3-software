@@ -15,6 +15,10 @@ int main(int argc, char **argv)
 
 	while(ros::ok())
 	{
+		lidar_filter._homing_x=0;
+		lidar_filter._homing_y=0;
+		lidar_filter._homing_heading=0;
+		lidar_filter._homing_found=false;
 		if(lidar_filter.newPointCloudAvailable())
 		{
 			//ROS_INFO_STREAM("New cloud is available");
