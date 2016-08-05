@@ -20,8 +20,9 @@ bool Examine::runProc()
 		//angleToTurn = fabs(expectedSampleAngle)-RAD2DEG*asin(offsetPositionDistance/distanceToDrive*sin(DEG2RAD*offsetPositionAngle));
 		angleToTurn = examineAngleToTurn;
 		//if(expectedSampleAngle < 0.0) angleToTurn = -angleToTurn;
-		finalHeading = robotStatus.heading; + expectedSampleAngle;
-		sendDriveRel(distanceToDrive, angleToTurn, true, finalHeading, false);
+        finalHeading = fmod(robotStatus.heading, 360.0) + expectedSampleAngle;
+        //sendDriveRel(distanceToDrive, angleToTurn, flase, 0.0, false);
+        sendDriveRel(distanceToDrive, angleToTurn, true, finalHeading, false);
 		sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 		state = _exec_;
 		break;
