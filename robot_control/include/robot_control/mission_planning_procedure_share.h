@@ -31,7 +31,7 @@
 #define MAX_SAMPLES 10
 #define NUM_TIMERS 3
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
+enum PROC_TYPES_T {__emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
 enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
 
 class MissionPlanningProcedureShare
@@ -43,6 +43,9 @@ public:
 	static bool procsToExecute[NUM_PROC_TYPES];
 	static bool procsToInterrupt[NUM_PROC_TYPES];
 	static bool procsBeingExecuted[NUM_PROC_TYPES];
+	static bool procsToResume[NUM_PROC_TYPES];
+	static unsigned int numProcsBeingOrToBeExecOrRes;
+	static unsigned int numProcsBeingOrToBeExec;
     static ros::ServiceClient execActionClient;
     static messages::ExecAction execActionSrv;
 	static ros::Subscriber execInfoSub;
@@ -115,7 +118,7 @@ public:
 	static bool roiKeyframed;
 	static bool startSLAM;
 	static unsigned int avoidCount;
-	const unsigned int maxAvoidCount = 5;
+	const unsigned int maxAvoidCount = 3;
 	const float metersPerAvoidCountDecrement = 5.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
@@ -144,7 +147,7 @@ public:
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m
 	const float lidarUpdateWaitTime = 1.0; // sec
-	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
+	const float biasRemovalTimeoutPeriod = 15.0;//180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
 };
 
@@ -154,6 +157,9 @@ public:
 bool MissionPlanningProcedureShare::procsToExecute[NUM_PROC_TYPES];
 bool MissionPlanningProcedureShare::procsToInterrupt[NUM_PROC_TYPES];
 bool MissionPlanningProcedureShare::procsBeingExecuted[NUM_PROC_TYPES];
+bool MissionPlanningProcedureShare::procsToResume[NUM_PROC_TYPES];
+unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExecOrRes;
+unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExec;
 ros::ServiceClient MissionPlanningProcedureShare::execActionClient;
 messages::ExecAction MissionPlanningProcedureShare::execActionSrv;
 ros::Subscriber MissionPlanningProcedureShare::execInfoSub;

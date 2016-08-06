@@ -17,6 +17,7 @@ bool Approach::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		findHighestConfSample();
 		expectedSampleDistance = highestConfSample.distance;
 		expectedSampleAngle = highestConfSample.bearing;
@@ -31,6 +32,7 @@ bool Approach::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
 		switch(step)
 		{
@@ -122,6 +124,7 @@ bool Approach::runProc()
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		step = _computeManeuver;
 		state = _init_;
 		break;

@@ -102,10 +102,11 @@ MissionPlanning::MissionPlanning()
         procsToExecute[i] = false;
         procsToInterrupt[i] = false;
         procsBeingExecuted[i] = false;
+        procsToResume[i] = false;
         //procsToExecute.push_back(false);
         //procsToInterrupt.push_back(false);
         //procsBeingExecuted.push_back(false);
-        ROS_INFO("procsToExecute.at(i) = %d",procsToExecute[i]);
+        //ROS_INFO("procsToExecute.at(i) = %d",procsToExecute[i]);
         //ROS_INFO("procsToInterrupt.at(i) = %d",procsToInterrupt.at(i));
         //ROS_INFO("procsBeingExecuted.at(i) = %d",procsBeingExecuted.at(i));
     }
@@ -113,6 +114,8 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
+    int temp;
+    //ROS_INFO("BEGIN >>>>>>>>>>>");
     //ROS_DEBUG("before evalConditions");
 
    /* ROS_INFO("\n");
@@ -134,6 +137,12 @@ void MissionPlanning::run()
     else runProcesses_();
     packAndPubInfoMsg_();
     //std::printf("\n");
+    //ROS_INFO("END <<<<<<<<<<<<<\n");
+    /*if(searchRegion.state==_exec_ && procsToExecute[__examine__])
+    {
+        std::cout << "enter character to continue" << std::endl;
+        std::cin >> temp;
+    }*/
 }
 
 void MissionPlanning::evalConditions_()
@@ -147,7 +156,7 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        /*ROS_INFO("=========================================");
+        /*//ROS_INFO("=========================================");
         ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
@@ -167,9 +176,11 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("performSafeMode = %i",performSafeMode);
         ROS_INFO("inDepositPosition = %i",inDepositPosition);
         ROS_INFO("avoidCount = %u",avoidCount);
+        ROS_INFO("examineCount = %u",examineCount);
         ROS_INFO("turnFlag = %i",execInfoMsg.turnFlag);
         ROS_INFO("stopFlag = %i",execInfoMsg.stopFlag);
-        ROS_INFO("execDequeSize = %u",execInfoMsg.actionDequeSize);
+        ROS_INFO("searchRegion.state = %i",(int)searchRegion.state);*/
+        /*ROS_INFO("execDequeSize = %u",execInfoMsg.actionDequeSize);
         std::printf("actionDeque: (");
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%i,",execInfoMsg.actionDeque[i]);
         std::printf(")\n");
@@ -178,15 +189,16 @@ void MissionPlanning::evalConditions_()
         std::printf(")\n");
         std::printf("actionFloat2: (");
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
-        std::printf(")\n");
-    	for(int i=0; i<NUM_PROC_TYPES; i++) 
-        //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}*/
-        calcnumProcsBeingOrToBeExec_();
+        std::printf(")\n");*/
+        //for(int i=0; i<NUM_PROC_TYPES; i++)
+        //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
+        calcnumProcsBeingOrToBeExecOrRes_();
+        //ROS_INFO("numProcsBeingOrToBeExecOrRes = %i", numProcsBeingOrToBeExecOrRes);
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
         {
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
-            if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape"); voiceSay->call("to interrupt emergencyEscape");}
-            else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape"); voiceSay->call("to execute emergencyEscape");}
+            if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape"); voiceSay->call("interrupt emergency escape");}
+            else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape"); voiceSay->call("emergency escape");}
         }
         if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
         {
@@ -220,15 +232,15 @@ void MissionPlanning::evalConditions_()
             }
             if(shouldExecuteAvoidManeuver)
             {
-                if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid"); voiceSay->call("to execute avoid");}
-                else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid"); voiceSay->call("to interrupt avoid");}
+                if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid"); voiceSay->call("avoid");}
+                else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid"); voiceSay->call("interrupt avoid");}
             }
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Next Best Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
-            voiceSay->call("to execute nextBestRegion");
+            voiceSay->call("next best begion");
             //VOICESAY("to execute nextBestRegion");
             /*robotStatus.pauseSwitch = true;
             pause.sendPause();
@@ -237,11 +249,11 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
-            voiceSay->call("to execute searchRegion");
+            voiceSay->call("search region");
             /*robotStatus.pauseSwitch = true;
             pause.sendPause();
             std::cout << "press enter to continue" << std::endl;
@@ -249,65 +261,65 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !performSafeMode && !missionEnded) // Bias Removal
+        if(numProcsBeingOrToBeExecOrRes==0 && performBiasRemoval && !(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !performSafeMode && !missionEnded) // Bias Removal
         {
             procsToExecute[__biasRemoval__] = true;
             ROS_INFO("to execute bias removal");
-            voiceSay->call("to execute bias removal");
+            voiceSay->call("bias removal");
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !performSafeMode && !missionEnded) // Examine
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !performSafeMode && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
-            voiceSay->call("to execute examine");
+            voiceSay->call("examine");
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !performSafeMode && !missionEnded) // Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !performSafeMode && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
-            voiceSay->call("to execute approach");
+            voiceSay->call("approach");
         }
-        if(numProcsBeingOrToBeExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
-            voiceSay->call("to execute collect");
+            voiceSay->call("collect");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Confirm Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
-            voiceSay->call("to execute confirmCollect");
+            voiceSay->call("confirm collect");
         }
-        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
-            voiceSay->call("to execute goHome");
+            voiceSay->call("go home");
         }
-        if(numProcsBeingOrToBeExec==0 && homingUpdateFailed && atHome && !inDepositPosition && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !inDepositPosition && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
-            voiceSay->call("to execute square update");
+            voiceSay->call("square update");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
-            voiceSay->call("to execute depositApproach");
+            voiceSay->call("deposit approach");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Sample
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
-            voiceSay->call("to execute depositSample");
+            voiceSay->call("deposit sample");
         }
-        if(numProcsBeingOrToBeExec==0 && performSafeMode && !escapeCondition && !missionEnded)
+        if(numProcsBeingOrToBeExecOrRes==0 && performSafeMode && !escapeCondition && !missionEnded)
         {
             procsToExecute[__safeMode__] = true;
             ROS_INFO("to execute safeMode");
-            voiceSay->call("to execute safeMode");
+            voiceSay->call("safe mode");
         }
 
         // *************** Multi Proc Lockout for testing *************************
@@ -361,11 +373,13 @@ void MissionPlanning::resumeTimers_()
     for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
 }
 
-void MissionPlanning::calcnumProcsBeingOrToBeExec_()
+void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
 {
+    numProcsBeingOrToBeExecOrRes = 0;
     numProcsBeingOrToBeExec = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++) 
     {
+        if(procsBeingExecuted[i] || procsToExecute[i] || procsToResume[i]) numProcsBeingOrToBeExecOrRes++;
         if(procsBeingExecuted[i] || procsToExecute[i]) numProcsBeingOrToBeExec++;
     }
 }
@@ -483,7 +497,8 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
             ROS_INFO("\nsampleList[%i]",i);
             ROS_INFO("conf = %f",cvSamplesFoundMsg.sampleList.at(i).confidence);
             ROS_INFO("distance = %f",cvSamplesFoundMsg.sampleList.at(i).distance);
-            ROS_INFO("bearing = %f\n",cvSamplesFoundMsg.sampleList.at(i).bearing);
+            ROS_INFO("bearing = %f",cvSamplesFoundMsg.sampleList.at(i).bearing);
+            ROS_INFO("type = %i\n",cvSamplesFoundMsg.sampleList.at(i).type);
         }
     }
     updateSampleFlags_();

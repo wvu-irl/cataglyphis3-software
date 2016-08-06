@@ -2,13 +2,14 @@
 
 bool Examine::runProc()
 {
-	ROS_INFO("examineState = %i",state);
+    //ROS_INFO("examineState = %i",state);
 	switch(state)
 	{
 	case _init_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		examineCount++;
 		if(examineCount>examineLimit) {possibleSample = false; definiteSample = false; examineCount = 0; state = _finish_; break;}
@@ -20,8 +21,9 @@ bool Examine::runProc()
 		//angleToTurn = fabs(expectedSampleAngle)-RAD2DEG*asin(offsetPositionDistance/distanceToDrive*sin(DEG2RAD*offsetPositionAngle));
 		angleToTurn = examineAngleToTurn;
 		//if(expectedSampleAngle < 0.0) angleToTurn = -angleToTurn;
-		finalHeading = robotStatus.heading; + expectedSampleAngle;
-		sendDriveRel(distanceToDrive, angleToTurn, true, finalHeading, false);
+        finalHeading = fmod(robotStatus.heading, 360.0) + expectedSampleAngle;
+        //sendDriveRel(distanceToDrive, angleToTurn, flase, 0.0, false);
+        sendDriveRel(distanceToDrive, angleToTurn, true, finalHeading, false);
 		sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 		state = _exec_;
 		break;
@@ -29,6 +31,7 @@ bool Examine::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
 		else state = _exec_;
@@ -46,6 +49,7 @@ bool Examine::runProc()
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

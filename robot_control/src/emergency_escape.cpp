@@ -9,6 +9,7 @@ bool EmergencyEscape::runProc()
 		escapeLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		if(interrupted)
 		{
 			sendDequeClearFront();
@@ -23,6 +24,7 @@ bool EmergencyEscape::runProc()
 	case _exec_:
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		ROS_INFO("execLastSerialNum = %u",execLastSerialNum);
 		ROS_INFO("backupSerialNum = %u", backupSerialNum);
 		ROS_INFO("offsetDriveSerialNum = %u", offsetDriveSerialNum);
@@ -39,6 +41,7 @@ bool EmergencyEscape::runProc()
 	case _finish_:
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

@@ -9,6 +9,7 @@ bool Avoid::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         avoidCount++;
         if(avoidCount > maxAvoidCount)
         {
@@ -63,6 +64,7 @@ bool Avoid::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
@@ -78,6 +80,7 @@ bool Avoid::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

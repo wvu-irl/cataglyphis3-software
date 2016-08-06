@@ -10,6 +10,7 @@ bool NextBestRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         execDequeEmpty = false;
         atHome = false;
         avoidCount = 0;
@@ -123,6 +124,7 @@ bool NextBestRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
 		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
@@ -164,6 +166,7 @@ bool NextBestRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         state = _init_;
         break;
     }

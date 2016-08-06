@@ -9,6 +9,7 @@ bool ConfirmCollect::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		sampleTypeMux = 0;
 		//sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
 		//ROS_INFO("confirmCollect sampleTypeMux = %u",sampleTypeMux);
@@ -23,6 +24,7 @@ bool ConfirmCollect::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
 		{
 			computeSampleValuesWithExpectedDistance();
@@ -85,6 +87,7 @@ bool ConfirmCollect::runProc()
 		sampleInCollectPosition = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}
