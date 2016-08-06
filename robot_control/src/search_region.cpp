@@ -7,7 +7,7 @@ SearchRegion::SearchRegion()
 
 bool SearchRegion::runProc()
 {
-	//ROS_INFO("searchRegion state = %i", state);
+    ROS_INFO("searchRegion state = %i", state);
 	//ROS_INFO_THROTTLE(1, "executing searchRegion");
 	switch(state)
 	{
@@ -84,7 +84,7 @@ bool SearchRegion::runProc()
 		procsToExecute[procType] = false;
 		computeDriveSpeeds();
 		serviceAvoidCounterDecrement();
-		if(possibleSample || definiteSample && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
+        if((possibleSample || definiteSample) && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
 			sendDequeClearAll();
 			state = _finish_;

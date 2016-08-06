@@ -483,7 +483,8 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
             ROS_INFO("\nsampleList[%i]",i);
             ROS_INFO("conf = %f",cvSamplesFoundMsg.sampleList.at(i).confidence);
             ROS_INFO("distance = %f",cvSamplesFoundMsg.sampleList.at(i).distance);
-            ROS_INFO("bearing = %f\n",cvSamplesFoundMsg.sampleList.at(i).bearing);
+            ROS_INFO("bearing = %f",cvSamplesFoundMsg.sampleList.at(i).bearing);
+            ROS_INFO("type = %i\n",cvSamplesFoundMsg.sampleList.at(i).type);
         }
     }
     updateSampleFlags_();

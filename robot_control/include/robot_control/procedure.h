@@ -54,7 +54,7 @@ bool Procedure::run()
 {
     //ROS_DEBUG("before if(procsToExecute.at(this->procType");
     //ROS_DEBUG("this->procType = %i",static_cast<int>(this->procType));
-	if(procsToInterrupt[this->procType] && this->state!=_finish_) this->state = _interrupt_;
+	if(procsToInterrupt[this->procType] && this->state==_exec_) this->state = _interrupt_;
 	if(procsToExecute[this->procType] || procsBeingExecuted[this->procType]) return this->runProc();
 	//else if(procsBeingExecuted.at(this->procType) == true && procsToExecute.at(this->procType) == false) {this->state = _interrupt_; return this->runProc();}
     //ROS_DEBUG("after if - else if(procsToExecute.at(this->procType");
