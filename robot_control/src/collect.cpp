@@ -9,6 +9,7 @@ bool Collect::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false);
 		sendGrab();
         computeDriveSpeeds();
@@ -18,6 +19,7 @@ bool Collect::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
@@ -33,6 +35,7 @@ bool Collect::runProc()
 		possessingSample = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

@@ -2,13 +2,14 @@
 
 bool Examine::runProc()
 {
-	ROS_INFO("examineState = %i",state);
+    //ROS_INFO("examineState = %i",state);
 	switch(state)
 	{
 	case _init_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		examineCount++;
 		if(examineCount>examineLimit) {possibleSample = false; definiteSample = false; examineCount = 0; state = _finish_; break;}
@@ -30,6 +31,7 @@ bool Examine::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
 		else state = _exec_;
@@ -47,6 +49,7 @@ bool Examine::runProc()
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

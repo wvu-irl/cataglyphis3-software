@@ -63,7 +63,6 @@ public:
 
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
-	unsigned int numProcsBeingOrToBeExec;
 	bool multiProcLockout;
 	unsigned int lockoutSum;
 	bool initComplete;
@@ -79,7 +78,7 @@ private:
 	void runPause_();
 	void pauseAllTimers_();
 	void resumeTimers_();
-	void calcnumProcsBeingOrToBeExec_();
+	void calcnumProcsBeingOrToBeExecOrRes_();
 	void updateSampleFlags_();
 	void packAndPubInfoMsg_();
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);

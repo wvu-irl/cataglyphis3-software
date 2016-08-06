@@ -7,7 +7,7 @@ SearchRegion::SearchRegion()
 
 bool SearchRegion::runProc()
 {
-    ROS_INFO("searchRegion state = %i", state);
+    //ROS_INFO("searchRegion state = %i", state);
 	//ROS_INFO_THROTTLE(1, "executing searchRegion");
 	switch(state)
 	{
@@ -15,6 +15,7 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		avoidCount = 0;
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
@@ -82,6 +83,7 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		serviceAvoidCounterDecrement();
         if((possibleSample || definiteSample) && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
@@ -101,6 +103,7 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}
