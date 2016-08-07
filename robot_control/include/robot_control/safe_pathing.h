@@ -28,11 +28,15 @@ public:
 	bool narrowBandNotEmpty(grid_map::GridMap& map);
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	void chooseWaypointsFromOptimalPath();
+	void generateAndPubVizMap();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer ppServ;
 	ros::Subscriber robotPoseSub;
 	ros::ServiceClient globalMapFullClient;
+	ros::Publisher vizMapPub;
+	grid_map_msgs::GridMap vizMapMsg;
+	grid_map::GridMap vizMap;
 	messages::GlobalMapFull globalMapFullSrv;
 	messages::RobotPose globalPose;
 	std::vector <robot_control::Waypoint> intermediateWaypoints;
@@ -56,6 +60,9 @@ public:
 	grid_map::Position goalPoint;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
+	const std::string vizResistanceLayer = "resistance";
+	const std::string vizTimeOfArrivalLayer = "timeOfArrival";
+	const std::string vizOptimalPathLayer = "optimalPath";
 	const float mapResolution = 1.0; // m
 	grid_map::Length mapDimensions;
 	const grid_map::Position mapOrigin;
