@@ -31,7 +31,7 @@ bool Collect::runProc()
 		state = _init_;
 		break;
 	case _finish_:
-		avoidLockout = false;
+		avoidLockout = true;
 		possessingSample = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

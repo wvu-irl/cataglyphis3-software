@@ -13,7 +13,7 @@ public:
 	const float maxDriveDistance = 4.0; // m
 	const int maxBackUpCount = 1;
 	const float backUpDistance = -0.5;
-	const float approachValueThreshold = 0.7;
+	const float approachValueThreshold = 0.65;
 	bool commandedSearch;
 	bool approachableSample;
 	// Methods

@@ -467,6 +467,8 @@ void Procedure::sendDequeClearFront()
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
+	ROS_INFO("send dequeClearFront");
+	voiceSay->call("queue clear front");
 }
 
 void Procedure::sendDequeClearAll()
@@ -568,7 +570,7 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 								(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2.0)+pow(expectedSampleDistance,2.0)-
 									2.0*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
 										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle))));
-		ROS_INFO("^^^^^ sampleValues.at(%i) = %i",i,sampleValues.at(i));
+		ROS_INFO("^^^^^ sampleValues.at(%i) = %f",i,sampleValues.at(i));
 
 		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
 	}
