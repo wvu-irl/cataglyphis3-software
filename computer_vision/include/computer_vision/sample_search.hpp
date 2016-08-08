@@ -38,7 +38,7 @@ public:
 	computer_vision::SegmentImage segmentImageSrv;
 	computer_vision::ImageProbabilities imageProbabilitiesSrv;
 	messages::CVSamplesFound searchForSamplesMsgOut;
-	const double G_SENSOR_HEIGHT = 1.4;
+	const double G_SENSOR_HEIGHT = 1.45;
 	const double G_IMAGE_WIDTH = 5792;
 	const double G_IMAGE_HEIGHT = 5792;
 	const double G_FOCAL_LENGTH = 0.01;

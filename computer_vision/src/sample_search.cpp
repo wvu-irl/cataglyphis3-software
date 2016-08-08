@@ -50,7 +50,7 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	double flat_ground_distance_distance = G_SENSOR_HEIGHT*tan(angle);
 
 	//calculate angle about the z axis to the sample (angle to rotate to face the sample)
-	double delta_theta = atan(y,x);
+	double delta_theta = atan2(y,x);
 
 	//push back output in vector
 	std::vector<double> relative_position;
@@ -63,7 +63,7 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	else
 	{
 		relative_position.push_back(flat_ground_distance_distance);
-		relative_position.push_back(delta_theta_t*180/3.14159265-3);
+		relative_position.push_back(delta_theta*180/3.14159265-3);
 	}
 
 	//return the relative position with flat ground assumption
