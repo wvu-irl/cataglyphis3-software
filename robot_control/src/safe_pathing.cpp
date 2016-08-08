@@ -6,6 +6,7 @@ SafePathing::SafePathing()
 	ppServ = nh.advertiseService("/control/safepathing/intermediatewaypoints", &SafePathing::FindPath, this);
     robotPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &SafePathing::robotPoseCallback, this);
     globalMapFullClient = nh.serviceClient<messages::GlobalMapFull>("/control/mapmanager/globalmapfull");
+    vizMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/safepathing/mapviz", 1);
     startRadialDistance = 0.0;
     finishRadialDistance = 0.0;
     transitionWaypoint1.x = 8.0;
@@ -28,7 +29,7 @@ SafePathing::SafePathing()
     timeOfArrivalMap.setFrameId("map");
     initialViscosityMap.setFrameId("map");
     resistanceMap.setFrameId("map");
-
+    vizMap.setFrameId("map");
 }
 
 bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, robot_control::IntermediateWaypoints::Response &res)
@@ -98,40 +99,57 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
         req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
         res.waypointArrayOut = req.waypointArrayIn;
         origNumWaypointsIn = req.waypointArrayIn.size();
-        numInsertedWaypoints = 0;
-        if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
-        else ROS_ERROR("globalMapFull service call unsuccessful");
-        grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
-        mapDimensions = globalMap.getLength();
-        timeOfArrivalMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-        initialViscosityMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-        resistanceMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-        for(int i=0; i<(origNumWaypointsIn-1); i++)
+        if(origNumWaypointsIn>0)
         {
-            timeOfArrivalMap.add(timeLayer, initialTimeValue);
-            timeOfArrivalMap.add(setLayer, (float)_unknown);
-            initialViscosityMap.add(timeLayer, initialTimeValue);
-            initialViscosityMap.add(setLayer, (float)_unknown);
-            resistanceMap.add(timeLayer, initialTimeValue);
-            resistanceMap.add(setLayer, (float)_unknown);
-            startPosition[0] = req.waypointArrayIn.at(i).x;
-            startPosition[1] = req.waypointArrayIn.at(i).y;
-            goalPoint[0] = req.waypointArrayIn.at(i+1).x;
-            goalPoint[1] = req.waypointArrayIn.at(i+1).y;
-            FMM(initialViscosityMap, resistanceMap, goalPoint);
-            // resistanceMap + satMap
-            for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
+            numInsertedWaypoints = 0;
+            if(globalMapFullClient.call(globalMapFullSrv)) ROS_INFO("globalMapFull service call successful");
+            else ROS_ERROR("globalMapFull service call unsuccessful");
+            grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
+            mapDimensions = globalMap.getLength();
+            timeOfArrivalMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
+            initialViscosityMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
+            resistanceMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
+            ROS_INFO("before for loop");
+            for(int i=0; i<(origNumWaypointsIn-1); i++)
             {
-                resistanceMap.at(timeLayer, *it) += globalMap.at(layerToString(_satDriveability), *it); // Just add or average?
-                if(resistanceMap.at(timeLayer, *it) > 10.0) resistanceMap.at(timeLayer, *it) = 10.0;
+                timeOfArrivalMap.add(timeLayer, initialTimeValue);
+                timeOfArrivalMap.add(setLayer, (float)_unknown);
+                initialViscosityMap.add(timeLayer, initialTimeValue);
+                initialViscosityMap.add(setLayer, (float)_unknown);
+                resistanceMap.add(timeLayer, initialTimeValue);
+                resistanceMap.add(setLayer, (float)_unknown);
+                startPosition[0] = req.waypointArrayIn.at(i).x;
+                startPosition[1] = req.waypointArrayIn.at(i).y;
+                goalPoint[0] = req.waypointArrayIn.at(i+1).x;
+                goalPoint[1] = req.waypointArrayIn.at(i+1).y;
+                ROS_INFO("before resistanceMap FMM");
+                FMM(initialViscosityMap, resistanceMap, goalPoint);
+                ROS_INFO("before write sat map into resistance map");
+                // resistanceMap + satMap
+                /*for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
+                {
+                    resistanceMap.at(timeLayer, *it) += globalMap.at(layerToString(_satDriveability), *it); // Just add or average?
+                    if(resistanceMap.at(timeLayer, *it) > 10.0) resistanceMap.at(timeLayer, *it) = 10.0;
+                }*/
+                ROS_INFO("before timeOfArrivalMap FMM");
+                FMM(resistanceMap, timeOfArrivalMap, goalPoint);
+                ROS_INFO("before gradientDescent");
+                ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
+                ROS_INFO("before chooseWaypointsFromOptimalPath");
+                ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                chooseWaypointsFromOptimalPath();
+                ROS_INFO("before waypointsOut.insert");
+                ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                if(waypointsToInsert.size()>0)
+                    res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, waypointsToInsert.begin(), waypointsToInsert.end());
+                ROS_INFO("before generateAngPubVizMap");
+                generateAndPubVizMap();
             }
-            FMM(resistanceMap, timeOfArrivalMap, goalPoint);
-            gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
-            chooseWaypointsFromOptimalPath();
-            if(waypointsToInsert.size()>0)
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, waypointsToInsert.begin(), waypointsToInsert.end());
+            ROS_INFO("before waypointsOut.erase(begin)");
+            res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
         }
-        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
+        else ROS_ERROR("called intermediate waypoints with less no waypointsIn");
 
         /*waypoint.x = req.current_x;
         waypoint.y = req.current_y;
@@ -195,7 +213,7 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     float delta;
     float dx;
     float dy;
-    bool continueLoop;
+    bool continueLoop = true;
     float bestNarrowBandValue;
     grid_map::Index bestNarrowBandIndex;
     grid_map::Size mapSize;
@@ -210,6 +228,7 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     while(continueLoop)
     {
         continueLoop = narrowBandNotEmpty(mapOut)/* || currentIndex != startIndex*/;
+        ROS_INFO("continueLoop = %i",continueLoop);
         if(continueLoop)
         {
             bestNarrowBandValue = 10.0;
@@ -222,9 +241,9 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
                         bestNarrowBandValue = mapOut.at(timeLayer, *it);
                         bestNarrowBandIndex = grid_map::getIndexFromLinearIndex(it.getLinearIndex(), mapOut.getSize());
                     }
-                    mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
                 }
             }
+            mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
             for(int i=-1; i<=1; i++)
             {
                 for(int j=-1; j<=1; j++)
@@ -338,6 +357,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             continueLoop = false;
             break;
         }
+        mapPolygon.removeVertices();
         mapPolygonHeading = atan2(considerIndexPos[1] - startIndexPos[1], considerIndexPos[0] - startIndexPos[0]); // radians
         polygonVertices.at(0)[0] = startIndexPos[0] + corridorWidth/2.0*sin(mapPolygonHeading);
         polygonVertices.at(0)[1] = startIndexPos[1] - corridorWidth/2.0*cos(mapPolygonHeading);
@@ -382,4 +402,32 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             else {startIndex = indexToConsider; continueLoop = true;}
         }
     }
+}
+
+void SafePathing::generateAndPubVizMap()
+{
+    ROS_INFO("before setGeometry");
+    vizMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
+    ROS_INFO("before add layers");
+    vizMap.add(vizResistanceLayer, 0.0);
+    vizMap.add(vizTimeOfArrivalLayer, 0.0);
+    vizMap.add(vizOptimalPathLayer, 0.0);
+    ROS_INFO("before iterator loop");
+    for(grid_map::GridMapIterator it(vizMap); !it.isPastEnd(); ++it)
+    {
+        vizMap.at(vizResistanceLayer, *it) = resistanceMap.at(timeLayer, *it);
+        vizMap.at(vizTimeOfArrivalLayer, *it) = timeOfArrivalMap.at(timeLayer, *it);
+    }
+    /*ROS_INFO("before optimalPath loop");
+    ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+    for(int i=0; i<optimalPath.size(); i++)
+    {
+        ROS_INFO("i = %i", i);
+        ROS_INFO("optimalPath[i] = (%i,%i)",optimalPath.at(i)[0],optimalPath.at(i)[1]);
+        vizMap.at(vizOptimalPathLayer, optimalPath.at(i)) = 1.0;
+    }*/
+    ROS_INFO("before toMessage");
+    grid_map::GridMapRosConverter::toMessage(vizMap, vizMapMsg);
+    ROS_INFO("before publish");
+    vizMapPub.publish(vizMapMsg);
 }
