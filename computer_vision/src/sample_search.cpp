@@ -33,31 +33,40 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	v = v - G_IMAGE_HEIGHT/2;
 
 	//transform u and v pixels to align with robot x and y 
-	double x = -v;
-	double y = u;
+	double x = -v; //pixels
+	double y = u; //pixels
 
-	//calculate angle between x and y
-	double delta_theta = atan2(y,x);
+	//convert pixels to distance in mm (pixel is 4.14 micrometer square)
+	x = x*4.14e-3; //mm
+	y = y*4.14e-3; //mm
 
-	//calculate angle between z and distance to sample
-	float pixel_distance_from_center = sqrt(x*x + y*y);
-	double angle = (3.14159265/2)*pixel_distance_from_center/(G_IMAGE_WIDTH/2);//atan2(pixel_distance_from_center*G_PIXEL2DISTANCE,G_FOCAL_LENGTH);
+	//calculate distance from center of image sensor
+	float pixel_distance_from_center = sqrt(x*x + y*y); //mm
+
+	//convert distance to angle of view (distance must be in mm and output will be in degrees)
+	double angle = ((pixel_distance_from_center-0.18753)/0.16637)*3.14159265/180.0; //radians (converted from degrees)
 
 	//calculate distance assuming flat ground tan(angle) = x/z where z is the sensor height
-	double distance = G_SENSOR_HEIGHT*tan(angle);
+	double flat_ground_distance_distance = G_SENSOR_HEIGHT*tan(angle);
 
-	//transform to center of robot (to cartesian then back to polar)
-	double x_t = distance*cos(delta_theta) + 0.4;
-	double y_t = distance*sin(delta_theta);
-	double distance_t = sqrt(x_t*x_t + y_t*y_t);
-	double delta_theta_t = atan2(y,x);
+	//calculate angle about the z axis to the sample (angle to rotate to face the sample)
+	double delta_theta = atan(y,x);
 
-	//put results in vector
+	//push back output in vector
 	std::vector<double> relative_position;
-	relative_position.push_back(distance_t);
-	relative_position.push_back(delta_theta_t*180/3.14159265-3);
+	if(angle > 3.1415926/2)
+	{
+		ROS_ERROR("Error! Object detectable outside of visible region of image...");
+		relative_position.push_back(0);
+		relative_position.push_back(0);
+	}
+	else
+	{
+		relative_position.push_back(flat_ground_distance_distance);
+		relative_position.push_back(delta_theta_t*180/3.14159265-3);
+	}
 
-	//return flat ground position
+	//return the relative position with flat ground assumption
 	return relative_position;
 }
 
