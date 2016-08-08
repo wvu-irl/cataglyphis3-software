@@ -1,8 +1,10 @@
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <computer_vision/capture_class.hpp> 
 #include <computer_vision/calibrate_camera.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <boost/filesystem.hpp>
 
 //Robot Width Image
 int robotWidthMax = 0;
@@ -113,6 +115,9 @@ int main(int argc, char **argv)
 	sprintf( TrackbarPoleHeight, "PH", poleHeightMax );
 	cv::createTrackbar( TrackbarPoleHeight, "Current Image", &poleHeightSlider, poleHeightMax, onTrackbarPoleHeight );
 
+	//Initialize calibration image
+	cv::Mat calibrationMask = cv::Mat::zeros(5792,5792,CV_8U);
+
 	//Main Loop
 	while(ros::ok())
 	{
@@ -133,9 +138,6 @@ int main(int argc, char **argv)
 		else if(keyPress == 'u')
 		{
 			ROS_INFO("Updating image...");
-
-    		cv::Mat calibrationMask = cv::Mat::zeros(5792,5792,CV_8U);
-
     		int limitRobotLeftWidth = (robotWidthMax - robotWidthSlider)/2;
     		int limitRobotRightWidth = (robotWidthMax - robotWidthSlider)/2 + robotWidthSlider;
     		int limitRobotHeightTop = robotHeightMax - robotHeightSlider - robotShiftSlider;
@@ -173,8 +175,10 @@ int main(int argc, char **argv)
 			cv::add(dstCopy,blendMask,dst);
 		}
 		else if(keyPress == 's')
-		{ //write mask to disk
-			//imwrite();
+		{
+			boost::filesystem::path P( ros::package::getPath("computer_vision") );
+			cv::imwrite(P.string() + "/data/images/calibration_mask.jpg",calibrationMask);
+			cv::imwrite(P.string() + "/data/images/calibration_mask_bak.jpg",calibrationMask);
 		}
 		else if(keyPress == 'q')
 		{

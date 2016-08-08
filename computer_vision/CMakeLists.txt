@@ -192,6 +192,8 @@ add_dependencies(calibrate_camera_node computer_vision_generate_messages_cpp)
  	${catkin_LIBRARIES}
  	calibrate_camera
  	capture_class
+   	boost_filesystem 
+ 	boost_system
  )
 
 
