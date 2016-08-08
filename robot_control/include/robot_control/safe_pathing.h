@@ -54,10 +54,14 @@ public:
 	std::vector<grid_map::Index> optimalPath;
 	std::vector<grid_map::Position> hazardMapPoints;
 	grid_map::GridMap initialViscosityMap;
-	const float initialTimeValue = 0.1;
+	const float initialTimeValue = 0.01;
+	const float maxTimeValue = 10.0;
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
 	grid_map::Position goalPoint;
+	std::vector<grid_map::Index> frozenSet;
+	std::vector<grid_map::Index> narrowBandSet;
+	std::vector<grid_map::Index> unknownSet;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
 	const std::string vizResistanceLayer = "resistance";

@@ -112,11 +112,11 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
             ROS_INFO("before for loop");
             for(int i=0; i<(origNumWaypointsIn-1); i++)
             {
-                timeOfArrivalMap.add(timeLayer, initialTimeValue);
+                timeOfArrivalMap.add(timeLayer, maxTimeValue);
                 timeOfArrivalMap.add(setLayer, (float)_unknown);
                 initialViscosityMap.add(timeLayer, initialTimeValue);
                 initialViscosityMap.add(setLayer, (float)_unknown);
-                resistanceMap.add(timeLayer, initialTimeValue);
+                resistanceMap.add(timeLayer, maxTimeValue);
                 resistanceMap.add(setLayer, (float)_unknown);
                 startPosition[0] = req.waypointArrayIn.at(i).x;
                 startPosition[1] = req.waypointArrayIn.at(i).y;
@@ -219,19 +219,28 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     grid_map::Size mapSize;
     grid_map::Index currentIndex;
     grid_map::Index offsetIndex;
+    unsigned long int counter = 0;
     //mapOut.add(timeLayer, 10.0);
     mapOut.add(setLayer, (float)_unknown);
     mapSize = mapOut.getSize();
+    unknownSet.resize(mapSize[0]*mapSize[1]);
+    for(grid_map::GridMapIterator it(mapOut); !it.isPastEnd(); ++it)
+    {
+        unknownSet.at(it.getLinearIndex()) = grid_map::getIndexFromLinearIndex(it.getLinearIndex(), mapSize);
+    }
     mapOut.atPosition(timeLayer, goalPointIn) = 0.0;
     mapOut.atPosition(setLayer, goalPointIn) = (float)_narrowBand;
     mapOut.getIndex(goalPointIn, currentIndex);
+    ROS_INFO("mapSize = (%i,%i)",mapSize[0],mapSize[1]);
     while(continueLoop)
     {
+        //ROS_INFO("counter = %u",counter);
+        counter++;
         continueLoop = narrowBandNotEmpty(mapOut)/* || currentIndex != startIndex*/;
-        ROS_INFO("continueLoop = %i",continueLoop);
+        //ROS_INFO("continueLoop = %i",continueLoop);
         if(continueLoop)
         {
-            bestNarrowBandValue = 10.0;
+            bestNarrowBandValue = maxTimeValue+initialTimeValue;
             for(grid_map::GridMapIterator it(mapOut); !it.isPastEnd(); ++it)
             {
                 if(mapOut.at(setLayer, *it) == (float)_narrowBand)
@@ -244,30 +253,45 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
                 }
             }
             mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
+            currentIndex = bestNarrowBandIndex;
             for(int i=-1; i<=1; i++)
             {
                 for(int j=-1; j<=1; j++)
                 {
+                    //ROS_INFO("i = %i, j = %i",i,j);
                     if((i != 0 && j == 0) || (i == 0 && j != 0))
                     {
                         offsetIndex[0] = currentIndex[0] + i;
                         offsetIndex[1] = currentIndex[1] + j;
                         if((offsetIndex[0]<mapSize[0] && offsetIndex[0]>=0) && (offsetIndex[1]<mapSize[1] && offsetIndex[1]>=0))
                         {
-                            if(mapOut.at(setLayer, offsetIndex)==(float)_unknown) mapOut.at(setLayer, offsetIndex) = (float)_narrowBand;
-
-                            if(mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]) < mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1])) dx = mapOut.get(timeLayer)(currentIndex[0]-1,currentIndex[1]);
-                            else dx = mapOut.get(timeLayer)(currentIndex[0]+1,currentIndex[1]);
-
-                            if(mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1) < mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1)) dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]-1);
-                            else dy = mapOut.get(timeLayer)(currentIndex[0],currentIndex[1]+1);
-
-                            delta = 2.0*mapIn.at(timeLayer, currentIndex) - pow(dx-dy, 2.0);
-                            if(delta>=0.0) mapOut.at(timeLayer, currentIndex) = (dx+dy+sqrt(delta))/2.0;
-                            else
+                            //ROS_INFO("currentIndex = (%i,%i); offsetIndex = (%i,%i)",currentIndex[0],currentIndex[1],offsetIndex[0],offsetIndex[1]);
+                            if(mapOut.at(setLayer, offsetIndex)!=(float)_frozen)
                             {
-                                if(dx+mapIn.at(timeLayer, currentIndex) < dy+mapIn.at(timeLayer, currentIndex)) mapOut.at(timeLayer, currentIndex) = dx+mapIn.at(timeLayer, currentIndex);
-                                else mapOut.at(timeLayer, currentIndex) = dy+mapIn.at(timeLayer, currentIndex);
+                                if(mapOut.at(setLayer, offsetIndex)==(float)_unknown) mapOut.at(setLayer, offsetIndex) = (float)_narrowBand;
+
+                                if(mapOut.get(timeLayer)(offsetIndex[0]-1,offsetIndex[1]) < mapOut.get(timeLayer)(offsetIndex[0]+1,offsetIndex[1])) dx = mapOut.get(timeLayer)(offsetIndex[0]-1,offsetIndex[1]);
+                                else dx = mapOut.get(timeLayer)(offsetIndex[0]+1,offsetIndex[1]);
+
+                                if(mapOut.get(timeLayer)(offsetIndex[0],offsetIndex[1]-1) < mapOut.get(timeLayer)(offsetIndex[0],offsetIndex[1]+1)) dy = mapOut.get(timeLayer)(offsetIndex[0],offsetIndex[1]-1);
+                                else dy = mapOut.get(timeLayer)(offsetIndex[0],offsetIndex[1]+1);
+
+                                delta = 2.0*mapIn.at(timeLayer, offsetIndex) - pow(dx-dy, 2.0);
+                                //ROS_INFO("delta = %f",delta);
+                                //ROS_INFO("dx = %f; dy = %f",dx,dy);
+                                if(delta>=0.0)
+                                {
+                                    //ROS_INFO("delta>=0");
+                                    mapOut.at(timeLayer, offsetIndex) = (dx+dy+sqrt(delta))/2.0;
+                                }
+                                else
+                                {
+                                    //ROS_INFO("delta<0");
+                                    if(dx+mapIn.at(timeLayer, offsetIndex) < dy+mapIn.at(timeLayer, offsetIndex)) mapOut.at(timeLayer, offsetIndex) = dx+mapIn.at(timeLayer, offsetIndex);
+                                    else mapOut.at(timeLayer, offsetIndex) = dy+mapIn.at(timeLayer, offsetIndex);
+                                }
+                                if(mapOut.at(timeLayer, offsetIndex)>maxTimeValue) mapOut.at(timeLayer, offsetIndex) = maxTimeValue;
+                                //ROS_INFO("mapOut(offsetIndex) = %f",mapOut.at(timeLayer, offsetIndex));
                             }
                         }
                     }
