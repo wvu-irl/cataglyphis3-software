@@ -367,8 +367,8 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
     }
     else
     {
-        cv::multiply(channels[0],calibrationMask,channels[0]);
-        //cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
+        //cv::multiply(channels[0],calibrationMask,channels[0]);
+        cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
     }
 
     cv::imwrite(P.string() + "/data/images/segmented.jpg",channels[0].clone());
