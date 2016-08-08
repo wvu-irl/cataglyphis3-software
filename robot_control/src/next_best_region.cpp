@@ -127,17 +127,23 @@ bool NextBestRegion::runProc()
         procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
-		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
-        if(waypointsToTravel.at(0).searchable)
+        if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample) state = _finish_;
+        else state = _exec_;
+        /*if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        else state = _exec_;*/
+
+        /*if(waypointsToTravel.at(0).searchable)
         {
+            ROS_INFO("searchable case");
             if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample) state = _finish_;
             else state = _exec_;
         }
         else
         {
+            ROS_INFO("non-searchable case");
             if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
             else state = _exec_;
-        }
+        }*/
         break;
     case _interrupt_:
 		procsBeingExecuted[procType] = false;
