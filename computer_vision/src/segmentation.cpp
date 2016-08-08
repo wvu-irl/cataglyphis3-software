@@ -7,20 +7,37 @@ Segmentation::Segmentation()
 
 int Segmentation::setCalibration()
 {
+    //load mask from file
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
-    calibrationMask = cv::imread(P.string() + "/data/images/calibration_mask.jpg");
-    if(!calibrationMask.data)
+    cv::Mat tempMask = cv::imread(P.string() + "/data/images/calibration_mask.jpg");
+    if(!tempMask.data)
     {
-        calibrationMask = cv::imread(P.string() + "/data/images/calibration_mask_bak.jpg");
-        if(!calibrationMask.data)
+        tempMask = cv::imread(P.string() + "/data/images/calibration_mask_bak.jpg");
+        if(!tempMask.data)
         {
             ROS_INFO("Error! Could not load calibration mask... Generating alternative mask for image.");
             return 0;
         }
     }
-    // namedWindow("Current Image", cv::WINDOW_NORMAL);
-    // cv::imshow("Current Image",calibrationMask);
+    // namedWindow("tempMask", cv::WINDOW_NORMAL);
+    // cv::imshow("tempMask",tempMask);
     // cv::waitKey(0);
+
+    //convert mask to binary
+    calibrationMask = cv::Mat::zeros(5792,5792,CV_8U);
+    cvtColor(tempMask, calibrationMask, CV_BGR2GRAY);
+    for(int i=0; i<5792; i++)
+    {
+        for(int j=0; j<5792; j++)
+        {
+            calibrationMask.at<uchar>(j,i)=tempMask.at<cv::Vec3b>(j,i)[0];
+        }
+    }
+    //std::cout << "tempMask.at<cv::Vec3b>5792/2,5792/2[0] = " << (int)tempMask.at<cv::Vec3b>(5792/2,5792/2)[0] << std::endl;
+    // namedWindow("calibrationMask", cv::WINDOW_NORMAL);
+    // cv::imshow("calibrationMask",calibrationMask);
+    // cv::waitKey(0);
+
     return 1;
 }
 
@@ -350,7 +367,8 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
     }
     else
     {
-        cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
+        cv::multiply(channels[0],calibrationMask,channels[0]);
+        //cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
     }
 
     cv::imwrite(P.string() + "/data/images/segmented.jpg",channels[0].clone());
