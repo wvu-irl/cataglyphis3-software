@@ -261,31 +261,31 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && performBiasRemoval && !(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !performSafeMode && !missionEnded) // Bias Removal
+        if(numProcsBeingOrToBeExecOrRes==0 && performBiasRemoval && /*!(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && */!escapeCondition && !performSafeMode && !missionEnded) // Bias Removal
         {
             procsToExecute[__biasRemoval__] = true;
             ROS_INFO("to execute bias removal");
             voiceSay->call("bias removal");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !performSafeMode && !missionEnded) // Examine
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
             voiceSay->call("examine");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !performSafeMode && !missionEnded) // Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
             voiceSay->call("approach");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
             voiceSay->call("collect");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && !confirmedPossession && !escapeCondition && !performSafeMode && !missionEnded) // Confirm Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && !confirmedPossession && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
@@ -303,13 +303,13 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute square update");
             voiceSay->call("square update");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
             voiceSay->call("deposit approach");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Sample
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
