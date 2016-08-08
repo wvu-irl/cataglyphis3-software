@@ -7,8 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /Grid1
-        - /Axes1
-        - /resistanceMap1
         - /resistanceMap1/Status1
       Splitter Ratio: 0.617716
     Tree Height: 1782
@@ -28,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: resistancePC
 Visualization Manager:
   Class: ""
   Displays:
@@ -81,6 +79,93 @@ Visualization Manager:
       Name: optimalPathMap
       Topic: /grid_map_visualization/optimalPath
       Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: resistancePC
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.8
+      Style: Boxes
+      Topic: /grid_map_visualization/resistancePC
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: timeOfArrivalPC
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.8
+      Style: Boxes
+      Topic: /grid_map_visualization/timeOfArrivalPC
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: optimalPathPC
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.8
+      Style: Boxes
+      Topic: /grid_map_visualization/optimalPathPC
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -100,22 +185,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 542.028
+      Distance: 644.534
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.799862
-        Y: 1.28333
-        Z: -36.7949
+        X: 27.6069
+        Y: -11.0225
+        Z: -16.6704
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: -1.5698
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.71169
+      Yaw: 4.7117
     Saved: ~
 Window Geometry:
   Displays:
@@ -133,5 +218,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 3726
-  X: 114
-  Y: 42
+  X: 96
+  Y: -25

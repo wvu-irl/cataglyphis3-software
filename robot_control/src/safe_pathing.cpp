@@ -213,7 +213,7 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     float delta;
     float dx;
     float dy;
-    bool continueLoop;
+    bool continueLoop = true;
     float bestNarrowBandValue;
     grid_map::Index bestNarrowBandIndex;
     grid_map::Size mapSize;
@@ -228,6 +228,7 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     while(continueLoop)
     {
         continueLoop = narrowBandNotEmpty(mapOut)/* || currentIndex != startIndex*/;
+        ROS_INFO("continueLoop = %i",continueLoop);
         if(continueLoop)
         {
             bestNarrowBandValue = 10.0;
@@ -240,9 +241,9 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
                         bestNarrowBandValue = mapOut.at(timeLayer, *it);
                         bestNarrowBandIndex = grid_map::getIndexFromLinearIndex(it.getLinearIndex(), mapOut.getSize());
                     }
-                    mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
                 }
             }
+            mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
             for(int i=-1; i<=1; i++)
             {
                 for(int j=-1; j<=1; j++)
