@@ -31,7 +31,7 @@
 #define MAX_SAMPLES 10
 #define NUM_TIMERS 3
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
+enum PROC_TYPES_T {__emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
 enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
 
 class MissionPlanningProcedureShare
@@ -43,6 +43,9 @@ public:
 	static bool procsToExecute[NUM_PROC_TYPES];
 	static bool procsToInterrupt[NUM_PROC_TYPES];
 	static bool procsBeingExecuted[NUM_PROC_TYPES];
+	static bool procsToResume[NUM_PROC_TYPES];
+	static unsigned int numProcsBeingOrToBeExecOrRes;
+	static unsigned int numProcsBeingOrToBeExec;
     static ros::ServiceClient execActionClient;
     static messages::ExecAction execActionSrv;
 	static ros::Subscriber execInfoSub;
@@ -86,11 +89,11 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.457; // m
+	const float blindDriveDistance = 0.507; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
-	const float possibleSampleConfThresh = 0.7;
-	const float definiteSampleConfThresh = 0.9;
+	const float possibleSampleConfThresh = 0.5;
+	const float definiteSampleConfThresh = 0.7;
 	static int currentROIIndex;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
@@ -115,7 +118,7 @@ public:
 	static bool roiKeyframed;
 	static bool startSLAM;
 	static unsigned int avoidCount;
-	const unsigned int maxAvoidCount = 5;
+	const unsigned int maxAvoidCount = 3;
 	const float metersPerAvoidCountDecrement = 5.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
@@ -154,6 +157,9 @@ public:
 bool MissionPlanningProcedureShare::procsToExecute[NUM_PROC_TYPES];
 bool MissionPlanningProcedureShare::procsToInterrupt[NUM_PROC_TYPES];
 bool MissionPlanningProcedureShare::procsBeingExecuted[NUM_PROC_TYPES];
+bool MissionPlanningProcedureShare::procsToResume[NUM_PROC_TYPES];
+unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExecOrRes;
+unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExec;
 ros::ServiceClient MissionPlanningProcedureShare::execActionClient;
 messages::ExecAction MissionPlanningProcedureShare::execActionSrv;
 ros::Subscriber MissionPlanningProcedureShare::execInfoSub;

@@ -45,6 +45,7 @@ bool DepositApproach::runProc()
 		step = _align;
 		procsBeingExecuted[procType] = true;
         procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         driveSpeedsMsg.vMax = slowVMax;
         driveSpeedsMsg.rMax = defaultRMax;
         driveSpeedsMsgPrev.vMax = slowVMax;
@@ -62,6 +63,7 @@ bool DepositApproach::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
         procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		switch(step)
 		{
 		case _align:
@@ -103,6 +105,7 @@ bool DepositApproach::runProc()
 		inDepositPosition = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		step = _align;
 		state = _init_;
 		break;

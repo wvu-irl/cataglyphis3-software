@@ -82,7 +82,10 @@ public:
 	short int _registration_counter;
 	short int _registration_counter_prev;
 
-	
+	float _homing_x = 0;
+	float _homing_y = 0;
+	float _homing_heading = 0;
+	bool _homing_found = 0;
 
 private:
 	//navigation filter callback
@@ -137,10 +140,6 @@ private:
 	std::vector<cylinder> _potential_cylinders_intensity;
 
 	const float home_detection_range = 60.0;
-	float _homing_x = 0;
-	float _homing_y = 0;
-	float _homing_heading = 0;
-	bool _homing_found = 0;
 
 	// //use for grid map
     typedef struct Cell 

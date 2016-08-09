@@ -54,8 +54,8 @@ bool Procedure::run()
 {
     //ROS_DEBUG("before if(procsToExecute.at(this->procType");
     //ROS_DEBUG("this->procType = %i",static_cast<int>(this->procType));
-	if(procsToInterrupt[this->procType]) this->state = _interrupt_;
-	if(procsToExecute[this->procType] || procsBeingExecuted[this->procType]) return this->runProc();
+	if(procsToInterrupt[this->procType] && this->state==_exec_) {this->state = _interrupt_; procsToResume[this->procType] = true;}
+	if((procsToResume[this->procType] && numProcsBeingOrToBeExec==0) || (procsToExecute[this->procType] || procsBeingExecuted[this->procType])) return this->runProc();
 	//else if(procsBeingExecuted.at(this->procType) == true && procsToExecute.at(this->procType) == false) {this->state = _interrupt_; return this->runProc();}
     //ROS_DEBUG("after if - else if(procsToExecute.at(this->procType");
 }
@@ -467,6 +467,8 @@ void Procedure::sendDequeClearFront()
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
+	ROS_INFO("send dequeClearFront");
+	voiceSay->call("queue clear front");
 }
 
 void Procedure::sendDequeClearAll()
@@ -568,7 +570,7 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 								(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2.0)+pow(expectedSampleDistance,2.0)-
 									2.0*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
 										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle))));
-		ROS_INFO("^^^^^ sampleValues.at(%i) = %i",i,sampleValues.at(i));
+		ROS_INFO("^^^^^ sampleValues.at(%i) = %f",i,sampleValues.at(i));
 
 		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
 	}

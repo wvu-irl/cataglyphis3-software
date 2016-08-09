@@ -9,6 +9,7 @@ bool SquareUpdate::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		avoidCount = 0;
 		numWaypointsToTravel = 5;
@@ -31,6 +32,7 @@ bool SquareUpdate::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
@@ -67,6 +69,7 @@ bool SquareUpdate::runProc()
 		atHome = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

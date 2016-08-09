@@ -6,26 +6,39 @@ bool EmergencyEscape::runProc()
 	switch(state)
 	{
 	case _init_:
-		escapeLockout = true;
-		procsBeingExecuted[procType] = true;
-		procsToExecute[procType] = false;
-		if(interrupted)
-		{
-			sendDequeClearFront();
-			interrupted = false;
-		}
-		sendDriveRel(offsetDistance, offsetAngle, false, 0.0, true);
-		offsetDriveSerialNum = serialNum;
-		sendDriveRel(backupDistance, 0.0, false, 0.0, true);
-		backupSerialNum = serialNum;
-		state = _exec_;
+        if(escapeCondition)
+        {
+            escapeLockout = true;
+            procsBeingExecuted[procType] = true;
+            procsToExecute[procType] = false;
+            procsToResume[procType] = false;
+            if(interrupted)
+            {
+                sendDequeClearFront();
+                interrupted = false;
+            }
+            sendDriveRel(offsetDistance, offsetAngle, false, 0.0, true);
+            offsetDriveSerialNum = serialNum;
+            sendDriveRel(backupDistance, 0.0, false, 0.0, true);
+            backupSerialNum = serialNum;
+            state = _exec_;
+        }
+        else
+        {
+            procsBeingExecuted[procType] = false;
+            procsToExecute[procType] = false;
+            procsToResume[procType] = false;
+            interrupted = false;
+            state = _init_;
+        }
 		break;
 	case _exec_:
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
-		ROS_INFO("execLastSerialNum = %u",execLastSerialNum);
-		ROS_INFO("backupSerialNum = %u", backupSerialNum);
-		ROS_INFO("offsetDriveSerialNum = %u", offsetDriveSerialNum);
+        procsToResume[procType] = false;
+        //ROS_INFO("execLastSerialNum = %u",execLastSerialNum);
+        //ROS_INFO("backupSerialNum = %u", backupSerialNum);
+        //ROS_INFO("offsetDriveSerialNum = %u", offsetDriveSerialNum);
 		if(execLastProcType == procType && execLastSerialNum == backupSerialNum) escapeLockout = false;
 		if(execLastProcType == procType && execLastSerialNum == offsetDriveSerialNum) state = _finish_;
 		else state = _exec_;
@@ -39,6 +52,7 @@ bool EmergencyEscape::runProc()
 	case _finish_:
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

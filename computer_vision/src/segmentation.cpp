@@ -7,68 +7,36 @@ Segmentation::Segmentation()
 
 int Segmentation::setCalibration()
 {
-    //TODO: develop a function to generate this image interactively then save to file
-    //then this function will just load an image instead of generate an image
-
-    //generate mask for boundary (area of image too far from robot)
-    cv::Mat boundaryMask = cv::Mat::zeros(5792,5792,CV_8U);
-    int cx = boundaryMask.cols/2;
-    int cy = boundaryMask.rows/2;
-    int radius = 0.975*5792/2;
-    for(int i=0; i<boundaryMask.cols; i++)
-    {
-        for(int j=0; j<boundaryMask.rows; j++)
-        {
-            //distance from center of image
-            int dist = sqrt( (i-cx)*(i-cx) + (j-cy)*(j-cy) );
-            if(dist < radius)
-            {
-                boundaryMask.at<uchar>(j,i)=255;
-            }
-        }
-    }
-    
-
-    //generate mask for area over the robot
-    cv::Mat robotMask = cv::Mat::zeros(5792,5792,CV_8U);
-    int leftLimit = 1900;
-    int rightLimit = 3900;
-    int frontLimit = 1900;
-    for(int i=0; i<robotMask.cols; i++)
-    {
-        for(int j=0; j<robotMask.rows; j++)
-        {
-            if(i < leftLimit || i > rightLimit || j < frontLimit)
-            {
-                robotMask.at<uchar>(j,i)=255;
-            }
-        }
-    }
-
-    //combine masks
-    cv::bitwise_and(boundaryMask, robotMask, calibrationMask);
-
-    //invert and threshold mask for display display masked image
-    cv::Mat displayMask;
-    cv::Mat calibrationRGB = calibrationMask.clone();
-    cv::cvtColor(calibrationRGB,calibrationRGB,CV_GRAY2RGB);
-    cv::threshold(calibrationRGB,displayMask,0,255,0);
+    //load mask from file
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
-    cv::imwrite(P.string() + "/data/images/calibration_mask.jpg",displayMask);
-
-    // cv::Mat image = cv::imread(P.string() + "/data/images/input_image.jpg");   
-    // cv::Mat blendMask;
-    // cv::threshold(calibrationRGB,blendMask,0,100,1);
-    // cv::Mat blended = cv::Mat::zeros(5792,5792,CV_8U);
-    // cv::add(image,blendMask,blended);
-
-    // //display masks
-    // cv::namedWindow("displayMask",CV_WINDOW_NORMAL);
-    // cv::imshow("displayMask", displayMask);
-    // cv::namedWindow("blended",CV_WINDOW_NORMAL);
-    // cv::imshow("blended", blended);
+    cv::Mat tempMask = cv::imread(P.string() + "/data/images/calibration_mask.jpg");
+    if(!tempMask.data)
+    {
+        tempMask = cv::imread(P.string() + "/data/images/calibration_mask_bak.jpg");
+        if(!tempMask.data)
+        {
+            ROS_INFO("Error! Could not load calibration mask... Generating alternative mask for image.");
+            return 0;
+        }
+    }
+    // namedWindow("tempMask", cv::WINDOW_NORMAL);
+    // cv::imshow("tempMask",tempMask);
     // cv::waitKey(0);
-    // cv::destroyAllWindows();
+
+    //convert mask to binary
+    calibrationMask = cv::Mat::zeros(5792,5792,CV_8U);
+    cvtColor(tempMask, calibrationMask, CV_BGR2GRAY);
+    for(int i=0; i<5792; i++)
+    {
+        for(int j=0; j<5792; j++)
+        {
+            calibrationMask.at<uchar>(j,i)=tempMask.at<cv::Vec3b>(j,i)[0];
+        }
+    }
+    //std::cout << "tempMask.at<cv::Vec3b>5792/2,5792/2[0] = " << (int)tempMask.at<cv::Vec3b>(5792/2,5792/2)[0] << std::endl;
+    // namedWindow("calibrationMask", cv::WINDOW_NORMAL);
+    // cv::imshow("calibrationMask",calibrationMask);
+    // cv::waitKey(0);
 
     return 1;
 }
@@ -399,6 +367,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
     }
     else
     {
+        //cv::multiply(channels[0],calibrationMask,channels[0]);
         cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
     }
 

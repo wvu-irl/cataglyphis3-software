@@ -7,7 +7,7 @@ SearchRegion::SearchRegion()
 
 bool SearchRegion::runProc()
 {
-	//ROS_INFO("searchRegion state = %i", state);
+    //ROS_INFO("searchRegion state = %i", state);
 	//ROS_INFO_THROTTLE(1, "executing searchRegion");
 	switch(state)
 	{
@@ -15,6 +15,7 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		avoidCount = 0;
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
@@ -22,7 +23,7 @@ bool SearchRegion::runProc()
 		confirmCollectFailedCount = 0;
 		if(!roiKeyframed) // check if ROI is not yet keyframed
 		{
-			//ROS_INFO("ROI not keyframed");
+			ROS_INFO("ROI not keyframed");
 			searchMapSrv.request.createMap = true;
 			searchMapSrv.request.roiIndex = currentROIIndex;
 			searchMapSrv.request.deleteMap = false;
@@ -59,7 +60,7 @@ bool SearchRegion::runProc()
 		else
 		{
 			//ROS_INFO("current ROI index = %i",currentROIIndex);
-			//ROS_INFO("choose random waypoints");
+			ROS_INFO("choose random waypoints");
 			chooseRandomWaypoints_(); // Select random waypoint locations based on sample prob distro on search local map
 			numWaypointsToTravel = waypointsToPlan.size(); // Set number of waypoints to choose
 			//ROS_INFO("numWaypointsToTravel = %i", numWaypointsToTravel);
@@ -70,7 +71,7 @@ bool SearchRegion::runProc()
 			currentLocation.y = robotStatus.yPos;
 			waypointsToPlan.push_back(currentLocation);
 			clearAndResizeWTT(); // waypointsToPlan minus the current location will get written into waypointsToTravel. Clear and resize to accomodate
-			//ROS_INFO("ant colony");
+			ROS_INFO("ant colony");
 			antColony_(); // Plan path through waypoints with ant colongy optimization algorithm
 			// Do we really want to do this? Waypoints are very close together. callIntermediateWaypoints(); // Plan around obastacles.
 			sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
@@ -82,9 +83,10 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		serviceAvoidCounterDecrement();
-		if(possibleSample || definiteSample && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
+        if((possibleSample || definiteSample) && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
 			sendDequeClearAll();
 			state = _finish_;
@@ -101,6 +103,7 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}
@@ -121,7 +124,7 @@ void SearchRegion::chooseRandomWaypoints_()
 		ROS_DEBUG("randomSearchWaypoints service call successful");
 		waypointsToPlan.clear();
 		waypointsToPlan = randomSearchWaypointsSrv.response.waypointList;
-		//ROS_INFO("waypointsToPlan = %u", waypointsToPlan.size());
+		ROS_INFO("waypointsToPlan = %u", waypointsToPlan.size());
 	}
 	else ROS_ERROR("randomSearchWaypoints service call unsuccessful");
 }

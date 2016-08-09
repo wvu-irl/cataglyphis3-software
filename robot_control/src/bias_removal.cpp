@@ -7,16 +7,17 @@ BiasRemoval::BiasRemoval()
 
 bool BiasRemoval::runProc()
 {
-	ROS_INFO("biasRemoval state = %i", state);
+    //ROS_INFO("biasRemoval state = %i", state);
 	switch(state)
 	{
 	case _init_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		sendPause();
 		biasRemovalTimedOut = false;
-		timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalTimeoutPeriod);
+		timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
 		timers[_biasRemovalActionTimeoutTimer_]->start();
 		navControlSrv.request.runBiasRemoval = true;
 		if(navControlClient.call(navControlSrv)) ROS_DEBUG("navFilterControlService call successful");
@@ -27,6 +28,7 @@ bool BiasRemoval::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		if(navStatus!=0 || biasRemovalTimedOut) state = _finish_;
 		else state = _exec_;
 		break;
@@ -42,6 +44,7 @@ bool BiasRemoval::runProc()
 		performBiasRemoval = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		sendUnPause();
 		timers[_biasRemovalActionTimeoutTimer_]->stop();
 		timers[_biasRemovalTimer_]->stop();

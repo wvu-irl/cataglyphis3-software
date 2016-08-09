@@ -1,8 +1,10 @@
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <computer_vision/capture_class.hpp> 
 #include <computer_vision/calibrate_camera.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <boost/filesystem.hpp>
 
 //Robot Width Image
 int robotWidthMax = 0;
@@ -73,8 +75,19 @@ int main(int argc, char **argv)
 	CalibrateCamera calibrateCamera;
 
 	//Capture Initial Image
-	dst = cv::imread("/home/jared/cataglyphis_ws/src/computer_vision/samples.jpg");
-	dstCopy = dst.clone();
+	//dst = cv::imread("/home/jared/cataglyphis_ws/src/computer_vision/samples.jpg");
+	//dstCopy = dst.clone();
+
+	if(capture.capture_image()==0)
+	{
+		ROS_ERROR("Could not capture initial image from camera. Terminating...");
+		return 0;
+	}
+	else
+	{
+		dst = capture.image_Mat.clone();
+		dstCopy = dst.clone();
+	}
 
 	//Set Maximum Values for Sliders
 	robotWidthMax = dst.cols;
@@ -113,29 +126,33 @@ int main(int argc, char **argv)
 	sprintf( TrackbarPoleHeight, "PH", poleHeightMax );
 	cv::createTrackbar( TrackbarPoleHeight, "Current Image", &poleHeightSlider, poleHeightMax, onTrackbarPoleHeight );
 
+	//Initialize calibration image
+	cv::Mat calibrationMask;
+	cv::Mat displayMask,blendMask,calibrationRGB,blended;
+
 	//Main Loop
 	while(ros::ok())
 	{
 		imshow("Current Image", dst);
+		calibrationMask = cv::Mat::zeros(5792,5792,CV_8U);
 
 		char keyPress = cv::waitKey(30);
 		if(keyPress == 'r')
 		{
-			if(capture.capture_image()==1)
+			if(capture.capture_image()==0)
 			{
-				ROS_ERROR("Could not capture a new image from camera...");
+				ROS_ERROR("Could not capture a new image from camera. Terminating...");
+				return 0;
 			}
 			else
 			{
-				calibrateCamera.refreshImage(capture.image_Mat);
+				dst = capture.image_Mat.clone();
+				dstCopy = dst.clone();
 			}
 		}
 		else if(keyPress == 'u')
 		{
 			ROS_INFO("Updating image...");
-
-    		cv::Mat calibrationMask = cv::Mat::zeros(5792,5792,CV_8U);
-
     		int limitRobotLeftWidth = (robotWidthMax - robotWidthSlider)/2;
     		int limitRobotRightWidth = (robotWidthMax - robotWidthSlider)/2 + robotWidthSlider;
     		int limitRobotHeightTop = robotHeightMax - robotHeightSlider - robotShiftSlider;
@@ -164,7 +181,6 @@ int main(int argc, char **argv)
 		    }
 
 		   //invert and threshold mask for display display masked image
-		    cv::Mat displayMask,blendMask,calibrationRGB,blended;
 		    calibrationRGB = calibrationMask.clone();
 		    cv::cvtColor(calibrationRGB,calibrationRGB,CV_GRAY2RGB);
 		    cv::threshold(calibrationRGB,displayMask,0,255,0);
@@ -173,8 +189,11 @@ int main(int argc, char **argv)
 			cv::add(dstCopy,blendMask,dst);
 		}
 		else if(keyPress == 's')
-		{ //write mask to disk
-			//imwrite();
+		{
+		    ROS_INFO("Writing new mask to file...");
+			boost::filesystem::path P( ros::package::getPath("computer_vision") );
+			cv::imwrite(P.string() + "/data/images/calibration_mask.jpg",displayMask);
+			cv::imwrite(P.string() + "/data/images/calibration_mask_bak.jpg",displayMask);
 		}
 		else if(keyPress == 'q')
 		{
