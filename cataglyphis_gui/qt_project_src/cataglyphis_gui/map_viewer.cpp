@@ -71,3 +71,8 @@ void map_viewer::on_pushButton_clicked()
 //    scene[1]->addItem(roiEllipse2);
 //    scene[1]->addItem(roi2text);
 }
+
+void map_viewer::draw_new_roi(/*put roi object info here*/)
+{
+
+}
