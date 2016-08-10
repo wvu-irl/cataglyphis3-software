@@ -4,22 +4,11 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
-//PCL library
-#include "pcl_ros/point_cloud.h"
-
-// //PCL for icp
-// #include "pcl/point_types.h"
-// #include "pcl/registration/icp.h"
-// #include "pcl/common/transforms.h"	//for transform pointcloud using transformation matrix
-
-
-
 //eigen3 library
 #include "Eigen/Dense"
 
 //message files
-// #include "messages/LocalMap.h"
-#include <messages/NavFilterOut.h>
+#include "messages/NavFilterOut.h"
 #include "slam/TkeyTomap_msg.h"
 #include "messages/SLAMPoseOut.h"
 
@@ -40,25 +29,21 @@ protected:
 	typedef Eigen::Matrix<float, 2, 2> matrix2f;
 	typedef Eigen::Matrix<float, 2, 1> matrix2f_point;
 
-	//define a struct for localmap messages, include whole information
-	typedef struct LocalMap_All
+	//define a struct for navfilterout messages
+	typedef struct Navfilterout_All
 	{
 		float x_filter;
 		float y_filter;
 		float heading_filter;
-	}LocalMap_All;
+	}Navfilterout_All;
 
-	//define a struct for ICP result
-	typedef struct ICP_Result
+	//define a struct for transformation result
+	typedef struct Transformation_Result
 	{
 		matrix4f transformation_matrix;
-		bool verification_result;
-		int from_index;
-		int to_index;
-		double overlap;
-	}ICP_Result;
+	}Transformation_Result;
 
-	//define a struct for position
+	//define a struct for position, for testing
 	typedef struct Position
 	{
 		double x;
@@ -83,15 +68,13 @@ protected:
 	matrix4f TreadTokey;
 	matrix4f TreadTomap;
 	matrix4f TkeyTomap;
-	
 
-
-	//lists of all maps
-	std::vector<LocalMap_All> LocalMap_All_s;
+	//lists of all positon
+	std::vector<Navfilterout_All> Navfilterout_All_s;
 	std::vector<double> heading_record;
 
 
-	//ICP index
+	//transformation compute index
 	int ref_index;
 	int read_index;
 
@@ -108,21 +91,15 @@ protected:
 	float y_filter_sub;
 	float heading_filter_sub;
 
-
-
-	// //timer definition
-	// clock_t start, finish;
-	// double totaltime;
-
 	//recored position data
 	std::vector<Position> position_data;
 	std::vector<Position> position_data_IMU;
 
-	void getlocalmapcallback(const messages::NavFilterOut& LocalMapMsgIn);
+	void getnavfilteroutcallback(const messages::NavFilterOut& NavFilterOutMsgIn);
 	void getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgIn);
 
-	// ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index, int option);	
-	ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index);
+	// Transformation_Result Transformation_compute(int ICP_ref_index, int ICP_read_index, int option);	
+	Transformation_Result Transformation_compute(int ICP_ref_index, int ICP_read_index);
 	double TransformationMatrix_to_angle(matrix4f matrix);
 	matrix4f angle_to_TransformationMatrix(double diff_x, double diff_y,double theta);
 	void Coordinate_Normalize(float x0, float y0, float heading0, float x1, float y1, float heading1, double &theta, double &diff_x, double &diff_y);
@@ -134,7 +111,7 @@ protected:
 Localization::Localization()
 {
 	//topic initialization
-	NavfilterSub = node.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &Localization::getlocalmapcallback, this);
+	NavfilterSub = node.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &Localization::getnavfilteroutcallback, this);
 	TkeyTomapSub = node.subscribe("/slam/TkeyTomap_msg", 1, &Localization::getTkeyTomapcallback, this);
 
 	PositionPub = node.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, true); 
@@ -147,7 +124,7 @@ void Localization::Initialization()
 
 
 	//initialize all vectors
-	LocalMap_All_s.clear();
+	Navfilterout_All_s.clear();
 	position_data.clear();
 	position_data_IMU.clear();
 	heading_record.clear();
@@ -175,30 +152,26 @@ void Localization::Initialization()
 	TreadTomap = Eigen::Matrix<float, 4, 4>::Identity();
 	TkeyTomap = Eigen::Matrix<float, 4, 4>::Identity();
 
-	LocalMap_All keyframe_all;
+	Navfilterout_All keyframe_all;
 	keyframe_all.x_filter = x;
 	keyframe_all.y_filter = y;
 	keyframe_all.heading_filter = heading;
-	LocalMap_All_s.push_back(keyframe_all);
+	Navfilterout_All_s.push_back(keyframe_all);
 
-	LocalMap_All localmap_all; //initialize struct	
-	localmap_all.x_filter = 0;
-	localmap_all.y_filter = 0;
-	localmap_all.heading_filter = 0;
-	//localmap_all.ground_adjacent = LocalMapMsgIn.ground_adjacent;
-	LocalMap_All_s.push_back(localmap_all);
+	Navfilterout_All navfilterout_all; //initialize struct	
+	navfilterout_all.x_filter = 0;
+	navfilterout_all.y_filter = 0;
+	navfilterout_all.heading_filter = 0;
+
+	Navfilterout_All_s.push_back(navfilterout_all);
 	
 
 }
 
-//**************************ICP calculation**********************//
-
-// Localization::ICP_Result Localization::ICP_compute(int ICP_ref_index, int ICP_read_index, int option)
-Localization::ICP_Result Localization::ICP_compute(int ICP_ref_index, int ICP_read_index)
+//**************************Transformation calculation**********************//
+Localization::Transformation_Result Localization::Transformation_compute(int ICP_ref_index, int ICP_read_index)
 {
-	double overlap;
-	bool verification_result;
-	ICP_Result icp_result;
+	Transformation_Result transformation_result;
 	matrix4f guessT;
 
 	guessT = Eigen::Matrix<float, 4, 4>::Identity();
@@ -211,22 +184,18 @@ Localization::ICP_Result Localization::ICP_compute(int ICP_ref_index, int ICP_re
 	//if reference frame and read frame are same frame, return indetity matrix
 	if(ICP_ref_index == ICP_read_index)
 	{
-		icp_result.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
-		icp_result.verification_result = true;
-		icp_result.from_index = ICP_read_index;
-		icp_result.to_index = ICP_ref_index;
-		icp_result.overlap = 1.0;
-
-		return icp_result;
+		transformation_result.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
+		return transformation_result;
 	}
+	
 	//data from imu for calculate read frame to reference frame
-	x0 = LocalMap_All_s[ICP_ref_index].x_filter;
-	y0 = LocalMap_All_s[ICP_ref_index].y_filter;
-	heading0 = LocalMap_All_s[ICP_ref_index].heading_filter;
+	x0 = Navfilterout_All_s[ICP_ref_index].x_filter;
+	y0 = Navfilterout_All_s[ICP_ref_index].y_filter;
+	heading0 = Navfilterout_All_s[ICP_ref_index].heading_filter;
 
-	x1 = LocalMap_All_s[ICP_read_index].x_filter;
-	y1 = LocalMap_All_s[ICP_read_index].y_filter;
-	heading1 = LocalMap_All_s[ICP_read_index].heading_filter;
+	x1 = Navfilterout_All_s[ICP_read_index].x_filter;
+	y1 = Navfilterout_All_s[ICP_read_index].y_filter;
+	heading1 = Navfilterout_All_s[ICP_read_index].heading_filter;
 
 	ROS_INFO_STREAM("x0: " << x0 << "y0: " << y0 << "heading0: " <<heading0);
 	//using Nav filter data to calculate guess transformation matrix
@@ -234,13 +203,9 @@ Localization::ICP_Result Localization::ICP_compute(int ICP_ref_index, int ICP_re
 
 	guessT = angle_to_TransformationMatrix(diff_x, diff_y, theta);
 
-	icp_result.transformation_matrix = guessT;
-	icp_result.verification_result = true;
-	icp_result.from_index = ICP_read_index;
-	icp_result.to_index = ICP_ref_index;
-	icp_result.overlap = 0.8;
+	transformation_result.transformation_matrix = guessT;
 
-	return icp_result;
+	return transformation_result;
 }
 
 
@@ -250,7 +215,6 @@ double Localization::TransformationMatrix_to_angle(matrix4f matrix)	//angle in r
 	double angle = 0.0;	
 
 	angle = atan2(-matrix(0,1), matrix(0,0));
-
 
 	return angle;
 }
@@ -314,200 +278,139 @@ void Localization::Coordinate_Normalize(float x0, float y0, float heading0, floa
 void Localization::getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgIn)
 {
 	TkeyTomap = angle_to_TransformationMatrix(TkeyTomapMsgIn.x, TkeyTomapMsgIn.y, TkeyTomapMsgIn.heading);
-	// TkeyTomap = Eigen::Matrix<float, 4, 4>::Identity();
+	//update the position of keyframe
 	x = TkeyTomapMsgIn.x;
 	y = TkeyTomapMsgIn.y;
 	heading = TkeyTomapMsgIn.heading;
 
+	//update the navfilterout of keyframe
 	x_filter_sub = TkeyTomapMsgIn.x_filter;
 	y_filter_sub = TkeyTomapMsgIn.y_filter;
 	heading_filter_sub = TkeyTomapMsgIn.heading_filter;
 
 }
 
-void Localization::getlocalmapcallback(const messages::NavFilterOut& LocalMapMsgIn)
+void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilterOutMsgIn)
 {	
-	//timer, debug
-	// start = clock();
+
+	//debug, for testing
+	Position position;
 	
-	// if(LocalMapMsgIn.new_data) //if the localmap data is new, update
-	// {	
+	messages::SLAMPoseOut slamposeout;
+	//check if the keyframe updated or not
+	if(pre_x != x || pre_y != y || pre_heading != heading)
+	{
+		Navfilterout_All_s[ref_index].x_filter = x_filter_sub;
+		Navfilterout_All_s[ref_index].y_filter = y_filter_sub;
+		Navfilterout_All_s[ref_index].heading_filter = heading_filter_sub;
 
+		//use the navfilterout of the keyframe as the reference
+		//range of globalHeading should from -inf to inf
+		slamposeout.globalX = x_filter_sub;
+		slamposeout.globalY = y_filter_sub;
+		slamposeout.globalHeading = heading_filter_sub * 180 / PI;
 
-		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Get data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
-
-		//************************************************************//
-
-		Position position;
-		messages::SLAMPoseOut slamposeout;
-		if(pre_x != x || pre_y != y || pre_heading != heading)
-		{
-			LocalMap_All_s[ref_index].x_filter = x_filter_sub;
-			LocalMap_All_s[ref_index].y_filter = y_filter_sub;
-			LocalMap_All_s[ref_index].heading_filter = heading_filter_sub;
-
-			// heading_record.push_back(heading_filter_sub * 180 / PI);
-			// if(heading_record.size() > 1)
-			// {
-			// 	if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 180)
-			// 	{
-			// 		if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
-			// 		{
-			// 			addition = addition - 360;
-			// 		}
-			// 		else
-			// 		{
-			// 			addition = addition + 360;
-			// 		}
-
-			// 		double heading_temp = heading_record[heading_record.size() - 1];
-			// 		heading_record.clear();
-			// 		heading_record.push_back(heading_temp);
-
-			// 		slamposeout.globalHeading = heading * 180 / PI + addition;
-			// 	}
-			// 	else
-			// 	{
-			// 		slamposeout.globalHeading = heading * 180 / PI;
-			// 	}
-			// }
-
-			slamposeout.globalX = x_filter_sub;
-			slamposeout.globalY = y_filter_sub;
-			slamposeout.globalHeading = heading_filter_sub * 180 / PI;
-
-			ROS_INFO_STREAM(TkeyTomap);
-
-			PositionPub.publish(slamposeout);
-			
-			position.x = x_filter_sub;
-			position.y = y_filter_sub;
-			position.heading = heading_filter_sub;
-			position_data.push_back(position);
-
-			ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
-			ROS_INFO_STREAM("IMU_Position: x:"<< LocalMap_All_s[read_index].x_filter << " y: "<< LocalMap_All_s[read_index].y_filter << " heading: "<<LocalMap_All_s[read_index].heading_filter * 180 / PI);
-		}
-
-		pre_x = x;
-		pre_y = y;
-		pre_heading = heading;
-
-
-		LocalMap_All_s[read_index].x_filter = LocalMapMsgIn.x_position;
-		LocalMap_All_s[read_index].y_filter = LocalMapMsgIn.y_position;
-		LocalMap_All_s[read_index].heading_filter = LocalMapMsgIn.heading * PI / 180;
-	
-		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
-
-		//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<Decide ICP frame sequence !!  important>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
-
-			//do ICP to get transformation matrix from read to reference
-
-
-			ICP_Result icp_result;
-			
-			icp_result = ICP_compute(ref_index, read_index);
-
-
-			TreadTokey = icp_result.transformation_matrix;
-
-			TreadTomap = TkeyTomap * TreadTokey;
-
-			heading_record.push_back(TransformationMatrix_to_angle(TreadTomap) * 180 / PI);
-
-			if(heading_record.size() > 1)
-			{
-			if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 180)
-			{
-				if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
-				{
-					addition = addition - 360;
-				}
-				else
-				{
-					addition = addition + 360;
-				}
-
-				double heading_temp = heading_record[heading_record.size() - 1];
-				heading_record.clear();
-				heading_record.push_back(heading_temp);
-			}
-			}
-
-			slamposeout.globalX = TreadTomap(0,3);
-			slamposeout.globalY = TreadTomap(1,3);
-			slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI + addition;
-
-			PositionPub.publish(slamposeout);
-
-			double position_x = TreadTomap(0,3);
-			double position_y = TreadTomap(1,3);
-			double position_heading = TransformationMatrix_to_angle(TreadTomap);	//radian
-
-			ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
-			ROS_INFO_STREAM("IMU_Position: x:"<< LocalMap_All_s[read_index].x_filter << " y: "<< LocalMap_All_s[read_index].y_filter << " heading: "<<LocalMap_All_s[read_index].heading_filter * 180 / PI);
-			
-			position.x = position_x;
-			position.y = position_y;
-			position.heading = position_heading;
-			position_data.push_back(position);
-				
-			Position position_IMU;
-			position_IMU.x = LocalMap_All_s[read_index].x_filter;
-			position_IMU.y = LocalMap_All_s[read_index].y_filter;
-			position_IMU.heading = LocalMap_All_s[read_index].heading_filter;
-			position_data_IMU.push_back(position_IMU);
-
-			//output position data to txt file
-			if(position_data.size() > 1300)
-			{
-			std::ofstream outFile;
-
-			outFile.open("test_SLAM.txt");
-
-			for(int i = 1; i < position_data.size(); i++)
-			{
-			// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-				outFile << position_data[i].x << "\t" << position_data[i].y << "\t" <<position_data[i].heading << "\n";
-			}
-			outFile.close();
-			}
-
-			if(position_data_IMU.size() > 1300)
-			{
-			std::ofstream outFile;
-
-			outFile.open("test_IMU.txt");
-
-			for(int j = 1; j < position_data_IMU.size(); j++)
-			{
-			// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-				outFile << position_data_IMU[j].x << "\t" << position_data_IMU[j].y << "\t" <<position_data_IMU[j].heading <<"\n";
-			}
-			outFile.close();
-			}
-
-
-			// ROS_INFO_STREAM("trigger_g2o: " << trigger_g2o);
-					// if(trigger_g2o = true)
-					// 	trigger_g2o = false;
+		PositionPub.publish(slamposeout);
 		
-			//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>//
-			//***************************timer*************************//
-			// finish = clock();
-			// totaltime = (double)(finish - start) / CLOCKS_PER_SEC;
-		
+		//debug, for testing
+		position.x = x_filter_sub;
+		position.y = y_filter_sub;
+		position.heading = heading_filter_sub;
+		position_data.push_back(position);
 
-
-
-
+		ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
+		ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
 	}
+
+	pre_x = x;
+	pre_y = y;
+	pre_heading = heading;
+
+	//save navfilter as read
+	Navfilterout_All_s[read_index].x_filter = NavFilterOutMsgIn.x_position;
+	Navfilterout_All_s[read_index].y_filter = NavFilterOutMsgIn.y_position;
+	Navfilterout_All_s[read_index].heading_filter = NavFilterOutMsgIn.heading * PI / 180;
 	
-// }
+	//get transformation matrix from read to reference
+	Transformation_Result transformation_result;
+	transformation_result = Transformation_compute(ref_index, read_index);
+	TreadTokey = transformation_result.transformation_matrix;
+	TreadTomap = TkeyTomap * TreadTokey;
 
+	//keep the heading continuous
+	heading_record.push_back(TransformationMatrix_to_angle(TreadTomap) * 180 / PI);
 
+	if(heading_record.size() > 1)
+	{
+		if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 180)
+		{
+			if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
+			{
+				addition = addition - 360;
+			}
+			else
+			{
+				addition = addition + 360;
+			}
 
+			double heading_temp = heading_record[heading_record.size() - 1];
+			heading_record.clear();
+			heading_record.push_back(heading_temp);
+		}
+	}
+
+	slamposeout.globalX = TreadTomap(0,3);
+	slamposeout.globalY = TreadTomap(1,3);
+	slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI + addition;
+
+	PositionPub.publish(slamposeout);
+
+	//debug, for testing
+	ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
+	ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
+	
+	position.x = TreadTomap(0,3);
+	position.y = TreadTomap(1,3);
+	position.heading = TransformationMatrix_to_angle(TreadTomap);	//radian
+	position_data.push_back(position);
+		
+	Position position_IMU;
+	position_IMU.x = Navfilterout_All_s[read_index].x_filter;
+	position_IMU.y = Navfilterout_All_s[read_index].y_filter;
+	position_IMU.heading = Navfilterout_All_s[read_index].heading_filter;
+	position_data_IMU.push_back(position_IMU);
+
+	//output position data to txt file
+	if(position_data.size() > 1300)
+	{
+		std::ofstream outFile;
+
+		outFile.open("test_SLAM.txt");
+
+		for(int i = 1; i < position_data.size(); i++)
+		{
+		// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
+			outFile << position_data[i].x << "\t" << position_data[i].y << "\t" <<position_data[i].heading << "\n";
+		}
+		outFile.close();
+	}
+
+	if(position_data_IMU.size() > 1300)
+	{
+		std::ofstream outFile;
+
+		outFile.open("test_IMU.txt");
+
+		for(int j = 1; j < position_data_IMU.size(); j++)
+		{
+		// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
+			outFile << position_data_IMU[j].x << "\t" << position_data_IMU[j].y << "\t" <<position_data_IMU[j].heading <<"\n";
+		}
+		outFile.close();
+	}
+
+}
+	
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "localization_node");
