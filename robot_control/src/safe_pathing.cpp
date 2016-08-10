@@ -215,6 +215,8 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     float dy;
     bool continueLoop = true;
     float bestNarrowBandValue;
+    float oldValue;
+    float newValue;
     grid_map::Index bestNarrowBandIndex;
     grid_map::Size mapSize;
     grid_map::Index currentIndex;
@@ -223,25 +225,38 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     //mapOut.add(timeLayer, 10.0);
     mapOut.add(setLayer, (float)_unknown);
     mapSize = mapOut.getSize();
-    unknownSet.resize(mapSize[0]*mapSize[1]);
+    mapOut.getIndex(goalPointIn, currentIndex);
+    // Initialize unknownSet
+    unknownSet.clear();
     for(grid_map::GridMapIterator it(mapOut); !it.isPastEnd(); ++it)
     {
-        unknownSet.at(it.getLinearIndex()) = grid_map::getIndexFromLinearIndex(it.getLinearIndex(), mapSize);
+        if((*it)[0] != currentIndex[0] && (*it)[1] != currentIndex[1])
+        {
+            mapCell.value = mapOut.at(timeLayer, *it);
+            mapCell.mapIndex = *it;
+            addToSet(unknownSet, mapCell);
+        }
     }
+    // Initialize narrowBandSet
+    narrowBandSet.clear();
+    mapCell.value = 0.0;
+    mapCell.mapIndex = currentIndex;
+    addToSet(narrowBandSet, mapCell);
+    // Initialize frozenSet
+    frozenSet.clear();
     mapOut.atPosition(timeLayer, goalPointIn) = 0.0;
     mapOut.atPosition(setLayer, goalPointIn) = (float)_narrowBand;
-    mapOut.getIndex(goalPointIn, currentIndex);
     ROS_INFO("mapSize = (%i,%i)",mapSize[0],mapSize[1]);
     while(continueLoop)
     {
-        //ROS_INFO("counter = %u",counter);
+        ROS_INFO("counter = %u",counter);
         counter++;
-        continueLoop = narrowBandNotEmpty(mapOut)/* || currentIndex != startIndex*/;
+        continueLoop = narrowBandNotEmpty()/* || currentIndex != startIndex*/;
         //ROS_INFO("continueLoop = %i",continueLoop);
         if(continueLoop)
         {
             bestNarrowBandValue = maxTimeValue+initialTimeValue;
-            for(grid_map::GridMapIterator it(mapOut); !it.isPastEnd(); ++it)
+            /*for(grid_map::GridMapIterator it(mapOut); !it.isPastEnd(); ++it)
             {
                 if(mapOut.at(setLayer, *it) == (float)_narrowBand)
                 {
@@ -251,8 +266,11 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
                         bestNarrowBandIndex = grid_map::getIndexFromLinearIndex(it.getLinearIndex(), mapOut.getSize());
                     }
                 }
-            }
+            }*/
+            bestNarrowBandValue = narrowBandSet.begin()->value;
+            bestNarrowBandIndex = narrowBandSet.begin()->mapIndex;
             mapOut.at(setLayer, bestNarrowBandIndex) = (float)_frozen;
+            swapCellInSet(narrowBandSet, frozenSet, bestNarrowBandValue, bestNarrowBandIndex);
             currentIndex = bestNarrowBandIndex;
             for(int i=-1; i<=1; i++)
             {
@@ -268,7 +286,11 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
                             //ROS_INFO("currentIndex = (%i,%i); offsetIndex = (%i,%i)",currentIndex[0],currentIndex[1],offsetIndex[0],offsetIndex[1]);
                             if(mapOut.at(setLayer, offsetIndex)!=(float)_frozen)
                             {
-                                if(mapOut.at(setLayer, offsetIndex)==(float)_unknown) mapOut.at(setLayer, offsetIndex) = (float)_narrowBand;
+                                if(mapOut.at(setLayer, offsetIndex)==(float)_unknown)
+                                {
+                                    mapOut.at(setLayer, offsetIndex) = (float)_narrowBand;
+                                    swapCellInSet(unknownSet, narrowBandSet, mapOut.at(timeLayer, offsetIndex), offsetIndex);
+                                }
 
                                 if(mapOut.get(timeLayer)(offsetIndex[0]-1,offsetIndex[1]) < mapOut.get(timeLayer)(offsetIndex[0]+1,offsetIndex[1])) dx = mapOut.get(timeLayer)(offsetIndex[0]-1,offsetIndex[1]);
                                 else dx = mapOut.get(timeLayer)(offsetIndex[0]+1,offsetIndex[1]);
@@ -279,17 +301,20 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
                                 delta = 2.0*mapIn.at(timeLayer, offsetIndex) - pow(dx-dy, 2.0);
                                 //ROS_INFO("delta = %f",delta);
                                 //ROS_INFO("dx = %f; dy = %f",dx,dy);
+                                oldValue = mapOut.at(timeLayer, offsetIndex);
                                 if(delta>=0.0)
                                 {
                                     //ROS_INFO("delta>=0");
-                                    mapOut.at(timeLayer, offsetIndex) = (dx+dy+sqrt(delta))/2.0;
+                                    newValue = (dx+dy+sqrt(delta))/2.0;
                                 }
                                 else
                                 {
                                     //ROS_INFO("delta<0");
-                                    if(dx+mapIn.at(timeLayer, offsetIndex) < dy+mapIn.at(timeLayer, offsetIndex)) mapOut.at(timeLayer, offsetIndex) = dx+mapIn.at(timeLayer, offsetIndex);
-                                    else mapOut.at(timeLayer, offsetIndex) = dy+mapIn.at(timeLayer, offsetIndex);
+                                    if(dx+mapIn.at(timeLayer, offsetIndex) < dy+mapIn.at(timeLayer, offsetIndex)) newValue = dx+mapIn.at(timeLayer, offsetIndex);
+                                    else newValue = dy+mapIn.at(timeLayer, offsetIndex);
                                 }
+                                mapOut.at(timeLayer, offsetIndex) = newValue;
+                                modifyValueOfIndexInSet(narrowBandSet, oldValue, newValue, offsetIndex);
                                 if(mapOut.at(timeLayer, offsetIndex)>maxTimeValue) mapOut.at(timeLayer, offsetIndex) = maxTimeValue;
                                 //ROS_INFO("mapOut(offsetIndex) = %f",mapOut.at(timeLayer, offsetIndex));
                             }
@@ -301,13 +326,9 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     }
 }
 
-bool SafePathing::narrowBandNotEmpty(grid_map::GridMap &map)
+bool SafePathing::narrowBandNotEmpty()
 {
-    for(grid_map::GridMapIterator it(map); !it.isPastEnd(); ++it)
-    {
-        if(map.at(setLayer, *it)==(float)_narrowBand) return true;
-    }
-    return false;
+    return !narrowBandSet.empty();
 }
 
 void SafePathing::gradientDescent(grid_map::GridMap &map, grid_map::Position startPosition, std::vector<grid_map::Index> &pathOut)
@@ -454,4 +475,47 @@ void SafePathing::generateAndPubVizMap()
     grid_map::GridMapRosConverter::toMessage(vizMap, vizMapMsg);
     ROS_INFO("before publish");
     vizMapPub.publish(vizMapMsg);
+}
+
+void SafePathing::addToSet(std::multiset<MapData, MapDataLess>& set, MapData& cell)
+{
+    set.insert(cell);
+}
+
+void SafePathing::removeFromSet(std::multiset<MapData, MapDataLess>& set, float cellValue, grid_map::Index mapIndex)
+{
+    std::pair<std::multiset<MapData, MapDataLess>::iterator,std::multiset<MapData, MapDataLess>::iterator> removeRange;
+    std::multiset<MapData, MapDataLess>::iterator it;
+    MapData testCell;
+    testCell.value = cellValue;
+    testCell.mapIndex = mapIndex;
+    removeRange = set.equal_range(testCell);
+    it = removeRange.first;
+    do
+    {
+        if(it->mapIndex[0] == mapIndex[0] && it->mapIndex[1] == mapIndex[1])
+        {
+            set.erase(it);
+            break;
+        }
+        ++it;
+    }while(it!=removeRange.second);
+}
+
+void SafePathing::modifyValueOfIndexInSet(std::multiset<MapData, MapDataLess>& set, float oldCellValue, float newCellValue, grid_map::Index mapIndex)
+{
+    MapData newCell;
+    newCell.value = newCellValue;
+    newCell.mapIndex = mapIndex;
+    removeFromSet(set, oldCellValue, mapIndex);
+    addToSet(set, newCell);
+}
+
+void SafePathing::swapCellInSet(std::multiset<MapData, MapDataLess>& fromSet, std::multiset<MapData, MapDataLess>& toSet, float cellValue, grid_map::Index mapIndex)
+{
+    MapData swapCell;
+    swapCell.value = cellValue;
+    swapCell.mapIndex = mapIndex;
+    removeFromSet(fromSet, cellValue, mapIndex);
+    addToSet(toSet, swapCell);
 }

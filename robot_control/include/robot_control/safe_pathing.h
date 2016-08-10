@@ -8,6 +8,8 @@
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <math.h>
+#include <set>
+#include <iterator>
 #include "map_layers.h"
 #include <messages/GlobalMapFull.h>
 #define PI 3.14159265359
@@ -15,6 +17,24 @@
 #define RAD2DEG 180.0/PI
 
 enum SET_LAYER_T {_frozen, _narrowBand, _unknown};
+
+class MapData
+{
+public:
+	float value;
+	grid_map::Index mapIndex;
+};
+
+struct MapDataLess
+{
+	bool operator() (const MapData &x, const MapData &y) const
+	{
+		return x.value < y.value;
+	}
+	typedef MapData first_argument_type;
+	typedef MapData second_argument_type;
+	typedef bool result_type;
+};
 
 class SafePathing
 {
@@ -25,10 +45,15 @@ public:
 	void robotPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 	void FMM(grid_map::GridMap& mapIn, grid_map::GridMap& mapOut, grid_map::Position &goalPointIn);
-	bool narrowBandNotEmpty(grid_map::GridMap& map);
+	bool narrowBandNotEmpty();
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	void chooseWaypointsFromOptimalPath();
 	void generateAndPubVizMap();
+	void addToSet(std::multiset<MapData, MapDataLess>& set, MapData& cell);
+	void removeFromSet(std::multiset<MapData, MapDataLess>& set, float cellValue, grid_map::Index mapIndex);
+	void modifyValueOfIndexInSet(std::multiset<MapData, MapDataLess>& set, float oldCellValue, float newCellValue, grid_map::Index mapIndex);
+	void swapCellInSet(std::multiset<MapData, MapDataLess>& fromSet, std::multiset<MapData, MapDataLess>& toSet, float cellValue, grid_map::Index mapIndex);
+	//float getValueInSet();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer ppServ;
@@ -59,9 +84,10 @@ public:
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
 	grid_map::Position goalPoint;
-	std::vector<grid_map::Index> frozenSet;
-	std::vector<grid_map::Index> narrowBandSet;
-	std::vector<grid_map::Index> unknownSet;
+	MapData mapCell;
+	std::multiset<MapData, MapDataLess> frozenSet;
+	std::multiset<MapData, MapDataLess> narrowBandSet;
+	std::multiset<MapData, MapDataLess> unknownSet;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
 	const std::string vizResistanceLayer = "resistance";
