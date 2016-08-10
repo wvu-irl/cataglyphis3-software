@@ -17,10 +17,18 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
     connect(this, &init_step_one::stop_nav_info_subscriber,
                 worker.get(), &ros_workers::on_run_nav_info_subscriber_stop);
 
-    connect(worker.get(), &ros_workers::nav_info_callback,
-                this, &init_step_one::on_nav_info_callback);
+    connect(this, &init_step_one::start_hsm_pose_subscriber,
+                worker.get(), &ros_workers::on_run_hsm_global_pose_subscriber_start);
+    connect(this, &init_step_one::stop_hsm_pose_subscriber,
+                worker.get(), &ros_workers::on_run_hsm_global_pose_subscriber_stop);
 
-    emit start_nav_info_subscriber();
+//    connect(worker.get(), &ros_workers::nav_info_callback,
+//                this, &init_step_one::on_nav_info_callback);
+    connect(worker.get(), &ros_workers::hsm_global_pose_callback,
+                this, &init_step_one::on_hsm_pose_callback);
+
+    //emit start_nav_info_subscriber();
+    emit start_hsm_pose_subscriber();
 }
 
 init_step_one::~init_step_one()
@@ -62,4 +70,10 @@ void init_step_one::on_nav_info_callback(const messages::NavFilterOut navInfo)
 {
     ROS_DEBUG("init_step_one:: nav_info_callback");
     ui->current_NA_spinbox->setValue(navInfo.north_angle);
+}
+
+void init_step_one::on_hsm_pose_callback(const messages::RobotPose robotPose)
+{
+    ROS_DEBUG("init_step_one:: hsm_pose_callback");
+    ui->current_NA_spinbox->setValue(robotPose.northAngle);
 }

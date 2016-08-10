@@ -8,6 +8,9 @@
 
 #include <ros_workers.h>
 
+#include <messages/NavFilterOut.h>
+#include <messages/RobotPose.h>
+
 #define INIT_STEP1_ID 1
 
 namespace Ui {
@@ -23,6 +26,8 @@ signals:
     void step_one_finished();
     void start_nav_info_subscriber();
     void stop_nav_info_subscriber();
+    void start_hsm_pose_subscriber();
+    void stop_hsm_pose_subscriber();
 
 public:
     explicit init_step_one(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
@@ -37,6 +42,7 @@ public slots:
                                 bool sucessful);
 
     void on_nav_info_callback(const messages::NavFilterOut navInfo);
+    void on_hsm_pose_callback(const messages::RobotPose robotPose);
 
 private slots:
 

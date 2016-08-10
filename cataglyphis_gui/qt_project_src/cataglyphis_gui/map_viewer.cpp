@@ -62,12 +62,4 @@ void map_viewer::on_pushButton_clicked()
     roiEllipse2->setFlag(QGraphicsItem::ItemIsMovable);
 
     scene[ui->fieldSelector->currentIndex()]->addItem(roiEllipse);
-    //generic_error_dialog test("testest","blankc");
-
-//    test2.setModal(false);
-//    test2.show();
-//    test2.raise();
-//    test2.activateWindow();
-//    scene[1]->addItem(roiEllipse2);
-//    scene[1]->addItem(roi2text);
 }

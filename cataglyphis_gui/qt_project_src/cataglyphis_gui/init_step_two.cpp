@@ -26,6 +26,8 @@ init_step_two::init_step_two(QWidget *parent, boost::shared_ptr<ros_workers> wor
 
     connect(worker.get(), &ros_workers::nav_info_callback,
                 this, &init_step_two::on_nav_info_callback);
+
+    emit start_nav_info_subscriber();
 }
 
 init_step_two::~init_step_two()
@@ -39,7 +41,6 @@ void init_step_two::on_begin_dead_reckoning_button_clicked()
     //send service
     emit start_dead_reckoning();
     emit bias_removal_finished();
-    emit stop_nav_info_subscriber();
 }
 
 void init_step_two::on_perform_bias_removal_button_clicked()
@@ -48,7 +49,6 @@ void init_step_two::on_perform_bias_removal_button_clicked()
     //when min and max of a progress bar are the same, it simply sits there and moves
     ui->progressBar->setMaximum(0);
     emit start_bias_removal();
-    emit start_nav_info_subscriber();
 }
 
 void init_step_two::on_update_bias_removal_display(messages::NavFilterControl serviceResponse,

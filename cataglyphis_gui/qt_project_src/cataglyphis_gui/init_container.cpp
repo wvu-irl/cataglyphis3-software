@@ -27,15 +27,6 @@ init_container::init_container(QWidget *parent,
     //no need to schedule deletion of rosWorker as the boost pointer automatically does
     //connect(&rosWorkerThread, &QThread::finished, rosWorker.get(), &QObject::deleteLater);
 
-    stepOneTab = boost::shared_ptr<init_step_one>(new init_step_one(ui->input_tabber, rosWorker));
-    stepOneTab->hide();
-    stepTwoTab = boost::shared_ptr<init_step_two>(new init_step_two(ui->input_tabber, rosWorker));
-    stepTwoTab->hide();
-    connect(stepOneTab.get(), &init_step_one::step_one_finished,
-                this, &init_container::on_step_one_returned);
-    connect(stepTwoTab.get(), &init_step_two::bias_removal_finished,
-                this, &init_container::on_step_two_returned);
-
     rosWorkerThread.start();
 }
 
@@ -67,6 +58,14 @@ void init_container::on_start_up_button_clicked()
 
     //emit start_bias_removal();
 
+    stepOneTab = boost::shared_ptr<init_step_one>(new init_step_one(ui->input_tabber, rosWorker));
+    stepOneTab->hide();
+    stepTwoTab = boost::shared_ptr<init_step_two>(new init_step_two(ui->input_tabber, rosWorker));
+    stepTwoTab->hide();
+    connect(stepOneTab.get(), &init_step_one::step_one_finished,
+                this, &init_container::on_step_one_returned);
+    connect(stepTwoTab.get(), &init_step_two::bias_removal_finished,
+                this, &init_container::on_step_two_returned);
     ui->input_tabber->addTab(stepOneTab.get(), "Nav Init");
     ui->input_tabber->setCurrentWidget(stepOneTab.get());
 }

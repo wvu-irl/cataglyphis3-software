@@ -5,10 +5,26 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
     nh = nhArg;
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
+    mapManagerROIClient = nh->serviceClient<robot_control::ROI>("/control/mapmanager/regionsofinterest");
+
     navInfoTime = ros::Time::now();
     navInfoSubStarted = false;
-    navInfoCallbackSub = ros::Subscriber();
+    navInfoSub = ros::Subscriber();
+
+    hsmGlobalPoseTime = ros::Time::now();
+    hsmGlobalPoseSubStarted = false;
+    hsmGlobalPosSub = ros::Subscriber();
     //workerMutex = boost::shared_ptr<QMutex>(new QMutex);
+}
+
+void ros_workers::on_run_map_manager_ROI_service()
+{
+    bool wasSucessful = false;
+    if(mapManagerROIClient.exists())
+    {
+        ROS_DEBUG("ros_workers::run_ROI Service:: ROI Service Exists!");
+        if(mapManagerROIClient)
+    }
 }
 
 void ros_workers::on_run_nav_service(messages::NavFilterControl serviceRequest,
@@ -169,10 +185,20 @@ void ros_workers::getNavInfoCallback(const messages::NavFilterOut::ConstPtr &msg
 {
     this->lastNavMsg = *msg;
     //rate limit amount of signals sent to the QT event queue
-    if(navInfoTime.toSec() - ros::Time::now().toSec() > NAV_INFO_MIN_PUB_TIME)
+    if(ros::Time::now().toSec() - navInfoTime.toSec() > NAV_INFO_MIN_PUB_TIME)
     {
         navInfoTime = ros::Time::now();
         emit nav_info_callback(this->lastNavMsg);
+    }
+}
+
+void ros_workers::getHSMGlobalPoseCallback(const messages::RobotPose::ConstPtr &msg)
+{
+    this->lastHSMGlobalPoseMsg = *msg;
+    if(ros::Time::now().toSec() - hsmGlobalPoseTime.toSec() > HSM_POSE_MIN_PUB_TIME)
+    {
+        hsmGlobalPoseTime = ros::Time::now();
+        emit hsm_global_pose_callback(this->lastHSMGlobalPoseMsg);
     }
 }
 
@@ -183,7 +209,7 @@ void ros_workers::on_run_nav_info_subscriber_start()
     {
         navInfoSubStarted = true;
         ROS_DEBUG("ros_workers::Starting New subscriber");
-        this->navInfoCallbackSub = nh->subscribe("navigation/navigationfilterout/navigationfilterout", 1,
+        this->navInfoSub = nh->subscribe("navigation/navigationfilterout/navigationfilterout", 1,
                                                         &ros_workers::getNavInfoCallback, this);
     }
 }
@@ -195,7 +221,30 @@ void ros_workers::on_run_nav_info_subscriber_stop()
     {
         ROS_DEBUG("ros_workers::Stopping Nav Info subscriber");
         navInfoSubStarted = false;
-        this->navInfoCallbackSub.shutdown();
+        this->navInfoSub.shutdown();
+    }
+}
+
+void ros_workers::on_run_hsm_global_pose_subscriber_start()
+{
+    ROS_DEBUG("ros_workers:: Entered nav info subscriber start");
+    if(!hsmGlobalPoseSubStarted)
+    {
+        hsmGlobalPoseSubStarted = true;
+        ROS_DEBUG("ros_workers::Starting New subscriber");
+        this->hsmGlobalPosSub = nh->subscribe("/hsm/masterexec/globalpose", 1,
+                                                        &ros_workers::getHSMGlobalPoseCallback, this);
+    }
+}
+
+void ros_workers::on_run_hsm_global_pose_subscriber_stop()
+{
+    ROS_DEBUG("ros_workers:: Entered nav info subscriber stop");
+    if(hsmGlobalPoseSubStarted)
+    {
+        ROS_DEBUG("ros_workers::Stopping Nav Info subscriber");
+        hsmGlobalPoseSubStarted = false;
+        this->hsmGlobalPosSub.shutdown();
     }
 }
 
