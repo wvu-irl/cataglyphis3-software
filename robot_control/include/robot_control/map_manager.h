@@ -10,34 +10,23 @@
 #include <messages/KeyframeList.h>
 #include <messages/RobotPose.h>
 #include <messages/SLAMPoseOut.h>
-#include <messages/CreateROIKeyframe.h>
+#include <messages/CreateROIHazardMap.h>
 #include <messages/CVSamplesFound.h>
-#include <messages/GlobalMapPathHazards.h>
+#include <messages/MapPathHazards.h>
 #include <messages/SearchLocalMapInfo.h>
+#include <messages/GlobalMapFull.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
 #include <vector>
 #include <time.h>
+#include <armadillo>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#define EVANSDALE
-//#define UHS
-//#define INSTITUTE_PARK
-
-#ifdef EVANSDALE
-#include "evansdale_maps.h"
-#endif // EVANSDALE
-
-#ifdef UHS
-#include "uhs_maps.h"
-#endif // UHS
-
-#ifdef INSTITUTE_PARK
-#include "institute_park_maps.h"
-#endif // INSTITUTE_PARK
+#include "evansdale_map.h"
+//#include other maps...
 
 class MapManager
 {
@@ -47,9 +36,11 @@ public:
 	bool listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res);
 	bool modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res);
 	bool searchMapCallback(robot_control::SearchMap::Request &req, robot_control::SearchMap::Response &res);
-	bool globalMapPathHazardsCallback(messages::GlobalMapPathHazards::Request &req, messages::GlobalMapPathHazards::Response &res);
+	bool globalMapPathHazardsCallback(messages::MapPathHazards::Request &req, messages::MapPathHazards::Response &res);
+	bool searchLocalMapPathHazardsCallback(messages::MapPathHazards::Request &req, messages::MapPathHazards::Response &res);
 	bool searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res);
 	bool randomSearchWaypointsCallback(robot_control::RandomSearchWaypoints::Request &req, robot_control::RandomSearchWaypoints::Response &res);
+	bool globalMapFullCallback(messages::GlobalMapFull::Request &req, messages::GlobalMapFull::Response &res);
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
@@ -73,9 +64,11 @@ public:
 	ros::ServiceServer modROIServ;
 	ros::ServiceServer searchMapServ;
 	ros::ServiceServer globalMapPathHazardsServ;
+	ros::ServiceServer searchLocalMapPathHazardsServ;
 	ros::ServiceServer searchLocalMapInfoServ;
 	ros::ServiceServer randomSearchWaypointsServ;
-	ros::ServiceClient createROIKeyframeClient;
+	ros::ServiceServer globalMapFullServ;
+	ros::ServiceClient createROIHazardMapClient;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
 	ros::Subscriber keyframeRelPoseSub;
@@ -100,17 +93,18 @@ public:
 	float searchLocalMapYPos;
 	float searchLocalMapHeading;
 	grid_map::Polygon globalMapPathHazardsPolygon;
-	std::vector<grid_map::Position> globalMapPathHazardsVertices;
-	float globalMapPathHazardsPolygonHeading;
-	float globalMapPathHazardValue;
-	float globalMapPathHazardHeight;
-	unsigned int globalMapPathHazardNumCellsInPolygon;
-	grid_map::Position globalMapPathHazardPosition;
+	grid_map::Polygon searchLocalMapPathHazardsPolygon;
+	std::vector<grid_map::Position> mapPathHazardsVertices;
+	float mapPathHazardsPolygonHeading;
+	float mapPathHazardValue;
+	float mapPathHazardHeight;
+	unsigned int mapPathHazardNumCellsInPolygon;
+	grid_map::Position mapPathHazardPosition;
 	messages::RobotPose globalPose;
 	float previousNorthAngle; // deg
 	messages::SLAMPoseOut keyframeRelPose;
 	messages::KeyframeList keyframes;
-	messages::CreateROIKeyframe createROIKeyframeSrv;
+	messages::CreateROIHazardMap createROIHazardMapSrv;
 	grid_map::GridMap currentKeyframe;
 	float currentCellValue;
 	float possibleNewCellValue;
@@ -142,6 +136,7 @@ public:
 	float possibleRandomWaypointValuesSum;
 	std::vector<float> possibleRandomWaypointValuesNormalized;
 	grid_map::Position randomWaypointPosition;
+	grid_map::Position globalPoseToSearchLocalMapPosition;
 	grid_map::Index randomWaypointIndex;
 	float randomValue;
 	float randomValueFloor;
@@ -157,10 +152,13 @@ public:
 	const float searchLocalMapWidth = 40.0; // m
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
-	const float randomWaypointMinDistance = 5.0; // m
+	const float randomWaypointMinDistance = 2.0; // m
+	const float satDriveabilityInitialValue = 10.0;
 	const float satDriveabilityInitialConf = 0.5;
+	const float keyframeDriveabilityInitialValue = 0.0;
 	const float keyframeDriveabilityInitialConf = 0.0;
 	const float keyframeSize = 80.0;
+	arma::Mat<float> distanceMat;
 };
 
 #endif // MAP_MANAGER_H

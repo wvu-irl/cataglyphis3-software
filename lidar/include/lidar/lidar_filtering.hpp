@@ -47,6 +47,7 @@
 #include <messages/NavFilterOut.h>
 
 #include <messages/ExecInfo.h>
+#include <messages/MissionPlanningInfo.h>
 
 #include <messages/LocalMap.h>
 #include "pcl/conversions.h"
@@ -63,6 +64,7 @@ public:
 	ros::Subscriber _sub_navigation;
 
 	ros::Subscriber _sub_execinfo;
+	ros::Subscriber _sub_missionplanning;
 
 	ros::Subscriber _sub_velodyne;
 	void doMathMapping();
@@ -80,7 +82,10 @@ public:
 	short int _registration_counter;
 	short int _registration_counter_prev;
 
-	
+	float _homing_x = 0;
+	float _homing_y = 0;
+	float _homing_heading = 0;
+	bool _homing_found = 0;
 
 private:
 	//navigation filter callback
@@ -96,6 +101,9 @@ private:
 	//ExecInfo callback
 	bool _execinfo_turnflag;
 	bool _execinfo_stopflag;
+
+	//Mission Planning Inf callback
+	bool _mission_startSLAM;
 
 	//transform points from lidar frame to robot body
 	Eigen::Matrix3f _R_tilt_robot_to_beacon; //robot to homing beacon rotation (pitch and roll rotation only)
@@ -114,7 +122,7 @@ private:
 	//mapping function
 	const int map_range = 60; //
 	const float grid_size = 1; // size of the local map grid
-	const float threshold_tree_height = 10.0; // above which the points will be disgarded
+	const float threshold_tree_height = 2.0; // above which the points will be disgarded
 	std::vector<std::vector<float> > _local_grid_map; // local grid map without grond adjacent infomation
 	std::vector<std::vector<float> > _local_grid_map_new; // local grid map with grond adjacent infomation
 	pcl::PointCloud<pcl::PointXYZI> _object_filtered;
@@ -132,10 +140,6 @@ private:
 	std::vector<cylinder> _potential_cylinders_intensity;
 
 	const float home_detection_range = 60.0;
-	float _homing_x = 0;
-	float _homing_y = 0;
-	float _homing_heading = 0;
-	bool _homing_found = 0;
 
 	// //use for grid map
     typedef struct Cell 
@@ -164,6 +168,7 @@ private:
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 
 	void execinforCallback(const messages::ExecInfo::ConstPtr &exec_msg);
+	void missionplanninginforCallback(const messages::MissionPlanningInfo::ConstPtr &mission_msg);
 };
 
 #endif // LIDAR_FILTERING_H

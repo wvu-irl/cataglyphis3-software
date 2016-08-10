@@ -39,7 +39,6 @@ IMU::IMU()
 	nb1_counter=0;
 	nb1_counter_prev = 0;
 	call_counter1=0;
-	time1=0;
 	prev_time1 = 0;
 	dt1 = 0;
 	new_imu1 = 0;
@@ -624,17 +623,53 @@ void IMU::filter_imu_values()
 		p1 = p1-p1_offset;
 		q1 = q1-q1_offset;
 		r1 = r1-r1_offset;
-		dt1 = time1 - prev_time1;
+		if (prev_time1!=0)
+		{
+			dt1 = time1 - prev_time1;
+		}
+		else 
+		{
+			dt1 = 0.0;
+		}
+		if (fabs(dt1)>1000.0)
+		{
+			dt1 = 0.0;
+		}
+
 
 		p2 = p2-p2_offset;
 		q2 = q2-q2_offset;
 		r2 = r2-r2_offset;
-		dt2 = time2 - prev_time2;
+		if (prev_time2!=0)
+		{
+			dt2 = time2 - prev_time2;
+		}
+		else 
+		{
+			dt2 = 0.0;
+		}
+		if (fabs(dt2)>1000.0)
+		{
+			dt2 = 0.0;
+		}
 
 		p3 = p3-p3_offset;
 		q3 = q3-q3_offset;
 		r3 = r3-r3_offset;
-		dt3 = time3 - prev_time3;
+		if (prev_time3!=0)
+		{
+			dt3 = time3 - prev_time3;
+		}
+		else 
+		{
+			dt3 = 0.0;
+		}
+		if (fabs(dt3)>1000.0)
+		{
+			dt3 = 0.0;
+		}
+
+
 	if (new_imu == 1)
 	{
 		p = ((double)new_imu1*(p1)+(double)new_imu2*(p2)+(double)new_imu3*(p3))/((double)new_imu1+(double)new_imu2+(double)new_imu3);

@@ -7,7 +7,7 @@ class BiasRemoval : public Procedure
 public:
 	// Members
 	ros::NodeHandle nh;
-	const float biasRemovalTimeoutTime = 20.0; // sec
+	const float biasRemovalActionTimeoutTime = 20.0; // sec
 	bool biasRemovalTimedOut;
 	// Methods
 	bool runProc();

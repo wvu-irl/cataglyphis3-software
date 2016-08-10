@@ -38,13 +38,12 @@ public:
 	computer_vision::SegmentImage segmentImageSrv;
 	computer_vision::ImageProbabilities imageProbabilitiesSrv;
 	messages::CVSamplesFound searchForSamplesMsgOut;
-	const double G_SENSOR_HEIGHT = 1.385;
+	const double G_SENSOR_HEIGHT = 1.45;
 	const double G_IMAGE_WIDTH = 5792;
 	const double G_IMAGE_HEIGHT = 5792;
-	const double G_FOCAL_LENGTH = 0.008;
-	const double G_IMAGE_SENSOR_WIDTH = 0.0020347;//4.14e-6 meters square;
-	const double G_IMAGE_SENSOR_HEIGHT = 0.0020347;
-	const double G_PIXEL2DISTANCE = G_IMAGE_SENSOR_WIDTH/G_IMAGE_WIDTH;
+	const double G_FOCAL_LENGTH = 0.01;
+	const double G_IMAGE_SENSOR_PIXEL_WIDTH = 4.14e-6;
+	const double G_IMAGE_SENSOR_PIXEL_HEIGHT = 4.14e-6;
 	boost::filesystem::path G_data_folder;
 	boost::filesystem::path G_data_folder_full_images;
 	std::string G_data_folder_name;

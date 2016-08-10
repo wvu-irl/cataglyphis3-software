@@ -11,6 +11,7 @@
 #include <messages/NavFilterOut.h>
 #include "emergency_escape.h"
 #include "avoid.h"
+#include "bias_removal.h"
 #include "next_best_region.h"
 #include "search_region.h"
 #include "examine.h"
@@ -18,8 +19,10 @@
 #include "collect.h"
 #include "confirm_collect.h"
 #include "go_home.h"
+#include "square_update.h"
 #include "deposit_approach.h"
 #include "deposit_sample.h"
+#include "safe_mode.h"
 #include "pause.h"
 #include "bit_utils.h"
 
@@ -44,6 +47,7 @@ public:
 	const int loopRate = 20; // Hz
 	EmergencyEscape emergencyEscape;
 	Avoid avoid;
+	BiasRemoval biasRemoval;
 	NextBestRegion nextBestRegion;
 	SearchRegion searchRegion;
 	Examine examine;
@@ -51,13 +55,14 @@ public:
 	Collect collect;
 	ConfirmCollect confirmCollect;
 	GoHome goHome;
+	SquareUpdate squareUpdate;
 	DepositApproach depositApproach;
 	DepositSample depositSample;
+	SafeMode safeMode;
     Pause pause;
 
 	bool collisionInterruptTrigger;
 	Leading_Edge_Latch collisionInterruptLEL;
-	unsigned int numProcsBeingOrToBeExec;
 	bool multiProcLockout;
 	unsigned int lockoutSum;
 	bool initComplete;
@@ -73,7 +78,7 @@ private:
 	void runPause_();
 	void pauseAllTimers_();
 	void resumeTimers_();
-	void calcnumProcsBeingOrToBeExec_();
+	void calcnumProcsBeingOrToBeExecOrRes_();
 	void updateSampleFlags_();
 	void packAndPubInfoMsg_();
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);

@@ -10,7 +10,7 @@
 #include <robot_control/RandomSearchWaypoints.h>
 #include <robot_control/DriveSpeeds.h>
 #include <robot_control/cataglyphis_timer.h>
-#include <messages/GlobalMapPathHazards.h>
+#include <messages/MapPathHazards.h>
 #include "robot_status.h"
 #include "action_type_enum.h"
 #include <messages/ExecAction.h>
@@ -20,17 +20,18 @@
 #include <messages/LidarFilterOut.h>
 #include <messages/MasterStatus.h>
 #include <messages/NavFilterControl.h>
+#include <hsm/voice.h>
 #include <armadillo>
 #include <math.h>
 #include <time.h>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
-#define NUM_PROC_TYPES 11
+#define NUM_PROC_TYPES 14
 #define MAX_SAMPLES 10
 #define NUM_TIMERS 3
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__emergencyEscape__ ,__avoid__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __depositApproach__, __depositSample__, __pause__};
+enum PROC_TYPES_T {__emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
 enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
 
 class MissionPlanningProcedureShare
@@ -42,6 +43,9 @@ public:
 	static bool procsToExecute[NUM_PROC_TYPES];
 	static bool procsToInterrupt[NUM_PROC_TYPES];
 	static bool procsBeingExecuted[NUM_PROC_TYPES];
+	static bool procsToResume[NUM_PROC_TYPES];
+	static unsigned int numProcsBeingOrToBeExecOrRes;
+	static unsigned int numProcsBeingOrToBeExec;
     static ros::ServiceClient execActionClient;
     static messages::ExecAction execActionSrv;
 	static ros::Subscriber execInfoSub;
@@ -61,9 +65,13 @@ public:
 	static ros::ServiceClient randomSearchWaypointsClient;
 	static robot_control::RandomSearchWaypoints randomSearchWaypointsSrv;
 	static ros::ServiceClient globalMapPathHazardsClient;
-	static messages::GlobalMapPathHazards globalMapPathHazardsSrv;
+	static messages::MapPathHazards globalMapPathHazardsSrv;
+	static ros::ServiceClient searchLocalMapPathHazardsClient;
+	static messages::MapPathHazards searchLocalMapPathHazardsSrv;
 	static ros::ServiceClient navControlClient;
 	static messages::NavFilterControl navControlSrv;
+	static VoiceBase* voiceSay;
+	//#define voiceObj voiceSay;
 	static ros::Publisher driveSpeedsPub;
 	static robot_control::DriveSpeeds driveSpeedsMsg;
 	static robot_control::DriveSpeeds driveSpeedsMsgPrev;
@@ -81,11 +89,11 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.457; // m
+	const float blindDriveDistance = 0.507; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
-	const float possibleSampleConfThresh = 0.7;
-	const float definiteSampleConfThresh = 0.9;
+	const float possibleSampleConfThresh = 0.5;
+	const float definiteSampleConfThresh = 0.7;
 	static int currentROIIndex;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
@@ -100,6 +108,7 @@ public:
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool homingUpdateFailed;
+	static bool performSafeMode;
 	static bool inDepositPosition;
 	static bool missionEnded;
 	static bool useDeadReckoning;
@@ -107,8 +116,9 @@ public:
 	static bool avoidLockout;
 	static bool escapeLockout;
 	static bool roiKeyframed;
+	static bool startSLAM;
 	static unsigned int avoidCount;
-	const unsigned int maxAvoidCount = 5;
+	const unsigned int maxAvoidCount = 3;
 	const float metersPerAvoidCountDecrement = 5.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
@@ -126,8 +136,8 @@ public:
 	static unsigned int confirmCollectFailedCount;
 	static unsigned int homingUpdatedFailedCount;
 	static unsigned int navStatus;
-	const unsigned int maxHomingUpdatedFailedCount = 2;
-	const unsigned int homingFailedSwitchToDeadReckoningCount = 1;
+	const unsigned int maxHomingUpdatedFailedCount = 3;
+	const unsigned int homingFailedSwitchToDeadReckoningCount = 2;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 1.0;
 	const float defaultVMax = 1.2; // m/s
@@ -137,8 +147,8 @@ public:
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m
 	const float lidarUpdateWaitTime = 1.0; // sec
-	const float biasRemovalTimeoutPeriod = 300.0; // sec = 5 minutes
-	const float homingTimeoutPeriod = 600.0; // sec = 10 minutes
+	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
+	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -147,6 +157,9 @@ public:
 bool MissionPlanningProcedureShare::procsToExecute[NUM_PROC_TYPES];
 bool MissionPlanningProcedureShare::procsToInterrupt[NUM_PROC_TYPES];
 bool MissionPlanningProcedureShare::procsBeingExecuted[NUM_PROC_TYPES];
+bool MissionPlanningProcedureShare::procsToResume[NUM_PROC_TYPES];
+unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExecOrRes;
+unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExec;
 ros::ServiceClient MissionPlanningProcedureShare::execActionClient;
 messages::ExecAction MissionPlanningProcedureShare::execActionSrv;
 ros::Subscriber MissionPlanningProcedureShare::execInfoSub;
@@ -166,7 +179,10 @@ robot_control::SearchMap MissionPlanningProcedureShare::searchMapSrv;
 ros::ServiceClient MissionPlanningProcedureShare::randomSearchWaypointsClient;
 robot_control::RandomSearchWaypoints MissionPlanningProcedureShare::randomSearchWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::globalMapPathHazardsClient;
-messages::GlobalMapPathHazards MissionPlanningProcedureShare::globalMapPathHazardsSrv;
+messages::MapPathHazards MissionPlanningProcedureShare::globalMapPathHazardsSrv;
+ros::ServiceClient MissionPlanningProcedureShare::searchLocalMapPathHazardsClient;
+messages::MapPathHazards MissionPlanningProcedureShare::searchLocalMapPathHazardsSrv;
+VoiceBase* MissionPlanningProcedureShare::voiceSay;
 ros::ServiceClient MissionPlanningProcedureShare::navControlClient;
 messages::NavFilterControl MissionPlanningProcedureShare::navControlSrv;
 ros::Publisher MissionPlanningProcedureShare::driveSpeedsPub;
@@ -198,6 +214,7 @@ bool MissionPlanningProcedureShare::sampleInCollectPosition;
 bool MissionPlanningProcedureShare::confirmedPossession;
 bool MissionPlanningProcedureShare::atHome;
 bool MissionPlanningProcedureShare::homingUpdateFailed;
+bool MissionPlanningProcedureShare::performSafeMode;
 bool MissionPlanningProcedureShare::inDepositPosition;
 bool MissionPlanningProcedureShare::missionEnded;
 bool MissionPlanningProcedureShare::useDeadReckoning;
@@ -205,6 +222,7 @@ unsigned int MissionPlanningProcedureShare::samplesCollected;
 bool MissionPlanningProcedureShare::avoidLockout;
 bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
+bool MissionPlanningProcedureShare::startSLAM;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

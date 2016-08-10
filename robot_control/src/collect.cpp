@@ -2,13 +2,14 @@
 
 bool Collect::runProc()
 {
-	ROS_INFO("collectState = %i", state);
+    //ROS_INFO("collectState = %i", state);
 	switch(state)
 	{
 	case _init_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false);
 		sendGrab();
         computeDriveSpeeds();
@@ -18,6 +19,7 @@ bool Collect::runProc()
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
@@ -29,10 +31,11 @@ bool Collect::runProc()
 		state = _init_;
 		break;
 	case _finish_:
-		avoidLockout = false;
+		avoidLockout = true;
 		possessingSample = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

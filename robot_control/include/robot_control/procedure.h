@@ -21,9 +21,9 @@ public:
     virtual bool runProc() = 0;
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
-	void sendDriveGlobal(bool pushToFront);
+	void sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading);
 	void sendDriveAndSearch(uint8_t typeMux);
-	void sendDriveAndWait(float waitTime); // sec
+	void sendDriveAndWait(float waitTime, bool endHeadingFlag, float endHeading); // sec
 	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
@@ -32,6 +32,8 @@ public:
 	void sendWait(float waitTime); // sec
 	void sendDequeClearFront();
 	void sendDequeClearAll();
+	void sendPause();
+	void sendUnPause();
 	void computeSampleValuesWithExpectedDistance();
 	void computeExpectedSampleLocation();
 	void findHighestConfSample();
@@ -52,8 +54,8 @@ bool Procedure::run()
 {
     //ROS_DEBUG("before if(procsToExecute.at(this->procType");
     //ROS_DEBUG("this->procType = %i",static_cast<int>(this->procType));
-	if(procsToInterrupt[this->procType]) this->state = _interrupt_;
-	if(procsToExecute[this->procType] || procsBeingExecuted[this->procType]) return this->runProc();
+	if(procsToInterrupt[this->procType] && this->state==_exec_) {this->state = _interrupt_; procsToResume[this->procType] = true;}
+	if((procsToResume[this->procType] && numProcsBeingOrToBeExec==0) || (procsToExecute[this->procType] || procsBeingExecuted[this->procType])) return this->runProc();
 	//else if(procsBeingExecuted.at(this->procType) == true && procsToExecute.at(this->procType) == false) {this->state = _interrupt_; return this->runProc();}
     //ROS_DEBUG("after if - else if(procsToExecute.at(this->procType");
 }
@@ -66,13 +68,24 @@ void Procedure::clearAndResizeWTT()
 
 void Procedure::callIntermediateWaypoints()
 {
-	intermediateWaypointsSrv.request.collision = false;
+	intermediateWaypointsSrv.request.collision = 0;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
 	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
 	intermediateWaypointsSrv.request.current_y = robotStatus.yPos;
 	intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
-    for(int i = 0; i < initNumWaypointsToTravel; i++)
+	intermediateWaypointsSrv.request.waypointArrayIn.resize(numWaypointsToTravel);
+	intermediateWaypointsSrv.request.waypointArrayIn = waypointsToTravel;
+	if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful, size = %u", intermediateWaypointsSrv.response.waypointArrayOut.size());
+	else ROS_ERROR("intermediateWaypoints service call unsuccessful");
+	if(intermediateWaypointsSrv.response.waypointArrayOut.size() != numWaypointsToTravel)
+	{
+		waypointsToTravel.clear();
+		waypointsToTravel = intermediateWaypointsSrv.response.waypointArrayOut;
+		numWaypointsToTravel = waypointsToTravel.size();
+		//for(int i=0; i<numWaypointsToTravel; i++) ROS_INFO("waypointsToTravel(%i) = (%f,%f)",i,waypointsToTravel.at(i).x,waypointsToTravel.at(i).y);
+	}
+	/*for(int i = 0; i < initNumWaypointsToTravel; i++)
     {
         intermWaypointsIt = waypointsToTravel.begin() + i + totalIntermWaypoints;
         if(i == 0)
@@ -95,10 +108,10 @@ void Procedure::callIntermediateWaypoints()
             totalIntermWaypoints += intermediateWaypointsSrv.response.waypointArray.size();
             numWaypointsToTravel += intermediateWaypointsSrv.response.waypointArray.size();
         }
-    }
+	}*/
 }
 
-void Procedure::sendDriveGlobal(bool pushToFront)
+void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading)
 {
     for(int i=0; i<numWaypointsToTravel; i++)
     {
@@ -111,11 +124,12 @@ void Procedure::sendDriveGlobal(bool pushToFront)
         execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
         execActionSrv.request.float5 = 0.0;
         execActionSrv.request.int1 = 0;
-		execActionSrv.request.bool1 = false;
+		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
+		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = pushToFront;
 		execActionSrv.request.bool3 = false;
 		execActionSrv.request.bool4 = false;
@@ -144,8 +158,8 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-		execActionSrv.request.float3 = 1.5;
-		execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float3 = 0.0;
+		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
 		execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
@@ -192,7 +206,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 	}
 }
 
-void Procedure::sendDriveAndWait(float waitTime)
+void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endHeading)
 {
 	for(int i=0; i<numWaypointsToTravel; i++)
 	{
@@ -206,11 +220,12 @@ void Procedure::sendDriveAndWait(float waitTime)
 		execActionSrv.request.pause = false;
 		execActionSrv.request.float1 = waypointsToTravel.at(i).x;
 		execActionSrv.request.float2 = waypointsToTravel.at(i).y;
-		execActionSrv.request.float3 = 1.5;
-		execActionSrv.request.float4 = 45.0;
+		execActionSrv.request.float3 = endHeading;
+		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
 		execActionSrv.request.int1 = 0;
-		execActionSrv.request.bool1 = false;
+		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
+		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
 		execActionSrv.request.bool3 = false;
 		execActionSrv.request.bool4 = false;
@@ -452,6 +467,8 @@ void Procedure::sendDequeClearFront()
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
+	ROS_INFO("send dequeClearFront");
+	voiceSay->call("queue clear front");
 }
 
 void Procedure::sendDequeClearAll()
@@ -483,6 +500,64 @@ void Procedure::sendDequeClearAll()
 	else ROS_ERROR("exec action service call unsuccessful");
 }
 
+void Procedure::sendPause()
+{
+    this->serialNum++;
+    execActionSrv.request.nextActionType = 0;
+    execActionSrv.request.newActionFlag = 0;
+    execActionSrv.request.pushToFrontFlag = false;
+    execActionSrv.request.clearDequeFlag = false;
+    execActionSrv.request.clearFrontFlag = false;
+    execActionSrv.request.pause = true;
+    execActionSrv.request.float1 = 0.0;
+    execActionSrv.request.float2 = 0.0;
+    execActionSrv.request.float3 = 0.0;
+    execActionSrv.request.float4 = 0.0;
+    execActionSrv.request.float5 = 0.0;
+    execActionSrv.request.int1 = 0;
+    execActionSrv.request.bool1 = false;
+    execActionSrv.request.bool2 = false;
+    execActionSrv.request.bool3 = false;
+    execActionSrv.request.bool4 = false;
+    execActionSrv.request.bool5 = false;
+    execActionSrv.request.bool6 = false;
+    execActionSrv.request.bool7 = false;
+    execActionSrv.request.bool8 = false;
+    execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+    execActionSrv.request.serialNum = this->serialNum;
+    if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+    else ROS_ERROR("exec action service call unsuccessful");
+}
+
+void Procedure::sendUnPause()
+{
+    this->serialNum++;
+    execActionSrv.request.nextActionType = 0;
+    execActionSrv.request.newActionFlag = 0;
+    execActionSrv.request.pushToFrontFlag = false;
+    execActionSrv.request.clearDequeFlag = false;
+    execActionSrv.request.clearFrontFlag = false;
+    execActionSrv.request.pause = false;
+    execActionSrv.request.float1 = 0.0;
+    execActionSrv.request.float2 = 0.0;
+    execActionSrv.request.float3 = 0.0;
+    execActionSrv.request.float4 = 0.0;
+    execActionSrv.request.float5 = 0.0;
+    execActionSrv.request.int1 = 0;
+    execActionSrv.request.bool1 = false;
+    execActionSrv.request.bool2 = false;
+    execActionSrv.request.bool3 = false;
+    execActionSrv.request.bool4 = false;
+    execActionSrv.request.bool5 = false;
+    execActionSrv.request.bool6 = false;
+    execActionSrv.request.bool7 = false;
+    execActionSrv.request.bool8 = false;
+    execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
+    execActionSrv.request.serialNum = this->serialNum;
+    if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
+    else ROS_ERROR("exec action service call unsuccessful");
+}
+
 void Procedure::computeSampleValuesWithExpectedDistance()
 {
 	numSampleCandidates = cvSamplesFoundMsg.sampleList.size();
@@ -495,7 +570,7 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 								(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2.0)+pow(expectedSampleDistance,2.0)-
 									2.0*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
 										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle))));
-		ROS_INFO("^^^^^ sampleValues.at(%i) = %i",i,sampleValues.at(i));
+		ROS_INFO("^^^^^ sampleValues.at(%i) = %f",i,sampleValues.at(i));
 
 		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
 	}

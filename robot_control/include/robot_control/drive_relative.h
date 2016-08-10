@@ -14,6 +14,7 @@ private:
 	float rMax_;
 	float desiredEndHeading_;
 	bool endHeading_;
+	float candidateEndHeadingAngleToTurn_[2];
 	bool pushedToFront_;
 };
 

@@ -10,7 +10,8 @@
 #include <messages/CVSearchCmd.h>
 #include <messages/CVSamplesFound.h>
 #include <messages/KeyframeList.h>
-#include <messages/CreateROIKeyframe.h>
+#include <messages/CreateROIHazardMap.h>
+#include <messages/NavFilterControl.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <robot_control/map_layers.h>
@@ -18,9 +19,11 @@
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
-bool createROIKeyframeCallback(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res);
+bool createROIHazardMapCallback(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res);
+bool navControlCallback(messages::NavFilterControl::Request &req, messages::NavFilterControl::Response &res);
 void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map);
 void publishKeyframeList();
+void biasRemovalTimerCallback(const ros::TimerEvent &event);
 
 ros::Publisher cvSamplesFoundPub;
 messages::ActuatorOut actuatorCmd;
@@ -33,6 +36,9 @@ messages::KeyframeList keyframeListMsg;
 grid_map::GridMap keyframe;
 ros::Publisher keyframeListPub;
 float rollAngle = 0.0;
+ros::Timer biasRemovalTimer;
+bool biasRemovalFinished = false;
+bool homingUpdated = false;
 
 int main(int argc, char** argv)
 {
@@ -48,7 +54,10 @@ int main(int argc, char** argv)
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
     keyframeListPub = nh.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1);
     ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
-    ros::ServiceServer createROIKeyframeServ = nh.advertiseService("/slam/keyframesnode/createroikeyframe", createROIKeyframeCallback);
+    ros::ServiceServer createROIHazardMapServ = nh.advertiseService("/lidar/collisiondetection/createroihazardmap", createROIHazardMapCallback);
+    ros::ServiceServer navControlCallbackServ = nh.advertiseService("/navigation/navigationfilter/control", navControlCallback);
+    biasRemovalTimer = nh.createTimer(ros::Duration(5.0), biasRemovalTimerCallback);
+    biasRemovalTimer.stop();
     messages::NavFilterOut navMsgOut;
     messages::SLAMPoseOut slamPoseMsgOut;
     messages::GrabberFeedback grabberMsgOut;
@@ -83,6 +92,8 @@ int main(int argc, char** argv)
         navMsgOut.heading = robotSim.heading;
         navMsgOut.human_heading = fmod(robotSim.heading, 360.0);
         navMsgOut.roll = rollAngle;
+        navMsgOut.nav_status = biasRemovalFinished;
+        navMsgOut.homing_updated = homingUpdated;
         slamPoseMsgOut.globalX = robotSim.xPos;
         slamPoseMsgOut.globalY = robotSim.yPos;
         slamPoseMsgOut.globalHeading = robotSim.heading;
@@ -96,6 +107,7 @@ int main(int argc, char** argv)
         grabberPub.publish(grabberMsgOut);
         nb1Pub.publish(nb1MsgOut);
         collisionPub.publish(collisionMsgOut);
+        biasRemovalFinished = false;
         loopRate.sleep();
         ros::spinOnce();
     }
@@ -128,6 +140,7 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     cvSampleProps.confidence = msg->cvConfidence;
     if(msg->pubKeyframeList) publishKeyframeList();
     rollAngle = msg->rollAngle;
+    homingUpdated = msg->homingUpdated;
 }
 
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
@@ -144,18 +157,22 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
     return true;
 }
 
-bool createROIKeyframeCallback(messages::CreateROIKeyframe::Request &req, messages::CreateROIKeyframe::Response &res)
+bool createROIHazardMapCallback(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res)
 {
-    keyframe.add(layerToString(_keyframeDriveability), 0.0);
-    keyframe.add(layerToString(_keyframeDriveabilityConf), 0.9);
-    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, 30.0)) = 1;
-    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(50.0, 0.0)) = 2;
-    keyframe.atPosition(layerToString(_keyframeDriveability), grid_map::Position(30.0, -30.0)) = 2;
-    grid_map::GridMapRosConverter::toMessage(keyframe, res.keyframe.map);
-    res.keyframe.x = robotSim.xPos;
-    res.keyframe.y = robotSim.yPos;
-    res.keyframe.heading = robotSim.heading;
-    res.keyframe.associatedROI = req.roiIndex;
+    res.x_mean.resize(3);
+    res.y_mean.resize(3);
+    res.x_mean.at(0) = 15.0;
+    res.y_mean.at(0) = 15.0;
+    res.x_mean.at(1) = 20.0;
+    res.y_mean.at(1) = 0.0;
+    res.x_mean.at(2) = 15.0;
+    res.y_mean.at(2) = -3.0;
+    return true;
+}
+
+bool navControlCallback(messages::NavFilterControl::Request &req, messages::NavFilterControl::Response &res)
+{
+    if(req.runBiasRemoval) biasRemovalTimer.start();
     return true;
 }
 
@@ -196,4 +213,10 @@ void publishKeyframeList()
     keyframeListMsg.keyframeList.at(1).heading = 45.0;
 
     keyframeListPub.publish(keyframeListMsg);
+}
+
+void biasRemovalTimerCallback(const ros::TimerEvent &event)
+{
+    biasRemovalFinished = true;
+    biasRemovalTimer.stop();
 }

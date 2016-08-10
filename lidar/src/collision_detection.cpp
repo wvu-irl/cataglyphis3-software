@@ -19,9 +19,22 @@ CollisionDetection::CollisionDetection()
 	//_registration_new = false;
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &CollisionDetection::registrationCallback, this);
 
+	//predictive avoidance service
+	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
+	
 	//collision output
 	_collision_status = 0;
 }
+
+// void CollisionDetection::service(messages::::Request &req, messages::::Response &res)
+// {
+// 	int index;
+// 	index = req.index;
+
+// 	res.x = x;
+// 	res.y = y;
+// }
+
 
 void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
@@ -135,7 +148,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	}
 	else
 	{
-		_collision_status = 3;
+		_collision_status = 0;
 		ROS_INFO("No Collision...");
 		return 0;
 	}
@@ -152,16 +165,17 @@ bool CollisionDetection::doPredictiveAovidance()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
 	*cloud = _input_cloud;
 
-	int hazard_map_size = 30; //so each side is 30*2 = 60 m
+	int preditive_region_length = 7;
+	int preditive_region_wide = 5; //this is on each side, so the total is 5*2 =10
 
 	//remove points based on hard thresholds (too far, too high, too low)
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.setFilterLimits(0,preditive_region_length);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.setFilterLimits(-preditive_region_wide,preditive_region_wide);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("z");
 	pass.setFilterLimits(-5,5); //positive z is down, negative z is up
@@ -173,7 +187,7 @@ bool CollisionDetection::doPredictiveAovidance()
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (1.5); //ground detection threshold parameter
+	seg_plane.setDistanceThreshold (0.75); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
@@ -202,29 +216,22 @@ bool CollisionDetection::doPredictiveAovidance()
 		object_filtered_projection->points[i].z=0;
 	}
 
-	//start from here is the predictive avoidance region
-	pcl::PointCloud<pcl::PointXYZI>::Ptr predictive_region (new pcl::PointCloud<pcl::PointXYZI>);
-	pass.setInputCloud(object_filtered_projection);
-	pass.setFilterFieldName("x");
-	pass.setFilterLimits(0,10);//may change later
-	pass.filter(*predictive_region);
-	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-5,5);//may change later
-	pass.filter(*predictive_region);
 
-	int bin_counter[20];
-	for (int i=0; i<20; i++)
+	int bin_num = 10;
+	int bin_counter[bin_num];
+	for (int i=0; i<bin_num; i++)
 	{
 		bin_counter[i] = 0;
 	}
 
-	for(int i=0; i<predictive_region->points.size(); i++)//every point in the predictive region
+	cout << object_filtered_projection->points.size() << endl;
+	for(int i=0; i<object_filtered_projection->points.size(); i++)//every point in the predictive region
 	{
-		bin_counter[int(ceil((floor(predictive_region->points[i].y) + 5)/0.5))] += 1; 
+		bin_counter[(int)ceil((floor(object_filtered_projection->points[i].y) + preditive_region_wide)/(preditive_region_wide*2/bin_num))] += 1; 
 	}
 
 	int bin_checker = 0;
-	for(int i=0; i<20; i++)
+	for(int i=0; i<bin_num; i++)
 	{
 		if(bin_counter[i] == 0)
 		{
@@ -232,15 +239,98 @@ bool CollisionDetection::doPredictiveAovidance()
 		}
 	}
 
-	if(bin_checker <= 14) //less than 70% of the bins are clear
+	cout << "Value of bin_checker is " << bin_checker << endl;
+	float threshold_ratio = 0.7;
+	if(bin_checker <= (int)(bin_num*threshold_ratio)) //less than 70% of the bins are clear
 	{
-		return true;//high risk area in front
+		//return true;//high risk area in front
 		cout << "High risk area in front" << endl;
+
+		//trigger the hazard map generation function
+		pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+	    *hazard_cloud = _input_cloud;
+
+	    int hazard_map_size = 30; //so each side is 30*2 = 60 
+
+		//remove points based on hard thresholds (too far, too high, too low)
+		//pcl::PassThrough<pcl::PointXYZI> pass;
+		pass.setInputCloud(hazard_cloud);
+		pass.setFilterFieldName("x");
+		pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+		pass.filter(*hazard_cloud);
+		pass.setFilterFieldName("y");
+		pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+		pass.filter(*hazard_cloud);
+		pass.setFilterFieldName("z");
+		pass.setFilterLimits(-5,5); //positive z is down, negative z is up
+		pass.filter(*hazard_cloud);
+
+		//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
+		pcl::SACSegmentation<pcl::PointXYZI> plane;
+		plane.setOptimizeCoefficients (true); //optional (why is this optional??)
+		plane.setModelType (pcl::SACMODEL_PLANE);
+		plane.setMethodType (pcl::SAC_RANSAC);
+		plane.setMaxIterations (1000); //max iterations for RANSAC
+		plane.setDistanceThreshold (0.75); //ground detection threshold parameter
+		plane.setInputCloud (hazard_cloud); //was raw_cloud
+
+		//segment the points fitted to the plane using ransac
+		pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ()); //what is this? (coefficients for fitted plane?)
+		pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ()); //what is this? (inliers for points that fit the plane?)
+		seg_plane.segment (*inliers_hazard, *coefficients_hazard);
+
+		//seperate the ground points and the points above the ground (object points)
+		//pcl::ExtractIndices<pcl::PointXYZI> extract;
+		extract.setInputCloud (hazard_cloud);
+		extract.setIndices (inliers_hazard);
+
+		extract.setNegative (true);
+		pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+		extract.filter (*hazard_filtered);
+
+		//project points on the xy plane, and that is the local hazard map
+		pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_filtered_projection (new pcl::PointCloud<pcl::PointXYZI>);
+		*hazard_filtered_projection = *hazard_filtered;
+		for (int i=0; i<hazard_filtered->points.size(); i++)
+		{
+			hazard_filtered_projection->points[i].z=0;
+		}
+
+		//voxel grid filter
+		pcl::VoxelGrid<pcl::PointXYZI> sor;
+		sor.setInputCloud (hazard_filtered_projection);
+		sor.setLeafSize (1.0f, 1.0f, 1.0f);
+		sor.filter (*hazard_filtered_projection);
+
+		_hazard_x.clear();
+		_hazard_y.clear();
+		for(int i = 0; i< hazard_filtered_projection->points.size(); i++)
+		{
+			_hazard_x.push_back(hazard_filtered_projection->points[i].x);
+			_hazard_y.push_back(hazard_filtered_projection->points[i].y);
+		}
+
+		//the above hazard_filter_projection is the hazard map and we need to publish this map
+		cout << "Hazard map get published !!!" << endl;
+		return true;
 	}
 	else
 	{
+		cout << "No risk in front" << endl;
 		return false;
 		//relative safe region
 	}
 	bin_checker = 0; 
+}
+
+bool CollisionDetection::returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res)
+{
+	res.x_mean.clear();
+	res.y_mean.clear();
+	for(int i=0; i<_hazard_x.size();i++)
+	{
+		res.x_mean.push_back(_hazard_x[i]);
+		res.y_mean.push_back(_hazard_y[i]);
+	}
+	return true;
 }

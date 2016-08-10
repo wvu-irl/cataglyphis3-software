@@ -77,6 +77,8 @@ find_package(catkin REQUIRED COMPONENTS
    LocalMap.msg
    MasterStatus.msg
    MissionPlanningInfo.msg
+   SunSensorOut.msg
+   VoiceSayPhrase.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -86,12 +88,13 @@ find_package(catkin REQUIRED COMPONENTS
    CVSearchCmd.srv
    MapSegment.srv
    NavFilterControl.srv
-   CreateROIKeyframe.srv
+   CreateROIHazardMap.srv
    SearchLocalMapInfo.srv
-   GlobalMapPathHazards.srv
+   MapPathHazards.srv
    EmergencyEscapeTrigger.srv
    HSMSetNorthAngle.srv
    MissionPlanningControl.srv
+   GlobalMapFull.srv
  )
 
 ## Generate actions in the 'action' folder

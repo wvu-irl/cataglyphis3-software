@@ -7,13 +7,15 @@ SearchRegion::SearchRegion()
 
 bool SearchRegion::runProc()
 {
-	//ROS_INFO("searchRegion state = %i", state);
+    //ROS_INFO("searchRegion state = %i", state);
+	//ROS_INFO_THROTTLE(1, "executing searchRegion");
 	switch(state)
 	{
 	case _init_:
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		avoidCount = 0;
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
@@ -21,7 +23,7 @@ bool SearchRegion::runProc()
 		confirmCollectFailedCount = 0;
 		if(!roiKeyframed) // check if ROI is not yet keyframed
 		{
-			//ROS_INFO("ROI not keyframed");
+			ROS_INFO("ROI not keyframed");
 			searchMapSrv.request.createMap = true;
 			searchMapSrv.request.roiIndex = currentROIIndex;
 			searchMapSrv.request.deleteMap = false;
@@ -57,15 +59,19 @@ bool SearchRegion::runProc()
 		}
 		else
 		{
+			//ROS_INFO("current ROI index = %i",currentROIIndex);
+			ROS_INFO("choose random waypoints");
 			chooseRandomWaypoints_(); // Select random waypoint locations based on sample prob distro on search local map
 			numWaypointsToTravel = waypointsToPlan.size(); // Set number of waypoints to choose
-			//ROS_INFO("numWaypointsToTravel = %u",numWaypointsToTravel);
+			//ROS_INFO("numWaypointsToTravel = %i", numWaypointsToTravel);
+			//for(int i=0; i<numWaypointsToTravel; i++) ROS_INFO("waypointsToPlan(%i) = (%f,%f)", i, waypointsToPlan.at(i).x, waypointsToPlan.at(i).y);
 			numWaypointsToPlan = numWaypointsToTravel+1; // Number to plan path through is one more, because it includes the starting location
 			// Add current location as last entry in waypointsToPlan
 			currentLocation.x = robotStatus.xPos;
 			currentLocation.y = robotStatus.yPos;
 			waypointsToPlan.push_back(currentLocation);
 			clearAndResizeWTT(); // waypointsToPlan minus the current location will get written into waypointsToTravel. Clear and resize to accomodate
+			ROS_INFO("ant colony");
 			antColony_(); // Plan path through waypoints with ant colongy optimization algorithm
 			// Do we really want to do this? Waypoints are very close together. callIntermediateWaypoints(); // Plan around obastacles.
 			sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
@@ -77,9 +83,10 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		serviceAvoidCounterDecrement();
-		if(possibleSample || definiteSample && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
+        if((possibleSample || definiteSample) && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
 			sendDequeClearAll();
 			state = _finish_;
@@ -96,6 +103,7 @@ bool SearchRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}
@@ -105,6 +113,7 @@ void SearchRegion::roiTimeExpiredCallback_(const ros::TimerEvent &event)
 {
 	roiTimeExpired = true;
 	ROS_WARN("roiTimeExpiredCallback");
+	voiceSay->call("r o i time expired");
 }
 
 void SearchRegion::chooseRandomWaypoints_()
@@ -115,6 +124,7 @@ void SearchRegion::chooseRandomWaypoints_()
 		ROS_DEBUG("randomSearchWaypoints service call successful");
 		waypointsToPlan.clear();
 		waypointsToPlan = randomSearchWaypointsSrv.response.waypointList;
+		ROS_INFO("waypointsToPlan = %u", waypointsToPlan.size());
 	}
 	else ROS_ERROR("randomSearchWaypoints service call unsuccessful");
 }
@@ -132,6 +142,7 @@ void SearchRegion::antColony_()
 	//ROS_INFO("distance rows = %i, distance cols = %i",distance.n_rows,distance.n_cols);
 	//ROS_INFO("waypointsToPlan.size() = %i",waypointsToPlan.size());
 	terrainHazard.set_size(numWaypointsToPlan,numWaypointsToPlan);
+	//ROS_INFO("after mat inits");
 	for(int m=0; m<numWaypointsToPlan; m++)
 	{
 		for(int n=0; n<numWaypointsToPlan; n++)
@@ -139,12 +150,30 @@ void SearchRegion::antColony_()
 			//ROS_INFO("before distance matrix calc: m=%i n=%i",m,n);
 			distance(m,n) = hypot(waypointsToPlan.at(m).x - waypointsToPlan.at(n).x,
 								  waypointsToPlan.at(m).y - waypointsToPlan.at(n).y);
+            if(m!=n && distance(m,n)==0.0) {distance(m,n) = 0.1; ROS_WARN("ant colony calculate distance == 0.0");} // Guard in case of incidental error to prevent divide by zero
 			//ROS_INFO("after distance matrix calc");
-			terrainHazard.fill(0.0); // Temporary until actual terrain hazard calculation implemented
+			//terrainHazard.fill(0.0);
 			// make service requests to get terrain hazard info
-			// terrainHazard(m,n) = something;
+			if(distance(m,n) != 0.0)
+			{
+				searchLocalMapPathHazardsSrv.request.xStart = waypointsToPlan.at(m).x;
+				searchLocalMapPathHazardsSrv.request.yStart = waypointsToPlan.at(m).y;
+				searchLocalMapPathHazardsSrv.request.xEnd = waypointsToPlan.at(n).x;
+				searchLocalMapPathHazardsSrv.request.yEnd = waypointsToPlan.at(n).y;
+				searchLocalMapPathHazardsSrv.request.width = hazardCorridorWidth;
+				if(searchLocalMapPathHazardsClient.call(searchLocalMapPathHazardsSrv)) ROS_DEBUG("searchLocalMapPathHazards service call successful");
+				else ROS_ERROR("searchLocalMapPathHazards service call unsuccessful");
+				terrainHazard(m,n) = searchLocalMapPathHazardsSrv.response.hazardValue;
+			}
+			else terrainHazard(m,n) = 0.0;
 		}
 	}
+    /*ROS_INFO("distance matrix:");
+    distance.print();
+    ROS_INFO("terrainHazard matrix:");
+    terrainHazard.print();
+    std::cout << "enter a character to continue" << std::endl;
+    std::cin >> temp;*/
 	antNum = 0;
 	for(antNum; antNum<maxAntNum; antNum++)
 	{
@@ -162,7 +191,7 @@ void SearchRegion::antColony_()
 			valueNormalizedFloor = 0.0;
 			for(j; j<numWaypointsToPlan; j++)
 			{
-				/*ROS_INFO("before value computation, i=%i j=%i",i,j);
+                /*ROS_INFO("before value computation, i=%i j=%i",i,j);
 				ROS_INFO("pheromone(i,j) = %f",pheromone(i,j));
 				ROS_INFO("waypointsToPlan.at(j).sampleProb = %f",waypointsToPlan.at(j).sampleProb);
 				ROS_INFO("sampleProbGain*sampleProb = %f",sampleProbGain*waypointsToPlan.at(j).sampleProb);
@@ -171,31 +200,31 @@ void SearchRegion::antColony_()
 				ROS_INFO("distanceGain*distance(i,j) = %f",distanceGain*distance(i,j));
 				ROS_INFO("terrainHazard(i,j) = %f",terrainHazard(i,j));
 				ROS_INFO("terrainGain*terrainHazard(i,j) = %f",terrainGain*terrainHazard(i,j));
-				ROS_INFO("notVisited[j] = %i",notVisited.at(j));*/
+                ROS_INFO("notVisited[j] = %i",notVisited.at(j));*/
 				computedValue =	(sampleProbGain*waypointsToPlan.at(j).sampleProb +
 								pheromoneGain*pheromone(i,j) -
 								distanceGain*distance(i,j) -
 								terrainGain*terrainHazard(i,j));
-				//ROS_INFO("after value computation, before coersion. computedValue = %f",computedValue);
+                //ROS_INFO("after value computation, before coersion. computedValue = %f",computedValue);
 				if(computedValue <= 0.0 && notVisited.at(j)==1) value.at(j) = 0.001;
 				else value.at(j) = ((float)notVisited.at(j))*computedValue;
-				//ROS_INFO("after value computation. value[j] = %f",value.at(j));
+                //ROS_INFO("after value computation. value[j] = %f",value.at(j));
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueSum += value.at(k);
-			//ROS_INFO("valueSum = %f",valueSum);
+            //ROS_INFO("valueSum = %f",valueSum);
 			for(int k=0; k<numWaypointsToPlan; k++)
 			{
 				valueNormalized.at(k) = value.at(k)/valueSum;
 				if(value.at(k)!=0.0 && valueNormalized.at(k)==0.0) valueNormalized.at(k) = 0.001; // Basement for normalized values. Probability distribution is discrete, not continuous, so there needs to be a basement (0.1%) that even the smallest probabilities get rounded up to so they are included in the distribution and not lost due to discrete rounding down
 			}
 			for(int k=0; k<numWaypointsToPlan; k++) valueNormalizedSum += valueNormalized.at(k);
-			//ROS_INFO("valueNormalizedSum = %f",valueNormalizedSum);
+            //ROS_INFO("valueNormalizedSum = %f",valueNormalizedSum);
 			randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-			//ROS_INFO("randomValue = %f",randomValue);
-			//for(int z=0; z<valueNormalized.size(); z++) ROS_INFO("valueNormalized.at(%i) = %f",z,valueNormalized.at(z));
+            //ROS_INFO("randomValue = %f",randomValue);
+            //for(int z=0; z<valueNormalized.size(); z++) ROS_INFO("valueNormalized.at(%i) = %f",z,valueNormalized.at(z));
 			if(randomValue>=valueNormalizedSum) // Picked 1.0 as the random value. Boundary condition, just choose the one with the biggest normalized value
 			{
-				//ROS_INFO("randomValue >= valueNormalizedSum");
+                //ROS_INFO("randomValue >= valueNormalizedSum");
 				largestNormalizedValue = 0.0;
 				for(int k=0; k<numWaypointsToPlan; k++)
 				{
@@ -204,29 +233,29 @@ void SearchRegion::antColony_()
 			}
 			else // Normal, non-boundary condition behavior where 0.0 <= randomValue < 1.0
 			{
-				//ROS_INFO("randomValue < valueNormalizedSum");
+                //ROS_INFO("randomValue < valueNormalizedSum");
 				for(int k=0; k<numWaypointsToPlan; k++)
 				{
-					/*ROS_INFO("k = %i",k);
+                    /*ROS_INFO("k = %i",k);
 					ROS_INFO("value[k] = %f",value.at(k));
 					ROS_INFO("valueNormalized[k] = %f",valueNormalized.at(k));
 					ROS_INFO("valueNormalizedFloor = %f",valueNormalizedFloor);
 					ROS_INFO("randomValue = %f",randomValue);
-					ROS_INFO("valueNormalizedCeiling = %f\n",valueNormalizedFloor + valueNormalized.at(k));*/
+                    ROS_INFO("valueNormalizedCeiling = %f\n",valueNormalizedFloor + valueNormalized.at(k));*/
 					if(randomValue >= valueNormalizedFloor && randomValue < (valueNormalizedFloor + valueNormalized.at(k)) && valueNormalized.at(k)!=0.0) {bestJ = k; break; ROS_WARN("found bestJ = %i",bestJ);}
 					else valueNormalizedFloor += valueNormalized.at(k);
 				}
 			}
-			//ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
-			//ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %f\n", pheroDepoGain/distance(i,bestJ));
+            //ROS_DEBUG("before pheromone increment, bestJ=%i, i=%i",bestJ,i);
+            //ROS_DEBUG("pheroDepoGain/distance(i,bestJ) = %f\n", pheroDepoGain/distance(i,bestJ));
 			// Deposit new pheromone
-			//ROS_INFO("---------- i = %i, bestJ = %i",i,bestJ);
+            //ROS_INFO("---------- i = %i, bestJ = %i",i,bestJ);
 			pheromone(i,bestJ) += (pheroDepoGain/distance(i,bestJ) + pheroDecayValue);
 			pheromone(bestJ,i) += (pheroDepoGain/distance(bestJ,i) + pheroDecayValue);
-			//ROS_INFO("distance(i,bestJ) = %f",distance(bestJ,i));
-			//ROS_INFO("pheroDepo = %f",(pheroDepoGain/distance(i,bestJ) + pheroDecayValue));
+            //ROS_INFO("distance(i,bestJ) = %f",distance(bestJ,i));
+            //ROS_INFO("pheroDepo = %f",(pheroDepoGain/distance(i,bestJ) + pheroDecayValue));
 
-			//ROS_DEBUG("after pheromone increment");
+            //ROS_DEBUG("after pheromone increment");
 			notVisited.at(bestJ) = 0;
 			i = bestJ;
 			j = 0;

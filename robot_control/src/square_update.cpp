@@ -2,13 +2,14 @@
 
 bool SquareUpdate::runProc()
 {
-	ROS_INFO("squareUpdateState = %i",state);
+	//ROS_INFO("squareUpdateState = %i",state);
 	switch(state)
 	{
 	case _init_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		avoidCount = 0;
 		numWaypointsToTravel = 5;
@@ -23,13 +24,15 @@ bool SquareUpdate::runProc()
 		waypointsToTravel.at(3).y = -cornerY;
 		waypointsToTravel.at(4).x = homeWaypointX;
 		waypointsToTravel.at(4).y = homeWaypointY;
-		sendDriveAndWait(lidarUpdateWaitTime); // Maybe need to interlace with wait actions?
+		sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
+		//sendDriveRel(0.0, 0.0, true, 180.0, false);
 		state = _exec_;
 		break;
 	case _exec_:
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
@@ -43,6 +46,9 @@ bool SquareUpdate::runProc()
 		avoidLockout = false;
 		if(robotStatus.homingUpdated)
 		{
+			timers[_homingTimer_]->stop();
+			timers[_homingTimer_]->start();
+			performHoming = false;
 			homingUpdatedFailedCount = 0;
 			homingUpdateFailed = false;
 			useDeadReckoning = false;
@@ -55,16 +61,15 @@ bool SquareUpdate::runProc()
 			{
 				useDeadReckoning = true; // !!! This switch in hsm probably won't happen quickly enough before the next cycle of planning a manuever. How to handle this?
 			}
-			else if(homingUpdatedFailedCount>=maxHomingUpdatedFailedCount)
+			if(homingUpdatedFailedCount>=maxHomingUpdatedFailedCount)
 			{
-				// !!! Just reset and deal with it for now. This really needs to trigger another procedure for "lost"
-				homingUpdatedFailedCount = 0;
-				homingUpdateFailed = false;
+				performSafeMode = true;
 			}
 		}
 		atHome = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

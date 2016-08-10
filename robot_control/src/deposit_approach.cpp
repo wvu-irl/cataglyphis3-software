@@ -25,10 +25,10 @@ DepositApproach::DepositApproach()
 	depositLocations.at(6).y = 0.483;
 
 	depositLocations.at(7).x = 1.7;
-	depositLocations.at(7).y = 0.0;
+    depositLocations.at(7).y = 0.483;
 
 	depositLocations.at(8).x = 1.7;
-	depositLocations.at(8).y = 0.483;
+    depositLocations.at(8).y = 0.0;
 
 	depositLocations.at(9).x = 1.7;
 	depositLocations.at(9).y = 0.0;
@@ -36,8 +36,8 @@ DepositApproach::DepositApproach()
 
 bool DepositApproach::runProc()
 {
-	ROS_INFO("depositApproachState = %i", state);
-	ROS_INFO("depositApproachStep = %i",step);
+    //ROS_INFO("depositApproachState = %i", state);
+    //ROS_INFO("depositApproachStep = %i",step);
 	switch(state)
 	{
 	case _init_:
@@ -45,6 +45,7 @@ bool DepositApproach::runProc()
 		step = _align;
 		procsBeingExecuted[procType] = true;
         procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         driveSpeedsMsg.vMax = slowVMax;
         driveSpeedsMsg.rMax = defaultRMax;
         driveSpeedsMsgPrev.vMax = slowVMax;
@@ -55,13 +56,14 @@ bool DepositApproach::runProc()
 		waypointsToTravel.at(0).x = depositAlignXDistance;
 		waypointsToTravel.at(0).y = depositLocations.at(samplesCollected).y;
 		callIntermediateWaypoints();
-        sendDriveGlobal(false);
+        sendDriveGlobal(false, false, 0.0);
 		state = _exec_;
 		break;
 	case _exec_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
         procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		switch(step)
 		{
 		case _align:
@@ -103,6 +105,7 @@ bool DepositApproach::runProc()
 		inDepositPosition = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		step = _align;
 		state = _init_;
 		break;

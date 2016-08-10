@@ -11,6 +11,8 @@ public:
 	float bestROIValue;
 	int roiSearchedSum;
 	bool tempGoHome;
+	const float distanceShortOfROI = 5.0; // m
+	float angleToROI;
 	std::vector<float> terrainHazard;
 	const float hazardCorridorWidth = 2.0; // m
 	const float numHazardsPerDistanceToTerrainHazardGain = 1.0; // terrainHzardIndex/(numHazards/m)

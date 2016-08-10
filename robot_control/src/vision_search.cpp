@@ -10,6 +10,7 @@ void VisionSearch::init()
     cvSearchCmdSrv.request.brass = params.bool6;
     cvSearchCmdSrv.request.confirm = params.bool7;
     cvSearchCmdSrv.request.save = params.bool8;
+    cvSearchCmdSrv.request.live = true;
 	cvSearchCmdSrv.request.procType = params.procType;
 	cvSearchCmdSrv.request.serialNum = params.serialNum;
 }

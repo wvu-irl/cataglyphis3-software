@@ -3,12 +3,14 @@
 bool NextBestRegion::runProc()
 {
     //ROS_INFO("nextBestRegion state = %i",state);
+    //ROS_INFO_THROTTLE(1, "executing nextBestRegion");
     switch(state)
     {
     case _init_:
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         execDequeEmpty = false;
         atHome = false;
         avoidCount = 0;
@@ -61,26 +63,40 @@ bool NextBestRegion::runProc()
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
 			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
         }
-		if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size()) // Temp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size())
         {
             // Call service to drive to center of the chosen region
-            numWaypointsToTravel = 1;
+
+            /*numWaypointsToTravel = 1;
             clearAndResizeWTT();
-			waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
-			waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
+            waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
+            waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
-            //sendDriveGlobal(false);
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            sendWait(10.0);
+            sendWait(10.0);*/
+
+            numWaypointsToTravel = 2;
+            clearAndResizeWTT();
+            angleToROI = atan2(regionsOfInterestSrv.response.ROIList.at(bestROINum).y - robotStatus.yPos, regionsOfInterestSrv.response.ROIList.at(bestROINum).x - robotStatus.xPos); // Radians
+            waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x - distanceShortOfROI*cos(angleToROI);
+            waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y - distanceShortOfROI*sin(angleToROI);
+            waypointsToTravel.at(0).searchable = true; // !!!!! NEEDS TO BE TRUE to search
+            waypointsToTravel.at(1).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
+            waypointsToTravel.at(1).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
+            waypointsToTravel.at(1).searchable = true; // !!!!! NEEDS TO BE TRUE to search
+            callIntermediateWaypoints();
+            sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+            //sendWait(10.0);
+
             currentROIIndex = bestROINum;
-            allocatedROITime = 480.0; // sec == 8 min; implement smarter way to compute
+            allocatedROITime = 270.0; // sec == 4.5 min; implement specific times in ROIs as properties
             tempGoHome = false;
             state = _exec_;
         }
-		else // Also temp. Just used to keep the robot going in a loop !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        else // !!! Temporary condition. End mission if all ROIs have been searched
         {
-			for(int i=0; i<regionsOfInterestSrv.response.ROIList.size(); i++)
+            /*for(int i=0; i<regionsOfInterestSrv.response.ROIList.size(); i++)
             {
 				modROISrv.request.setSearchedROI = true;
 				modROISrv.request.searchedROIState = false;
@@ -96,10 +112,11 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).y = 0.0;
             waypointsToTravel.at(0).searchable = false;
             callIntermediateWaypoints();
-            sendDriveGlobal(false);
+            sendDriveGlobal(false, false, 0.0);
 			procsBeingExecuted[procType] = false;
-            tempGoHome = true;
-            state = _exec_;
+            tempGoHome = true;*/
+            missionEnded = true;
+            state = _finish_;
         }
         computeDriveSpeeds();
         break;
@@ -107,19 +124,26 @@ bool NextBestRegion::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
-		//if(execDequeEmpty && execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
-        if(waypointsToTravel.at(0).searchable)
+        if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample) state = _finish_;
+        else state = _exec_;
+        /*if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        else state = _exec_;*/
+
+        /*if(waypointsToTravel.at(0).searchable)
         {
-            if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
+            ROS_INFO("searchable case");
+            if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample) state = _finish_;
             else state = _exec_;
         }
         else
         {
+            ROS_INFO("non-searchable case");
             if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
             else state = _exec_;
-        }
+        }*/
         break;
     case _interrupt_:
 		procsBeingExecuted[procType] = false;
@@ -127,7 +151,9 @@ bool NextBestRegion::runProc()
 		state = _exec_;
         break;
     case _finish_:
-        if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
+        if(execLastProcType != procType || execLastSerialNum != serialNum) sendDequeClearAll();
+        inSearchableRegion = true;
+        /*if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
         else
         {
             // ************************ THIS IS TEMPORARY TO ALLOW FOR DRIVING WITHOUT SEARCHING
@@ -142,10 +168,11 @@ bool NextBestRegion::runProc()
                 else ROS_ERROR("modify ROI service call unsuccessful");
             }
             // ********************************************
-        }
+        }*/
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         state = _init_;
         break;
     }

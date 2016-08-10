@@ -145,6 +145,13 @@ add_library(sample_search src/sample_search.cpp)
  	boost_system
  )
 
+add_library(calibrate_camera src/calibrate_camera.cpp)
+ target_link_libraries(calibrate_camera 
+ 	${catkin_LIBRARIES}
+	boost_filesystem 
+ 	boost_system
+ )
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -154,11 +161,13 @@ add_library(sample_search src/sample_search.cpp)
 add_executable(sample_search_node src/sample_search_node.cpp)
 add_executable(segmentation_node src/segmentation_node.cpp)
 add_executable(save_data_node src/save_data_node.cpp)
+add_executable(calibrate_camera_node src/calibrate_camera_node.cpp)
 
 ## Add cmake target dependencies of the executable
 add_dependencies(sample_search_node computer_vision_generate_messages_cpp)
 add_dependencies(segmentation_node computer_vision_generate_messages_cpp)
 add_dependencies(save_data_node computer_vision_generate_messages_cpp)
+add_dependencies(calibrate_camera_node computer_vision_generate_messages_cpp)
 
 #add_dependencies(sample_search computer_vision_generate_messages_cpp)
 
@@ -170,7 +179,7 @@ add_dependencies(save_data_node computer_vision_generate_messages_cpp)
  	boost_system
  )
 
-  target_link_libraries(segmentation_node 
+ target_link_libraries(segmentation_node 
  	${catkin_LIBRARIES}
  	segmentation
  	boost_filesystem 
@@ -179,6 +188,14 @@ add_dependencies(save_data_node computer_vision_generate_messages_cpp)
 
  target_link_libraries(save_data_node 
  	${catkin_LIBRARIES}
+ )
+ 
+ target_link_libraries(calibrate_camera_node 
+ 	${catkin_LIBRARIES}
+ 	calibrate_camera
+ 	capture_class
+   	boost_filesystem 
+ 	boost_system
  )
 
 

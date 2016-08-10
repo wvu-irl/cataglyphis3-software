@@ -9,6 +9,7 @@ bool GoHome::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
         avoidCount = 0;
         prevAvoidCountDecXPos = robotStatus.xPos;
@@ -20,14 +21,14 @@ bool GoHome::runProc()
         waypointsToTravel.at(0).x = homeWaypointX;
         waypointsToTravel.at(0).y = homeWaypointY;
 		callIntermediateWaypoints();
-        sendDriveGlobal(false);
-        sendWait(lidarUpdateWaitTime);
+        sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
 		state = _exec_;
 		break;
 	case _exec_:
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
@@ -43,7 +44,10 @@ bool GoHome::runProc()
 		atHome = true;
         if(robotStatus.homingUpdated)
         {
+            timers[_homingTimer_]->stop();
+            timers[_homingTimer_]->start();
             homingUpdatedFailedCount = 0;
+            performHoming = false;
             homingUpdateFailed = false;
             useDeadReckoning = false;
         }
@@ -54,6 +58,7 @@ bool GoHome::runProc()
         }
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	}

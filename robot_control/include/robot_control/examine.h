@@ -8,7 +8,9 @@ public:
 	// Members
 	const int examineLimit = 2;
 	const float offsetPositionAngle = 90.0; // deg
-	const float offsetPositionDistance = 3.0; // m
+	const float offsetPositionDistance = 2.0; // m
+	const float examineAngleToTurn = 10.0;
+	float finalHeading;
 	// Methods
 	bool runProc();
 };

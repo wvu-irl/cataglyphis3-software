@@ -10,7 +10,8 @@ MissionPlanning::MissionPlanning()
     modROIClient = nh.serviceClient<robot_control::ModifyROI>("/control/mapmanager/modifyroi");
     searchMapClient = nh.serviceClient<robot_control::SearchMap>("/control/mapmanager/searchlocalmap");
     randomSearchWaypointsClient = nh.serviceClient<robot_control::RandomSearchWaypoints>("/control/mapmanager/randomsearchwaypoints");
-    globalMapPathHazardsClient = nh.serviceClient<messages::GlobalMapPathHazards>("/control/mapmanager/globalmappathhazards");
+    globalMapPathHazardsClient = nh.serviceClient<messages::MapPathHazards>("/control/mapmanager/globalmappathhazards");
+    searchLocalMapPathHazardsClient = nh.serviceClient<messages::MapPathHazards>("/control/mapmanager/searchlocalmappathhazards");
     navControlClient = nh.serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     nb1Sub = nh.subscribe<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in", 1, &MissionPlanning::nb1Callback_, this);
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
@@ -23,6 +24,7 @@ MissionPlanning::MissionPlanning()
     controlServ = nh.advertiseService("/control/missionplanning/control", &MissionPlanning::controlCallback_, this);
     infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
     driveSpeedsPub = nh.advertise<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1);
+    voiceSay = new Voice;
     collisionInterruptTrigger = false;
     escapeCondition = false;
     performBiasRemoval = false;
@@ -37,6 +39,7 @@ MissionPlanning::MissionPlanning()
     confirmedPossession = false;
     atHome = false;
     homingUpdateFailed = false;
+    performSafeMode = false;
     inDepositPosition = false;
     missionEnded = false;
     useDeadReckoning = false;
@@ -49,6 +52,7 @@ MissionPlanning::MissionPlanning()
     avoidLockout = true;
     escapeLockout = false;
     roiKeyframed = false;
+    startSLAM = false;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
     prevAvoidCountDecYPos = robotStatus.yPos;
@@ -58,6 +62,7 @@ MissionPlanning::MissionPlanning()
     collisionInterruptThresh = 1.0; // m
     emergencyEscape.reg(__emergencyEscape__);
     avoid.reg(__avoid__);
+    biasRemoval.reg(__biasRemoval__);
     nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
     searchRegion.reg(__searchRegion__);
     examine.reg(__examine__);
@@ -65,8 +70,10 @@ MissionPlanning::MissionPlanning()
     collect.reg(__collect__);
     confirmCollect.reg(__confirmCollect__);
     goHome.reg(__goHome__);
+    squareUpdate.reg(__squareUpdate__);
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
+    safeMode.reg(__safeMode__);
     depositSample.sendOpen(); // Make sure the grabber is open initially
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
@@ -95,10 +102,11 @@ MissionPlanning::MissionPlanning()
         procsToExecute[i] = false;
         procsToInterrupt[i] = false;
         procsBeingExecuted[i] = false;
+        procsToResume[i] = false;
         //procsToExecute.push_back(false);
         //procsToInterrupt.push_back(false);
         //procsBeingExecuted.push_back(false);
-        ROS_INFO("procsToExecute.at(i) = %d",procsToExecute[i]);
+        //ROS_INFO("procsToExecute.at(i) = %d",procsToExecute[i]);
         //ROS_INFO("procsToInterrupt.at(i) = %d",procsToInterrupt.at(i));
         //ROS_INFO("procsBeingExecuted.at(i) = %d",procsBeingExecuted.at(i));
     }
@@ -106,6 +114,8 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
+    int temp;
+    //ROS_INFO("BEGIN >>>>>>>>>>>");
     //ROS_DEBUG("before evalConditions");
 
    /* ROS_INFO("\n");
@@ -127,6 +137,12 @@ void MissionPlanning::run()
     else runProcesses_();
     packAndPubInfoMsg_();
     //std::printf("\n");
+    //ROS_INFO("END <<<<<<<<<<<<<\n");
+    /*if(searchRegion.state==_exec_ && procsToExecute[__examine__])
+    {
+        std::cout << "enter character to continue" << std::endl;
+        std::cin >> temp;
+    }*/
 }
 
 void MissionPlanning::evalConditions_()
@@ -140,7 +156,7 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        /*ROS_INFO("=========================================");
+        /*//ROS_INFO("=========================================");
         ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
@@ -157,11 +173,14 @@ void MissionPlanning::evalConditions_()
         ROS_INFO("confirmedPossession = %i",confirmedPossession);
         ROS_INFO("atHome = %i",atHome);
         ROS_INFO("homingUpdateFailed = %i",homingUpdateFailed);
+        ROS_INFO("performSafeMode = %i",performSafeMode);
         ROS_INFO("inDepositPosition = %i",inDepositPosition);
         ROS_INFO("avoidCount = %u",avoidCount);
+        ROS_INFO("examineCount = %u",examineCount);
         ROS_INFO("turnFlag = %i",execInfoMsg.turnFlag);
         ROS_INFO("stopFlag = %i",execInfoMsg.stopFlag);
-        ROS_INFO("execDequeSize = %u",execInfoMsg.actionDequeSize);
+        ROS_INFO("searchRegion.state = %i",(int)searchRegion.state);*/
+        /*ROS_INFO("execDequeSize = %u",execInfoMsg.actionDequeSize);
         std::printf("actionDeque: (");
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%i,",execInfoMsg.actionDeque[i]);
         std::printf(")\n");
@@ -171,13 +190,15 @@ void MissionPlanning::evalConditions_()
         std::printf("actionFloat2: (");
         for(int i=0; i<execInfoMsg.actionDequeSize; i++) std::printf("%f,",execInfoMsg.actionFloat2[i]);
         std::printf(")\n");*/
+        //for(int i=0; i<NUM_PROC_TYPES; i++)
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
-        calcnumProcsBeingOrToBeExec_();
+        calcnumProcsBeingOrToBeExecOrRes_();
+        //ROS_INFO("numProcsBeingOrToBeExecOrRes = %i", numProcsBeingOrToBeExecOrRes);
         if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
         {
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
-            if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape");}
-            else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape");}
+            if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape"); voiceSay->call("interrupt emergency escape");}
+            else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape"); voiceSay->call("emergency escape");}
         }
         if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
         {
@@ -211,14 +232,16 @@ void MissionPlanning::evalConditions_()
             }
             if(shouldExecuteAvoidManeuver)
             {
-                if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid");}
-                else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid");}
+                if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid"); voiceSay->call("avoid");}
+                else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid"); voiceSay->call("interrupt avoid");}
             }
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !missionEnded) // Next Best Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
+            voiceSay->call("next best begion");
+            //VOICESAY("to execute nextBestRegion");
             /*robotStatus.pauseSwitch = true;
             pause.sendPause();
             std::cout << "press enter to continue" << std::endl;
@@ -226,10 +249,11 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
+            voiceSay->call("search region");
             /*robotStatus.pauseSwitch = true;
             pause.sendPause();
             std::cout << "press enter to continue" << std::endl;
@@ -237,44 +261,65 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        /*if(numProcsBeingOrToBeExec==0 && performBiasRemoval && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !escapeCondition && !missionEnded) // Bias Removal
+        if(numProcsBeingOrToBeExecOrRes==0 && performBiasRemoval && /*!(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && */!escapeCondition && !performSafeMode && !missionEnded) // Bias Removal
         {
-
-        }*/
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !escapeCondition && !missionEnded) // Examine
+            procsToExecute[__biasRemoval__] = true;
+            ROS_INFO("to execute bias removal");
+            voiceSay->call("bias removal");
+        }
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
+            voiceSay->call("examine");
         }
-        if(numProcsBeingOrToBeExec==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !escapeCondition && !missionEnded) // Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
+            voiceSay->call("approach");
         }
-        if(numProcsBeingOrToBeExec==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
+            voiceSay->call("collect");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && !confirmedPossession && !escapeCondition && !missionEnded) // Confirm Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && !confirmedPossession && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
+            voiceSay->call("confirm collect");
         }
-        if(numProcsBeingOrToBeExec==0 && ((possessingSample && confirmedPossession && !atHome) || performHoming) && !escapeCondition && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
+            voiceSay->call("go home");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !escapeCondition && !missionEnded) // Deposit Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !inDepositPosition && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Square Update
+        {
+            procsToExecute[__squareUpdate__] = true;
+            ROS_INFO("to execute square update");
+            voiceSay->call("square update");
+        }
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
+            voiceSay->call("deposit approach");
         }
-        if(numProcsBeingOrToBeExec==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !escapeCondition && !missionEnded) // Deposit Sample
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !performBiasRemoval && !escapeCondition && !performSafeMode && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
+            voiceSay->call("deposit sample");
+        }
+        if(numProcsBeingOrToBeExecOrRes==0 && performSafeMode && !escapeCondition && !missionEnded)
+        {
+            procsToExecute[__safeMode__] = true;
+            ROS_INFO("to execute safeMode");
+            voiceSay->call("safe mode");
         }
 
         // *************** Multi Proc Lockout for testing *************************
@@ -286,6 +331,7 @@ void MissionPlanning::evalConditions_()
         {
             robotStatus.pauseSwitch = true;
             ROS_FATAL("tried to execute multiple procedures..........");
+            voiceSay->call("tried to execute multiple procedures. tisk tisk.");
         }
         // *************************************************************************
     }
@@ -293,10 +339,11 @@ void MissionPlanning::evalConditions_()
 
 void MissionPlanning::runProcesses_()
 {
-    if(pauseStarted == true) {pause.sendUnPause(); resumeTimers_();}
+    if(pauseStarted == true) {pause.sendUnPause(); resumeTimers_(); voiceSay->call("un pause"); startSLAM = true;} // !!!! startSLAM needs to go in init proc when implemented
     pauseStarted = false;
     emergencyEscape.run();
     avoid.run();
+    biasRemoval.run();
     nextBestRegion.run();
     searchRegion.run();
     examine.run();
@@ -304,13 +351,15 @@ void MissionPlanning::runProcesses_()
     collect.run();
     confirmCollect.run();
     goHome.run();
+    squareUpdate.run();
     depositApproach.run();
     depositSample.run();
+    safeMode.run();
 }
 
 void MissionPlanning::runPause_()
 {
-    if(pauseStarted == false) {pause.sendPause(); pauseAllTimers_();}
+    if(pauseStarted == false) {pause.sendPause(); pauseAllTimers_(); voiceSay->call("pause");}
     pauseStarted = true;
 }
 
@@ -324,11 +373,13 @@ void MissionPlanning::resumeTimers_()
     for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
 }
 
-void MissionPlanning::calcnumProcsBeingOrToBeExec_()
+void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
 {
+    numProcsBeingOrToBeExecOrRes = 0;
     numProcsBeingOrToBeExec = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++) 
     {
+        if(procsBeingExecuted[i] || procsToExecute[i] || procsToResume[i]) numProcsBeingOrToBeExecOrRes++;
         if(procsBeingExecuted[i] || procsToExecute[i]) numProcsBeingOrToBeExec++;
     }
 }
@@ -362,6 +413,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.confirmedPossession = confirmedPossession;
     infoMsg.atHome = atHome;
     infoMsg.homingUpdateFailed = homingUpdateFailed;
+    infoMsg.performSafeMode = performSafeMode;
     infoMsg.inDepositPosition = inDepositPosition;
     infoMsg.samplesCollected = samplesCollected;
     infoMsg.avoidCount = avoidCount;
@@ -369,6 +421,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.backupCount = backUpCount;
     infoMsg.confirmCollectFailedCount = confirmCollectFailedCount;
     infoMsg.roiKeyframed = roiKeyframed;
+    infoMsg.startSLAM = startSLAM;
     infoMsg.stopFlag = execInfoMsg.stopFlag;
     infoMsg.turnFlag = execInfoMsg.turnFlag;
     for(int i=0; i<NUM_PROC_TYPES; i++)
@@ -389,11 +442,11 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
     robotStatus.homingUpdated = msg->homingUpdated;
-    if(robotStatus.homingUpdated)
+    /*if(robotStatus.homingUpdated)
     {
         timers[_homingTimer_]->stop();
         timers[_homingTimer_]->start();
-    }
+    }*/
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)
@@ -437,6 +490,17 @@ void MissionPlanning::hsmMasterStatusCallback_(const messages::MasterStatus::Con
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)
 {
     cvSamplesFoundMsg = *msg;
+    if(cvSamplesFoundMsg.sampleList.size()>0)
+    {
+        for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+        {
+            ROS_INFO("\nsampleList[%i]",i);
+            ROS_INFO("conf = %f",cvSamplesFoundMsg.sampleList.at(i).confidence);
+            ROS_INFO("distance = %f",cvSamplesFoundMsg.sampleList.at(i).distance);
+            ROS_INFO("bearing = %f",cvSamplesFoundMsg.sampleList.at(i).bearing);
+            ROS_INFO("type = %i\n",cvSamplesFoundMsg.sampleList.at(i).type);
+        }
+    }
     updateSampleFlags_();
     sampleDataActedUpon = false;
 }
@@ -483,6 +547,9 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
         case __avoid__:
             avoid.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
+        case __biasRemoval__:
+            biasRemoval.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
         case __nextBestRegion__:
             nextBestRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
@@ -504,14 +571,14 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
         case __goHome__:
             goHome.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
+        case __squareUpdate__:
+            squareUpdate.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
         case __depositApproach__:
             depositApproach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
         case __depositSample__:
             depositSample.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
-            break;
-        case __pause__:
-            pause.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
             break;
         }
     }
@@ -522,10 +589,12 @@ void MissionPlanning::biasRemovalTimerCallback_(const ros::TimerEvent &event)
 {
     performBiasRemoval = true;
     ROS_INFO("biasRemovalTimer expired");
+    voiceSay->call("bias removal timer expired");
 }
 
 void MissionPlanning::homingTimerCallback_(const ros::TimerEvent &event)
 {
     performHoming = true;
     ROS_INFO("homingTimerExpired");
+    voiceSay->call("homing timer expired");
 }

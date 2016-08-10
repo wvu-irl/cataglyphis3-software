@@ -27,6 +27,7 @@ private:
 	arma::Mat<float> pheromone;
 	arma::Mat<float> distance;
 	arma::Mat<float> terrainHazard;
+	const float hazardCorridorWidth = 2.0; // m
 	const float sampleProbGain = 1.0;
 	const float pheromoneGain = 0.5;
 	const float distanceGain = 0.05;

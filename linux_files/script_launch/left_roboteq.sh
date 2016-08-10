@@ -1,2 +1,2 @@
 #!/bin/bash
-roslaunch hw_interface left_roboteq.launch
+taskset -c 0,1 roslaunch hw_interface left_roboteq.launch

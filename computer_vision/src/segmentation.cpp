@@ -7,68 +7,36 @@ Segmentation::Segmentation()
 
 int Segmentation::setCalibration()
 {
-    //TODO: develop a function to generate this image interactively then save to file
-    //then this function will just load an image instead of generate an image
-
-    //generate mask for boundary (area of image too far from robot)
-    cv::Mat boundaryMask = cv::Mat::zeros(5792,5792,CV_8U);
-    int cx = boundaryMask.cols/2;
-    int cy = boundaryMask.rows/2;
-    int radius = 0.975*5792/2;
-    for(int i=0; i<boundaryMask.cols; i++)
-    {
-        for(int j=0; j<boundaryMask.rows; j++)
-        {
-            //distance from center of image
-            int dist = sqrt( (i-cx)*(i-cx) + (j-cy)*(j-cy) );
-            if(dist < radius)
-            {
-                boundaryMask.at<uchar>(j,i)=255;
-            }
-        }
-    }
-    
-
-    //generate mask for area over the robot
-    cv::Mat robotMask = cv::Mat::zeros(5792,5792,CV_8U);
-    int leftLimit = 1900;
-    int rightLimit = 3900;
-    int frontLimit = 1900;
-    for(int i=0; i<robotMask.cols; i++)
-    {
-        for(int j=0; j<robotMask.rows; j++)
-        {
-            if(i < leftLimit || i > rightLimit || j < frontLimit)
-            {
-                robotMask.at<uchar>(j,i)=255;
-            }
-        }
-    }
-
-    //combine masks
-    cv::bitwise_and(boundaryMask, robotMask, calibrationMask);
-
-    //invert and threshold mask for display display masked image
-    cv::Mat displayMask;
-    cv::Mat calibrationRGB = calibrationMask.clone();
-    cv::cvtColor(calibrationRGB,calibrationRGB,CV_GRAY2RGB);
-    cv::threshold(calibrationRGB,displayMask,0,255,0);
+    //load mask from file
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
-    cv::imwrite(P.string() + "/data/images/calibration_mask.jpg",displayMask);
-
-    // cv::Mat image = cv::imread(P.string() + "/data/images/input_image.jpg");   
-    // cv::Mat blendMask;
-    // cv::threshold(calibrationRGB,blendMask,0,100,1);
-    // cv::Mat blended = cv::Mat::zeros(5792,5792,CV_8U);
-    // cv::add(image,blendMask,blended);
-
-    // //display masks
-    // cv::namedWindow("displayMask",CV_WINDOW_NORMAL);
-    // cv::imshow("displayMask", displayMask);
-    // cv::namedWindow("blended",CV_WINDOW_NORMAL);
-    // cv::imshow("blended", blended);
+    cv::Mat tempMask = cv::imread(P.string() + "/data/images/calibration_mask.jpg");
+    if(!tempMask.data)
+    {
+        tempMask = cv::imread(P.string() + "/data/images/calibration_mask_bak.jpg");
+        if(!tempMask.data)
+        {
+            ROS_INFO("Error! Could not load calibration mask... Generating alternative mask for image.");
+            return 0;
+        }
+    }
+    // namedWindow("tempMask", cv::WINDOW_NORMAL);
+    // cv::imshow("tempMask",tempMask);
     // cv::waitKey(0);
-    // cv::destroyAllWindows();
+
+    //convert mask to binary
+    calibrationMask = cv::Mat::zeros(5792,5792,CV_8U);
+    cvtColor(tempMask, calibrationMask, CV_BGR2GRAY);
+    for(int i=0; i<5792; i++)
+    {
+        for(int j=0; j<5792; j++)
+        {
+            calibrationMask.at<uchar>(j,i)=tempMask.at<cv::Vec3b>(j,i)[0];
+        }
+    }
+    //std::cout << "tempMask.at<cv::Vec3b>5792/2,5792/2[0] = " << (int)tempMask.at<cv::Vec3b>(5792/2,5792/2)[0] << std::endl;
+    // namedWindow("calibrationMask", cv::WINDOW_NORMAL);
+    // cv::imshow("calibrationMask",calibrationMask);
+    // cv::waitKey(0);
 
     return 1;
 }
@@ -225,7 +193,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     {
         boundingBoxonBlob = boundingRect(cv::Mat(contourPoints[i]));
 
-        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 350 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 350 )
+        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 500 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 500 ) //used to be 350
         {
         	//ignore blob
         	ROS_INFO("ignoring blob (size) %i",i);
@@ -252,24 +220,25 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         float segmentAreaInPixels = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)*(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
         ROS_INFO("distance, area, index = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
         tempCounter++;
-        if( distanceFromCenterOfImageInPixels > 2000 )
-        {
-            if(segmentAreaInPixels < 750)
-            {
-                //ignore blob
-                ROS_INFO("ignoring (near area thresh) %i",i);
-                continue;
-            }
-        }
-        if(distanceFromCenterOfImageInPixels < 2000)
-        {
-            if(segmentAreaInPixels < 1000)
-            {
-                //ignore blob
-                ROS_INFO("ignoring (far area thresh) %i",i);
-                continue;              
-            }
-        }
+
+        // if( distanceFromCenterOfImageInPixels > 2000 )
+        // {
+        //     if(segmentAreaInPixels < 750)
+        //     {
+        //         //ignore blob
+        //         ROS_INFO("ignoring (near area thresh) %i",i);
+        //         continue;
+        //     }
+        // }
+        // if(distanceFromCenterOfImageInPixels < 2000)
+        // {
+        //     if(segmentAreaInPixels < 1000)
+        //     {
+        //         //ignore blob
+        //         ROS_INFO("ignoring (far area thresh) %i",i);
+        //         continue;              
+        //     }
+        // }
 
         blob_list.push_back(boundingBoxonBlob);
     }
@@ -348,17 +317,18 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 			ROS_ERROR("Error! Must enter valid path to image in request.");
 			return false;
 		}
-        if(image_file.cols!=5792 || image_file.rows!=5792)
-        {
-            ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for (image) segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
-            return false;
-        }   
+        // if(image_file.cols!=5792 || image_file.rows!=5792)
+        // {
+        //     ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for (image) segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
+        //     return false;
+        // }   
 	}
 	else
 	{
 		ROS_ERROR("Invalid request to segmentImageSrv.");
 		return false;
 	}
+
 	cv::Mat image_file_copy = image_file.clone();
 
     //write origional image to file
@@ -389,11 +359,18 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
     //extract blue channel from image (blue channel contains pixel colors)
 	//t = get_wall_time();
-
 	std::vector<cv::Mat> channels(3);
 	split(image_file, channels);
-    //cv::multiply(channels[0],cv::Scalar(255),channels[0]);
-    cv::multiply(channels[0],calibrationMask,channels[0]);
+    if(req.live==true)
+    {
+        cv::multiply(channels[0],calibrationMask,channels[0]);
+    }
+    else
+    {
+        //cv::multiply(channels[0],calibrationMask,channels[0]);
+        cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
+    }
+
     cv::imwrite(P.string() + "/data/images/segmented.jpg",channels[0].clone());
 
     //t = (get_wall_time() - t)*1000;

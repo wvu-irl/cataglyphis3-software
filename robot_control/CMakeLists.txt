@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   grid_map_msgs
   geometry_msgs
   sensor_msgs
+  hsm
 )
 
 ## System dependencies are found with CMake's conventions
@@ -143,6 +144,7 @@ include_directories(
  add_library(pause src/pause.cpp)
  add_library(emergency_escape src/emergency_escape.cpp)
  add_library(avoid src/avoid.cpp)
+ add_library(bias_removal src/bias_removal.cpp)
  add_library(next_best_region src/next_best_region.cpp)
  add_library(search_region src/search_region.cpp)
  add_library(examine src/examine.cpp)
@@ -153,6 +155,7 @@ include_directories(
  add_library(square_update src/square_update.cpp)
  add_library(deposit_approach src/deposit_approach.cpp)
  add_library(deposit_sample src/deposit_sample.cpp)
+ add_library(safe_mode src/safe_mode.cpp)
  
  add_library(safe_pathing src/safe_pathing.cpp)
 
@@ -168,7 +171,7 @@ include_directories(
  add_dependencies(keyboard_control_node robot_control_generate_messages_cpp)
  add_dependencies(exec_node robot_control_generate_messages_cpp)
  add_dependencies(map_manager_node robot_control_generate_messages_cpp)
- add_dependencies(mission_planning_node robot_control_generate_messages_cpp)
+ add_dependencies(mission_planning_node robot_control_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
  add_dependencies(safe_pathing_node robot_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
@@ -216,6 +219,7 @@ include_directories(
    pause
    emergency_escape
    avoid
+   bias_removal
    next_best_region
    search_region
    examine
@@ -226,11 +230,14 @@ include_directories(
    square_update
    deposit_approach
    deposit_sample
+   safe_mode
+   voice
  )
  
  target_link_libraries(safe_pathing_node
    ${catkin_LIBRARIES}
    safe_pathing
+   ${grid_map_ros_LIBRARIES}
  )
 
 #############
