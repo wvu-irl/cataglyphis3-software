@@ -85,9 +85,7 @@ public:
 	grid_map::GridMap globalMap;
 	grid_map::Position goalPoint;
 	MapData mapCell;
-	std::multiset<MapData, MapDataLess> frozenSet;
 	std::multiset<MapData, MapDataLess> narrowBandSet;
-	std::multiset<MapData, MapDataLess> unknownSet;
 	const std::string timeLayer = "timeLayer";
 	const std::string setLayer = "setLayer"; // 0 = frozen, 1 = narrow band, 2 = unknown
 	const std::string vizResistanceLayer = "resistance";
