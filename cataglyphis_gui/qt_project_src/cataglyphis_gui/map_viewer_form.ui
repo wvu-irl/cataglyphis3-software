@@ -25,12 +25,18 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QGraphicsView" name="fieldDisplay">
+        <widget class="QGraphicsViewScrollScale" name="fieldDisplay">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="cursor" stdset="0">
+          <cursorShape>CrossCursor</cursorShape>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
          </property>
          <property name="sizeAdjustPolicy">
           <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -85,7 +91,7 @@
               <x>0</x>
               <y>0</y>
               <width>131</width>
-              <height>145</height>
+              <height>199</height>
              </rect>
             </property>
             <attribute name="label">
@@ -93,7 +99,7 @@
             </attribute>
             <layout class="QVBoxLayout" name="verticalLayout_3">
              <item>
-              <widget class="QPushButton" name="pushButton_16">
+              <widget class="QPushButton" name="slamMapLayerButton">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click to toggle this layer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
@@ -103,30 +109,39 @@
                <property name="text">
                 <string>SLAM</string>
                </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_4">
+              <widget class="QPushButton" name="roiMapLayerButton">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click to toggle this layer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>ROIs</string>
                </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_17">
+              <widget class="QPushButton" name="pathLayerButton">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click to toggle this layer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Paths</string>
                </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_3">
+              <widget class="QPushButton" name="gridMapLayerButton">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click to toggle this layer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
@@ -135,6 +150,9 @@
                </property>
                <property name="text">
                 <string>Grid</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -146,7 +164,7 @@
               <x>0</x>
               <y>0</y>
               <width>131</width>
-              <height>145</height>
+              <height>199</height>
              </rect>
             </property>
             <attribute name="label">
@@ -189,7 +207,7 @@
               <x>0</x>
               <y>0</y>
               <width>131</width>
-              <height>145</height>
+              <height>199</height>
              </rect>
             </property>
             <attribute name="label">
@@ -227,6 +245,14 @@
             </layout>
            </widget>
            <widget class="QWidget" name="page_10">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>131</width>
+              <height>199</height>
+             </rect>
+            </property>
             <attribute name="label">
              <string>Page</string>
             </attribute>
@@ -262,6 +288,14 @@
             </layout>
            </widget>
            <widget class="QWidget" name="page_11">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>131</width>
+              <height>199</height>
+             </rect>
+            </property>
             <attribute name="label">
              <string>Page</string>
             </attribute>
@@ -297,6 +331,14 @@
             </layout>
            </widget>
            <widget class="QWidget" name="page_12">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>131</width>
+              <height>199</height>
+             </rect>
+            </property>
             <attribute name="label">
              <string>Page</string>
             </attribute>
@@ -368,7 +410,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="drawTestShapesButton">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -386,6 +428,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QGraphicsViewScrollScale</class>
+   <extends>QGraphicsView</extends>
+   <header>qgraphicsviewscrollscale.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

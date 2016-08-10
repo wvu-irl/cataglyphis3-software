@@ -14,6 +14,7 @@
 #include <messages/HSMSetNorthAngle.h>
 #include <messages/RobotPose.h>
 
+#include <robot_control/RegionsOfInterest.h>
 #include <robot_control/ROI.h>
 
 #define ON_SERIVCE_FAILURE_RETURN_PAUSE 3
@@ -42,7 +43,7 @@ signals:
 
     void hsm_global_pose_callback(const messages::RobotPose hsmRobotPose);
 
-    void map_manager_ROI_service_returned(const robot_control::ROI mapManagerResponse,
+    void map_manager_ROI_service_returned(const robot_control::RegionsOfInterest mapManagerResponse,
                                             bool wasSucessful);
 
 private:
@@ -53,7 +54,7 @@ private:
     messages::HSMSetNorthAngle lastHSMNAMsg;
 
     ros::ServiceClient mapManagerROIClient;
-    robot_control::ROI lastROIMsg;
+    robot_control::RegionsOfInterest lastROIMsg;
 
     ros::Time navInfoTime;
     bool navInfoSubStarted;

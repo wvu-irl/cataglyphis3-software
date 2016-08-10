@@ -5,7 +5,7 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
     nh = nhArg;
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
-    mapManagerROIClient = nh->serviceClient<robot_control::ROI>("/control/mapmanager/regionsofinterest");
+    mapManagerROIClient = nh->serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
 
     navInfoTime = ros::Time::now();
     navInfoSubStarted = false;
@@ -23,8 +23,24 @@ void ros_workers::on_run_map_manager_ROI_service()
     if(mapManagerROIClient.exists())
     {
         ROS_DEBUG("ros_workers::run_ROI Service:: ROI Service Exists!");
-        if(mapManagerROIClient)
+        if(mapManagerROIClient.call(lastROIMsg))
+        {
+            ROS_DEBUG("ros_workers:: run ROI service:: ROI service call success!");
+            wasSucessful = true;
+        }
+        else
+        {
+            ROS_WARN("ros_workers:: run ROI Service:: ROI service call failure");
+        }
     }
+    else
+    {
+        ROS_WARN("ros_workers::run ROI Service:: ROI Service Does not Exist!");
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        pause.sleep();
+    }
+    emit map_manager_ROI_service_returned(lastROIMsg, wasSucessful);
 }
 
 void ros_workers::on_run_nav_service(messages::NavFilterControl serviceRequest,

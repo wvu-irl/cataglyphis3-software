@@ -37,7 +37,9 @@ SOURCES +=\
     generic_error_dialog.cpp \
     init_container.cpp \
     map_view_roi_ellipse.cpp \
-    roi_dialog.cpp
+    roi_dialog.cpp \
+    qgraphicsviewscrollscale.cpp \
+    qgraphicsscenemapviewer.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -48,7 +50,9 @@ HEADERS  += \
     generic_error_dialog.h \
     init_container.h \
     map_view_roi_ellipse.h \
-    roi_dialog.h
+    roi_dialog.h \
+    qgraphicsviewscrollscale.h \
+    qgraphicsscenemapviewer.h
 
 FORMS    += \
     generic_error_dialog_form.ui \
