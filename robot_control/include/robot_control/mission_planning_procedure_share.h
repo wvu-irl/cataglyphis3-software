@@ -89,11 +89,11 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.457; // m
+	const float blindDriveDistance = 0.507; // m
 	const float grabberDistanceTolerance = 0.15; // m
 	const float grabberAngleTolerance = 6.0; // deg
-	const float possibleSampleConfThresh = 0.6;
-	const float definiteSampleConfThresh = 0.8;
+	const float possibleSampleConfThresh = 0.5;
+	const float definiteSampleConfThresh = 0.7;
 	static int currentROIIndex;
 	static bool escapeCondition;
 	static bool performBiasRemoval;

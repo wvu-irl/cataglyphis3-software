@@ -1,2 +1,2 @@
 #!/bin/bash
-roslaunch hw_interface NB1_UDP_Sender.launch
+taskset -c 0,1 roslaunch hw_interface NB1_UDP_Sender.launch

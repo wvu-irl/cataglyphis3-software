@@ -1,2 +1,2 @@
 #!/bin/bash
-rosrun navigation navigation_filter_node
+taskset -c 0,1 rosrun navigation navigation_filter_node
