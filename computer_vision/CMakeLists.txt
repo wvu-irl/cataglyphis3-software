@@ -148,6 +148,8 @@ add_library(sample_search src/sample_search.cpp)
 add_library(calibrate_camera src/calibrate_camera.cpp)
  target_link_libraries(calibrate_camera 
  	${catkin_LIBRARIES}
+	boost_filesystem 
+ 	boost_system
  )
 
 ## Add cmake target dependencies of the library
