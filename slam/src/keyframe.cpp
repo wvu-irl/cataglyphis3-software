@@ -199,10 +199,11 @@ protected:
 
 	//parameters
 	double distance_correspondence;	//maximum distance for finding a correspondence point
-	float edge_rectangle_filter;
+	float edge_area_filter;
 	double ratio_height_verification;
 	int neighbor_number;	//K nearest neighbor to calculate transformation matrix 
 	double threshold_verification;	//verification rate smaller than the threshold, using IMU data to get transformation matrix
+	double verification_angle_threshold;	//if all points are in the same area, then using IMU data to get transformation matrix
 
 	//global nav_filter data;
 	float x_IMU;
@@ -267,6 +268,7 @@ protected:
 
 	//overlap
 	int LocalMap_size;
+	int Overlap_error_threshold;
 
 	//condition for generating a new keyframe
 	double threshold_overlap;
@@ -315,7 +317,7 @@ protected:
 	// void set_Navfilter_data(float IMU_x, float IMU_y, float IMU_heading);
 	ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index, int PointDataType, int option);	//*************change return type to struct include tranformation matrix, from index, to index, overlap, true of false***********//
 	ICP_Result ICP_compute(int ICP_ref_index, int ICP_read_index, int PointDataType, int option, matrix4f transformation_matrix);
-	bool outside_rectangle(float rectangle_x, float rectangle_y);		//determine if the point is inside 2.24m rectangle
+	bool outside_area(float area_x, float area_y);		//determine if the point is inside 5m round
 	LocalMap_ICP remove_block_area(float b_x1, float b_y1, float b_heading1, float b_x0, float b_y0, float b_heading0, LocalMap_ICP before_remove_localmap_icp);	//remove points blocks by masks in pre frame
 	// bool ICP_verification(int ref_v_index, int read_v_index, matrix4f T, double &overlap, int PointDataType);
 	double ICP_verification(std::vector<Cell_Local> read_Correspondences_cells_verify, std::vector<Cell_Local> ref_Correspondences_cells_verify, matrix3f& information_matrix);
@@ -376,9 +378,10 @@ void Keyframe::Initialization()
 	//parameters for verification
 	ratio_height_verification = 0.75; 
 	threshold_verification = 3;
+	verification_angle_threshold = 15;
 
 	//parameters for points filter
-	edge_rectangle_filter = 5; //length of edgs of rectangle filter
+	edge_area_filter = 5; //length of edgs of round filter
 	b_theta = 10 * PI / 180; //angle of blocked points (translate to radian)
 
 	//parameters for generating a new keyframe
@@ -390,7 +393,8 @@ void Keyframe::Initialization()
 	threshold_permanent_keyframe = 10; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
 
 	//overlap
-	LocalMap_size = 120; // localmap size will be 80 * 80
+	LocalMap_size = 120; // localmap size will be 120 + 120
+	Overlap_error_threshold = 20;
 
 	//parameter for k nearest neighbor
 	neighbor_number = 5; //find 5 nearest neighbor to build edge, include the search point and the previous keyframe
@@ -995,8 +999,8 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		std::stringstream readPointCloudPtr_pcd;
 		std::stringstream refPointCloudPtr_pcd;
 
-		// readPointCloudPtr_pcd << "/home/atlas/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
-		// refPointCloudPtr_pcd << "/home/atlas/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
+		// readPointCloudPtr_pcd << "/home/chizhao/test_data/read/readPointCloudPtr" << pcd_counter_overlap << ".pcd";
+		// refPointCloudPtr_pcd << "/home/chizhao/test_data/ref/refPointCloudPtr" << pcd_counter_overlap << ".pcd";
 		// pcl::io::savePCDFileASCII (readPointCloudPtr_pcd.str(), *readPointCloudPtr);
 		// pcl::io::savePCDFileASCII (refPointCloudPtr_pcd.str(), *refPointCloudPtr);
 		// pcd_counter_overlap++;
@@ -1374,7 +1378,7 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 
 			FinalTransformation(0,0) = guessT(0,0);  FinalTransformation(0,1) = guessT(0,1);  	FinalTransformation(0,2) = 0;  FinalTransformation(0,3) = guessT(0,3) + Tg_new(0,0);
 			FinalTransformation(1,0) = guessT(1,0);  FinalTransformation(1,1) = guessT(1,1);    FinalTransformation(1,2) = 0;  FinalTransformation(1,3) = guessT(1,3) + Tg_new(1,0);
-			FinalTransformation(2,0) = 0;                 FinalTransformation(2,1) = 0;					 FinalTransformation(2,2) = 1;  FinalTransformation(2,3) = 0;
+			FinalTransformation(2,0) = 0;                 FinalTransformation(2,1) = 0;					   FinalTransformation(2,2) = 1;  FinalTransformation(2,3) = 0;
 			FinalTransformation(3,0) = 0;                 FinalTransformation(3,1) = 0;                    FinalTransformation(3,2) = 0;  FinalTransformation(3,3) = 1;
 			
 
@@ -1572,12 +1576,11 @@ Keyframe::LocalMap_ICP Keyframe::remove_block_area(float b_x1, float b_y1, float
 
 }
 //************************** circle filter for points ***********//
-//determine if the point is inside 2.24m rectangle
-bool Keyframe::outside_rectangle(float rectangle_x, float rectangle_y)
+//determine if the point is inside 5m round
+bool Keyframe::outside_area(float area_x, float area_y)
 {
-	float threshold = edge_rectangle_filter / 2;
 
-	if(rectangle_x < threshold && rectangle_x > -threshold && rectangle_y < threshold && rectangle_y > -threshold)
+	if(area_x * area_x + area_y * area_y <= edge_area_filter * edge_area_filter)
 		return false;
 	else
 		return true;
@@ -1635,28 +1638,45 @@ double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_c
   	float ref_z_value;
   	float ref_var_z;
   	int count = 0;
-  	for(int i = 0; i < all_correspondences.size(); i++)
-  	{
-  		read_z_value = read_Correspondences_cells_verify[all_correspondences[i].index_query].z_mean;
-  		ref_z_value = ref_Correspondences_cells_verify[all_correspondences[i].index_match].z_mean;
-  		ref_var_z = ref_Correspondences_cells_verify[all_correspondences[i].index_match].var_z;
-  		
-  		if(read_z_value < ref_z_value + 1 * ref_var_z && read_z_value > ref_z_value - 1 * ref_var_z)
-  		{
 
-  			double distance = sqrt((read_Correspondences_cells_verify[all_correspondences[i].index_query].x_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].x_mean) *
-  									(read_Correspondences_cells_verify[all_correspondences[i].index_query].x_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].x_mean) +
-  									(read_Correspondences_cells_verify[all_correspondences[i].index_query].y_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].y_mean) *
-  									(read_Correspondences_cells_verify[all_correspondences[i].index_query].y_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].y_mean) );
+  	//judge if all points are from one side
+  	std::vector<double> angle_sort;
+  	angle_sort.clear();
+	for(int i = 0; i < all_correspondences.size(); i++)
+	{
+		angle_sort.push_back((double)atan2(read_Correspondences_cells_verify[all_correspondences[i].index_query].x_mean, read_Correspondences_cells_verify[all_correspondences[i].index_query].y_mean) * 180 / PI);
+	} 
 
-  			if(distance == 0)
-  			{
-  				distance = 0.000000000000001;
-  			}
-  			score = score + distance_correspondence / distance;
-  			count++;
-  		}
-  	}
+	std::sort(angle_sort.begin(), angle_sort.end());
+
+	if(angle_sort.end() - angle_sort.begin() < verification_angle_threshold)
+		score = 0.1;
+	else
+	{
+
+	  	for(int i = 0; i < all_correspondences.size(); i++)
+	  	{
+	  		read_z_value = read_Correspondences_cells_verify[all_correspondences[i].index_query].z_mean;
+	  		ref_z_value = ref_Correspondences_cells_verify[all_correspondences[i].index_match].z_mean;
+	  		ref_var_z = ref_Correspondences_cells_verify[all_correspondences[i].index_match].var_z;
+	  		
+	  		if(read_z_value < ref_z_value + 1 * ref_var_z && read_z_value > ref_z_value - 1 * ref_var_z)
+	  		{
+
+	  			double distance = sqrt((read_Correspondences_cells_verify[all_correspondences[i].index_query].x_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].x_mean) *
+	  									(read_Correspondences_cells_verify[all_correspondences[i].index_query].x_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].x_mean) +
+	  									(read_Correspondences_cells_verify[all_correspondences[i].index_query].y_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].y_mean) *
+	  									(read_Correspondences_cells_verify[all_correspondences[i].index_query].y_mean - ref_Correspondences_cells_verify[all_correspondences[i].index_match].y_mean) );
+
+	  			if(distance == 0)
+	  			{
+	  				distance = 0.000000000000001;
+	  			}
+	  			score = score + distance_correspondence / distance;
+	  			count++;
+	  		}
+	  	}
+	}
 
   	//calculate information matrix for each edge
   	float diff_x;
@@ -2025,10 +2045,10 @@ void Keyframe::getOverlap(LocalMap_ICP ICP_localmap_read, LocalMap_ICP ICP_local
   	{
 
   		// ROS_INFO_STREAM(transformed_cloud->points[i].x<<" "<<transformed_cloud->points[i].y);
-  		if(transformed_cloud_read->points[i].x >= (-LocalMap_size / 2) 
-  			&& transformed_cloud_read->points[i].x <= (LocalMap_size / 2)
-  			&& transformed_cloud_read->points[i].y >= (-LocalMap_size / 2) 
-  			&& transformed_cloud_read->points[i].y <= (LocalMap_size / 2))		//localmap size 80*80
+  		if(transformed_cloud_read->points[i].x >= (-LocalMap_size / 2 - Overlap_error_threshold) 
+  			&& transformed_cloud_read->points[i].x <= (LocalMap_size / 2 + Overlap_error_threshold)
+  			&& transformed_cloud_read->points[i].y >= (-LocalMap_size / 2 - Overlap_error_threshold) 
+  			&& transformed_cloud_read->points[i].y <= (LocalMap_size / 2 + Overlap_error_threshold))		//localmap size 80*80
   		{
   			// ROS_INFO_STREAM("1");
 
@@ -2065,10 +2085,10 @@ void Keyframe::getOverlap(LocalMap_ICP ICP_localmap_read, LocalMap_ICP ICP_local
   	{
 
   		// ROS_INFO_STREAM(transformed_cloud->points[i].x<<" "<<transformed_cloud->points[i].y);
-  		if(transformed_cloud_ref->points[i].x >= (-LocalMap_size / 2) 
-  			&& transformed_cloud_ref->points[i].x <= (LocalMap_size / 2)
-  			&& transformed_cloud_ref->points[i].y >= (-LocalMap_size / 2) 
-  			&& transformed_cloud_ref->points[i].y <= (LocalMap_size / 2))		//localmap size 80*80
+  		if(transformed_cloud_ref->points[i].x >= (-LocalMap_size / 2 - Overlap_error_threshold) 
+  			&& transformed_cloud_ref->points[i].x <= (LocalMap_size / 2 + Overlap_error_threshold)
+  			&& transformed_cloud_ref->points[i].y >= (-LocalMap_size / 2 - Overlap_error_threshold) 
+  			&& transformed_cloud_ref->points[i].y <= (LocalMap_size / 2 + Overlap_error_threshold))		//localmap size 80*80
   		{
   			// ROS_INFO_STREAM("1");
 
@@ -2131,102 +2151,6 @@ void Keyframe::getOverlap(LocalMap_ICP ICP_localmap_read, LocalMap_ICP ICP_local
 
 }
 
-
-
-// void Keyframe::getOverlap(LocalMap_ICP ICP_localmap_read, LocalMap_ICP ICP_localmap_ref, matrix4f Transformation_matrix, int &overlap_check_counter, std::vector<Cell_Local> &read_Correspondences_cells, std::vector<Cell_Local> &ref_Correspondences_cells)
-// {
-// 	read_Correspondences_cells.clear();
-// 	ref_Correspondences_cells.clear();
-// 	overlap_check_counter = 0;
-
-// 	std::vector<Cell_Local> read_Correspondences_cells_temp;
-
-// 	PointCloudPtr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-// 	PointCloudPtr read_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-
-// 	*read_cloud = ICP_localmap_read.ICP_cloudMsgIn;
-// 	//using transformation matrix transfer read_points to the same coordinate as ref_points
-//   	pcl::transformPointCloud (*read_cloud, *transformed_cloud, Transformation_matrix);
-
-//   	//transfer overlap points cells to global map coordination
-//   	matrix4f TreadTomap_IMU;
-//   	TreadTomap_IMU = Eigen::Matrix<float, 4, 4>::Identity();
-//   	TreadTomap_IMU = TkeyTomap * Transformation_matrix;
-
-//   	Cell_Local cell_local;
-//   	// ROS_INFO_STREAM(-LocalMap_size / 2);
-
-//   	// for(int i = 0; i < transformed_cloud->size(); i++)
-//   	// {
-//   	// 	ROS_INFO_STREAM(transformed_cloud->points[i].x<<" "<<transformed_cloud->points[i].y);
-//   	// 	ROS_INFO_STREAM(transformed_cloud->points[i].x >= -LocalMap_size / 2 );
-//   	// }
-//   	for(int i = 0; i < transformed_cloud->size(); i++)
-//   	{
-
-//   		// ROS_INFO_STREAM(transformed_cloud->points[i].x<<" "<<transformed_cloud->points[i].y);
-//   		if(transformed_cloud->points[i].x >= (-LocalMap_size / 2) 
-//   			&& transformed_cloud->points[i].x <= (LocalMap_size / 2)
-//   			&& transformed_cloud->points[i].y >= (-LocalMap_size / 2) 
-//   			&& transformed_cloud->points[i].y <= (LocalMap_size / 2))		//localmap size 80*80
-//   		{
-//   			// ROS_INFO_STREAM("1");
-
-//   			matrix4f_point pointXY_local;
-//   			matrix4f_point pointXY_global;
-//   			pointXY_local(0,0) = read_cloud->points[i].x;
-//   			pointXY_local(1,0) = read_cloud->points[i].y;
-//   			pointXY_local(2,0) = 0;
-//   			pointXY_local(3,0) = 1;
-
-//   			pointXY_global = TreadTomap_IMU * pointXY_local;
-
-//   			pointXY_global(0,0) = pointXY_global(0,0) / pointXY_global(3,0);
-//   			pointXY_global(1,0) = pointXY_global(1,0) / pointXY_global(3,0);
-//   			// ROS_INFO_STREAM(pointXY_global);
-  			
-//   			cell_local.x_mean = pointXY_global(0,0);
-//   			cell_local.y_mean = pointXY_global(1,0);
-
-//   			// ROS_INFO_STREAM("pointXY_local: \n" << pointXY_local <<" \n pointXY_global: \n" << pointXY_global);
-//   			//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^bugs//
-//   			cell_local.z_mean = ICP_localmap_read.z_mean[i];
-//   			cell_local.var_z = ICP_localmap_read.var_z[i];
-//   			cell_local.ground_adjacent = true;
-//   			read_Correspondences_cells_temp.push_back(cell_local);
-//   		}
-//   	}
-
-//   	// ROS_INFO_STREAM("TreadTomap_IMU: \n" << TreadTomap_IMU);
-//   	// ROS_INFO_STREAM("TkeyTomap: \n" << TkeyTomap);
-//   	// ROS_INFO_STREAM("Transformation_matrix: \n" << Transformation_matrix);
-
-//   	for(int i = 0; i < read_Correspondences_cells_temp.size(); i++)
-//   	{
-//   		int horizontal_index = 0;
-//   		int vertical_index = 0;
-//   		horizontal_index = floor((read_Correspondences_cells_temp[i].x_mean + maplength / 2) / cell_resolution);
-//   		vertical_index = floor((read_Correspondences_cells_temp[i].y_mean + maplength / 2) / cell_resolution);
-
-//   		if(GlobalMap[horizontal_index][vertical_index].occupy == 1)	// check if that particular cell in the Cell_global has been occupied
-//   		{
-//   			cell_local.x_mean = GlobalMap[horizontal_index][vertical_index].x_mean;
-//   			cell_local.y_mean = GlobalMap[horizontal_index][vertical_index].y_mean;
-//   			cell_local.z_mean = GlobalMap[horizontal_index][vertical_index].z_mean;
-//   			cell_local.var_z = GlobalMap[horizontal_index][vertical_index].var_z;
-//   			cell_local.ground_adjacent = GlobalMap[horizontal_index][vertical_index].ground_adjacent;
-
-//   			ref_Correspondences_cells.push_back(cell_local);
-
-//   			read_Correspondences_cells.push_back(read_Correspondences_cells_temp[i]);
-
-//   			overlap_check_counter++;
-//   		}
-
-  		
-//   	}
-
-// }
 
 double Keyframe::Update_GlobalMap(LocalMap_Information localmap_information_update, matrix4f transformation_matrix_update)
 {
@@ -2458,8 +2382,8 @@ void Keyframe::Store_Information(const messages::LocalMap& LocalMapMsgIn)
 
 	for(int i = 0; i < LocalMapMsgIn.x_mean.size(); i++)
 	{	
-		//remove all points inside 2.24m * 2.24m rectangle
-		if(outside_rectangle(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i]))
+		//remove all points inside 5m round
+		if(outside_area(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i]))
 		{
 			//if the cell is near to the ground, save that point for icp pointcloud
 			if (LocalMapMsgIn.ground_adjacent[i])
