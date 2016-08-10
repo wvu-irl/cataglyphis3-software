@@ -27,6 +27,9 @@ public:
     //boost::shared_ptr<Ui::map_viewer> ui;
     Ui::map_viewer_form* ui;
 
+public slots:
+    void draw_new_roi(/*put roi object here*/);
+
 private slots:
     void on_fieldSelector_currentIndexChanged(int index);
 

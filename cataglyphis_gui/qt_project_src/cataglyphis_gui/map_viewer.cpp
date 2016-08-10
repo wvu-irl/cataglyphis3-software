@@ -63,3 +63,8 @@ void map_viewer::on_pushButton_clicked()
 
     scene[ui->fieldSelector->currentIndex()]->addItem(roiEllipse);
 }
+
+void map_viewer::draw_new_roi(/*put roi object info here*/)
+{
+
+}
