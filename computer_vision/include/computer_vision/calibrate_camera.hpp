@@ -45,19 +45,29 @@ public:
 	bool _showGrabber = false;
 	bool _showRadius = false;
 
-	static void bodyCheckBox(int state, void* object){
+	bool selectingPoint1 = false;
+	bool selectingPoint2 = false;
+	bool selectingPoint3 = false;
+	bool selectingPoint4 = false;
+	bool startSelectingPoints = false;
+
+	std::vector<cv::Point2f> imageCoordinates;
+	std::vector<cv::Point3f> globalCoordinates;
+
+	static void bodyCheckBox(int state, void* object)
+	{
 		if(state==true)
 		{
 			((CalibrateCamera*)object)->_showBody=true;
-			ROS_INFO("True.");
 		}
 		else
 		{
 			((CalibrateCamera*)object)->_showBody=false;
-			ROS_INFO("False.");
 		}
 	};
-	static void poleCheckBox(int state, void* object){
+
+	static void poleCheckBox(int state, void* object)
+	{
 		if(state==true)
 		{
 			((CalibrateCamera*)object)->_showPole=true;
@@ -67,7 +77,9 @@ public:
 			((CalibrateCamera*)object)->_showPole=false;
 		}
 	};
-	static void grabberCheckBox(int state, void* object){
+
+	static void grabberCheckBox(int state, void* object)
+	{
 		if(state==true)
 		{
 			((CalibrateCamera*)object)->_showGrabber=true;
@@ -77,7 +89,9 @@ public:
 			((CalibrateCamera*)object)->_showGrabber=false;
 		}
 	};
-	static void radiusCheckBox(int state, void* object){
+
+	static void radiusCheckBox(int state, void* object)
+	{
 		if(state==true)
 		{
 			((CalibrateCamera*)object)->_showRadius=true;
@@ -87,13 +101,69 @@ public:
 			((CalibrateCamera*)object)->_showRadius=false;
 		}
 	};
-	static void calibratePoseButton(int state, void* object){
-		ROS_WARN("Calibrate pose not implemented yet.");
+
+	static void onMouse(int event, int x, int y, int flags, void* object)
+	{
+		if(event != CV_EVENT_LBUTTONDOWN)
+		{
+			return;
+		}
+
+
+		if(((CalibrateCamera*)object)->selectingPoint1==true)
+		{
+			ROS_INFO("Select point 2");
+			((CalibrateCamera*)object)->imageCoordinates.clear();
+			((CalibrateCamera*)object)->imageCoordinates.push_back(cv::Point2f(x,y));
+			((CalibrateCamera*)object)->selectingPoint1=false;
+			((CalibrateCamera*)object)->selectingPoint2=true;
+		}
+		else if(((CalibrateCamera*)object)->selectingPoint2==true)
+		{
+			ROS_INFO("Select point 3");
+			((CalibrateCamera*)object)->imageCoordinates.push_back(cv::Point2f(x,y));
+			((CalibrateCamera*)object)->selectingPoint2=false;
+			((CalibrateCamera*)object)->selectingPoint3=true;
+		}
+		else if(((CalibrateCamera*)object)->selectingPoint3==true)
+		{
+			ROS_INFO("Select point 4");
+			((CalibrateCamera*)object)->imageCoordinates.push_back(cv::Point2f(x,y));
+			((CalibrateCamera*)object)->selectingPoint3=false;
+			((CalibrateCamera*)object)->selectingPoint4=true;
+		}
+		else if(((CalibrateCamera*)object)->selectingPoint4==true)
+		{
+			((CalibrateCamera*)object)->imageCoordinates.push_back(cv::Point2f(x,y));
+			((CalibrateCamera*)object)->selectingPoint4=false;
+			((CalibrateCamera*)object)->startSelectingPoints=false;
+			ROS_INFO("x1=%i,y1=%i",(int)((CalibrateCamera*)object)->imageCoordinates[0].x,(int)((CalibrateCamera*)object)->imageCoordinates[0].y);
+			ROS_INFO("x2=%i,y2=%i",(int)((CalibrateCamera*)object)->imageCoordinates[1].x,(int)((CalibrateCamera*)object)->imageCoordinates[1].y);
+			ROS_INFO("x3=%i,y3=%i",(int)((CalibrateCamera*)object)->imageCoordinates[2].x,(int)((CalibrateCamera*)object)->imageCoordinates[2].y);
+			ROS_INFO("x4=%i,y4=%i",(int)((CalibrateCamera*)object)->imageCoordinates[3].x,(int)((CalibrateCamera*)object)->imageCoordinates[3].y);
+		}
+		else
+		{
+			ROS_WARN("No action being executed...");
+		}
+
+		//ROS_INFO("x = %i, y = %i", x, y);
 	}
-	static void updateImageButton(int state, void* object){
+
+	static void calibratePoseButton(int state, void* object)
+	{
+			ROS_INFO("Select point 1.");
+			((CalibrateCamera*)object)->selectingPoint1 = true;
+			((CalibrateCamera*)object)->selectingPoint2 = false;
+			((CalibrateCamera*)object)->selectingPoint3 = false;
+			((CalibrateCamera*)object)->selectingPoint4 = false;
+	}
+	static void updateImageButton(int state, void* object)
+	{
 		((CalibrateCamera*)object)->updateImage();
 	};
-	static void saveCalibrationButton(int state, void*){
+	static void saveCalibrationButton(int state, void*)
+	{
 		ROS_WARN("Save not implemented yet.");
 	};
 

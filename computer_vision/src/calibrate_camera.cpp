@@ -18,10 +18,11 @@ CalibrateCamera::CalibrateCamera()
     cv::createTrackbar( "pole-w", "", &_poleWidthSlider, _poleWidthMax, onTrackbarPoleWidth );
     cv::createTrackbar( "pole-h", "", &_poleHeightSlider, _poleHeightMax, onTrackbarPoleHeight );  
 
-    //cv::createButton("Update Calibration\n", boost::function<void (int, void*)>(boost::bind(&CalibrateCamera::updateCalibrationButton, this, _1, _2)).target<void(int,void*)>(), NULL, CV_PUSH_BUTTON, 0);
     cv::createButton("Calibrate Pose\n", calibratePoseButton, (void*)this, CV_PUSH_BUTTON, 0);
     cv::createButton("Update Image\n", updateImageButton, (void*)this, CV_PUSH_BUTTON, 0);
     cv::createButton("Save Calibration\n", saveCalibrationButton, (void*)this, CV_PUSH_BUTTON, 0);
+
+    cv::setMouseCallback("Current Image", onMouse, (void*)this);
 }
 
 void CalibrateCamera::displayImage()
