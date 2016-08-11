@@ -48,6 +48,7 @@ public:
 	bool narrowBandNotEmpty();
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	void chooseWaypointsFromOptimalPath();
+	bool straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh);
 	void generateAndPubVizMap();
 	void addToSet(std::multiset<MapData, MapDataLess>& set, MapData& cell);
 	void removeFromSet(std::multiset<MapData, MapDataLess>& set, float cellValue, grid_map::Index mapIndex);
@@ -79,14 +80,15 @@ public:
 	std::vector<grid_map::Index> optimalPath;
 	std::vector<grid_map::Position> hazardMapPoints;
 	grid_map::GridMap initialViscosityMap;
-	const float initialTimeValue = 0.0005;
+	//const float initialTimeValue = 0.0005;
+	const float initialTimeValue = 0.00008;
 	const float maxTimeValue = 10.0;
 	const float minFMMTimeValue = 0.0;
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
 	grid_map::Position goalPoint;
 	float globalMapValue;
-	const float globalMapValueScaleFactor = 0.08;
+	const float globalMapValueScaleFactor = 0.04; // 0.08
 	MapData mapCell;
 	std::multiset<MapData, MapDataLess> narrowBandSet;
 	const std::string timeLayer = "timeLayer";
@@ -101,9 +103,9 @@ public:
 	unsigned int origNumWaypointsIn;
 	unsigned int numInsertedWaypoints;
 	std::vector<robot_control::Waypoint> waypointsToInsert;
-	const float initialHazardAlongPossiblePathThresh = 5.0;
+	const float initialHazardAlongPossiblePathThresh = 3.0;
 	const float hazardThreshIncrementAmount = 1.0;
-	const unsigned int numCellsOverThreshLimit = 4;
+	const unsigned int numCellsOverThreshLimit = 6;
 	const float minWaypointDistance = 5.0; // m
 	const float corridorWidth = 2.0; // m
 };
