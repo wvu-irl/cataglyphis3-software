@@ -136,8 +136,10 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                 // resistanceMap + satMap
                 for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
                 {
-                    resistanceMap.at(timeLayer, *it) += globalMap.at(layerToString(_satDriveability), *it); // Just add or average?
-                    if(resistanceMap.at(timeLayer, *it) > 10.0) resistanceMap.at(timeLayer, *it) = 10.0;
+                    globalMapValue = globalMap.at(layerToString(_satDriveability), *it);
+                    if(globalMapValue >= maxTimeValue) resistanceMap.at(timeLayer, *it) += globalMapValue; // Just add or average?
+                    else if(globalMapValue < maxTimeValue && globalMapValue > 0.0) resistanceMap.at(timeLayer, *it) += globalMapValueScaleFactor*globalMapValue; // Just add or average?
+                    if(resistanceMap.at(timeLayer, *it) > maxTimeValue) resistanceMap.at(timeLayer, *it) = maxTimeValue;
                 }
                 ROS_INFO("before timeOfArrivalMap FMM");
                 FMM(resistanceMap, timeOfArrivalMap, goalPoint);
@@ -251,7 +253,7 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     addToSet(narrowBandSet, mapCell);
     mapOut.atPosition(timeLayer, goalPointIn) = 0.0;
     mapOut.atPosition(setLayer, goalPointIn) = (float)_narrowBand;
-    //ROS_INFO("mapSize = (%i,%i)",mapSize[0],mapSize[1]);
+    ROS_INFO("mapSize = (%i,%i)",mapSize[0],mapSize[1]);
     /*
     nexttime = ros::Time::now().toSec();
     deltatime = nexttime - firsttime;
@@ -390,6 +392,7 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
                                 ROS_INFO("FMM=> Modify value time = %lf",deltatime);
                                 */
                                 if(mapOut.at(timeLayer, offsetIndex)>maxTimeValue) mapOut.at(timeLayer, offsetIndex) = maxTimeValue;
+                                //else if(mapOut.at(timeLayer, offsetIndex)<minFMMTimeValue) mapOut.at(timeLayer, offsetIndex) = minFMMTimeValue;
                                 //ROS_INFO("mapOut(offsetIndex) = %f",mapOut.at(timeLayer, offsetIndex));
                             }
                         }
@@ -419,12 +422,18 @@ void SafePathing::gradientDescent(grid_map::GridMap &map, grid_map::Position sta
     grid_map::Index currentIndex;
     grid_map::Index offsetIndex;
     grid_map::Index nextBestIndex;
+    unsigned int counter = 0;
+    float candidateValue;
     pathOut.clear();
     map.getIndex(startPosition, currentIndex);
     mapSize = map.getSize();
     int i, j;
     while(continueLoop)
     {
+        //ROS_INFO("counter = %u",counter);
+        //ROS_INFO("currentIndex = (%i,%i)",currentIndex[0],currentIndex[1]);
+        counter++;
+        continueLoop = false;
         for(i=-1; i<=1; i++)
         {
             for(j=-1; j<=1; j++)
@@ -435,10 +444,11 @@ void SafePathing::gradientDescent(grid_map::GridMap &map, grid_map::Position sta
                     offsetIndex[1] = currentIndex[1] + j;
                     if((offsetIndex[0]<mapSize[0] && offsetIndex[0]>=0) && (offsetIndex[1]<mapSize[1] && offsetIndex[1]>=0))
                     {
-                        continueLoop = false;
-                        if(map.at(timeLayer, offsetIndex) < nextBestValue)
+                        candidateValue = map.at(timeLayer, offsetIndex);
+                        //ROS_INFO("candidateValue(%i,%i) = %f",i,j,candidateValue);
+                        if(candidateValue < nextBestValue)
                         {
-                            nextBestValue = map.at(timeLayer, offsetIndex);
+                            nextBestValue = candidateValue;
                             nextBestIndex = offsetIndex;
                             continueLoop = true;
                         }
@@ -468,6 +478,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
     bool continueLoop = true;
     robot_control::Waypoint waypointToPushBack;
 
+    polygonVertices.resize(4);
     waypointsToInsert.clear();
     startIndex = optimalPath.front();
     indexToConsider = optimalPath.back();
@@ -477,6 +488,8 @@ void SafePathing::chooseWaypointsFromOptimalPath()
         hazardAlongPossiblePathThresh = initialHazardAlongPossiblePathThresh;
         timeOfArrivalMap.getPosition(startIndex, startIndexPos);
         timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
+        ROS_INFO("startIndex = (%i,%i)",startIndex[0],startIndex[1]);
+        ROS_INFO("startIndex = (%i,%i)",indexToConsider[0],indexToConsider[1]);
         if(hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]) < minWaypointDistance)
         {
             continueLoop = false;
@@ -484,6 +497,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
         }
         mapPolygon.removeVertices();
         mapPolygonHeading = atan2(considerIndexPos[1] - startIndexPos[1], considerIndexPos[0] - startIndexPos[0]); // radians
+        ROS_INFO("create verticies");
         polygonVertices.at(0)[0] = startIndexPos[0] + corridorWidth/2.0*sin(mapPolygonHeading);
         polygonVertices.at(0)[1] = startIndexPos[1] - corridorWidth/2.0*cos(mapPolygonHeading);
         polygonVertices.at(1)[0] = startIndexPos[0] - corridorWidth/2.0*sin(mapPolygonHeading);
@@ -492,23 +506,30 @@ void SafePathing::chooseWaypointsFromOptimalPath()
         polygonVertices.at(2)[1] = considerIndexPos[1] + corridorWidth/2.0*cos(mapPolygonHeading);
         polygonVertices.at(3)[0] = considerIndexPos[0] + corridorWidth/2.0*sin(mapPolygonHeading);
         polygonVertices.at(3)[1] = considerIndexPos[1] - corridorWidth/2.0*cos(mapPolygonHeading);
+        ROS_INFO("before addVertex");
         mapPolygon.addVertex(polygonVertices.at(0));
         mapPolygon.addVertex(polygonVertices.at(1));
         mapPolygon.addVertex(polygonVertices.at(2));
         mapPolygon.addVertex(polygonVertices.at(3));
+        ROS_INFO("after addVertex");
         for(grid_map::PolygonIterator it(timeOfArrivalMap, mapPolygon); !it.isPastEnd(); ++it)
         {
             if(timeOfArrivalMap.at(timeLayer, *it) > hazardAlongPossiblePathThresh) numCellsOverThresh++;
         }
+        ROS_INFO("after polygon iterator loop");
         if(numCellsOverThresh>=numCellsOverThreshLimit)
         {
+            ROS_INFO("numHazardsOverLimit");
             prevIndex = indexToConsider;
             for(int i=optimalPath.size()-1; i>=0; i--)
             {
                 indexToConsider = optimalPath.at(i);
                 timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
                 timeOfArrivalMap.getPosition(prevIndex, prevIndexPos);
+                ROS_INFO("considerIndexPos = (%f,%f)",considerIndexPos[0],considerIndexPos[1]);
+                ROS_INFO("prevIndexPos = (%f,%f)",prevIndexPos[0],prevIndexPos[1]);
                 distanceBetweenIndices = hypot(considerIndexPos[0]-prevIndexPos[0], considerIndexPos[1]-prevIndexPos[1]);
+                ROS_INFO("distanceBetween = %f",distanceBetweenIndices);
                 if(indexToConsider[0]==optimalPath.front()[0] && indexToConsider[1]==optimalPath.front()[1]) hazardAlongPossiblePathThresh += hazardThreshIncrementAmount;
                 else if(distanceBetweenIndices>minWaypointDistance)
                 {
@@ -518,6 +539,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             }
             continueLoop = true;
         }
+        else if(indexToConsider[0] == optimalPath.back()[0] && indexToConsider[1] == optimalPath.back()[1]) continueLoop = false; // Straight line path to end point is clear, do not insert any waypoints
         else
         {
             waypointToPushBack.x = considerIndexPos[0];
@@ -543,14 +565,14 @@ void SafePathing::generateAndPubVizMap()
         vizMap.at(vizResistanceLayer, *it) = resistanceMap.at(timeLayer, *it);
         vizMap.at(vizTimeOfArrivalLayer, *it) = timeOfArrivalMap.at(timeLayer, *it);
     }
-    /*ROS_INFO("before optimalPath loop");
+    ROS_INFO("before optimalPath loop");
     ROS_INFO("optimalPath.size() = %u",optimalPath.size());
     for(int i=0; i<optimalPath.size(); i++)
     {
-        ROS_INFO("i = %i", i);
-        ROS_INFO("optimalPath[i] = (%i,%i)",optimalPath.at(i)[0],optimalPath.at(i)[1]);
-        vizMap.at(vizOptimalPathLayer, optimalPath.at(i)) = 1.0;
-    }*/
+        //ROS_INFO("i = %i", i);
+        //ROS_INFO("optimalPath[i] = (%i,%i)",optimalPath.at(i)[0],optimalPath.at(i)[1]);
+        vizMap.at(vizOptimalPathLayer, optimalPath.at(i)) = 10.0;
+    }
     ROS_INFO("before toMessage");
     grid_map::GridMapRosConverter::toMessage(vizMap, vizMapMsg);
     ROS_INFO("before publish");

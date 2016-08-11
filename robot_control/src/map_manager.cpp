@@ -109,6 +109,8 @@ MapManager::MapManager()
     currentKeyframe.setFrameId("map");
     ROIKeyframe.setFrameId("map");
 
+    globalSubMap.setFrameId("map");
+
     /*ROS_DEBUG("before global map toMsssage");
     grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
     ROS_DEBUG("after global map toMsssage");
@@ -845,19 +847,19 @@ void MapManager::calculateGlobalMapSize()
 {
     float candidateSize;
     float bestCandidateSize = 0.0;
-    candidateSize = hypot(satMapStartE, satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapStartE, satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapStartE, satMapSize[1] - satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapStartE, satMapSize[1] - satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapSize[1] - satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapSize[1] - satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
@@ -866,4 +868,9 @@ void MapManager::calculateGlobalMapSize()
     globalMapSize[0] = bestCandidateSize*2.0;
     globalMapSize[1] = bestCandidateSize*2.0;
     //ROS_INFO("globalMapSize[0] = %f, [1] = %f",globalMapSize[0],globalMapSize[1]);
+}
+
+void MapManager::cutOutGlobalSubMap()
+{
+
 }
