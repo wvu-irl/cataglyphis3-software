@@ -27,7 +27,7 @@ private:
 		this->num_imus1=msg->num_imus; //number of imus on nb
 		this->nb1_counter=msg->counter; //counter from nb
 		this->call_counter1=this->call_counter1+1; //increments each time function executed
-		this->time1=ros::Time::now().toSec()-start_time; //time since object instantiated
+		this->time1=msg->nb_clock; //time since object instantiated
 	}
 
 	//netburner2 imu callback function	
@@ -42,7 +42,7 @@ private:
 		this->num_imus2=msg->num_imus; //number of imus on nb
 		this->nb2_counter=msg->counter; //counter from nb
 		this->call_counter2=this->call_counter2+1; //increments each time function executed
-		this->time2=ros::Time::now().toSec()-start_time; //time since object instantiated
+		this->time2=msg->nb_clock; //time since object instantiated
 	}
 
 	//netburner3 imu callback function
@@ -57,7 +57,7 @@ private:
 		this->num_imus3=msg->num_imus; //number of imus on nb
 		this->nb3_counter=msg->counter; //counter from nb
 		this->call_counter3=this->call_counter3+1; //increments each time function executed
-		this->time3=ros::Time::now().toSec()-start_time; //time since object instantiated
+		this->time3=msg->nb_clock; //time since object instantiated
 	}
 public:
 	double start_time;
