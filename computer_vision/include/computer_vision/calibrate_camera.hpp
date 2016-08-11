@@ -43,10 +43,15 @@ public:
 	static void onTrackbarPoleWidth(int, void*){};
 	static void onTrackbarPoleHeight(int, void*){};
 
+	static const int _LINE_THICKNESS = 12;
+	static const int _LINE_TYPE = 12;
+	static const int _LINE_SHIFT = 0;
+
 	bool _showBody = false;
 	bool _showPole = false;
 	bool _showGrabber = false;
 	bool _showRadius = false;
+	bool _showAttitude = false;
 
 	bool selectingPoint1 = false;
 	bool selectingPoint2 = false;
@@ -103,6 +108,18 @@ public:
 		else
 		{
 			((CalibrateCamera*)object)->_showRadius=false;
+		}
+	};
+
+	static void attitudeCheckBox(int state, void* object)
+	{
+		if(state==true)
+		{
+			((CalibrateCamera*)object)->_showAttitude=true;
+		}
+		else
+		{
+			((CalibrateCamera*)object)->_showAttitude=false;
 		}
 	};
 

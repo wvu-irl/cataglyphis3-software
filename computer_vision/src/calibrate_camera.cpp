@@ -10,6 +10,7 @@ CalibrateCamera::CalibrateCamera()
     cv::createButton("Show Radius\n", radiusCheckBox, (void*)this, CV_CHECKBOX, 1);
     cv::createButton("Show Pole\n", poleCheckBox, (void*)this, CV_CHECKBOX, 1);
     cv::createButton("Show Grabber\n", grabberCheckBox, (void*)this, CV_CHECKBOX, 1);
+    cv::createButton("Show Attitude\n", attitudeCheckBox, (void*)this, CV_CHECKBOX, 1);
 
     cv::createTrackbar( "body-w", "", &_robotWidthSlider, _robotWidthMax, onTrackbarRobotWidth );
     cv::createTrackbar( "body-h", "", &_robotHeightSlider, _robotHeightMax, onTrackbarRobotHeight );
@@ -42,8 +43,6 @@ CalibrateCamera::CalibrateCamera()
 
 void CalibrateCamera::displayImage()
 {
-	// cv::Mat imageUndistorted;
-	// undistort(_dst, imageUndistorted, _cameraMatrix, _distortionCoefficients);
     imshow("Current Image", _dst);
 }
 
@@ -101,6 +100,13 @@ void CalibrateCamera::updateImage()
     cv::threshold(calibrationRGB,_saveMask,0,255,0);
     cv::threshold(calibrationRGB,blendMask,0,100,1);
     cv::add(_dstCopy,blendMask,_dst);
+
+ 	if(_showAttitude)
+	{
+		//line for local yaw offset
+		cv::line(_dst, cv::Point(5792/2,0), cv::Point(5792/2,5792), cv::Scalar(0,0,255), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+		cv::line(_dst, cv::Point(0,5792/2), cv::Point(5792,5792/2), cv::Scalar(0,0,255), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+	}
 }
 
 void CalibrateCamera::saveCalibration()

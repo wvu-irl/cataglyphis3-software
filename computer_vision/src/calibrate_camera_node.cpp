@@ -27,6 +27,7 @@ int main(int argc, char **argv)
 	// }
 
 	//Main Loop
+	calibrateCamera.updateImage();
 	while(ros::ok())
 	{
 		calibrateCamera.displayImage();
