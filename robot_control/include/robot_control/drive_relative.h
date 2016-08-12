@@ -16,6 +16,7 @@ private:
 	bool endHeading_;
 	float candidateEndHeadingAngleToTurn_[2];
 	bool pushedToFront_;
+	bool closedLoop_;
 };
 
 #endif // DRIVE_RELATIVE_H

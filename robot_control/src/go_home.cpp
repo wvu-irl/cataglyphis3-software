@@ -25,7 +25,8 @@ bool GoHome::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
-		avoidLockout = false;
+        if(execLastProcType == procType && execLastSerialNum == (serialNum-1)) avoidLockout = true;
+        else avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

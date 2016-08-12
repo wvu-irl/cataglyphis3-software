@@ -33,6 +33,7 @@ public:
 	ros::Publisher infoPub;
 	ros::Publisher actuatorPub;
 	ros::Publisher actionEndedPub;
+	ros::Publisher nextWaypointOutPub;
 	ros::ServiceServer actionServ;
 	ros::Subscriber poseSub;
 	ros::Subscriber navSub;
@@ -73,6 +74,7 @@ private:
 	void driveSpeedsCallback_(const robot_control::DriveSpeeds::ConstPtr& msg);
 	void packActuatorMsgOut_();
 	void packInfoMsgOut_();
+	void packNextWaypointOut_();
 };
 
 #endif // EXEC_H

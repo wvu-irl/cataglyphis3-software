@@ -17,9 +17,9 @@ bool EmergencyEscape::runProc()
                 sendDequeClearFront();
                 interrupted = false;
             }
-            sendDriveRel(offsetDistance, offsetAngle, false, 0.0, true);
+            sendDriveRel(offsetDistance, offsetAngle, false, 0.0, true, false);
             offsetDriveSerialNum = serialNum;
-            sendDriveRel(backupDistance, 0.0, false, 0.0, true);
+            sendDriveRel(backupDistance, 0.0, false, 0.0, true, false);
             backupSerialNum = serialNum;
             state = _exec_;
         }
