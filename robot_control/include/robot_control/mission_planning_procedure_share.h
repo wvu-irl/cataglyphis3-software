@@ -89,8 +89,8 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.507; // m
-	const float grabberDistanceTolerance = 0.15; // m
+	const float blindDriveDistance = 0.257; // m
+	const float grabberDistanceTolerance = 0.17; // m
 	const float grabberAngleTolerance = 6.0; // deg
 	const float possibleSampleConfThresh = 0.5;
 	const float definiteSampleConfThresh = 0.7;
@@ -119,7 +119,7 @@ public:
 	static bool startSLAM;
 	static unsigned int avoidCount;
 	const unsigned int maxAvoidCount = 3;
-	const float metersPerAvoidCountDecrement = 5.0;
+	const float metersPerAvoidCountDecrement = 3.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
 	static unsigned int numSampleCandidates;

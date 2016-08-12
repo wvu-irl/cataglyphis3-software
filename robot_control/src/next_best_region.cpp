@@ -90,7 +90,7 @@ bool NextBestRegion::runProc()
             //sendWait(10.0);
 
             currentROIIndex = bestROINum;
-            allocatedROITime = 270.0; // sec == 4.5 min; implement specific times in ROIs as properties
+            allocatedROITime = 60.0;//270.0; // sec == 4.5 min; implement specific times in ROIs as properties
             tempGoHome = false;
             state = _exec_;
         }
