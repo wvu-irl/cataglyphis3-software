@@ -24,6 +24,16 @@ SafePathing::SafePathing()
     transitionWaypoint3.sampleProb = 0.0;
     transitionWaypoint3.terrainHazard = 0.0;
     transitionWaypoint3.searchable = false;
+    quad1MagneticWaypoint.x = 7.0;
+    quad1MagneticWaypoint.y = 7.0;
+    quad2MagneticWaypoint.x = 7.0;
+    quad2MagneticWaypoint.y = -7.0;
+    quad3MagneticWaypoint.x = -7.0;
+    quad3MagneticWaypoint.y = -7.0;
+    quad4MagneticWaypoint.x = 7.0;
+    quad4MagneticWaypoint.y = -7.0;
+    homeWaypoint.x = 5.0;
+    homeWaypoint.y = 0.0;
     mapDimensions[0] = 500;
     mapDimensions[1] = 500;
     timeOfArrivalMap.setFrameId("map");
@@ -121,7 +131,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                 startPosition[1] = req.waypointArrayIn.at(i).y;
                 goalPoint[0] = req.waypointArrayIn.at(i+1).x;
                 goalPoint[1] = req.waypointArrayIn.at(i+1).y;
-                initialStraightLineCondition = straightLineDriveable(globalMap, layerToString(_satDriveability), startPosition, goalPoint, initialHazardAlongPossiblePathThresh);
+                initialStraightLineCondition = straightLineDriveable(globalMap, layerToString(_satDriveability), startPosition, goalPoint, straightLineCheckHazardThresh, straightLineNumCellsOverThreshLimit);
                 if(initialStraightLineCondition == _tooManyObstacles)
                 {
                     ROS_INFO("too many obstacles along straight line");
@@ -198,6 +208,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                     }
                 }
             }
+            transitionWaypoints(res.waypointArrayOut);
             ROS_INFO("before waypointsOut.erase(begin)");
             res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
         }
@@ -531,7 +542,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             break;
         }*/
         ROS_INFO("hazardAlongPossiblePathThresh = %f",hazardAlongPossiblePathThresh);
-        if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh)!=_driveable && !intersectingMinDistance)
+        if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh, numCellsOverThreshLimit)!=_driveable && !intersectingMinDistance)
         {
             ROS_INFO("numHazardsOverLimit");
             prevIndex = indexToConsider;
@@ -589,7 +600,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
     }
 }
 
-STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string layer, grid_map::Position &startPos, grid_map::Position &endPos, float hazardThresh)
+STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string layer, grid_map::Position &startPos, grid_map::Position &endPos, float hazardThresh, unsigned int numCellsLimit)
 {
     unsigned int numCellsOverThresh;
     grid_map::Polygon mapPolygon;
@@ -620,11 +631,75 @@ STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &
         if(map.at(layer, *it) >= hazardThresh) numCellsOverThresh++;
     }
     //ROS_INFO("after polygon iterator loop");
-    if(numCellsOverThresh>=numCellsOverThreshLimit) return _tooManyObstacles;
+    if(numCellsOverThresh>=numCellsLimit) return _tooManyObstacles;
     else
     {
         if(hypot(endPos[0]-startPos[0], endPos[1]-startPos[1]) > maxDriveDistance) return _distanceTooLong;
         else return _driveable;
+    }
+}
+
+void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& waypointList)
+{
+    unsigned int waypointsOutInitSize = waypointList.size();
+    unsigned int numTransitionWaypointsInserted = 0;
+    float firstWaypointDistance;
+    float secondWaypointDistance;
+    float angleBetweenWaypoints;
+    float distanceFromInnerWaypoint;
+    float distanceBetweenWaypoints;
+    robot_control::Waypoint homingWaypoint;
+    robot_control::Waypoint lastWaypointBeforeHome;
+
+    // Homing waypoint check
+    for(int i=0; i<(waypointsOutInitSize-1); i++)
+    {
+        firstWaypointDistance = hypot(waypointList.at(i).x, waypointList.at(i).y);
+        secondWaypointDistance = hypot(waypointList.at(i+1).x, waypointList.at(i+1).y);
+        distanceBetweenWaypoints = hypot(waypointList.at(i).x-waypointList.at(i+1).x, waypointList.at(i).y-waypointList.at(i+1).y);
+        if(firstWaypointDistance > homingRadius && secondWaypointDistance < homingRadius)
+        {
+            angleBetweenWaypoints = atan2(waypointList.at(i+1).y - waypointList.at(i).y, waypointList.at(i+1).x - waypointList.at(i).x); // rad
+            distanceFromInnerWaypoint = sqrt((pow(secondWaypointDistance,2.0) + pow(homingRadius,2.0) - 2.0*secondWaypointDistance*homingRadius*
+                                              (pow(secondWaypointDistance,2.0) + pow(distanceBetweenWaypoints,2.0) - pow(firstWaypointDistance,2.0))/
+                                               (2.0*secondWaypointDistance*distanceBetweenWaypoints)));
+            homingWaypoint.x = waypointList.at(i+1).x + distanceFromInnerWaypoint*cos(angleBetweenWaypoints);
+            homingWaypoint.y = waypointList.at(i+1).y + distanceFromInnerWaypoint*sin(angleBetweenWaypoints);
+            waypointList.insert(waypointList.begin()+1+i, homingWaypoint);
+        }
+    }
+
+    // Corner waypoint check
+    if(waypointList.back().x == homeWaypoint.x && waypointList.back().y == homeWaypoint.y)
+    {
+        if(waypointList.size()>1)
+        {
+            lastWaypointBeforeHome.x = waypointList.at(waypointList.size()-2).x;
+            lastWaypointBeforeHome.y = waypointList.at(waypointList.size()-2).y;
+        }
+        else
+        {
+            lastWaypointBeforeHome.x = globalPose.x;
+            lastWaypointBeforeHome.y = globalPose.y;
+        }
+        if(lastWaypointBeforeHome.x>0.0 && lastWaypointBeforeHome.y>0.0)
+        {
+            waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
+        }
+        else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y>0.0)
+        {
+            waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
+            waypointList.insert(waypointList.end()-2, quad2MagneticWaypoint);
+        }
+        else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y<0.0)
+        {
+            waypointList.insert(waypointList.end()-1, quad4MagneticWaypoint);
+            waypointList.insert(waypointList.end()-2, quad3MagneticWaypoint);
+        }
+        else
+        {
+            waypointList.insert(waypointList.end()-1, quad4MagneticWaypoint);
+        }
     }
 }
 

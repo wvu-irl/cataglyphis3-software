@@ -49,7 +49,8 @@ public:
 	bool narrowBandNotEmpty();
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	void chooseWaypointsFromOptimalPath();
-	STRAIGHT_LINE_CONDITION_T straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh);
+	STRAIGHT_LINE_CONDITION_T straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh, unsigned int numCellsLimit);
+	void transitionWaypoints(std::vector<robot_control::Waypoint>& waypointList);
 	void generateAndPubVizMap();
 	void addToSet(std::multiset<MapData, MapDataLess>& set, MapData& cell);
 	void removeFromSet(std::multiset<MapData, MapDataLess>& set, float cellValue, grid_map::Index mapIndex);
@@ -112,9 +113,17 @@ public:
 	const float initialHazardAlongPossiblePathThresh = 5.0;
 	const float hazardThreshIncrementAmount = 1.0;
 	const unsigned int numCellsOverThreshLimit = 8;
+	const float straightLineCheckHazardThresh = 2.0;
+	const unsigned int straightLineNumCellsOverThreshLimit = 5;
 	const float minWaypointDistance = 5.0; // m
 	const float corridorWidth = 2.0; // m
 	const float maxDriveDistance = 35.0; // m
+	const float homingRadius = 20.0; // m
+	robot_control::Waypoint quad1MagneticWaypoint;
+	robot_control::Waypoint quad2MagneticWaypoint;
+	robot_control::Waypoint quad3MagneticWaypoint;
+	robot_control::Waypoint quad4MagneticWaypoint;
+	robot_control::Waypoint homeWaypoint;
 };
 
 #endif // SAFE_PATHING_H 
