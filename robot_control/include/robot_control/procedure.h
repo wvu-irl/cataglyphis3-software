@@ -71,8 +71,8 @@ void Procedure::callIntermediateWaypoints()
 	intermediateWaypointsSrv.request.collision = 0;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
-	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
-	intermediateWaypointsSrv.request.current_y = robotStatus.yPos;
+	intermediateWaypointsSrv.request.start_x = robotStatus.xPos;
+	intermediateWaypointsSrv.request.start_y = robotStatus.yPos;
 	intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
 	intermediateWaypointsSrv.request.waypointArrayIn.resize(numWaypointsToTravel);
 	intermediateWaypointsSrv.request.waypointArrayIn = waypointsToTravel;

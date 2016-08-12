@@ -91,7 +91,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -107,7 +107,7 @@ Visualization Manager:
       Topic: /grid_map_visualization/timeOfArrivalPC
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -120,7 +120,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -136,7 +136,7 @@ Visualization Manager:
       Topic: /grid_map_visualization/optimalPathPC
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -149,7 +149,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -165,7 +165,7 @@ Visualization Manager:
       Topic: /grid_map_visualization/resistancePC
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -185,16 +185,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 236.597
+      Distance: 340.664
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 45.964
-        Y: 11.4638
-        Z: -18.1776
+        X: 28.6083
+        Y: -16.5335
+        Z: -18.1495
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: -1.5698
@@ -218,5 +218,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1855
-  X: 65
-  Y: 24
+  X: 55
+  Y: -14

@@ -47,8 +47,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 	{
 		const float turn_angle = 30; //turn 30 degrees (to right)
 		//avoidance waypoint
-        waypoint.x = req.current_x + req.collisionDistance*(cos(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)-sin(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
-        waypoint.y = req.current_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
+        waypoint.x = req.start_x + req.collisionDistance*(cos(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)-sin(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
+        waypoint.y = req.start_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
         waypoint.sampleProb = 0.0;
 		waypoint.terrainHazard = 0.0;
         res.waypointArrayOut.resize(1);
@@ -58,8 +58,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 	{
 		const float turn_angle = -30; //turn 30 degrees (to left)
 		//avoidance waypoint
-        waypoint.x = req.current_x + req.collisionDistance*(cos(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)-sin(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
-        waypoint.y = req.current_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
+        waypoint.x = req.start_x + req.collisionDistance*(cos(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)-sin(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
+        waypoint.y = req.start_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
         waypoint.sampleProb = 0.0;
 		waypoint.terrainHazard = 0.0;
         res.waypointArrayOut.resize(1);
@@ -67,8 +67,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
 	}
     else if(req.collision==3) // Predictive avoidance
     {
-        /*waypoint.x = req.current_x;
-        waypoint.y = req.current_y;
+        /*waypoint.x = req.start_x;
+        waypoint.y = req.start_y;
         req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
         res.waypointArrayOut = req.waypointArrayIn;
         origNumWaypointsIn = req.waypointArrayIn.size();
@@ -97,8 +97,8 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
     }
     else if(req.collision==0) // No collision
     {
-        waypoint.x = req.current_x;
-        waypoint.y = req.current_y;
+        waypoint.x = req.start_x;
+        waypoint.y = req.start_y;
         req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
         res.waypointArrayOut = req.waypointArrayIn;
         origNumWaypointsIn = req.waypointArrayIn.size();
@@ -117,63 +117,94 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
             ROS_INFO("before for loop");
             for(int i=0; i<(origNumWaypointsIn-1); i++)
             {
-                timeOfArrivalMap.add(timeLayer, maxTimeValue);
-                timeOfArrivalMap.add(setLayer, (float)_unknown);
-                initialViscosityMap.add(timeLayer, initialTimeValue);
-                initialViscosityMap.add(setLayer, (float)_unknown);
-                //resistanceMap.add(timeLayer, maxTimeValue);
-                resistanceMap.add(timeLayer, initialTimeValue);
-                resistanceMap.add(setLayer, (float)_unknown);
                 startPosition[0] = req.waypointArrayIn.at(i).x;
                 startPosition[1] = req.waypointArrayIn.at(i).y;
                 goalPoint[0] = req.waypointArrayIn.at(i+1).x;
                 goalPoint[1] = req.waypointArrayIn.at(i+1).y;
-                /*ROS_INFO("before resistanceMap FMM");
-                firsttime = ros::Time::now().toSec();
-                FMM(initialViscosityMap, resistanceMap, goalPoint);
-                nexttime = ros::Time::now().toSec();
-                deltatime = nexttime - firsttime;
-                firsttime = nexttime;
-                ROS_INFO("resistance map FMM deltaT = %lf",deltatime);*/
-                ROS_INFO("before write sat map into resistance map");
-                // resistanceMap + satMap
-                for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
+                initialStraightLineCondition = straightLineDriveable(globalMap, layerToString(_satDriveability), startPosition, goalPoint, initialHazardAlongPossiblePathThresh);
+                if(initialStraightLineCondition == _tooManyObstacles)
                 {
-                    globalMapValue = globalMap.at(layerToString(_satDriveability), *it);
-                    if(globalMapValue >= maxTimeValue) resistanceMap.at(timeLayer, *it) += globalMapValue; // Just add or average?
-                    else if(globalMapValue < maxTimeValue && globalMapValue > 0.0) resistanceMap.at(timeLayer, *it) += globalMapValueScaleFactor*globalMapValue; // Just add or average?
-                    if(resistanceMap.at(timeLayer, *it) > maxTimeValue) resistanceMap.at(timeLayer, *it) = maxTimeValue;
+                    ROS_INFO("too many obstacles along straight line");
+                    timeOfArrivalMap.add(timeLayer, maxTimeValue);
+                    timeOfArrivalMap.add(setLayer, (float)_unknown);
+                    initialViscosityMap.add(timeLayer, initialTimeValue);
+                    initialViscosityMap.add(setLayer, (float)_unknown);
+                    //resistanceMap.add(timeLayer, maxTimeValue);
+                    resistanceMap.add(timeLayer, initialTimeValue);
+                    resistanceMap.add(setLayer, (float)_unknown);
+                    /*ROS_INFO("before resistanceMap FMM");
+                    firsttime = ros::Time::now().toSec();
+                    FMM(initialViscosityMap, resistanceMap, goalPoint);
+                    nexttime = ros::Time::now().toSec();
+                    deltatime = nexttime - firsttime;
+                    firsttime = nexttime;
+                    ROS_INFO("resistance map FMM deltaT = %lf",deltatime);*/
+                    ROS_INFO("before write sat map into resistance map");
+                    // resistanceMap + satMap
+                    for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
+                    {
+                        globalMapValue = globalMap.at(layerToString(_satDriveability), *it);
+                        if(globalMapValue >= maxTimeValue) resistanceMap.at(timeLayer, *it) += globalMapValue; // Just add or average?
+                        else if(globalMapValue < maxTimeValue && globalMapValue > 0.0) resistanceMap.at(timeLayer, *it) += globalMapValueScaleFactor*globalMapValue; // Just add or average?
+                        if(resistanceMap.at(timeLayer, *it) > maxTimeValue) resistanceMap.at(timeLayer, *it) = maxTimeValue;
+                    }
+                    ROS_INFO("before timeOfArrivalMap FMM");
+                    firsttime = ros::Time::now().toSec();
+                    FMM(resistanceMap, timeOfArrivalMap, goalPoint);
+                    nexttime = ros::Time::now().toSec();
+                    deltatime = nexttime - firsttime;
+                    firsttime = nexttime;
+                    ROS_INFO("time of arrival map FMM deltaT = %lf",deltatime);
+                    ROS_INFO("before gradientDescent");
+                    //ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                    gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
+                    if(optimalPath.size()>1)
+                    {
+                        ROS_INFO("before chooseWaypointsFromOptimalPath");
+                        ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                        chooseWaypointsFromOptimalPath();
+                        ROS_INFO("before waypointsOut.insert");
+                        ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                    }
+                    // ------------------------------------
+                    ROS_INFO("before generateAngPubVizMap");
+                    generateAndPubVizMap();
+                    // ------------------------------------
+                    if(waypointsToInsert.size()>0)
+                    {
+                        res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, waypointsToInsert.begin(), waypointsToInsert.end());
+                        numInsertedWaypoints += waypointsToInsert.size();
+                    }
                 }
-                ROS_INFO("before timeOfArrivalMap FMM");
-                firsttime = ros::Time::now().toSec();
-                FMM(resistanceMap, timeOfArrivalMap, goalPoint);
-                nexttime = ros::Time::now().toSec();
-                deltatime = nexttime - firsttime;
-                firsttime = nexttime;
-                ROS_INFO("time of arrival map FMM deltaT = %lf",deltatime);
-                ROS_INFO("before gradientDescent");
-                //ROS_INFO("optimalPath.size() = %u",optimalPath.size());
-                gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
-                if(optimalPath.size()>1)
+                else if(initialStraightLineCondition==_distanceTooLong)
                 {
-                    ROS_INFO("before chooseWaypointsFromOptimalPath");
-                    ROS_INFO("optimalPath.size() = %u",optimalPath.size());
-                    chooseWaypointsFromOptimalPath();
-                    ROS_INFO("before waypointsOut.insert");
-                    ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                    ROS_INFO("straight line distance too long");
+                    stillInsertingWaypoints = true;
+                    angleBetweenStartAndGoal = atan2(goalPoint[1]-startPosition[1], goalPoint[0]-startPosition[0]); // rad
+                    workingPos = startPosition;
+                    while(stillInsertingWaypoints)
+                    {
+                        insertWaypoint.x = maxDriveDistance*cos(angleBetweenStartAndGoal) + workingPos[0];
+                        insertWaypoint.y = maxDriveDistance*sin(angleBetweenStartAndGoal) + workingPos[1];
+                        res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, insertWaypoint);
+                        numInsertedWaypoints++;
+                        if(hypot(goalPoint[0]-insertWaypoint.x, goalPoint[1]-insertWaypoint.y) < maxDriveDistance) stillInsertingWaypoints = false;
+                        else
+                        {
+                            stillInsertingWaypoints = true;
+                            workingPos[0] = insertWaypoint.x;
+                            workingPos[1] = insertWaypoint.y;
+                        }
+                    }
                 }
-                if(waypointsToInsert.size()>0)
-                    res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, waypointsToInsert.begin(), waypointsToInsert.end());
-                ROS_INFO("before generateAngPubVizMap");
-                generateAndPubVizMap();
             }
             ROS_INFO("before waypointsOut.erase(begin)");
             res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
         }
-        else ROS_ERROR("called intermediate waypoints with less no waypointsIn");
+        else ROS_ERROR("called intermediate waypoints with no waypointsIn");
 
-        /*waypoint.x = req.current_x;
-        waypoint.y = req.current_y;
+        /*waypoint.x = req.start_x;
+        waypoint.y = req.start_y;
         req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
         res.waypointArrayOut = req.waypointArrayIn;
         origNumWaypointsIn = req.waypointArrayIn.size();
@@ -476,13 +507,15 @@ void SafePathing::chooseWaypointsFromOptimalPath()
     grid_map::Position considerIndexPos;
     grid_map::Position prevIndexPos;
     float distanceBetweenIndices;
+    float distanceToStartIndex;
     float hazardAlongPossiblePathThresh;
     bool continueLoop = true;
     robot_control::Waypoint waypointToPushBack;
-    unsigned int numStraightLineDriveableFailed = 0;
     int optimalPathConsiderIndex = optimalPath.size()-1;
     int optimalPathStartIndex = 0;
+    bool intersectingMinDistance = false;
 
+    waypointsToInsert.clear();
     startIndex = optimalPath.front();
     indexToConsider = optimalPath.back();
     hazardAlongPossiblePathThresh = initialHazardAlongPossiblePathThresh;
@@ -498,11 +531,12 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             break;
         }*/
         ROS_INFO("hazardAlongPossiblePathThresh = %f",hazardAlongPossiblePathThresh);
-        if(!straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh))
+        if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh)!=_driveable && !intersectingMinDistance)
         {
             ROS_INFO("numHazardsOverLimit");
-            numStraightLineDriveableFailed++;
             prevIndex = indexToConsider;
+            ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
+            ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
             for(optimalPathConsiderIndex; optimalPathConsiderIndex>=optimalPathStartIndex; optimalPathConsiderIndex--)
             {
                 ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
@@ -514,12 +548,25 @@ void SafePathing::chooseWaypointsFromOptimalPath()
                 ROS_INFO("prevIndexPos = (%f,%f)",prevIndexPos[0],prevIndexPos[1]);
                 distanceBetweenIndices = hypot(considerIndexPos[0]-prevIndexPos[0], considerIndexPos[1]-prevIndexPos[1]);
                 ROS_INFO("distanceBetween = %f",distanceBetweenIndices);
-                if(indexToConsider[0]==startIndex[0] && indexToConsider[1]==startIndex[1])
+                distanceToStartIndex = hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]);
+                ROS_INFO("distanceToStartIndex = %f",distanceToStartIndex);
+                if(distanceToStartIndex<=minWaypointDistance && distanceBetweenIndices<=minWaypointDistance)
                 {
-                    hazardAlongPossiblePathThresh += hazardThreshIncrementAmount;
-                    optimalPathConsiderIndex = optimalPath.size()-1;
+                    ROS_FATAL("intersecting");
+                    intersectingMinDistance = true;
                 }
-                else if(distanceBetweenIndices>minWaypointDistance) break;
+                if(distanceToStartIndex<minWaypointDistance)
+                {
+                    ROS_WARN("!*!* distance to start index < min");
+                    hazardAlongPossiblePathThresh += hazardThreshIncrementAmount;
+                    if(!intersectingMinDistance) optimalPathConsiderIndex = optimalPath.size()-1;
+                    break;
+                }
+                else if(distanceBetweenIndices>minWaypointDistance)
+                {
+                    break;
+                }
+
             }
             continueLoop = true;
         }
@@ -535,12 +582,14 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             optimalPathStartIndex = optimalPathConsiderIndex;
             indexToConsider = optimalPath.back();
             optimalPathConsiderIndex = optimalPath.size()-1;
+            intersectingMinDistance = false;
+            ROS_ERROR("optimalPathStartIndex in else = %i",optimalPathStartIndex);
             continueLoop = true;
         }
     }
 }
 
-bool SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string layer, grid_map::Position &startPos, grid_map::Position &endPos, float hazardThresh)
+STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string layer, grid_map::Position &startPos, grid_map::Position &endPos, float hazardThresh)
 {
     unsigned int numCellsOverThresh;
     grid_map::Polygon mapPolygon;
@@ -551,7 +600,7 @@ bool SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string laye
     polygonVertices.resize(4);
     mapPolygon.removeVertices();
     mapPolygonHeading = atan2(endPos[1] - startPos[1], endPos[0] - startPos[0]); // radians
-    ROS_INFO("create verticies");
+    //ROS_INFO("create verticies");
     polygonVertices.at(0)[0] = startPos[0] + corridorWidth/2.0*sin(mapPolygonHeading);
     polygonVertices.at(0)[1] = startPos[1] - corridorWidth/2.0*cos(mapPolygonHeading);
     polygonVertices.at(1)[0] = startPos[0] - corridorWidth/2.0*sin(mapPolygonHeading);
@@ -560,23 +609,28 @@ bool SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string laye
     polygonVertices.at(2)[1] = endPos[1] + corridorWidth/2.0*cos(mapPolygonHeading);
     polygonVertices.at(3)[0] = endPos[0] + corridorWidth/2.0*sin(mapPolygonHeading);
     polygonVertices.at(3)[1] = endPos[1] - corridorWidth/2.0*cos(mapPolygonHeading);
-    ROS_INFO("before addVertex");
+    //ROS_INFO("before addVertex");
     mapPolygon.addVertex(polygonVertices.at(0));
     mapPolygon.addVertex(polygonVertices.at(1));
     mapPolygon.addVertex(polygonVertices.at(2));
     mapPolygon.addVertex(polygonVertices.at(3));
-    ROS_INFO("after addVertex");
+    //ROS_INFO("after addVertex");
     for(grid_map::PolygonIterator it(map, mapPolygon); !it.isPastEnd(); ++it)
     {
-        if(map.at(layer, *it) > hazardThresh) numCellsOverThresh++;
+        if(map.at(layer, *it) >= hazardThresh) numCellsOverThresh++;
     }
-    ROS_INFO("after polygon iterator loop");
-    if(numCellsOverThresh>=numCellsOverThreshLimit) return false;
-    else return true;
+    //ROS_INFO("after polygon iterator loop");
+    if(numCellsOverThresh>=numCellsOverThreshLimit) return _tooManyObstacles;
+    else
+    {
+        if(hypot(endPos[0]-startPos[0], endPos[1]-startPos[1]) > maxDriveDistance) return _distanceTooLong;
+        else return _driveable;
+    }
 }
 
 void SafePathing::generateAndPubVizMap()
 {
+    grid_map::Position waypointPositions;
     ROS_INFO("before setGeometry");
     vizMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
     ROS_INFO("before add layers");
@@ -597,8 +651,14 @@ void SafePathing::generateAndPubVizMap()
         {
             //ROS_INFO("i = %i", i);
             //ROS_INFO("optimalPath[i] = (%i,%i)",optimalPath.at(i)[0],optimalPath.at(i)[1]);
-            vizMap.at(vizOptimalPathLayer, optimalPath.at(i)) = 10.0;
+            vizMap.at(vizOptimalPathLayer, optimalPath.at(i)) = 5.0;
         }
+    }
+    for(int i=0; i<waypointsToInsert.size(); i++)
+    {
+        waypointPositions[0] = waypointsToInsert.at(i).x;
+        waypointPositions[1] = waypointsToInsert.at(i).y;
+        vizMap.atPosition(vizOptimalPathLayer, waypointPositions) = 10.0;
     }
     ROS_INFO("before toMessage");
     grid_map::GridMapRosConverter::toMessage(vizMap, vizMapMsg);
