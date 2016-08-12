@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 	CalibrateCamera calibrateCamera;
 
 	//Capture Initial Image
-	calibrateCamera._dst = cv::imread("/home/jared/cataglyphis_ws/src/computer_vision/samples.jpg");
+	calibrateCamera._dst = cv::imread("/home/jared/cataglyphis_ws/src/computer_vision/f10.jpg");
 	calibrateCamera._dstCopy = calibrateCamera._dst.clone();
 
 	// if(capture.capture_image()==0)
@@ -27,6 +27,7 @@ int main(int argc, char **argv)
 	// }
 
 	//Main Loop
+	calibrateCamera.updateImage();
 	while(ros::ok())
 	{
 		calibrateCamera.displayImage();
