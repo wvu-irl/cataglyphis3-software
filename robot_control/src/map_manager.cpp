@@ -33,10 +33,10 @@ MapManager::MapManager()
 //#include <robot_control/evansdale_short_dense_rois.h>
 
     // Limited set of ROIs covering eastern half of Evansdale in front of library
-#include <robot_control/evansdale_library_rois.h>
+//#include <robot_control/evansdale_library_rois.h>
 
     // Full set of ROIs covering Evansdale in front of library and engineering
-//#include <robot_control/evansdale_full_rois.h>
+#include <robot_control/evansdale_full_rois.h>
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);

@@ -51,7 +51,7 @@ public:
 	void chooseWaypointsFromOptimalPath();
 	STRAIGHT_LINE_CONDITION_T straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh, unsigned int numCellsLimit);
 	void transitionWaypoints(std::vector<robot_control::Waypoint>& waypointList);
-	void generateAndPubVizMap();
+	void generateAndPubVizMap(std::vector<robot_control::Waypoint> waypointList);
 	void addToSet(std::multiset<MapData, MapDataLess>& set, MapData& cell);
 	void removeFromSet(std::multiset<MapData, MapDataLess>& set, float cellValue, grid_map::Index mapIndex);
 	void modifyValueOfIndexInSet(std::multiset<MapData, MapDataLess>& set, float oldCellValue, float newCellValue, grid_map::Index mapIndex);
@@ -119,6 +119,7 @@ public:
 	const float corridorWidth = 2.0; // m
 	const float maxDriveDistance = 35.0; // m
 	const float homingRadius = 20.0; // m
+	const float atHomeRadius = 10.0; // m
 	robot_control::Waypoint quad1MagneticWaypoint;
 	robot_control::Waypoint quad2MagneticWaypoint;
 	robot_control::Waypoint quad3MagneticWaypoint;
