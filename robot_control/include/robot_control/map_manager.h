@@ -25,7 +25,8 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#include "evansdale_map.h"
+//#include "evansdale_map.h"
+#include "wpi_map.h"
 //#include other maps...
 
 class MapManager
