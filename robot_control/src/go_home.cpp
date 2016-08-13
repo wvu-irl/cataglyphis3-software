@@ -20,6 +20,7 @@ bool GoHome::runProc()
 		clearAndResizeWTT();
         waypointsToTravel.at(0).x = homeWaypointX;
         waypointsToTravel.at(0).y = homeWaypointY;
+        waypointsToTravel.at(0).unskippable = true;
 		callIntermediateWaypoints();
         sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
 		state = _exec_;

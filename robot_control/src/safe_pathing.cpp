@@ -26,12 +26,16 @@ SafePathing::SafePathing()
     transitionWaypoint3.searchable = false;
     quad1MagneticWaypoint.x = 7.0;
     quad1MagneticWaypoint.y = 7.0;
+    quad1MagneticWaypoint.unskippable = true;
     quad2MagneticWaypoint.x = 7.0;
     quad2MagneticWaypoint.y = -7.0;
+    quad2MagneticWaypoint.unskippable = true;
     quad3MagneticWaypoint.x = -7.0;
     quad3MagneticWaypoint.y = -7.0;
+    quad3MagneticWaypoint.unskippable = true;
     quad4MagneticWaypoint.x = 7.0;
     quad4MagneticWaypoint.y = -7.0;
+    quad4MagneticWaypoint.unskippable = true;
     homeWaypoint.x = 5.0;
     homeWaypoint.y = 0.0;
     mapDimensions[0] = 500;

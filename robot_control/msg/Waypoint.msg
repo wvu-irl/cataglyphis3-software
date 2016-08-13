@@ -3,3 +3,4 @@ float32 y
 uint16 terrainHazard
 float32 sampleProb
 bool searchable
+bool unskippable
