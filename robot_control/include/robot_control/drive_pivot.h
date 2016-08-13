@@ -34,9 +34,12 @@ private:
 	const float deltaHeadingThreshold_ = 2.0; // deg
 	const double thresholdMinTime_ = 0.25; // s
 	const float middleWheelReduction_ = 0.65;
-	const float cornerBoostGain_ = 1.15;
+	const float cornerBoostGain_ = 1.2;
+	const float reverseMiddleGain_ = 0.8;
 	float ccwBoostGain_;
 	float cwBoostGain_;
+	float leftMiddleWheelMultiplier_;
+	float rightMiddleWheelMultiplier_;
 };
 
 #endif // DRIVE_PIVOT_H

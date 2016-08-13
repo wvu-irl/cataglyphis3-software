@@ -1,7 +1,7 @@
 #ifndef WPI_ROIS_H
 #define WPI_ROIS_H
 
-ROI.e = 99.0 - satMapStartE; // precached (0)
+/*ROI.e = 99.0 - satMapStartE; // precached (0)
 ROI.s = 28.0 - satMapStartS;
 ROI.sampleProb = 1.0;
 ROI.sampleSig = 1000.0;
@@ -96,7 +96,7 @@ ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
 ROI.tangentialAxis = 5.5;
 ROI.searched = false;
-regionsOfInterest.push_back(ROI);
+regionsOfInterest.push_back(ROI);*/
 ROI.e = 228.8 - satMapStartE; // 12
 ROI.s = 109.2 - satMapStartS;
 ROI.sampleProb = 0.5;
