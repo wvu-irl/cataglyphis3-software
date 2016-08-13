@@ -47,7 +47,7 @@ bool NextBestRegion::runProc()
         // Loop through list of ROIs and choose best region not yet searched
         bestROIValue = 0;
         bestROINum = 0;
-        roiSearchedSum = 0;
+        roiHardLockoutSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
             roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
@@ -56,14 +56,14 @@ bool NextBestRegion::runProc()
                                            regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos) -
 						terrainGain*terrainHazard.at(i));
             ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
-			ROS_INFO("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
-            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).searched) roiValue = 0.001;
-            else roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*roiValue;
+            ROS_INFO("hardLockout = %i",regionsOfInterestSrv.response.ROIList.at(i).hardLockout);
+            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex) roiValue = 0.001;
+            else roiValue = 0.0;
             ROS_INFO("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
-			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
+            roiHardLockoutSum += regionsOfInterestSrv.response.ROIList.at(i).hardLockout;
         }
-        if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size())
+        if(roiHardLockoutSum < regionsOfInterestSrv.response.ROIList.size())
         {
             // Call service to drive to center of the chosen region
 
@@ -91,7 +91,7 @@ bool NextBestRegion::runProc()
             //sendWait(10.0);
 
             currentROIIndex = bestROINum;
-            allocatedROITime = 60.0;//270.0; // sec == 4.5 min; implement specific times in ROIs as properties
+            allocatedROITime = 270.0; // sec == 4.5 min; implement specific times in ROIs as properties
             tempGoHome = false;
             state = _exec_;
         }
@@ -116,7 +116,7 @@ bool NextBestRegion::runProc()
             sendDriveGlobal(false, false, 0.0);
 			procsBeingExecuted[procType] = false;
             tempGoHome = true;*/
-            missionEnded = true;
+            missionEnded = true; // !!! should be super safe mode
             state = _finish_;
         }
         computeDriveSpeeds();

@@ -130,7 +130,7 @@ bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_c
 
 bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res) // need to add more features
 {
-    if(req.setSearchedROI) regionsOfInterest.at(req.modROIIndex).searched = req.searchedROIState;
+    if(req.setHardLockoutROI) regionsOfInterest.at(req.modROIIndex).hardLockout = req.hardLockoutROIState;
     if(req.setPosES && !req.setPosXY)
     {
         regionsOfInterest.at(req.modROIIndex).e = req.e;

@@ -45,6 +45,7 @@ private:
 	std::vector<robot_control::Waypoint> waypointsToPlan;
 	robot_control::Waypoint currentLocation;
 	float bestPheromone;
+	const float roiTimeExpiredNewSampleProb = 0.05;
 	// Methods
 	void roiTimeExpiredCallback_(const ros::TimerEvent& event);
 	void chooseRandomWaypoints_();

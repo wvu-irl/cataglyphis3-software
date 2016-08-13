@@ -9,7 +9,7 @@ public:
     int bestROINum;
 	float roiValue;
 	float bestROIValue;
-	int roiSearchedSum;
+	int roiHardLockoutSum;
 	bool tempGoHome;
 	const float distanceShortOfROI = 5.0; // m
 	float angleToROI;

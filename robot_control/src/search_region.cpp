@@ -41,9 +41,12 @@ bool SearchRegion::runProc()
 			roiTimeExpired = false;
 			timers[_roiTimer_]->stop();
 			// Set ROI to searched
-			modROISrv.request.setSearchedROI = true;
-			modROISrv.request.searchedROIState = true;
-			modROISrv.request.modROIIndex = currentROIIndex;
+            modROISrv.request.setHardLockoutROI = false;
+            modROISrv.request.hardLockoutROIState = false;
+            modROISrv.request.modROIIndex = currentROIIndex;
+            modROISrv.request.setSampleProps = true;
+            modROISrv.request.sampleProb = roiTimeExpiredNewSampleProb;
+            modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
 			modROISrv.request.addNewROI = false;
 			if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
 			else ROS_ERROR("modify ROI service call unsuccessful");

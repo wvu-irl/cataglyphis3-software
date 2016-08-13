@@ -1,6 +1,6 @@
 uint32 modROIIndex
-bool setSearchedROI
-bool searchedROIState
+bool setHardLockoutROI
+bool hardLockoutROIState
 bool setPosES
 float32 e
 float32 s

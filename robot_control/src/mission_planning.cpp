@@ -77,7 +77,7 @@ MissionPlanning::MissionPlanning()
     depositSample.sendOpen(); // Make sure the grabber is open initially
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
-    currentROIIndex = 0;
+    currentROIIndex = 99;
     examineCount = 0;
     backUpCount = 0;
     confirmCollectFailedCount = 0;
