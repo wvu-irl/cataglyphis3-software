@@ -64,6 +64,7 @@ void init_step_one::on_nav_init_return(const messages::NavFilterControl navRespo
     {
         ROS_WARN("init_step_one:: Nav Init FAILED! skip step to move on");
     }
+
 }
 
 void init_step_one::on_nav_info_callback(const messages::NavFilterOut navInfo)

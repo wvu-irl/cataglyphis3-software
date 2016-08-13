@@ -11,6 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = cataglyphis_gui
 TEMPLATE = app
 
+CONFIG += c++11
 
 CONFIG(static, debug|release|static):{
     CONFIG += static
@@ -39,7 +40,9 @@ SOURCES +=\
     map_view_roi_ellipse.cpp \
     roi_dialog.cpp \
     qgraphicsviewscrollscale.cpp \
-    qgraphicsscenemapviewer.cpp
+    qgraphicsscenemapviewer.cpp \
+    generic_ack_dialog.cpp \
+    map_viewer_rect.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -52,7 +55,12 @@ HEADERS  += \
     map_view_roi_ellipse.h \
     roi_dialog.h \
     qgraphicsviewscrollscale.h \
-    qgraphicsscenemapviewer.h
+    qgraphicsscenemapviewer.h \
+    generic_ack_dialog.h \
+    map_viewer_enums.h \
+    ../../../robot_control/include/robot_control/map_layers.h \
+    ../../../robot_control/include/robot_control/task_type_enum.h \
+    map_viewer_rect.h
 
 FORMS    += \
     generic_error_dialog_form.ui \
@@ -61,7 +69,8 @@ FORMS    += \
     map_viewer_form.ui \
     core_app_form.ui \
     init_container_form.ui \
-    roi_dialog_form.ui
+    roi_dialog_form.ui \
+    generic_ack_dialog_form.ui
 
 RESOURCES += \
     resources.qrc
@@ -71,4 +80,15 @@ DISTFILES +=
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += roscpp
 unix: PKGCONFIG += roslib
+unix: PKGCONFIG += grid_map_ros
+unix: PKGCONFIG += grid_map_msgs
+#unix: PKGCONFIG += grid_map_loader
+#unix: PKGCONFIG += grid_map_visualization
 
+unix:!macx: LIBS += -lgrid_map_core
+
+#unix:!macx: LIBS += -lgrid_map_cv
+
+#unix:!macx: LIBS += -lgrid_map_filters
+
+unix:!macx: LIBS += -lgrid_map_ros

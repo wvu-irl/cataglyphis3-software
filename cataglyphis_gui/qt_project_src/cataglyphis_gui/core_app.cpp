@@ -43,7 +43,7 @@ core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
                             (new init_container(ui->guiTabber, nh));
 
     mapViewFormPtr =
-            boost::shared_ptr<map_viewer>(new map_viewer(ui->guiTabber, 0));
+            boost::shared_ptr<map_viewer>(new map_viewer(ui->guiTabber, 0, nh));
 
     ui->guiTabber->addTab(cataglyphisStartupFormPtr.get(), "Startup");
     ui->guiTabber->addTab(mapViewFormPtr.get(), "Map");

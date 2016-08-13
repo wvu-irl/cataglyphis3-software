@@ -19,6 +19,9 @@ init_step_two::init_step_two(QWidget *parent, boost::shared_ptr<ros_workers> wor
     connect(this, &init_step_two::stop_nav_info_subscriber,
                 worker.get(), &ros_workers::on_run_nav_info_subscriber_stop);
 
+    connect(this, &init_step_two::stop_hsm_info_subscriber,
+                worker.get(), &ros_workers::on_run_hsm_global_pose_subscriber_stop);
+
     connect(worker.get(), &ros_workers::bias_removal_returned,
                 this, &init_step_two::on_update_bias_removal_display);
     connect(worker.get(), &ros_workers::dead_reckoning_service_returned,
@@ -41,6 +44,8 @@ void init_step_two::on_begin_dead_reckoning_button_clicked()
     //send service
     emit start_dead_reckoning();
     emit bias_removal_finished();
+    emit stop_nav_info_subscriber();
+    emit stop_hsm_info_subscriber();
 }
 
 void init_step_two::on_perform_bias_removal_button_clicked()

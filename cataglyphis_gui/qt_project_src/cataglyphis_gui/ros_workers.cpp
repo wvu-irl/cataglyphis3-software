@@ -3,9 +3,19 @@
 ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
 {
     nh = nhArg;
+
+    qRegisterMetaType<messages::NavFilterControl>("messages::NavFilterControl");
+    qRegisterMetaType<messages::HSMSetNorthAngle>("messages::HSMSetNorthAngle");
+    qRegisterMetaType<robot_control::RegionsOfInterest>("robot_control::RegionsOfInterest");
+    qRegisterMetaType<messages::GlobalMapFull>("messages::GlobalMapFull");
+    qRegisterMetaType<messages::NavFilterOut>("messages::NavFilterOut");
+    qRegisterMetaType<messages::RobotPose>("messages::RobotPose");
+    qRegisterMetaType<map_viewer_enums::mapViewerLayers_t>("map_viewer_enums::mapViewerLayers_t");
+
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
     mapManagerROIClient = nh->serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
+    mapManagerGlobalMapClient = nh->serviceClient<messages::GlobalMapFull>("/control/mapmanager/globalmapfull");
 
     navInfoTime = ros::Time::now();
     navInfoSubStarted = false;
@@ -15,6 +25,32 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
     hsmGlobalPoseSubStarted = false;
     hsmGlobalPosSub = ros::Subscriber();
     //workerMutex = boost::shared_ptr<QMutex>(new QMutex);
+}
+
+void ros_workers::on_run_map_manager_global_map_request(map_viewer_enums::mapViewerLayers_t requestedLayer)
+{
+    bool wasSucessful = false;
+    if(mapManagerGlobalMapClient.exists())
+    {
+        ROS_DEBUG("ros_workers::run Global Map Service:: ROI Service Exists!");
+        if(mapManagerGlobalMapClient.call(lastGlobalMapMsg))
+        {
+            ROS_DEBUG("ros_workers:: run Global Map service:: ROI service call success!");
+            wasSucessful = true;
+        }
+        else
+        {
+            ROS_WARN("ros_workers:: run Global Map Service:: ROI service call failure");
+        }
+    }
+    else
+    {
+        ROS_WARN("ros_workers::run Global Map Service:: ROI Service Does not Exist!");
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        pause.sleep();
+    }
+    emit map_manager_global_map_service_returned(lastGlobalMapMsg, requestedLayer, wasSucessful);
 }
 
 void ros_workers::on_run_map_manager_ROI_service()
@@ -243,11 +279,11 @@ void ros_workers::on_run_nav_info_subscriber_stop()
 
 void ros_workers::on_run_hsm_global_pose_subscriber_start()
 {
-    ROS_DEBUG("ros_workers:: Entered nav info subscriber start");
+    ROS_DEBUG("ros_workers:: Entered hsm global pose subscriber start");
     if(!hsmGlobalPoseSubStarted)
     {
         hsmGlobalPoseSubStarted = true;
-        ROS_DEBUG("ros_workers::Starting New subscriber");
+        ROS_DEBUG("ros_workers::Starting New subscriber hsm global pose");
         this->hsmGlobalPosSub = nh->subscribe("/hsm/masterexec/globalpose", 1,
                                                         &ros_workers::getHSMGlobalPoseCallback, this);
     }
@@ -255,10 +291,10 @@ void ros_workers::on_run_hsm_global_pose_subscriber_start()
 
 void ros_workers::on_run_hsm_global_pose_subscriber_stop()
 {
-    ROS_DEBUG("ros_workers:: Entered nav info subscriber stop");
+    ROS_DEBUG("ros_workers:: Entered hsm global pose subscriber stop");
     if(hsmGlobalPoseSubStarted)
     {
-        ROS_DEBUG("ros_workers::Stopping Nav Info subscriber");
+        ROS_DEBUG("ros_workers::Stopping Nav Info subscriber hsm global pose");
         hsmGlobalPoseSubStarted = false;
         this->hsmGlobalPosSub.shutdown();
     }

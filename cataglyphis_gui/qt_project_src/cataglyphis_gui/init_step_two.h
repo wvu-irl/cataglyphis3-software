@@ -27,6 +27,7 @@ signals:
     void bias_removal_finished();
     void start_nav_info_subscriber();
     void stop_nav_info_subscriber();
+    void stop_hsm_info_subscriber();
 
 public:
     explicit init_step_two(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =

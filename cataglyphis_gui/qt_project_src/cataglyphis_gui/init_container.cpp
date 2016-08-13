@@ -9,8 +9,6 @@ init_container::init_container(QWidget *parent,
 {
     ui->setupUi(this);
 
-    qRegisterMetaType<messages::NavFilterControl>("messages::NavFilterControl");
-
     if(nhArg.get() != 0)
     {
         nh = nhArg;
