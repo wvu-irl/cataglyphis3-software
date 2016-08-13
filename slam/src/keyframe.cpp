@@ -298,7 +298,7 @@ protected:
 	void Store_Information(const messages::LocalMap& LocalMapMsgIn);
 	void getSubVertexEdges();
 	void DetectNearestKeyframe();
-	void TkeyTomap_Pub();
+	void TkeyTomap_Pub(int option);
 	void Store_temp_vertex_edges(int option);
 	void Vector_Clean();
 	void getg2oResult();
@@ -527,7 +527,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 								DetectNearestKeyframe();	
 							}
 
-							TkeyTomap_Pub();
+							TkeyTomap_Pub(1);
 
 							//after generating a new keyframe, clean all map data for free storage
 							Vector_Clean();
@@ -563,7 +563,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 									DetectNearestKeyframe();	
 								}
 
-								TkeyTomap_Pub();									
+								TkeyTomap_Pub(0);									
 							}
 
 							//after generating a new keyframe, clean all map data for free storage
@@ -618,7 +618,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 									DetectNearestKeyframe();	
 								}
 
-								TkeyTomap_Pub();
+								TkeyTomap_Pub(0);
 								
 								//after generating a new keyframe, clean all map data for free storage
 								Vector_Clean();
@@ -673,7 +673,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 										DetectNearestKeyframe();
 									}
 
-									TkeyTomap_Pub();
+									TkeyTomap_Pub(0);
 
 									//after generating a new keyframe, clean all map data for free storage
 									Vector_Clean();
@@ -1930,7 +1930,7 @@ void Keyframe::DetectNearestKeyframe()
 	}
 }
 
-void Keyframe::TkeyTomap_Pub()
+void Keyframe::TkeyTomap_Pub(int option)
 {
 	float x_filter_pub = 0;
 	float y_filter_pub = 0;
@@ -1951,6 +1951,15 @@ void Keyframe::TkeyTomap_Pub()
 	tkeytomap_msg.x_filter = x_filter_pub;
 	tkeytomap_msg.y_filter = y_filter_pub;
 	tkeytomap_msg.heading_filter = heading_filter_pub;
+
+	if(option == 1)
+	{
+		tkeytomap_msg.homing_updated = true;
+	}
+	else
+	{
+		tkeytomap_msg.homing_updated = false;
+	}
 
 	TkeyTomapPub.publish(tkeytomap_msg);
 

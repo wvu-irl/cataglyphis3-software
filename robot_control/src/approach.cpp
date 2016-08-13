@@ -56,7 +56,7 @@ bool Approach::runProc()
 					if(distanceToDrive > maxDriveDistance) distanceToDrive = maxDriveDistance;
 					angleToTurn = bestSample.bearing;
 					computeExpectedSampleLocation();
-                    sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false);
+                    sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false, false);
                     sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 					commandedSearch = true;
 					step = _performManeuver;
@@ -80,7 +80,7 @@ bool Approach::runProc()
 					distanceToDrive = backUpDistance;
 					angleToTurn = 0.0;
 					computeExpectedSampleLocation();
-                    sendDriveRel(backUpDistance, 0.0, false, 0.0, false);
+                    sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
                     sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 					commandedSearch = true;
 					step = _performManeuver;

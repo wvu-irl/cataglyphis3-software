@@ -27,8 +27,8 @@ bool Avoid::runProc()
 		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
 		intermediateWaypointsSrv.request.collision = collisionMsg.collision;
 		intermediateWaypointsSrv.request.collisionDistance = collisionMsg.distance_to_collision;
-		intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
-		intermediateWaypointsSrv.request.current_y = robotStatus.yPos;
+        intermediateWaypointsSrv.request.start_x = robotStatus.xPos;
+        intermediateWaypointsSrv.request.start_y = robotStatus.yPos;
 		intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
         intermediateWaypointsSrv.request.waypointArrayIn.resize(1);
 		if(execInfoMsg.actionDeque[0]==_driveGlobal)

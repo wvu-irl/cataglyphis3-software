@@ -166,7 +166,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	else
 	{
 		ROS_ERROR("Error! Failed to call service SegmentImage!");
-		return false;
+		searchForSamplesMsgOut.sampleList.clear();
+		searchForSamplesMsgOut.procType = req.procType;
+		searchForSamplesMsgOut.serialNum = req.serialNum;
+		searchForSamplesPub.publish(searchForSamplesMsgOut);
+		ros::spinOnce();
+		return true;
 	}
 
 	gettimeofday(&this->localTimer, NULL);  

@@ -43,6 +43,10 @@ int main(int argc, char **argv)
 	
 	float servoIncrement = 45.0;
 	float servoAngleCmd = 180.0;
+
+	const float middleWheelReduction_ = 0.65;
+	const float reverseMiddleGain_ = 0.8;
+	const float cornerBoostGain_ = 1.2;
 	
 	bool done = false;
 	bool killAll = false;
@@ -78,8 +82,8 @@ int main(int argc, char **argv)
                     exec_msg.stopFlag = false;
                     exec_msg.turnFlag = true;
 			        clear();printw("RIGHT ROTATE");
-                    right[0] = -speed/2; right[1] = -speed * 0.7347/2; right[2] = -speed/2;
-    		        left[0] = speed/2; left[1] = speed * 0.7347/2; left[2] = speed/2;		    
+                    right[0] = -speed/2*cornerBoostGain_; right[1] = -speed * middleWheelReduction_ * reverseMiddleGain_ / 2.0; right[2] = -speed/2;
+    		        left[0] = speed/2; left[1] = speed * middleWheelReduction_ / 2.0; left[2] = speed/2*cornerBoostGain_;		    
 				    break;
 			    case KEY_LEFT:
 			    //printw("The pressed key is left\n");
@@ -87,8 +91,8 @@ int main(int argc, char **argv)
                     exec_msg.stopFlag = false;
                     exec_msg.turnFlag = true;
 			        clear();printw("LEFT ROTATE");
-                    right[0] = speed/2; right[1] = speed * 0.7347/2; right[2] = speed/2;
-    		        left[0] = -speed/2; left[1] = -speed * 0.7347/2; left[2] = -speed/2;
+                    right[0] = speed/2; right[1] = speed * middleWheelReduction_ / 2.0; right[2] = speed/2*cornerBoostGain_;
+    		        left[0] = -speed/2*cornerBoostGain_; left[1] = -speed * middleWheelReduction_ * reverseMiddleGain_ / 2.0; left[2] = -speed/2;
 				    break;
 			    case KEY_DOWN:
 			    //printw("The pressed key is down\n");

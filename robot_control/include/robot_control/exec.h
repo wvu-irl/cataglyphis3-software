@@ -21,6 +21,7 @@
 #include <messages/RobotPose.h>
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
+#include <messages/NextWaypointOut.h>
 #include <robot_control/DriveSpeeds.h>
 
 #define ACTION_POOL_SIZE 100
@@ -33,6 +34,7 @@ public:
 	ros::Publisher infoPub;
 	ros::Publisher actuatorPub;
 	ros::Publisher actionEndedPub;
+	ros::Publisher nextWaypointOutPub;
 	ros::ServiceServer actionServ;
 	ros::Subscriber poseSub;
 	ros::Subscriber navSub;
@@ -63,6 +65,7 @@ private:
 	messages::ActuatorOut actuatorMsgOut_;
 	messages::ExecInfo execInfoMsgOut_;
 	messages::ExecActionEnded execActionEndedMsgOut_;
+	messages::NextWaypointOut nextWaypointMsgOut_;
 	double execStartTime_;
 	double execElapsedTime_;
 	// Methods
@@ -73,6 +76,7 @@ private:
 	void driveSpeedsCallback_(const robot_control::DriveSpeeds::ConstPtr& msg);
 	void packActuatorMsgOut_();
 	void packInfoMsgOut_();
+	void packNextWaypointOut_();
 };
 
 #endif // EXEC_H

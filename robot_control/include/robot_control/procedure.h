@@ -24,7 +24,7 @@ public:
 	void sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading);
 	void sendDriveAndSearch(uint8_t typeMux);
 	void sendDriveAndWait(float waitTime, bool endHeadingFlag, float endHeading); // sec
-	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque);
+	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool closedLoop);
 	void sendSearch(uint8_t typeMux);
 	void sendGrab();
 	void sendDrop();
@@ -71,8 +71,8 @@ void Procedure::callIntermediateWaypoints()
 	intermediateWaypointsSrv.request.collision = 0;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
-	intermediateWaypointsSrv.request.current_x = robotStatus.xPos;
-	intermediateWaypointsSrv.request.current_y = robotStatus.yPos;
+	intermediateWaypointsSrv.request.start_x = robotStatus.xPos;
+	intermediateWaypointsSrv.request.start_y = robotStatus.yPos;
 	intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
 	intermediateWaypointsSrv.request.waypointArrayIn.resize(numWaypointsToTravel);
 	intermediateWaypointsSrv.request.waypointArrayIn = waypointsToTravel;
@@ -266,7 +266,7 @@ void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endH
 	}
 }
 
-void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque)
+void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool closedLoop)
 {
 	this->serialNum++;
     execActionSrv.request.nextActionType = _driveRelative;
@@ -283,7 +283,7 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
     execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = endHeadingFlag;
 	execActionSrv.request.bool2 = frontOfDeque;
-	execActionSrv.request.bool3 = false;
+	execActionSrv.request.bool3 = closedLoop;
 	execActionSrv.request.bool4 = false;
 	execActionSrv.request.bool5 = false;
 	execActionSrv.request.bool6 = false;

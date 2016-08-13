@@ -11,6 +11,7 @@ Exec::Exec()
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
     actionEndedPub = nh.advertise<messages::ExecActionEnded>("control/exec/actionended",1);
+    nextWaypointOutPub = nh.advertise<messages::NextWaypointOut>("/control/exec/nextwaypoint", 1);
     cvSearchCmdClient = nh.serviceClient<messages::CVSearchCmd>("/vision/samplesearch/searchforsamples");
 	// "allocate" deque memory
     for(int i=0; i<NUM_ACTIONS; i++)
@@ -239,4 +240,14 @@ void Exec::packInfoMsgOut_()
         execInfoMsgOut_.actionProcType[i] = static_cast<uint8_t>(actionDeque_.at(i)->params.procType);
         execInfoMsgOut_.actionSerialNum[i] = actionDeque_.at(i)->params.serialNum;
 	}
+}
+
+void Exec::packNextWaypointOut_()
+{
+    if(actionDeque_.at(0)->params.actionType == _driveGlobal)
+    {
+        nextWaypointMsgOut_.globalX = actionDeque_.at(0)->params.float1;
+        nextWaypointMsgOut_.globalY = actionDeque_.at(0)->params.float2;
+    }
+
 }

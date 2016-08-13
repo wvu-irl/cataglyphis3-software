@@ -55,11 +55,11 @@ bool NextBestRegion::runProc()
 						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
                                            regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos) -
 						terrainGain*terrainHazard.at(i));
-            ROS_DEBUG("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
-			ROS_DEBUG("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
+            ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
+			ROS_INFO("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
             if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).searched) roiValue = 0.001;
             else roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*roiValue;
-            ROS_DEBUG("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
+            ROS_INFO("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
 			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
         }
@@ -76,6 +76,7 @@ bool NextBestRegion::runProc()
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             sendWait(10.0);*/
 
+            ROS_INFO("NEXT BEST REGION: bestROINum = %i",bestROINum);
             numWaypointsToTravel = 2;
             clearAndResizeWTT();
             angleToROI = atan2(regionsOfInterestSrv.response.ROIList.at(bestROINum).y - robotStatus.yPos, regionsOfInterestSrv.response.ROIList.at(bestROINum).x - robotStatus.xPos); // Radians
@@ -90,7 +91,7 @@ bool NextBestRegion::runProc()
             //sendWait(10.0);
 
             currentROIIndex = bestROINum;
-            allocatedROITime = 270.0; // sec == 4.5 min; implement specific times in ROIs as properties
+            allocatedROITime = 60.0;//270.0; // sec == 4.5 min; implement specific times in ROIs as properties
             tempGoHome = false;
             state = _exec_;
         }

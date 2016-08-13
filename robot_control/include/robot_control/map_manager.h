@@ -25,7 +25,8 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#include "evansdale_map.h"
+//#include "evansdale_map.h"
+#include "wpi_map.h"
 //#include other maps...
 
 class MapManager
@@ -55,9 +56,8 @@ public:
 	void writeKeyframesIntoGlobalMap();
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
-	//void smoothDriveabilityLayer();
 	void calculateGlobalMapSize();
-	//void smoothNumericLayer();
+	void cutOutGlobalSubMap();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;
@@ -76,8 +76,10 @@ public:
 	ros::Publisher currentROIPub;
 	ros::Publisher globalMapPub;
 	ros::Publisher searchLocalMapPub;
+	ros::Publisher globalSubMapPub;
 	grid_map_msgs::GridMap globalMapMsg;
 	grid_map_msgs::GridMap searchLocalMapMsg;
+	grid_map_msgs::GridMap globalSubMapMsg;
 	robot_control::Waypoint waypoint;
 	robot_control::ROI ROI;
 	std::vector<robot_control::ROI> regionsOfInterest;
@@ -85,6 +87,7 @@ public:
 	grid_map::Length globalMapSize;
 	grid_map::Length satMapSize;
 	grid_map::Size globalMapRowsCols;
+	grid_map::GridMap globalSubMap;
 	grid_map::GridMap globalMapTemp;
 	grid_map::GridMap searchLocalMap;
 	int searchLocalMapROINum;
