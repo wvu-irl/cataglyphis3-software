@@ -1,46 +1,74 @@
 #include "qgraphicsscenemapviewer.h"
 
-void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(const messages::GlobalMapFull &gridMapFull,
+void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::GlobalMapFull gridMapFull,
                                                                           map_viewer_enums::mapViewerLayers_t requestedLayer,
                                                                             bool wasSucessful)
 {
     ROS_DEBUG("SCENE:: gridmap service returned");
     if(wasSucessful)
     {
+        ROS_DEBUG("SCENE:: grid map Service call was sucessful");
         mapLayer_t *layer = getLayerFromEnum(requestedLayer);
         grid_map::GridMapRosConverter::fromMessage(gridMapFull.response.globalMap, gridMapContainer);
+        ROS_WARN("SCENE:: Grid MAP size %d, %d", gridMapContainer.getSize()[0], gridMapContainer.getSize()[1]);
         std::string gridMapLayerName = map_viewer_enums::gridMapLayersToString.find(map_viewer_enums::mapViewerLayersToGridMapLayers.find(requestedLayer)->second)->second;
-
-        for(grid_map::GridMapIterator it(gridMapContainer); !it.isPastEnd(); ++it)
+        //if(gridMapContainer.isValid())
         {
-
-            map_viewer_rect *gridRectangle = new map_viewer_rect();
-            gridRectangle->defaultCircleFill.setRgb(255,0,255,100);
-            gridRectangle->fullTransparentColor.setRgbF(0,0,0,0);
-            gridRectangle->setBrush(gridRectangle->defaultCircleFill);
-            gridRectangle->setTransform(robotToObjTransform);
-            float mapValue = gridMapContainer.at(gridMapLayerName, *it);
-            grid_map::Position cellPosition;
-            gridMapContainer.getPosition(*it, cellPosition);
-            ROS_DEBUG("Current it %d, %d", cellPosition[0], cellPosition[1]);
-
-            gridRectangle->setRect(cellPosition[0]*pixelsPerDistance, cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
-            layer->itemList->append(gridRectangle);
-            /*cellPosition[0] = x*/
-            if(mapValue == 0.0)
+            for(grid_map::GridMapIterator it(gridMapContainer); !it.isPastEnd(); it= (++it))
             {
-                /*passable*/
+                ROS_DEBUG_THROTTLE(5, "SCENE:: Iterator past end? %d %d", it.isPastEnd(), it.getLinearIndex());
+                map_viewer_rect *gridRectangle = new map_viewer_rect();
+                gridRectangle->setCacheMode(QGraphicsItem::ItemCoordinateCache);
+                gridRectangle->defaultCircleFill.setRgb(255,0,255,100);
+                gridRectangle->fullTransparentColor.setRgbF(0,0,0,0);
+                gridRectangle->setBrush(gridRectangle->defaultCircleFill);
+                gridRectangle->setTransform(robotToObjTransform);
+                float mapValue = gridMapContainer.at(gridMapLayerName, *it);
+                grid_map::Position cellPosition;
+                gridMapContainer.getPosition(*it, cellPosition);
+                //ROS_DEBUG("Current it %d, %d", cellPosition[0], cellPosition[1]);
+                //ROS_DEBUG("SCENE:: grid MAP value %2.3f", mapValue);
+
+                gridRectangle->setRect(cellPosition[0]*pixelsPerDistance, cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
+                this->addItem(gridRectangle);
+                layer->itemList->append(gridRectangle);
+                /*cellPosition[0] = x*/
+                if(mapValue == 0.0)
+                {
+                    /*passable*/
+                }
+                else
+                {
+                    /*not passable*/
+                }
             }
-            else
-            {
-                /*not passable*/
-            }
+            ROS_DEBUG("SCENE:: Finished Reading Global Map");
+//            ROS_DEBUG("SCENE:: adding item group");
+//            layer->items = this->createItemGroup(*(layer->itemList));
+//            ROS_DEBUG("SCENE:: adding group to scene");
+//            this->addItem(layer->items);
+//            ROS_DEBUG("SCENE:: showing layer");
+//            //layer->items->show();
+//            ros::Duration pause(60);
+//            pause.sleep();
+
+//            ROS_DEBUG("HIDING LAYER");
+//            for(int i = 0; i< layer->itemList->size(); i++)
+//            {
+//                if((*(layer->itemList))[i])
+//                {
+//                    (*(layer->itemList))[i]->hide();
+//                }
+//            }
+                ROS_DEBUG("DONE");
+
+            layer->properties.isLayerSetup = true;
+            layer->properties.isLayerVisible = true;
         }
-        layer->items = this->createItemGroup(*(layer->itemList));
-        this->addItem(layer->items);
-        layer->items->show();
-        layer->properties.isLayerSetup = true;
-        layer->properties.isLayerVisible = true;
+//        else
+//        {
+//            ROS_ERROR("SCENE:: Grid MAP Container is invalid!");
+//        }
     }
     else
     {
@@ -72,6 +100,7 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         startPlatformCenter.setY(scenePos.y());
         robotToObjTransform.translate(startPlatformCenter.x(), startPlatformCenter.y());
         robotToObjTransform.rotate(lastRobotPose.northAngle);
+        this->setItemIndexMethod(QGraphicsScene::NoIndex);
     }
     else
     {

@@ -51,7 +51,7 @@ signals:
 
     void map_manager_ROI_service_returned(const robot_control::RegionsOfInterest mapManagerResponse,
                                             bool wasSucessful);
-    void map_manager_global_map_service_returned(const messages::GlobalMapFull &gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer,
+    void map_manager_global_map_service_returned(messages::GlobalMapFull gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer,
                                                     bool wasSucessful);
 
 public slots:

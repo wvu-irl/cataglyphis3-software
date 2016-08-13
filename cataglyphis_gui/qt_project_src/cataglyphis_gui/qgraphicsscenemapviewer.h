@@ -44,7 +44,7 @@ signals:
 
 public slots:
     void on_set_ignore_setup_flag(bool status);
-    void on_map_manager_gridmap_service_returned(const messages::GlobalMapFull &gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer, bool wasSucessful);
+    void on_map_manager_gridmap_service_returned(messages::GlobalMapFull gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer, bool wasSucessful);
     void on_set_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
     void on_hsm_global_pose_callback(const messages::RobotPose navInfo);
 

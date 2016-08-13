@@ -13,7 +13,7 @@ public:
     map_viewer_rect(qreal x, qreal y, qreal width, qreal height, QGraphicsItem * parent = 0):
                         QGraphicsRectItem(x, y, width, height, parent) {}
 
-    ~map_viewer_rect(){ ROS_DEBUG("Rectangle Desctructor"); }
+    ~map_viewer_rect(){ /*ROS_DEBUG("Rectangle Desctructor"); */}
 
     QColor defaultCircleFill;
     QColor fullTransparentColor;

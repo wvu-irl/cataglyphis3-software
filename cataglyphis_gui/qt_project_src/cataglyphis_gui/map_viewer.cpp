@@ -13,6 +13,11 @@ map_viewer::map_viewer(QWidget *parent, int startIndex, boost::shared_ptr<ros::N
     rosWorkerThread.start();
 
     ui->setupUi(this);
+
+    QPixmapCache::setCacheLimit(102400);
+
+    ui->fieldDisplay->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+
     scene[0].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/pattern_test.jpg", 0, true, this, rosWorker));
     scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 0, true, this, rosWorker));
     scene[2].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/esb.jpg", 4.32258, true, this, rosWorker));

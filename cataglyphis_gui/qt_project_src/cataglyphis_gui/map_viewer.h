@@ -7,6 +7,7 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsTextItem>
 #include <QWidget>
+#include <QPixmapCache>
 #include <map_viewer_enums.h>
 #include <qgraphicsscenemapviewer.h>
 #include <map_view_roi_ellipse.h>
