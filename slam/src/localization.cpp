@@ -307,9 +307,10 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	if(pre_x != x || pre_y != y || pre_heading != heading)
 	{
 		if(homing_updated)
-		{
-			addition = 0;
-		}
+ 		{
+ 			addition = 0;
+ 		}
+
 		Navfilterout_All_s[ref_index].x_filter = x_filter_sub;
 		Navfilterout_All_s[ref_index].y_filter = y_filter_sub;
 		Navfilterout_All_s[ref_index].heading_filter = heading_filter_sub;
