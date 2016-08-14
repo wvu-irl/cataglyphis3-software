@@ -19,7 +19,7 @@ map_viewer::map_viewer(QWidget *parent, int startIndex, boost::shared_ptr<ros::N
     ui->fieldDisplay->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     scene[0].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/pattern_test.jpg", 0, true, this, rosWorker));
-    scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 0, true, this, rosWorker));
+    scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 3.884058, true, this, rosWorker));
     scene[2].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/esb.jpg", 4.32258, true, this, rosWorker));
     scene[3].reset(new QGraphicsSceneMapViewer(this));
 

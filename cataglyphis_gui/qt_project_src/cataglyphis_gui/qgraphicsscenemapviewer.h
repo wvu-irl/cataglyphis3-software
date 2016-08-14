@@ -4,7 +4,9 @@
 #include <QObject>
 #include <QRectF>
 #include <QImage>
+#include <QPixmap>
 #include <QPointF>
+#include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QGraphicsItemGroup>
@@ -14,6 +16,7 @@
 #include <QGraphicsRectItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QTransform>
+#include <QLinearGradient>
 
 #include <map_viewer_rect.h>
 
@@ -33,6 +36,10 @@
 
 #include <ros/ros.h>
 #include <ros_workers.h>
+
+#define MAP_CELL_MAX_VALUE 10.0
+#define MAP_CELL_MIN_VALUE 0.0
+#define MAP_CELL_NOOP_VALUE 1.0
 
 class QGraphicsSceneMapViewer : public QGraphicsScene
 {
@@ -86,7 +93,8 @@ public:
     void mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent);
 
     struct layerProperties_t { bool isLayerSetup = false, isLayerVisible = false; };
-    struct mapLayer_t { layerProperties_t properties; QGraphicsItemGroup *items; boost::scoped_ptr<QList<QGraphicsItem*> > itemList;};
+    struct mapLayer_t { layerProperties_t properties; boost::scoped_ptr<QGraphicsItemGroup> items; boost::scoped_ptr<QList<QGraphicsItem*> > itemList;
+                            boost::scoped_ptr<QPixmap> gridPixmap;};
 
     bool setupMap(QPointF scenePos);
     bool isMapSetup(){ return mapSetup; }
@@ -119,6 +127,7 @@ private:
     boost::scoped_ptr<QImage> areaImage;
     boost::shared_ptr<map_viewer_rect> cataglyphisRect;
     boost::scoped_ptr<map_viewer_rect> startingPlatformRect;
+
 
     grid_map::GridMap gridMapContainer;
 

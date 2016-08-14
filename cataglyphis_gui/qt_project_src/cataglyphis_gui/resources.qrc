@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/field_pictures">
-        <file>resources/institute_park.jpg</file>
         <file>resources/pattern_test.jpg</file>
         <file>resources/esb.jpg</file>
+        <file>resources/institute_park.jpg</file>
     </qresource>
 </RCC>
