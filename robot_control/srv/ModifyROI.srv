@@ -18,4 +18,5 @@ bool newROIInESNotXY
 ROI newROI
 bool deleteROI
 uint32 numDeleteROI
+bool editGroup
 ---

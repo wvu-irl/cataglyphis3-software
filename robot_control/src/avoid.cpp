@@ -32,6 +32,7 @@ bool Avoid::runProc()
                 modROISrv.request.sampleProb = giveUpROIFromAvoidNewSampleProb;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
                 modROISrv.request.addNewROI = false;
+                modROISrv.request.editGroup = false;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
                 giveUpROI = true;

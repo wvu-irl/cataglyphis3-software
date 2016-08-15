@@ -152,6 +152,13 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
     {
         regionsOfInterest.at(req.modROIIndex).sampleProb = req.sampleProb;
         regionsOfInterest.at(req.modROIIndex).sampleSig = req.sampleSig;
+        if(req.editGroup && regionsOfInterest.at(req.modROIIndex).roiGroup != 0)
+        {
+            for(int i=0; i<regionsOfInterest.size(); i++)
+            {
+                if(regionsOfInterest.at(i).roiGroup == regionsOfInterest.at(req.modROIIndex).roiGroup) regionsOfInterest.at(i).sampleProb = req.sampleProb;
+            }
+        }
     }
     if(req.addNewROI)
     {

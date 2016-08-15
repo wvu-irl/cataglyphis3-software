@@ -151,7 +151,7 @@ public:
 	const float defaultRMax = 45.0; // deg/s
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m
-	const float lidarUpdateWaitTime = 1.0; // sec
+	const float lidarUpdateWaitTime = 2.0; // sec
 	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
 	const float sampleFoundNewROIProb = 0.01;

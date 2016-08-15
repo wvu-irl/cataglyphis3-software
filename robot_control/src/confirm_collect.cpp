@@ -50,6 +50,7 @@ bool ConfirmCollect::runProc()
                 modROISrv.request.setSampleProps = true;
                 modROISrv.request.sampleProb = sampleFoundNewROIProb;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.editGroup = true;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
                 roiKeyframed = false;

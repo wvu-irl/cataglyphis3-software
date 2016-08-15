@@ -52,8 +52,9 @@ bool NextBestRegion::runProc()
         {
             roiValue = sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
                         sampleSigGain*regionsOfInterestSrv.response.ROIList.at(i).sampleSig -
-						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
-                                           regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos) -
+                        distanceGain*(hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
+                                           regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos)
+                                      + hypot(regionsOfInterestSrv.response.ROIList.at(i).x, regionsOfInterestSrv.response.ROIList.at(i).y)) -
                         terrainGain*terrainHazard.at(i) -
                         riskGain*regionsOfInterestSrv.response.ROIList.at(i).highRisk;
             ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
