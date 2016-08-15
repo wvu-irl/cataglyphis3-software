@@ -45,13 +45,13 @@ private:
 	double dogLegRecoverStartTime_;
 	const double dogLegDetectThreshold_ = 1.5; // sec
 	const double dogLegRecoverDuration_ = 1.0; // sec
-	const long int encoderDogLegTriggerValue_ = 1000;
-	long int flEncPrev_;
-	long int mlEncPrev_;
-	long int blEncPrev_;
-	long int frEncPrev_;
-	long int mrEncPrev_;
-	long int brEncPrev_;
+	const long int encoderDogLegTriggerValue_ = 120;
+	long int encPrev_[6];
+	long int encDelta_[6];
+	long int maxLeftDelta_;
+	long int maxRightDelta_;
+	long int minLeftDelta_;
+	long int minRightDelta_;
 	long int encoderDiffSum_;
 	const float dogLegRDes_ = 45.0;
 	bool dogLegDetectTimeStarted_;
