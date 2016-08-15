@@ -21,6 +21,8 @@
 #include <messages/RobotPose.h>
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
+#include <messages/NextWaypointOut.h>
+#include <messages/encoder_data.h>
 #include <robot_control/DriveSpeeds.h>
 
 #define ACTION_POOL_SIZE 100
@@ -33,11 +35,14 @@ public:
 	ros::Publisher infoPub;
 	ros::Publisher actuatorPub;
 	ros::Publisher actionEndedPub;
+	ros::Publisher nextWaypointOutPub;
 	ros::ServiceServer actionServ;
 	ros::Subscriber poseSub;
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;
 	ros::Subscriber driveSpeedsSub;
+	ros::Subscriber leftRoboteqSub;
+	ros::Subscriber rightRoboteqSub;
 
 	const int loopRate = 20; // Hz
 	// Methods
@@ -63,6 +68,7 @@ private:
 	messages::ActuatorOut actuatorMsgOut_;
 	messages::ExecInfo execInfoMsgOut_;
 	messages::ExecActionEnded execActionEndedMsgOut_;
+	messages::NextWaypointOut nextWaypointMsgOut_;
 	double execStartTime_;
 	double execElapsedTime_;
 	// Methods
@@ -71,8 +77,11 @@ private:
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg);
 	void driveSpeedsCallback_(const robot_control::DriveSpeeds::ConstPtr& msg);
+	void leftRoboteqCallback_(const messages::encoder_data::ConstPtr& msg);
+	void rightRoboteqCallback_(const messages::encoder_data::ConstPtr& msg);
 	void packActuatorMsgOut_();
 	void packInfoMsgOut_();
+	void packNextWaypointOut_();
 };
 
 #endif // EXEC_H

@@ -19,7 +19,7 @@ bool DepositSample::runProc()
 		if(samplesCollected<MAX_SAMPLES)
 		{
 			sendDrop();
-            sendDriveRel(-3.0, 0.0, false, 0.0, false);
+            sendDriveRel(-3.0, 0.0, false, 0.0, false, false);
 			missionEnded = false;
 			state = _exec_;
             voiceSay->call("I'll be back");

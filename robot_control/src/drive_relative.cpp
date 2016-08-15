@@ -7,10 +7,12 @@ void DriveRelative::init()
     desiredEndHeading_ = params.float3;
 	endHeading_ = params.bool1;
     pushedToFront_ = params.bool2;
+    closedLoop_ = params.bool3;
     clearDeques();
 	pushTask(_pivot_);
 	driveDeque.back()->params.float1 = angleToTurn_;
-	pushTask(_driveStraight_);
+    if(closedLoop_) pushTask(_driveStraightCL_);
+    else pushTask(_driveStraight_);
 	driveDeque.back()->params.float1 = distanceToDrive_;
 	if(endHeading_)
 	{

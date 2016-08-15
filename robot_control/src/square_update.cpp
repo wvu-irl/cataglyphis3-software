@@ -25,7 +25,7 @@ bool SquareUpdate::runProc()
 		waypointsToTravel.at(4).x = homeWaypointX;
 		waypointsToTravel.at(4).y = homeWaypointY;
 		sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
-		//sendDriveRel(0.0, 0.0, true, 180.0, false);
+        //sendDriveRel(0.0, 0.0, true, 180.0, false, false);
 		state = _exec_;
 		break;
 	case _exec_:

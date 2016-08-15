@@ -91,6 +91,8 @@ protected:
 	float y_filter_sub;
 	float heading_filter_sub;
 
+	bool homing_updated;
+
 	//recored position data
 	std::vector<Position> position_data;
 	std::vector<Position> position_data_IMU;
@@ -146,6 +148,8 @@ void Localization::Initialization()
 	x_filter_sub = 0;
 	y_filter_sub = 0;
 	heading_filter_sub = 0;
+
+	homing_updated = false;
 
 	//transformation matrix
 	TreadTokey = Eigen::Matrix<float, 4, 4>::Identity();
@@ -288,6 +292,8 @@ void Localization::getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgI
 	y_filter_sub = TkeyTomapMsgIn.y_filter;
 	heading_filter_sub = TkeyTomapMsgIn.heading_filter;
 
+	homing_updated = TkeyTomapMsgIn.homing_updated;
+
 }
 
 void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilterOutMsgIn)
@@ -300,6 +306,11 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	//check if the keyframe updated or not
 	if(pre_x != x || pre_y != y || pre_heading != heading)
 	{
+		if(homing_updated)
+ 		{
+ 			addition = 0;
+ 		}
+
 		Navfilterout_All_s[ref_index].x_filter = x_filter_sub;
 		Navfilterout_All_s[ref_index].y_filter = y_filter_sub;
 		Navfilterout_All_s[ref_index].heading_filter = heading_filter_sub;

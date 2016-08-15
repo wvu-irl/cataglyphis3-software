@@ -34,9 +34,28 @@ private:
 	const float deltaHeadingThreshold_ = 2.0; // deg
 	const double thresholdMinTime_ = 0.25; // s
 	const float middleWheelReduction_ = 0.65;
-	const float cornerBoostGain_ = 1.15;
+	const float cornerBoostGain_ = 1.2;
+	const float reverseMiddleGain_ = 0.8;
 	float ccwBoostGain_;
 	float cwBoostGain_;
+	float leftMiddleWheelMultiplier_;
+	float rightMiddleWheelMultiplier_;
+	void dogLeg_();
+	double dogLegDetectTime_;
+	double dogLegRecoverStartTime_;
+	const double dogLegDetectThreshold_ = 1.5; // sec
+	const double dogLegRecoverDuration_ = 1.0; // sec
+	const long int encoderDogLegTriggerValue_ = 120;
+	long int encPrev_[6];
+	long int encDelta_[6];
+	long int maxLeftDelta_;
+	long int maxRightDelta_;
+	long int minLeftDelta_;
+	long int minRightDelta_;
+	long int encoderDiffSum_;
+	const float dogLegRDes_ = 45.0;
+	bool dogLegDetectTimeStarted_;
+	enum DOG_LEG_STATE_T {_monitoring, _commanding, _recovering} dogLegState;
 };
 
 #endif // DRIVE_PIVOT_H

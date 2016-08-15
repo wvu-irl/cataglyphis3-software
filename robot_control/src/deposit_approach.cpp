@@ -70,7 +70,7 @@ bool DepositApproach::runProc()
 			if(execLastProcType == procType && execLastSerialNum == serialNum)
 			{
 				calcPlatformDrive();
-                sendDriveRel(platformDriveDistance, platformPivotAngle, false, 0.0, false);
+                sendDriveRel(platformDriveDistance, platformPivotAngle, false, 0.0, false, false);
 				step = _platform;
 				state = _exec_;
 			}

@@ -20,6 +20,7 @@
 #include <messages/LidarFilterOut.h>
 #include <messages/MasterStatus.h>
 #include <messages/NavFilterControl.h>
+#include <messages/NextWaypointOut.h>
 #include <hsm/voice.h>
 #include <armadillo>
 #include <math.h>
@@ -54,6 +55,8 @@ public:
 	static messages::LidarFilterOut lidarFilterMsg;
 	static ros::Subscriber hsmMasterStatusSub;
 	static messages::MasterStatus hsmMasterStatusMsg;
+	static ros::Subscriber nextWaypointSub;
+	static messages::NextWaypointOut nextWaypointMsg;
     static ros::ServiceClient intermediateWaypointsClient;
     static robot_control::IntermediateWaypoints intermediateWaypointsSrv;
     static ros::ServiceClient reqROIClient;
@@ -89,8 +92,8 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.507; // m
-	const float grabberDistanceTolerance = 0.15; // m
+	const float blindDriveDistance = 0.257; // m
+	const float grabberDistanceTolerance = 0.17; // m
 	const float grabberAngleTolerance = 6.0; // deg
 	const float possibleSampleConfThresh = 0.5;
 	const float definiteSampleConfThresh = 0.7;
@@ -117,9 +120,11 @@ public:
 	static bool escapeLockout;
 	static bool roiKeyframed;
 	static bool startSLAM;
+	static bool giveUpROI;
 	static unsigned int avoidCount;
-	const unsigned int maxAvoidCount = 3;
-	const float metersPerAvoidCountDecrement = 5.0;
+	const unsigned int maxNormalWaypointAvoidCount = 3;
+	const unsigned int maxROIWaypointAvoidCount = 5;
+	const float metersPerAvoidCountDecrement = 3.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
 	static unsigned int numSampleCandidates;
@@ -146,9 +151,12 @@ public:
 	const float defaultRMax = 45.0; // deg/s
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m
-	const float lidarUpdateWaitTime = 1.0; // sec
+	const float lidarUpdateWaitTime = 2.0; // sec
 	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
+	const float sampleFoundNewROIProb = 0.01;
+	const float roiTimeExpiredNewSampleProb = 0.05;
+	const float giveUpROIFromAvoidNewSampleProb = 0.01;
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -168,6 +176,8 @@ ros::Subscriber MissionPlanningProcedureShare::lidarFilterSub;
 messages::LidarFilterOut MissionPlanningProcedureShare::lidarFilterMsg;
 ros::Subscriber MissionPlanningProcedureShare::hsmMasterStatusSub;
 messages::MasterStatus MissionPlanningProcedureShare::hsmMasterStatusMsg;
+ros::Subscriber MissionPlanningProcedureShare::nextWaypointSub;
+messages::NextWaypointOut MissionPlanningProcedureShare::nextWaypointMsg;
 ros::ServiceClient MissionPlanningProcedureShare::intermediateWaypointsClient;
 robot_control::IntermediateWaypoints MissionPlanningProcedureShare::intermediateWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::reqROIClient;
@@ -223,6 +233,7 @@ bool MissionPlanningProcedureShare::avoidLockout;
 bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
 bool MissionPlanningProcedureShare::startSLAM;
+bool MissionPlanningProcedureShare::giveUpROI;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

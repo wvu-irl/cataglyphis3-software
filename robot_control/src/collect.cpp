@@ -10,7 +10,7 @@ bool Collect::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false);
+        sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false, true);
 		sendGrab();
         computeDriveSpeeds();
 		state = _exec_;

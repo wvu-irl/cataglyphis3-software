@@ -33,10 +33,13 @@ MapManager::MapManager()
 //#include <robot_control/evansdale_short_dense_rois.h>
 
     // Limited set of ROIs covering eastern half of Evansdale in front of library
-#include <robot_control/evansdale_library_rois.h>
+//#include <robot_control/evansdale_library_rois.h>
 
     // Full set of ROIs covering Evansdale in front of library and engineering
 //#include <robot_control/evansdale_full_rois.h>
+
+    // WPI Institute Park ROIs
+#include <robot_control/wpi_rois.h>
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -109,6 +112,8 @@ MapManager::MapManager()
     currentKeyframe.setFrameId("map");
     ROIKeyframe.setFrameId("map");
 
+    globalSubMap.setFrameId("map");
+
     /*ROS_DEBUG("before global map toMsssage");
     grid_map::GridMapRosConverter::toMessage(globalMap, globalMapMsg);
     ROS_DEBUG("after global map toMsssage");
@@ -125,7 +130,7 @@ bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_c
 
 bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res) // need to add more features
 {
-    if(req.setSearchedROI) regionsOfInterest.at(req.modROIIndex).searched = req.searchedROIState;
+    if(req.setHardLockoutROI) regionsOfInterest.at(req.modROIIndex).hardLockout = req.hardLockoutROIState;
     if(req.setPosES && !req.setPosXY)
     {
         regionsOfInterest.at(req.modROIIndex).e = req.e;
@@ -147,6 +152,13 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
     {
         regionsOfInterest.at(req.modROIIndex).sampleProb = req.sampleProb;
         regionsOfInterest.at(req.modROIIndex).sampleSig = req.sampleSig;
+        if(req.editGroup && regionsOfInterest.at(req.modROIIndex).roiGroup != 0)
+        {
+            for(int i=0; i<regionsOfInterest.size(); i++)
+            {
+                if(regionsOfInterest.at(i).roiGroup == regionsOfInterest.at(req.modROIIndex).roiGroup) regionsOfInterest.at(i).sampleProb = req.sampleProb;
+            }
+        }
     }
     if(req.addNewROI)
     {
@@ -845,19 +857,19 @@ void MapManager::calculateGlobalMapSize()
 {
     float candidateSize;
     float bestCandidateSize = 0.0;
-    candidateSize = hypot(satMapStartE, satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapStartE, satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapStartE, satMapSize[1] - satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapStartE, satMapSize[1] - satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
-    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapSize[1] - satMapStartS) + 1.41421356237/2.0*keyframeSize;
+    candidateSize = hypot(satMapSize[0] - satMapStartE, satMapSize[1] - satMapStartS);
     //ROS_INFO("candidateSize = %f",candidateSize);
     //ROS_INFO("bestCandidateSize = %f",bestCandidateSize);
     if(candidateSize>bestCandidateSize) bestCandidateSize = candidateSize;
@@ -866,4 +878,9 @@ void MapManager::calculateGlobalMapSize()
     globalMapSize[0] = bestCandidateSize*2.0;
     globalMapSize[1] = bestCandidateSize*2.0;
     //ROS_INFO("globalMapSize[0] = %f, [1] = %f",globalMapSize[0],globalMapSize[1]);
+}
+
+void MapManager::cutOutGlobalSubMap()
+{
+
 }

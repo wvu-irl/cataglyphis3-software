@@ -1,6 +1,6 @@
 uint32 modROIIndex
-bool setSearchedROI
-bool searchedROIState
+bool setHardLockoutROI
+bool hardLockoutROIState
 bool setPosES
 float32 e
 float32 s
@@ -18,4 +18,5 @@ bool newROIInESNotXY
 ROI newROI
 bool deleteROI
 uint32 numDeleteROI
+bool editGroup
 ---

@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 	festival_initialize(load_init_files,heap_size);
 	festival_eval_command("(voice_kal_diphone)"); //kal, don, rad, kdl
 
-	festival_say_text("Hello.. I am Cataglyphis. I think, therefore I am.");
+	festival_say_text("Hello.. I am Cataglyphis. This is the last time.");
 
 	ros::spin();
 

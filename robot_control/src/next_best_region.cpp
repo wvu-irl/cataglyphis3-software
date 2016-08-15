@@ -47,23 +47,26 @@ bool NextBestRegion::runProc()
         // Loop through list of ROIs and choose best region not yet searched
         bestROIValue = 0;
         bestROINum = 0;
-        roiSearchedSum = 0;
+        roiHardLockoutSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
-            roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
+            roiValue = sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
                         sampleSigGain*regionsOfInterestSrv.response.ROIList.at(i).sampleSig -
-						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
-                                           regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos) -
-						terrainGain*terrainHazard.at(i));
-            ROS_DEBUG("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
-			ROS_DEBUG("searched = %i",regionsOfInterestSrv.response.ROIList.at(i).searched);
-            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).searched) roiValue = 0.001;
-            else roiValue = (!regionsOfInterestSrv.response.ROIList.at(i).searched)*roiValue;
-            ROS_DEBUG("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
+                        distanceGain*(hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
+                                           regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos)
+                                      + hypot(regionsOfInterestSrv.response.ROIList.at(i).x, regionsOfInterestSrv.response.ROIList.at(i).y)) -
+                        terrainGain*terrainHazard.at(i) -
+                        riskGain*regionsOfInterestSrv.response.ROIList.at(i).highRisk;
+            ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
+            ROS_INFO("hardLockout = %i",regionsOfInterestSrv.response.ROIList.at(i).hardLockout);
+            ROS_INFO("currentROIIndex = %i",currentROIIndex);
+            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex) roiValue = 0.001;
+            else if(regionsOfInterestSrv.response.ROIList.at(i).hardLockout || i == currentROIIndex) roiValue = 0.0;
+            ROS_INFO("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
-			roiSearchedSum += regionsOfInterestSrv.response.ROIList.at(i).searched;
+            roiHardLockoutSum += regionsOfInterestSrv.response.ROIList.at(i).hardLockout;
         }
-        if(roiSearchedSum < regionsOfInterestSrv.response.ROIList.size())
+        if(roiHardLockoutSum < regionsOfInterestSrv.response.ROIList.size())
         {
             // Call service to drive to center of the chosen region
 
@@ -76,21 +79,26 @@ bool NextBestRegion::runProc()
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             sendWait(10.0);*/
 
+            ROS_INFO("NEXT BEST REGION: bestROINum = %i",bestROINum);
             numWaypointsToTravel = 2;
             clearAndResizeWTT();
             angleToROI = atan2(regionsOfInterestSrv.response.ROIList.at(bestROINum).y - robotStatus.yPos, regionsOfInterestSrv.response.ROIList.at(bestROINum).x - robotStatus.xPos); // Radians
             waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x - distanceShortOfROI*cos(angleToROI);
             waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y - distanceShortOfROI*sin(angleToROI);
             waypointsToTravel.at(0).searchable = true; // !!!!! NEEDS TO BE TRUE to search
+            waypointsToTravel.at(0).unskippable = false;
+            waypointsToTravel.at(0).roiWaypoint = true;
             waypointsToTravel.at(1).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
             waypointsToTravel.at(1).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(1).searchable = true; // !!!!! NEEDS TO BE TRUE to search
+            waypointsToTravel.at(1).unskippable = false;
+            waypointsToTravel.at(1).roiWaypoint = true;
             callIntermediateWaypoints();
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             //sendWait(10.0);
 
             currentROIIndex = bestROINum;
-            allocatedROITime = 270.0; // sec == 4.5 min; implement specific times in ROIs as properties
+            allocatedROITime = regionsOfInterestSrv.response.ROIList.at(bestROINum).allocatedTime;
             tempGoHome = false;
             state = _exec_;
         }
@@ -115,7 +123,7 @@ bool NextBestRegion::runProc()
             sendDriveGlobal(false, false, 0.0);
 			procsBeingExecuted[procType] = false;
             tempGoHome = true;*/
-            missionEnded = true;
+            missionEnded = true; // !!! should be super safe mode
             state = _finish_;
         }
         computeDriveSpeeds();
@@ -127,7 +135,7 @@ bool NextBestRegion::runProc()
         procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
-        if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample) state = _finish_;
+        if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample || giveUpROI) state = _finish_;
         else state = _exec_;
         /*if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         else state = _exec_;*/
@@ -152,7 +160,9 @@ bool NextBestRegion::runProc()
         break;
     case _finish_:
         if(execLastProcType != procType || execLastSerialNum != serialNum) sendDequeClearAll();
-        inSearchableRegion = true;
+        if(giveUpROI) inSearchableRegion = false;
+        else inSearchableRegion = true;
+        giveUpROI = false;
         /*if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
         else
         {

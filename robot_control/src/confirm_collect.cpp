@@ -16,7 +16,7 @@ bool ConfirmCollect::runProc()
 		//sendSearch(sampleTypeMux);
 		expectedSampleAngle = 0.0;
 		expectedSampleDistance = distanceToGrabber - backUpDistance;
-        sendDriveRel(backUpDistance, 0.0, false, 0.0, false);
+        sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
         sendSearch(252); // 124 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
 		state = _exec_;
 		break;
@@ -42,11 +42,15 @@ bool ConfirmCollect::runProc()
                 if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
                 else ROS_ERROR("searchMap service call unsuccessful");
                 // Set ROI to searched
-                modROISrv.request.setSearchedROI = true;
-                modROISrv.request.searchedROIState = true;
+                modROISrv.request.setHardLockoutROI = false;
+                modROISrv.request.hardLockoutROIState = false;
                 modROISrv.request.modROIIndex = currentROIIndex;
                 modROISrv.request.addNewROI = false;
                 modROISrv.request.deleteROI = false;
+                modROISrv.request.setSampleProps = true;
+                modROISrv.request.sampleProb = sampleFoundNewROIProb;
+                modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.editGroup = true;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
                 roiKeyframed = false;
