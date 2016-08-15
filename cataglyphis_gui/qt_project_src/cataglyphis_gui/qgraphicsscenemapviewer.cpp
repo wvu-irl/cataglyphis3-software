@@ -18,6 +18,13 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
         drawingView.setStyleSheet("background: transparent;");
         drawingView.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         drawingView.setScene(&drawingScene);
+        drawingView.setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+        boost::scoped_ptr<QGraphicsPixmapItem> tempitem;
+        tempitem.reset(new QGraphicsPixmapItem(QPixmap::fromImage(*areaImage)));
+        drawingScene.addItem(tempitem.get());
+
+        //drawingView.setSizeAdjustPolicy(QAbstractScrollArea::AdjustIgnored);
+        drawingScene.removeItem(tempitem.get());
         //if(gridMapContainer.isValid())
         {
             for(grid_map::GridMapIterator it(gridMapContainer); !it.isPastEnd(); it= (++it))
@@ -27,11 +34,13 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                 gridMapContainer.getPosition(*it, cellPosition);
                 /*cellPosition[0] = x*/
                 if((mapValue != MAP_CELL_MAX_VALUE)
-                        || (mapValue != MAP_CELL_NOOP_VALUE))
+                        && (mapValue != MAP_CELL_NOOP_VALUE))
                 {
                     map_viewer_rect *gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE);
+                    ROS_DEBUG("Position %2.3f %2.3f %2.3f %2.3f %2.3f %2.3f",cellPosition[0], cellPosition[1], cellPosition[0]*pixelsPerDistance+2, cellPosition[1]*pixelsPerDistance+2, pixelsPerDistance, pixelsPerDistance);
+                    gridRectangle->setRect((float)cellPosition[0]*pixelsPerDistance, (float)cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
+                    gridRectangle->setTransformOriginPoint(startPlatformCenter);
                     gridRectangle->setTransform(robotToObjTransform);
-                    gridRectangle->setRect(cellPosition[0]*pixelsPerDistance, cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
                     gridRectangle->setGroup(layer->items.get());
                     layer->itemList->append(gridRectangle);
                 }
@@ -40,19 +49,21 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
             ROS_DEBUG("SCENE:: Finished Reading Global Map");
             ROS_DEBUG("Number of items in scene: %d", layer->itemList->size());
             ROS_DEBUG("SCENE:: adding group to scene");
-            drawingScene.addItem(layer->items.get());
-            drawingScene.setSceneRect(drawingScene.itemsBoundingRect());
+            //drawingScene.addItem(layer->items.get());
+
+            this->addItem(layer->items.get());
+            //drawingScene.setSceneRect(drawingScene.itemsBoundingRect());
             ROS_DEBUG("SCENE:: showing layer");
             layer->items->show();
             ROS_DEBUG("SCENE:: DONE");
 
             ROS_DEBUG("SCENE:: Generating drawingScene Texture");
-            QPixmap temp = drawingView.grab();
+            /*QPixmap temp = drawingView.grab(drawingScene.);
             layer->gridPixmap->swap(temp);
             QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(*layer->gridPixmap);
-            pixmapItem->setFlag(QGraphicsItem::ItemIsMovable);
+            pixmapItem->setFlag(QGraphicsItem::ItemIsMovable)*/;
             ROS_DEBUG("SCENE:: Rendering texture of field display");
-            this->addItem(pixmapItem);
+            //this->addItem(pixmapItem);
 
             layer->properties.isLayerSetup = true;
             layer->properties.isLayerVisible = true;
@@ -86,16 +97,18 @@ void QGraphicsSceneMapViewer::mousePressEvent(QGraphicsSceneMouseEvent *mouseEve
 
 bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
 {
-    if(!isMapSetup())
+    //if(!isMapSetup())
     {
         ROS_DEBUG("SCENE:: Robot start pos in pixels %2.3f, %2.3f", scenePos.x(), scenePos.y());
+        ROS_DEBUG("SCENE:: Delta Start Pos pixels: %2.3f %2.3f... Meters %2.3f %2.3f", scenePos.x()- startPlatformCenter.x(), scenePos.y()- startPlatformCenter.y(), (scenePos.x()- startPlatformCenter.x())/pixelsPerDistance, (scenePos.y()-startPlatformCenter.y())/pixelsPerDistance);
         startPlatformCenter.setX(scenePos.x());
         startPlatformCenter.setY(scenePos.y());
+        robotToObjTransform.reset();
         robotToObjTransform.translate(startPlatformCenter.x(), startPlatformCenter.y());
         robotToObjTransform.rotate(lastRobotPose.northAngle-90);
         this->setItemIndexMethod(QGraphicsScene::NoIndex);
     }
-    else
+   // else
     {
         /*handle re-init, probably clear obj containers and what not.*/
     }
