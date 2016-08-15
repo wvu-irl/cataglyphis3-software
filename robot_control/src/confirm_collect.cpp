@@ -25,7 +25,7 @@ bool ConfirmCollect::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
+        if(searchEnded())
 		{
 			computeSampleValuesWithExpectedDistance();
             ROS_INFO("confirmCollect bestSampleValue = %f",bestSampleValue);

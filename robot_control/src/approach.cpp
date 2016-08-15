@@ -92,7 +92,7 @@ bool Approach::runProc()
 		case _performManeuver:
 			if(commandedSearch)
 			{
-				if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
+                if(searchEnded())
 				{
 					findHighestConfSample();
 					expectedSampleDistance = highestConfSample.distance;
