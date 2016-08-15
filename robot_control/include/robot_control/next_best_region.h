@@ -20,6 +20,7 @@ public:
 	const float sampleSigGain = 0.1; // value/sample significance
 	const float distanceGain = 0.0033; // value/m
 	const float terrainGain = 0.2; // value/terrainHazardIndex
+	const float riskGain = 0.2;
     // Methods
     bool runProc();
 };

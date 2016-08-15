@@ -7,8 +7,10 @@ class Avoid : public Procedure
 {
 public:
 	// Members
-
+	bool interruptedEmergencyEscape;
+	int interruptedAvoid;
 	// Methods
+	Avoid();
 	bool runProc();
 };
 

@@ -20,6 +20,7 @@
 #include <messages/LidarFilterOut.h>
 #include <messages/MasterStatus.h>
 #include <messages/NavFilterControl.h>
+#include <messages/NextWaypointOut.h>
 #include <hsm/voice.h>
 #include <armadillo>
 #include <math.h>
@@ -54,6 +55,8 @@ public:
 	static messages::LidarFilterOut lidarFilterMsg;
 	static ros::Subscriber hsmMasterStatusSub;
 	static messages::MasterStatus hsmMasterStatusMsg;
+	static ros::Subscriber nextWaypointSub;
+	static messages::NextWaypointOut nextWaypointMsg;
     static ros::ServiceClient intermediateWaypointsClient;
     static robot_control::IntermediateWaypoints intermediateWaypointsSrv;
     static ros::ServiceClient reqROIClient;
@@ -168,6 +171,8 @@ ros::Subscriber MissionPlanningProcedureShare::lidarFilterSub;
 messages::LidarFilterOut MissionPlanningProcedureShare::lidarFilterMsg;
 ros::Subscriber MissionPlanningProcedureShare::hsmMasterStatusSub;
 messages::MasterStatus MissionPlanningProcedureShare::hsmMasterStatusMsg;
+ros::Subscriber MissionPlanningProcedureShare::nextWaypointSub;
+messages::NextWaypointOut MissionPlanningProcedureShare::nextWaypointMsg;
 ros::ServiceClient MissionPlanningProcedureShare::intermediateWaypointsClient;
 robot_control::IntermediateWaypoints MissionPlanningProcedureShare::intermediateWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::reqROIClient;

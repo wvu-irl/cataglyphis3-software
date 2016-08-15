@@ -1,12 +1,17 @@
 #include <robot_control/avoid.h>
 
+Avoid::Avoid()
+{
+    interruptedAvoid = 0;
+    interruptedEmergencyEscape = false;
+}
+
 bool Avoid::runProc()
 {
     //ROS_INFO("avoid state = %i",state);
 	switch(state)
 	{
 	case _init_:
-		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
@@ -14,17 +19,33 @@ bool Avoid::runProc()
         if(avoidCount > maxAvoidCount)
         {
             //ROS_INFO("avoid count limit reached");
-            sendDequeClearFront();
-            dequeClearFront = false;
-            avoidCount = 0;
-            avoidLockout = true;
-            procsBeingExecuted[procType] = false;
-            procsToExecute[procType] = false;
-            state = _init_;
-            break;
+            if((dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
+                    (dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]))
+            {
+                sendDequeClearFront(); // Send once to clear the avoid drive action
+                sendDequeClearFront(); // And send again to clear prev proc's drive action as well
+                dequeClearFront = false;
+                avoidCount = 0;
+                procsBeingExecuted[procType] = false;
+                procsToExecute[procType] = false;
+                state = _init_;
+                break;
+            }
+            else if((dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool3[interruptedAvoid]) ||
+                    (!dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
+                    (!dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
+                    interruptedEmergencyEscape)
+            {
+                sendDequeClearFront(); // Send once to clear the avoid drive action
+                dequeClearFront = false;
+                avoidCount = 0;
+                procsBeingExecuted[procType] = false;
+                procsToExecute[procType] = false;
+                state = _init_;
+                break;
+            }
         }
         computeDriveSpeeds();
-		collisionInterruptThresh = (collisionMsg.distance_to_collision+collisionMinDistance)/2.0;
 		intermediateWaypointsSrv.request.collision = collisionMsg.collision;
 		intermediateWaypointsSrv.request.collisionDistance = collisionMsg.distance_to_collision;
         intermediateWaypointsSrv.request.start_x = robotStatus.xPos;
@@ -48,11 +69,12 @@ bool Avoid::runProc()
             numWaypointsToTravel = intermediateWaypointsSrv.response.waypointArrayOut.size();
 			clearAndResizeWTT();
             for(int i=0; i<numWaypointsToTravel; i++) waypointsToTravel.at(i) = intermediateWaypointsSrv.response.waypointArrayOut.at(numWaypointsToTravel-1-i);
-            if(dequeClearFront)
+            if(dequeClearFront || interruptedEmergencyEscape)
             {
                 sendDequeClearFront();
                 dequeClearFront = false;
-                ROS_INFO("avoid dequeClearFront true");
+                interruptedEmergencyEscape = false;
+                ROS_INFO("avoid dequeClearFront or interruptedEmergencyEscape true");
             }
             sendDriveGlobal(true, false, 0.0);
             //ROS_INFO("avoid sendDriveGlobal(front)");
@@ -61,16 +83,15 @@ bool Avoid::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
-		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
         computeDriveSpeeds();
+        if(!execInfoMsg.stopFlag && !execInfoMsg.turnFlag && execInfoMsg.actionProcType.at(0)==procType) avoidLockout = false;
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
 		break;
 	case _interrupt_:
-		avoidLockout = false;
         procsBeingExecuted[procType] = true;
 		procsToInterrupt[procType] = false;
         dequeClearFront = true;

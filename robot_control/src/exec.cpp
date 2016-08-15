@@ -109,8 +109,10 @@ void Exec::run()
 	pausePrev_ = pause_;
 	packActuatorMsgOut_();
 	packInfoMsgOut_();
+    packNextWaypointOut_();
 	actuatorPub.publish(actuatorMsgOut_);
 	infoPub.publish(execInfoMsgOut_);
+    nextWaypointOutPub.publish(nextWaypointMsgOut_);
     /*execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
     ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
     for(int i=0; i<NUM_ACTIONS; i++) ROS_INFO("actionPoolIndex[%i] = %i",i,actionPoolIndex_[i]);
@@ -244,10 +246,13 @@ void Exec::packInfoMsgOut_()
 
 void Exec::packNextWaypointOut_()
 {
-    if(actionDeque_.at(0)->params.actionType == _driveGlobal)
+    if(actionDeque_.size()>0)
     {
-        nextWaypointMsgOut_.globalX = actionDeque_.at(0)->params.float1;
-        nextWaypointMsgOut_.globalY = actionDeque_.at(0)->params.float2;
+        if(actionDeque_.at(0)->params.actionType == _driveGlobal)
+        {
+            nextWaypointMsgOut_.globalX = actionDeque_.at(0)->params.float1;
+            nextWaypointMsgOut_.globalY = actionDeque_.at(0)->params.float2;
+            //nextWaypointMsgOut_.unskippable = actionDeque_.at(0)->params.bool3;
+        }
     }
-
 }

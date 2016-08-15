@@ -50,15 +50,17 @@ bool NextBestRegion::runProc()
         roiHardLockoutSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {
-            roiValue = (sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
+            roiValue = sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
                         sampleSigGain*regionsOfInterestSrv.response.ROIList.at(i).sampleSig -
 						distanceGain*hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
                                            regionsOfInterestSrv.response.ROIList.at(i).y - robotStatus.yPos) -
-						terrainGain*terrainHazard.at(i));
+                        terrainGain*terrainHazard.at(i) -
+                        riskGain*regionsOfInterestSrv.response.ROIList.at(i).highRisk;
             ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
             ROS_INFO("hardLockout = %i",regionsOfInterestSrv.response.ROIList.at(i).hardLockout);
+            ROS_INFO("currentROIIndex = %i",currentROIIndex);
             if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex) roiValue = 0.001;
-            else roiValue = 0.0;
+            else if(regionsOfInterestSrv.response.ROIList.at(i).hardLockout || i == currentROIIndex) roiValue = 0.0;
             ROS_INFO("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
             roiHardLockoutSum += regionsOfInterestSrv.response.ROIList.at(i).hardLockout;
@@ -91,7 +93,7 @@ bool NextBestRegion::runProc()
             //sendWait(10.0);
 
             currentROIIndex = bestROINum;
-            allocatedROITime = 270.0; // sec == 4.5 min; implement specific times in ROIs as properties
+            allocatedROITime = regionsOfInterestSrv.response.ROIList.at(bestROINum).allocatedTime;
             tempGoHome = false;
             state = _exec_;
         }
