@@ -17,6 +17,7 @@ void VisionSearch::init()
 
 int VisionSearch::run()
 {
-	if(cvSearchCmdClient.call(cvSearchCmdSrv)) {ROS_DEBUG("cvSearchCmdClient call successful"); return 1;}
-	else {ROS_ERROR("cvSearchCmdClient call unsuccessful"); return 0;}
+    if(cvSearchCmdClient.call(cvSearchCmdSrv)) ROS_DEBUG("cvSearchCmdClient call successful");
+    else {ROS_ERROR("cvSearchCmdClient call unsuccessful");}
+    return 1;
 }

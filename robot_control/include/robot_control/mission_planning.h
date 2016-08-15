@@ -78,6 +78,7 @@ private:
 	void runPause_();
 	void pauseAllTimers_();
 	void resumeTimers_();
+	void serviceSearchTimer_();
 	void calcnumProcsBeingOrToBeExecOrRes_();
 	void updateSampleFlags_();
 	void packAndPubInfoMsg_();
@@ -95,6 +96,7 @@ private:
 	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
 	void biasRemovalTimerCallback_(const ros::TimerEvent& event);
 	void homingTimerCallback_(const ros::TimerEvent& event);
+	void searchTimerCallback_(const ros::TimerEvent& event);
 };
 
 #endif // MISSION_PLANNING_H

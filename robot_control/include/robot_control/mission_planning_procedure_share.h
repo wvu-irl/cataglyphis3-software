@@ -30,10 +30,10 @@
 #define RAD2DEG 180.0/PI
 #define NUM_PROC_TYPES 14
 #define MAX_SAMPLES 10
-#define NUM_TIMERS 3
+#define NUM_TIMERS 5
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
 enum PROC_TYPES_T {__emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
-enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
+enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_, _searchTimer_};
 
 class MissionPlanningProcedureShare
 {
@@ -121,6 +121,7 @@ public:
 	static bool roiKeyframed;
 	static bool startSLAM;
 	static bool giveUpROI;
+	static bool searchTimedOut;
 	static unsigned int avoidCount;
 	const unsigned int maxNormalWaypointAvoidCount = 3;
 	const unsigned int maxROIWaypointAvoidCount = 5;
@@ -154,6 +155,7 @@ public:
 	const float lidarUpdateWaitTime = 2.0; // sec
 	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
+	const float searchTimeoutPeriod = 15.0; // sec
 	const float sampleFoundNewROIProb = 0.01;
 	const float roiTimeExpiredNewSampleProb = 0.05;
 	const float giveUpROIFromAvoidNewSampleProb = 0.01;
@@ -234,6 +236,7 @@ bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
 bool MissionPlanningProcedureShare::startSLAM;
 bool MissionPlanningProcedureShare::giveUpROI;
+bool MissionPlanningProcedureShare::searchTimedOut;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

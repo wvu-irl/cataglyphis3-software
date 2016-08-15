@@ -39,9 +39,7 @@ public:
 	void findHighestConfSample();
 	void computeDriveSpeeds();
 	void serviceAvoidCounterDecrement();
-	void startTimer(TIMER_NAMES_T timerName);
-	void stopTimer(TIMER_NAMES_T timerName);
-	void setPeriodTimer(TIMER_NAMES_T timerName, float period);
+	bool searchEnded();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -626,6 +624,18 @@ void Procedure::serviceAvoidCounterDecrement()
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
 	}
+}
+
+bool Procedure::searchEnded()
+{
+	if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || searchTimedOut)
+	{
+		ROS_INFO("searchEnded return true");
+		timers[_searchTimer_]->stop();
+		searchTimedOut = false;
+		return true;
+	}
+	else return false;
 }
 
 #endif // PROCEDURE_H

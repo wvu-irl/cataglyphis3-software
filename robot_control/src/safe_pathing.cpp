@@ -673,6 +673,9 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
     float B;
     float C;
     float m;
+    float dx;
+    float dy;
+    const float minDX = 0.001; // m
     float xSol[2];
     float ySol[2];
     robot_control::Waypoint homingWaypoint;
@@ -740,7 +743,7 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             }
         }
         // Homing waypoint check
-        /*waypointsOutInitSize = waypointList.size();
+        waypointsOutInitSize = waypointList.size();
         for(int i=0; i<(waypointsOutInitSize-1); i++)
         {
             waypoint1 = waypointList.at(i);
@@ -751,34 +754,45 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             firstWaypointDistance = hypot(waypoint1.x, waypoint1.y);
             secondWaypointDistance = hypot(waypoint2.x, waypoint2.y);
             distanceBetweenWaypoints = hypot(waypoint1.x-waypoint2.x, waypoint1.y-waypoint2.y);
-            ROS_INFO("firstWaypointDistance = %f",firstWaypointDistance);
-            ROS_INFO("secondWaypointDistance = %f",secondWaypointDistance);
-            ROS_INFO("distanceBetweenWaypoints = %f",distanceBetweenWaypoints);
+            //ROS_INFO("firstWaypointDistance = %f",firstWaypointDistance);
+            //ROS_INFO("secondWaypointDistance = %f",secondWaypointDistance);
+            //ROS_INFO("distanceBetweenWaypoints = %f",distanceBetweenWaypoints);
             if(firstWaypointDistance > homingRadius && secondWaypointDistance < homingRadius)
             {
                 ROS_INFO("stop at homing radius");
-                m = (waypoint2.y - waypoint1.y)/(waypoint2.x - waypoint1.x);
+                dy = waypoint1.y - waypoint2.y;
+                dx = waypoint1.x - waypoint2.x;
+                if(dx>=0.0 && fabs(dx) < minDX) dx = minDX;
+                else if(dx<0.0 && fabs(dx) < minDX) dx = -minDX;
+                m = dy/dx;
                 A = 1.0 + pow(m, 2.0);
-                B = -2.0*pow(m, 2.0)*waypoint1.x + 2.0*m;
-                C = pow(m, 2.0)*pow(waypoint1.x, 2.0) - 2.0*m*waypoint1.x + 2.0*m*waypoint1.y + pow(waypoint1.y, 2.0) - pow(homingRadius, 2.0);
+                B = -2.0*pow(m, 2.0)*waypoint2.x + 2.0*m*waypoint2.y;
+                C = pow(m, 2.0)*pow(waypoint2.x, 2.0) - 2.0*m*waypoint2.x*waypoint2.y + pow(waypoint2.y, 2.0) - pow(homingRadius, 2.0);
+                ROS_INFO("m = %f",m);
+                ROS_INFO("A = %f",A);
+                ROS_INFO("B = %f",B);
+                ROS_INFO("C = %f",C);
                 xSol[0] = (-B+sqrt(pow(B, 2.0) - 4.0*A*C))/(2.0*A);
                 xSol[1] = (-B-sqrt(pow(B, 2.0) - 4.0*A*C))/(2.0*A);
-                ySol[0] = waypoint1.y + m*(xSol[0] + waypoint1.x);
-                ySol[1] = waypoint1.y + m*(xSol[1] + waypoint1.x);
+                ySol[0] = waypoint2.y + m*(xSol[0] - waypoint2.x);
+                ySol[1] = waypoint2.y + m*(xSol[1] - waypoint2.x);
+                ROS_INFO("homing solutions: (%f,%f); (%f,%f)", xSol[0], ySol[0], xSol[1], ySol[1]);
                 if(hypot(xSol[1]-waypoint1.x, ySol[1]-waypoint1.y) < hypot(xSol[0]-waypoint1.x, ySol[0]-waypoint1.y))
                 {
                     homingWaypoint.x = xSol[1];
                     homingWaypoint.y = ySol[1];
+                    ROS_INFO("homing solution 1 chosen");
                 }
                 else
                 {
                     homingWaypoint.x = xSol[0];
                     homingWaypoint.y = ySol[0];
+                    ROS_INFO("homing solution 0 chosen");
                 }
                 waypointList.insert(waypointList.begin()+1+i+numTransitionWaypointsInserted, homingWaypoint);
                 numTransitionWaypointsInserted++;
             }
-        }*/
+        }
     }
 }
 

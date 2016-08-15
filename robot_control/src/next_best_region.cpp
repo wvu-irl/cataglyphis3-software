@@ -135,7 +135,7 @@ bool NextBestRegion::runProc()
         procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
-        if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample || giveUpROI) state = _finish_;
+        if(searchEnded() || possibleSample || definiteSample || giveUpROI) state = _finish_;
         else state = _exec_;
         /*if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
         else state = _exec_;*/
@@ -143,7 +143,7 @@ bool NextBestRegion::runProc()
         /*if(waypointsToTravel.at(0).searchable)
         {
             ROS_INFO("searchable case");
-            if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || possibleSample || definiteSample) state = _finish_;
+            if(searchEnded() || possibleSample || definiteSample) state = _finish_;
             else state = _exec_;
         }
         else

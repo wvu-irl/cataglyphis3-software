@@ -55,6 +55,7 @@ MissionPlanning::MissionPlanning()
     roiKeyframed = false;
     startSLAM = false;
     giveUpROI = false;
+    searchTimedOut = false;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
     prevAvoidCountDecYPos = robotStatus.yPos;
@@ -86,6 +87,8 @@ MissionPlanning::MissionPlanning()
     homingUpdatedFailedCount = 0;
     timers[_biasRemovalTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalTimerCallback_, this);
     timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
+    timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
+    timers[_searchTimer_]->stop();
     timers[_biasRemovalTimer_]->setPeriod(biasRemovalTimeoutPeriod);
     timers[_homingTimer_]->setPeriod(homingTimeoutPeriod);
     timers[_biasRemovalTimer_]->start();
@@ -137,6 +140,7 @@ void MissionPlanning::run()
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch) runPause_();
     else runProcedures_();
+    serviceSearchTimer_();
     packAndPubInfoMsg_();
     //std::printf("\n");
     //ROS_INFO("END <<<<<<<<<<<<<\n");
@@ -388,6 +392,11 @@ void MissionPlanning::resumeTimers_()
     for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
 }
 
+void MissionPlanning::serviceSearchTimer_()
+{
+    if(execInfoMsg.actionDeque[0] == _search && !timers[_searchTimer_]->running && !searchTimedOut) {timers[_searchTimer_]->start(); ROS_INFO("start searchTimer");}
+}
+
 void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
 {
     numProcsBeingOrToBeExecOrRes = 0;
@@ -617,4 +626,11 @@ void MissionPlanning::homingTimerCallback_(const ros::TimerEvent &event)
     performHoming = true;
     ROS_INFO("homingTimerExpired");
     voiceSay->call("homing timer expired");
+}
+
+void MissionPlanning::searchTimerCallback_(const ros::TimerEvent &event)
+{
+    searchTimedOut = true;
+    ROS_INFO("searchTimer expired");
+    voiceSay->call("search timer expired");
 }
