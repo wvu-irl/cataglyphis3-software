@@ -99,7 +99,7 @@ void DrivePivot::dogLeg_()
         encoderDiffSum_ = abs(robotStatus.flEncoder - flEncPrev_) + abs(robotStatus.mlEncoder - mlEncPrev_) + abs(robotStatus.blEncoder - blEncPrev_) +
                 abs(robotStatus.frEncoder - frEncPrev_) + abs(robotStatus.mrEncoder - mrEncPrev_) + abs(robotStatus.brEncoder - brEncPrev_);
         if(encoderDiffSum_ > encoderDogLegTriggerValue_ && !dogLegDetectTimeStarted_) {dogLegDetectTimeStarted_ = true; dogLegDetectTime_ = ros::Time::now().toSec();}
-        else dogLegDetectTimeStarted_ = false;
+        else if(encoderDiffSum_ <= encoderDogLegTriggerValue_ && dogLegDetectTimeStarted_) dogLegDetectTimeStarted_ = false;
         if(dogLegDetectTimeStarted_ && (ros::Time::now().toSec() - dogLegDetectTime_) >= dogLegDetectThreshold_) dogLegState = _commanding;
         else dogLegState = _monitoring;
         break;
@@ -121,8 +121,13 @@ void DrivePivot::dogLeg_()
             rSpeedI_ = 0.0;
             dogLegDetectTimeStarted_ = false;
             dogLegState = _monitoring;
-
         }
         break;
     }
+    flEncPrev_ = robotStatus.flEncoder;
+    mlEncPrev_ = robotStatus.mlEncoder;
+    blEncPrev_ = robotStatus.blEncoder;
+    frEncPrev_ = robotStatus.frEncoder;
+    mrEncPrev_ = robotStatus.mrEncoder;
+    brEncPrev_ = robotStatus.brEncoder;
 }
