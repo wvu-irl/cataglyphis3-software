@@ -27,14 +27,17 @@ int main(int argc, char **argv)
 	// }
 
 	//Main Loop
+	calibrateCamera.loadCalibration();
+	calibrateCamera.initializeTrackbars();
 	calibrateCamera.updateImage();
 	while(ros::ok())
 	{
 		calibrateCamera.displayImage();
 		
 		char keyPress = cv::waitKey(30);
-		if(keyPress == 'r')
+		if(calibrateCamera._captureImage == true || keyPress == 'r')
 		{
+			calibrateCamera._captureImage = false;
 			if(capture.capture_image()==0)
 			{
 				ROS_ERROR("Could not capture a new image from camera. Terminating...");
@@ -46,18 +49,7 @@ int main(int argc, char **argv)
 				calibrateCamera._dstCopy = calibrateCamera._dst.clone();
 			}
 		}
-		else if(keyPress == 'u')
-		{
-			ROS_INFO("Updating image...");
-			calibrateCamera.updateImage();
-
-		}
-		else if(keyPress == 's')
-		{
-		    ROS_INFO("Writing new mask to file...");
-			calibrateCamera.saveCalibration();
-		}
-		else if(keyPress == 'q')
+		else if(calibrateCamera._exit == true || keyPress == 'q')
 		{
 			break;
 		}

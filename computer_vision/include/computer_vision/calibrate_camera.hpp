@@ -4,7 +4,9 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <boost/filesystem.hpp>
-#include <boost/bind.hpp>
+// #include <boost/bind.hpp>
+#include <fstream>
+#include <string>
 
 #ifndef CALIBRATE_CAMERA_HPP
 #define CALIBRATE_CAMERA_HPP
@@ -15,6 +17,7 @@ private:
 
 public:
 	CalibrateCamera();
+	void initializeTrackbars();
 
 	cv::Mat _dst;
 	cv::Mat _dstCopy;
@@ -30,11 +33,20 @@ public:
 	int _robotShiftMax = 5792;
 	int _robotShiftSlider = 0;
 	int _radiusMax = 4095;
-	int _radiusSlider = 4095;
+	int _radiusSlider = 0;
 	int _poleWidthMax = 5792;
 	int _poleWidthSlider = 0;
 	int _poleHeightMax = 5792/2;
 	int _poleHeightSlider = 0;
+	int _rollMax = 100;
+	int _rollSlider = 0;//_rollMax/2;
+	int _rollOffset = -_rollMax/2;
+	int _pitchMax = 250;
+	int _pitchSlider = 0;//_pitchMax/2;
+	int _pitchOffset = -_pitchMax/2;
+	int _yawMax = 250;
+	int _yawSlider = 0;//_yawMax/2;
+	int _yawOffset = -_yawMax/2;
 
 	static void onTrackbarRobotWidth(int, void*){};
 	static void onTrackbarRobotHeight(int, void*){};
@@ -42,16 +54,21 @@ public:
 	static void onTrackbarRadius(int, void*){};
 	static void onTrackbarPoleWidth(int, void*){};
 	static void onTrackbarPoleHeight(int, void*){};
+	static void onTrackbarRoll(int, void*){};
+	static void onTrackbarPitch(int, void*){};
+	static void onTrackbarYaw(int, void*){};
 
-	static const int _LINE_THICKNESS = 12;
-	static const int _LINE_TYPE = 12;
+	static const int _LINE_THICKNESS = 8;
+	static const int _LINE_TYPE = 8;
 	static const int _LINE_SHIFT = 0;
 
 	bool _showBody = false;
 	bool _showPole = false;
 	bool _showGrabber = false;
 	bool _showRadius = false;
-	bool _showAttitude = false;
+	bool _showLines = false;
+	bool _captureImage = false;
+	bool _exit = false;
 
 	bool selectingPoint1 = false;
 	bool selectingPoint2 = false;
@@ -111,15 +128,15 @@ public:
 		}
 	};
 
-	static void attitudeCheckBox(int state, void* object)
+	static void linesCheckBox(int state, void* object)
 	{
 		if(state==true)
 		{
-			((CalibrateCamera*)object)->_showAttitude=true;
+			((CalibrateCamera*)object)->_showLines=true;
 		}
 		else
 		{
-			((CalibrateCamera*)object)->_showAttitude=false;
+			((CalibrateCamera*)object)->_showLines=false;
 		}
 	};
 
@@ -179,18 +196,29 @@ public:
 			((CalibrateCamera*)object)->selectingPoint2 = false;
 			((CalibrateCamera*)object)->selectingPoint3 = false;
 			((CalibrateCamera*)object)->selectingPoint4 = false;
-	}
+	};
+	static void captureImageButton(int state, void* object)
+	{
+		((CalibrateCamera*)object)->_captureImage = true;
+	};
 	static void updateImageButton(int state, void* object)
 	{
 		((CalibrateCamera*)object)->updateImage();
 	};
-	static void loadCalibrationButton(int state, void*)
+	static void saveCalibrationButton(int state, void* object)
 	{
-		ROS_WARN("Load not implemented yet.");
+		ROS_WARN("Calibration parameters saving...");
+		((CalibrateCamera*)object)->saveCalibration();
 	};
-	static void saveCalibrationButton(int state, void*)
+	static void loadCalibrationButton(int state, void* object)
 	{
-		ROS_WARN("Save not implemented yet.");
+		ROS_WARN("Loading calibration parameters...");
+		((CalibrateCamera*)object)->loadCalibration();
+		((CalibrateCamera*)object)->updateImage();
+	};
+	static void exitButton(int state, void* object)
+	{
+		((CalibrateCamera*)object)->_exit = true;
 	};
 
 	void displayImage();
