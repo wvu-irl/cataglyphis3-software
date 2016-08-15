@@ -54,6 +54,7 @@ MissionPlanning::MissionPlanning()
     escapeLockout = false;
     roiKeyframed = false;
     startSLAM = false;
+    giveUpROI = false;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
     prevAvoidCountDecYPos = robotStatus.yPos;

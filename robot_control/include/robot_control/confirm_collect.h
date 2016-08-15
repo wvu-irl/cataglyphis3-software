@@ -9,7 +9,6 @@ public:
 	uint8_t sampleTypeMux;
 	const float backUpDistance = -1.0; // m
 	const float confirmCollectValueThreshold = 0.4;
-	const float sampleFoundNewROIProb = 0.01;
 	const int confirmCollectFailedLimit = 3;
 	bool noSampleOnGround;
 	// Methods

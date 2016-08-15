@@ -120,8 +120,10 @@ public:
 	static bool escapeLockout;
 	static bool roiKeyframed;
 	static bool startSLAM;
+	static bool giveUpROI;
 	static unsigned int avoidCount;
-	const unsigned int maxAvoidCount = 3;
+	const unsigned int maxNormalWaypointAvoidCount = 3;
+	const unsigned int maxROIWaypointAvoidCount = 5;
 	const float metersPerAvoidCountDecrement = 3.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
@@ -152,6 +154,9 @@ public:
 	const float lidarUpdateWaitTime = 1.0; // sec
 	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
+	const float sampleFoundNewROIProb = 0.01;
+	const float roiTimeExpiredNewSampleProb = 0.05;
+	const float giveUpROIFromAvoidNewSampleProb = 0.01;
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -228,6 +233,7 @@ bool MissionPlanningProcedureShare::avoidLockout;
 bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
 bool MissionPlanningProcedureShare::startSLAM;
+bool MissionPlanningProcedureShare::giveUpROI;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

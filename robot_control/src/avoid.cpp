@@ -16,9 +16,28 @@ bool Avoid::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
         avoidCount++;
+        if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool4[interruptedAvoid])
+            maxAvoidCount = maxROIWaypointAvoidCount;
+        else maxAvoidCount = maxNormalWaypointAvoidCount;
         if(avoidCount > maxAvoidCount)
         {
             //ROS_INFO("avoid count limit reached");
+            if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool4[interruptedAvoid])
+            {
+                // Give up ROI
+                modROISrv.request.setHardLockoutROI = false;
+                modROISrv.request.hardLockoutROIState = false;
+                modROISrv.request.modROIIndex = currentROIIndex;
+                modROISrv.request.setSampleProps = true;
+                modROISrv.request.sampleProb = giveUpROIFromAvoidNewSampleProb;
+                modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.addNewROI = false;
+                if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
+                else ROS_ERROR("modify ROI service call unsuccessful");
+                giveUpROI = true;
+                sendDequeClearAll();
+                ROS_INFO("AVOID gave up ROI number %i",currentROIIndex);
+            }
             if((dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
                     (dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]))
             {
