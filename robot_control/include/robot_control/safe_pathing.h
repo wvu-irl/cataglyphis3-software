@@ -12,6 +12,7 @@
 #include <iterator>
 #include "map_layers.h"
 #include <messages/GlobalMapFull.h>
+#include <hsm/voice.h>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
@@ -49,7 +50,7 @@ public:
 	bool narrowBandNotEmpty();
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	void chooseWaypointsFromOptimalPath();
-	STRAIGHT_LINE_CONDITION_T straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh, unsigned int numCellsLimit);
+	STRAIGHT_LINE_CONDITION_T straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh, unsigned int numCellsLimit, bool useMinDistanceLimit);
 	void transitionWaypoints(std::vector<robot_control::Waypoint>& waypointList);
 	void generateAndPubVizMap(std::vector<robot_control::Waypoint> waypointList);
 	void addToSet(std::multiset<MapData, MapDataLess>& set, MapData& cell);
@@ -117,6 +118,7 @@ public:
 	const unsigned int straightLineNumCellsOverThreshLimit = 5;
 	const float minWaypointDistance = 5.0; // m
 	const float corridorWidth = 2.0; // m
+	const float minDriveDistanceForFMM = 10.0; // m
 	const float maxDriveDistance = 35.0; // m
 	const float homingRadius = 20.0; // m
 	const float atHomeRadius = 10.0; // m
@@ -125,6 +127,7 @@ public:
 	robot_control::Waypoint quad3MagneticWaypoint;
 	robot_control::Waypoint quad4MagneticWaypoint;
 	robot_control::Waypoint homeWaypoint;
+	Voice voiceSay;
 };
 
 #endif // SAFE_PATHING_H 

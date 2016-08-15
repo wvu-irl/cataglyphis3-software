@@ -48,6 +48,15 @@ SafePathing::SafePathing()
     initialViscosityMap.setFrameId("map");
     resistanceMap.setFrameId("map");
     vizMap.setFrameId("map");
+    timeOfArrivalMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
+    initialViscosityMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
+    resistanceMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
+    timeOfArrivalMap.add(timeLayer, maxTimeValue);
+    timeOfArrivalMap.add(setLayer, (float)_unknown);
+    initialViscosityMap.add(timeLayer, initialTimeValue);
+    initialViscosityMap.add(setLayer, (float)_unknown);
+    resistanceMap.add(timeLayer, initialTimeValue);
+    resistanceMap.add(setLayer, (float)_unknown);
 }
 
 bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, robot_control::IntermediateWaypoints::Response &res)
@@ -139,10 +148,11 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                 startPosition[1] = req.waypointArrayIn.at(i).y;
                 goalPoint[0] = req.waypointArrayIn.at(i+1).x;
                 goalPoint[1] = req.waypointArrayIn.at(i+1).y;
-                initialStraightLineCondition = straightLineDriveable(globalMap, layerToString(_satDriveability), startPosition, goalPoint, straightLineCheckHazardThresh, straightLineNumCellsOverThreshLimit);
+                initialStraightLineCondition = straightLineDriveable(globalMap, layerToString(_satDriveability), startPosition, goalPoint, straightLineCheckHazardThresh, straightLineNumCellsOverThreshLimit, true);
                 if(initialStraightLineCondition == _tooManyObstacles)
                 {
-                    ROS_INFO("too many obstacles along straight line");
+                    ROS_INFO("too many obstacles along straight line, running FMM");
+                    voiceSay.call("performing fast marching");
                     timeOfArrivalMap.add(timeLayer, maxTimeValue);
                     timeOfArrivalMap.add(setLayer, (float)_unknown);
                     initialViscosityMap.add(timeLayer, initialTimeValue);
@@ -550,7 +560,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             break;
         }*/
         //ROS_INFO("hazardAlongPossiblePathThresh = %f",hazardAlongPossiblePathThresh);
-        if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh, numCellsOverThreshLimit)!=_driveable && !intersectingMinDistance)
+        if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh, numCellsOverThreshLimit, false)!=_driveable && !intersectingMinDistance)
         {
             //ROS_INFO("numHazardsOverLimit");
             prevIndex = indexToConsider;
@@ -606,13 +616,17 @@ void SafePathing::chooseWaypointsFromOptimalPath()
     }
 }
 
-STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string layer, grid_map::Position &startPos, grid_map::Position &endPos, float hazardThresh, unsigned int numCellsLimit)
+STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &map, std::string layer, grid_map::Position &startPos, grid_map::Position &endPos, float hazardThresh, unsigned int numCellsLimit, bool useMinDistanceLimit)
 {
     unsigned int numCellsOverThresh;
     grid_map::Polygon mapPolygon;
     std::vector<grid_map::Position> polygonVertices;
     float mapPolygonHeading;
 
+    if(useMinDistanceLimit)
+    {
+        if(hypot(endPos[0] - startPos[0], endPos[1] - startPos[1]) <= minDriveDistanceForFMM) {ROS_INFO("distance too short, no need to run FMM"); return _driveable;}
+    }
     numCellsOverThresh = 0;
     polygonVertices.resize(4);
     mapPolygon.removeVertices();
