@@ -2,23 +2,13 @@
 
 CalibrateCamera::CalibrateCamera()
 {
-    //create window
     namedWindow("Current Image", cv::WINDOW_NORMAL);
-    // cv::setMouseCallback("Current Image", onMouse, (void*)this);
+}
 
-    //set coordinates for corners of robot
-    _globalCoordinates.clear();
-    _globalCoordinates.push_back(cv::Point3f(0.315,0.2535,-0.465));
-    _globalCoordinates.push_back(cv::Point3f(0.315,-0.2535,-0.465));
-    _globalCoordinates.push_back(cv::Point3f(-0.295,0.2535,-0.465));
-    _globalCoordinates.push_back(cv::Point3f(-0.295,-0.2535,-0.465));
-
-    //set camera matrix (a11,a12,a13,a21,a22,a23,a31,a32,a33)
-    _cameraMatrix = (cv::Mat_<double>(3,3) << 2896.00000, 0.0, 0.0, 0.0, 2896.00000, 0.0, 0.0, 0.0, 1.0);
-
-    //set distortion coefficients (radial1, radial2, tangential1, tangential2, radial3)
-    _distortionCoefficients = (cv::Mat_<double>(5,1) << -1.693698799145976e-09, -8.529322941398544e-10, 0.0, 0.0, -4.420202910449835e-09);
-
+void CalibrateCamera::setImage(cv::Mat &src)
+{
+    _dst = src.clone();;
+    _dstCopy = src.clone();
 }
 
 void CalibrateCamera::initializeTrackbars()
@@ -151,13 +141,21 @@ void CalibrateCamera::updateImage()
 		cv::line(_dst, P_H1, P_H2, cv::Scalar(0,0,255), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT); //horizontal
 
 		//convert to meaningful stuff
-		ROS_INFO("angle = %f", rollCompensation*180.0/3.14159265);
-	    int u = (P_V1.x+P_V2.x)/2;
-	    int v = (P_V1.y+P_V2.y)/2;
-	    ROS_INFO("u,v = %i,%i",u,v);
-	    int x = -(v-5792/2);
-	    int y = u - 5792/2;
-	    ROS_INFO("x,y = %i,%i",x,y);
+        int u = (P_V1.x+P_V2.x)/2;
+        int v = (P_V1.y+P_V2.y)/2;
+        // ROS_INFO("u,v = %i,%i",u,v);
+        int x = -(v-5792/2);
+        int y = u - 5792/2;
+        // ROS_INFO("x,y = %i,%i",x,y);
+
+        //attitude with respect to the camera
+        double rollAngle = rollCompensation;
+        double yawAngle = atan2(y*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
+        double pitchAngle = atan2(x*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
+        ROS_INFO("rollAngle = %f", rollAngle*180.0/3.14159265);
+        ROS_INFO("yawAngle = %f", yawAngle*180.0/3.14159265);
+        ROS_INFO("pitchAngle = %f", pitchAngle*180.0/3.14159265);
+
 	}
 }
 
@@ -188,8 +186,6 @@ void CalibrateCamera::saveCalibration()
 
 void CalibrateCamera::loadCalibration()
 {
-    ROS_ERROR("Loading calibration file...");
-
     //get path to calibration parameters
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
     std::string filename = P.string() + "/data/calibration/cameraCalibration.csv";
@@ -224,77 +220,102 @@ void CalibrateCamera::loadCalibration()
 
     //close file
     inputFile.close();
-
-    ROS_ERROR("Complete.");
 }
 
-void CalibrateCamera::findPose()
+////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////CALLBACK FUNCTION IMPLEMENTATIONS/////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+
+void CalibrateCamera::bodyCheckBoxImplementation(int state)
 {
-	ROS_INFO("Finding pose...");
-	//solve pnp
-	cv::Mat rotVec(3,1,cv::DataType<double>::type);
-	cv::Mat traVec(3,1,cv::DataType<double>::type);
-	cv::solvePnP(_globalCoordinates, _imageCoordinates, _cameraMatrix, _distortionCoefficients, rotVec, traVec, CV_ITERATIVE);
-	
-	//convert rotVec to rotMat
-	ROS_INFO("Converting rotVec to rotMat...");
-	cv::Mat rotMat, rotMatT;
-	cv::Rodrigues(rotVec,rotMatT);
-	cv::transpose(rotMatT,rotMat);
-	cv::Mat cameraPose = -rotMat*traVec;
+    if(state==true)
+    {
+        _showBody=true;
+    }
+    else
+    {
+        _showBody=false;
+    }
+}
 
-	//extract x, y, z, roll,pitch, and yaw
-	ROS_INFO("Extracting x, y, and z...");
-	float xCamera=cameraPose.at<double>(0,0);//traVec.at<double>(0,0);
-	float yCamera=cameraPose.at<double>(1,0);//traVec.at<double>(1,0);
-	float zCamera=cameraPose.at<double>(2,0);//traVec.at<double>(2,0);
+void CalibrateCamera::poleCheckBoxImplementation(int state)
+{
+    if(state==true)
+    {
+        _showPole=true;
+    }
+    else
+    {
+        _showPole=false;
+    }
+}
 
-	ROS_INFO("Extracting roll, pitch, and yaw...");
-	float rollCamera=atan2(-rotMat.at<double>(2,1), rotMat.at<double>(2,2))*180.0/3.14159265;
-	float pitchCamera=asin(rotMat.at<double>(2,0))*180.0/3.14159265;
-	float yawCamera=atan2(-rotMat.at<double>(1,0), rotMat.at<double>(0,0))*180.0/3.14159265;
+void CalibrateCamera::grabberCheckBoxImplementation(int state)
+{
+    if(state==true)
+    {
+        _showGrabber=true;
+    }
+    else
+    {
+        _showGrabber=false;
+    }
+}
 
-	// float rollCamera=atan2(-rotMat.at<double>(1,2), rotMat.at<double>(2,2));
-	// float pitchCamera=asin(rotMat.at<double>(0,2));
-	// float yawCamera=atan2(-rotMat.at<double>(0,1), rotMat.at<double>(0,0));
+void CalibrateCamera::radiusCheckBoxImplementation(int state)
+{
+    if(state==true)
+    {
+        _showRadius=true;
+    }
+    else
+    {
+        _showRadius=false;
+    }
+}
 
-	//print result
-	ROS_INFO("x = %f",xCamera);
-	ROS_INFO("y = %f",yCamera);
-	ROS_INFO("z = %f",zCamera);
-	ROS_INFO("roll = %f",rollCamera);
-	ROS_INFO("pitch = %f",pitchCamera);
-	ROS_INFO("yaw = %f",yawCamera);
+void CalibrateCamera::linesCheckBoxImplementation(int state)
+{
+    if(state==true)
+    {
+        _showLines=true;
+    }
+    else
+    {
+        _showLines=false;
+    }
+}
 
+void CalibrateCamera::captureImageButtonImplementation()
+{
+    _captureImage = true;
+}
+
+void CalibrateCamera::updateImageButtonImplementation()
+{
+    ROS_INFO("Updating image...");
+    updateImage();
     ROS_INFO("Complete.");
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////BUTTON CALLBACK FUNCTION IMPLEMENTATION///////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////
+void CalibrateCamera::saveCalibrationButtonImplementation()
+{
+    ROS_INFO("Calibration parameters saving...");
+    saveCalibration();
+    ROS_INFO("Complete.");
+}
 
-// void CalibrateCamera::bodyCheckBoxImplementation()
-// {
+void CalibrateCamera::loadCalibrationButtonImplementation()
+{
+    ROS_INFO("Loading calibration parameters...");
+    loadCalibration();
+    updateImage();
+    ROS_INFO("Complete.");
+    ROS_WARN("Note only the image show the current calibration not the sliders.");
+}
 
-// }
-
-// void CalibrateCamera::poleCheckBoxImplementation()
-// {
-
-// }
-
-// void CalibrateCamera::grabberCheckBoxImplementation()
-// {
-
-// }
-
-// void CalibrateCamera::radiusCheckBoxImplementation()
-// {
-
-// }
-
-// void CalibrateCamera::linesCheckBoxImplementation()
-// {
-
-// }
-
+void CalibrateCamera::exitButtonImplementation()
+{
+    ROS_INFO("Exiting program...");
+    _exit = true;
+}
