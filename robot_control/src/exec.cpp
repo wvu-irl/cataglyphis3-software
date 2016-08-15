@@ -8,6 +8,8 @@ Exec::Exec()
     navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
     driveSpeedsSub = nh.subscribe<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1, &Exec::driveSpeedsCallback_, this);
+    leftRoboteqSub = nh.subscribe<messages::encoder_data>("/roboteq/drivemotorin/left", 1, &Exec::leftRoboteqCallback_, this);
+    rightRoboteqSub = nh.subscribe<messages::encoder_data>("/roboteq/drivemotorin/right", 1, &Exec::rightRoboteqCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
     actionEndedPub = nh.advertise<messages::ExecActionEnded>("control/exec/actionended",1);
@@ -181,6 +183,20 @@ void Exec::driveSpeedsCallback_(const robot_control::DriveSpeeds::ConstPtr &msg)
 {
     robotStatus.vMax = msg->vMax;
     robotStatus.rMax = msg->rMax;
+}
+
+void Exec::leftRoboteqCallback_(const messages::encoder_data::ConstPtr &msg)
+{
+    robotStatus.flEncoder = msg->motor_1_encoder_count;
+    robotStatus.mlEncoder = msg->motor_2_encoder_count;
+    robotStatus.blEncoder = msg->motor_3_encoder_count;
+}
+
+void Exec::rightRoboteqCallback_(const messages::encoder_data::ConstPtr &msg)
+{
+    robotStatus.frEncoder = msg->motor_1_encoder_count;
+    robotStatus.mrEncoder = msg->motor_2_encoder_count;
+    robotStatus.brEncoder = msg->motor_3_encoder_count;
 }
 
 void Exec::packActuatorMsgOut_()

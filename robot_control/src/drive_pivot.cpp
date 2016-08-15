@@ -13,6 +13,14 @@ void DrivePivot::init()
 	thresholdTime_ = 0.0;
     robotOutputs.stopFlag = false;
     robotOutputs.turnFlag = true;
+    flEncPrev_ = robotStatus.flEncoder;
+    mlEncPrev_ = robotStatus.mlEncoder;
+    blEncPrev_ = robotStatus.blEncoder;
+    frEncPrev_ = robotStatus.frEncoder;
+    mrEncPrev_ = robotStatus.mrEncoder;
+    brEncPrev_ = robotStatus.brEncoder;
+    dogLegState = _monitoring;
+    dogLegDetectTimeStarted_ = false;
     ROS_DEBUG("drivePivot init");
 }
 
@@ -23,6 +31,7 @@ int DrivePivot::run()
     rMax_ = robotStatus.rMax;
 	deltaHeading_ = robotStatus.heading - initHeading_;
 	rDes_ = kpR_*(desiredDeltaHeading_-deltaHeading_);
+    dogLeg_();
 	if(rDes_>rMax_) rDes_ = rMax_;
 	else if(rDes_<(-rMax_)) rDes_ = -rMax_;
     if(rDes_>0.0)
@@ -80,4 +89,40 @@ int DrivePivot::run()
 		taskEnded_ = 0;
 	}
 	return taskEnded_;
+}
+
+void DrivePivot::dogLeg_()
+{
+    switch(dogLegState)
+    {
+    case _monitoring:
+        encoderDiffSum_ = abs(robotStatus.flEncoder - flEncPrev_) + abs(robotStatus.mlEncoder - mlEncPrev_) + abs(robotStatus.blEncoder - blEncPrev_) +
+                abs(robotStatus.frEncoder - frEncPrev_) + abs(robotStatus.mrEncoder - mrEncPrev_) + abs(robotStatus.brEncoder - brEncPrev_);
+        if(encoderDiffSum_ > encoderDogLegTriggerValue_ && !dogLegDetectTimeStarted_) {dogLegDetectTimeStarted_ = true; dogLegDetectTime_ = ros::Time::now().toSec();}
+        else dogLegDetectTimeStarted_ = false;
+        if(dogLegDetectTimeStarted_ && (ros::Time::now().toSec() - dogLegDetectTime_) >= dogLegDetectThreshold_) dogLegState = _commanding;
+        else dogLegState = _monitoring;
+        break;
+    case _commanding:
+        ROS_INFO("dog leg detected");
+        rSpeedI_ = 0.0;
+        dogLegRecoverStartTime_ = ros::Time::now().toSec();
+        dogLegState = _recovering;
+        break;
+    case _recovering:
+        if((ros::Time::now().toSec() - dogLegRecoverStartTime_) >= dogLegRecoverDuration_)
+        {
+            if(pivotSign_ > 0) rDes_ = -dogLegRDes_;
+            else rDes_ = dogLegRDes_;
+            dogLegState = _recovering;
+        }
+        else
+        {
+            rSpeedI_ = 0.0;
+            dogLegDetectTimeStarted_ = false;
+            dogLegState = _monitoring;
+
+        }
+        break;
+    }
 }

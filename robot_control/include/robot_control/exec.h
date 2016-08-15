@@ -22,6 +22,7 @@
 #include <messages/NavFilterOut.h>
 #include <messages/GrabberFeedback.h>
 #include <messages/NextWaypointOut.h>
+#include <messages/encoder_data.h>
 #include <robot_control/DriveSpeeds.h>
 
 #define ACTION_POOL_SIZE 100
@@ -40,6 +41,8 @@ public:
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;
 	ros::Subscriber driveSpeedsSub;
+	ros::Subscriber leftRoboteqSub;
+	ros::Subscriber rightRoboteqSub;
 
 	const int loopRate = 20; // Hz
 	// Methods
@@ -74,6 +77,8 @@ private:
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg);
 	void driveSpeedsCallback_(const robot_control::DriveSpeeds::ConstPtr& msg);
+	void leftRoboteqCallback_(const messages::encoder_data::ConstPtr& msg);
+	void rightRoboteqCallback_(const messages::encoder_data::ConstPtr& msg);
 	void packActuatorMsgOut_();
 	void packInfoMsgOut_();
 	void packNextWaypointOut_();

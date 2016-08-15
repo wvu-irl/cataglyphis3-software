@@ -40,6 +40,22 @@ private:
 	float cwBoostGain_;
 	float leftMiddleWheelMultiplier_;
 	float rightMiddleWheelMultiplier_;
+	void dogLeg_();
+	double dogLegDetectTime_;
+	double dogLegRecoverStartTime_;
+	const double dogLegDetectThreshold_ = 1.5; // sec
+	const double dogLegRecoverDuration_ = 1.0; // sec
+	const long int encoderDogLegTriggerValue_ = 1000;
+	long int flEncPrev_;
+	long int mlEncPrev_;
+	long int blEncPrev_;
+	long int frEncPrev_;
+	long int mrEncPrev_;
+	long int brEncPrev_;
+	long int encoderDiffSum_;
+	const float dogLegRDes_ = 45.0;
+	bool dogLegDetectTimeStarted_;
+	enum DOG_LEG_STATE_T {_monitoring, _commanding, _recovering} dogLegState;
 };
 
 #endif // DRIVE_PIVOT_H
