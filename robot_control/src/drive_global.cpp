@@ -7,6 +7,7 @@ void DriveGlobal::init()
     desiredEndHeading_ = params.float3;
 	endHeading_ = params.bool1;
     pushedToFront_ = params.bool2;
+    // params.bool3 = unskippable
     //ROS_DEBUG("before task deque clears");
     clearDeques();
 	calculatePath_();

@@ -336,7 +336,7 @@ void Keyframe::Initialization()
 
 	//parameters for points filter
 	radius_round_filter = 5; //length of edgs of round filter
-	b_theta = 20 * PI / 180; //angle of blocked points (translate to radian)
+	b_theta = 16 * PI / 180; //angle of blocked points (translate to radian)
 
 	//parameters for generating a new keyframe
 	threshold_mindistance = 5; //distance between current frame and previous keyframe less than the threshold, it will not generate a new keyframe
@@ -450,7 +450,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 
 				position.x = TkeyTomap(0,3);
 				position.y = TkeyTomap(1,3);
-				position.heading = TransformationMatrix_to_angle(TkeyTomap);	//radian
+				position.heading = LocalMap_All_s[messages_input_index].heading_filter;	//radian, make sure the number is same as Navfilter
 
 				//store keyframe position into vertex 
 				Vertex.push_back(position);
@@ -473,6 +473,9 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 				//publish the first keyframe
 				keyframelist_msg.keyframeList.push_back(Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]));
 				keyframePub.publish(keyframelist_msg);
+
+				//publish the first keyframe to localization, based on Navfilter data
+				TkeyTomap_Pub(0);
 
 			}
 			else
@@ -1088,15 +1091,18 @@ Keyframe::ICP_Result Keyframe::ICP_compute(int ICP_ref_index, int ICP_read_index
 		//get ovelap rate
 		//calculate overlap (number of overlap points / number of read points)
 	  	overlap = overlap_check_counter / (double) read_localmap_icp_rm.ICP_cloudMsgIn.size();
-	  	
-		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix);
 
-		icp_result.transformation_matrix = transformation_matrix;
+	  	//if there is no enough points to do verification
+	  	if(read_Correspondences_cells.size() < threshold_ICP_min_points || ref_Correspondences_cells.size() < threshold_ICP_min_points)
+	  	{
+	  		verification_result = 0.1;
+	  	}
+	  	else
+	  	{
+	  		verification_result = ICP_verification(read_Correspondences_cells, ref_Correspondences_cells, information_matrix);
+	  	}
+	  	
 		icp_result.verification_result = verification_result;
-		icp_result.from_index = ICP_read_index;
-		icp_result.to_index = ICP_ref_index;
-		icp_result.overlap = overlap;
-		icp_result.information_matrix = information_matrix;
 
 		return icp_result;
 	}
@@ -1180,6 +1186,22 @@ double Keyframe::ICP_verification(std::vector<Cell_Local> read_Correspondences_c
 		ref_cloud->push_back(pcl::PointXYZ(ref_Correspondences_cells_verify[i].x_mean, ref_Correspondences_cells_verify[i].y_mean, 0));
 	}
 
+	//if there is no enough points, return score for IMU
+	if(read_cloud->size() < threshold_ICP_min_points|| ref_cloud->size() < threshold_ICP_min_points)
+	{
+		//set the information_matrix as a average number
+  		information_matrix(0,0) = 5;
+  		information_matrix(1,1) = 5;
+  		information_matrix(2,2) = 5;
+	  	information_matrix(0,1) = 0.0;
+	  	information_matrix(0,2) = 0.0;
+	  	information_matrix(1,0) = 0.0;
+	  	information_matrix(1,2) = 0.0;
+	  	information_matrix(2,0) = 0.0;
+	  	information_matrix(2,1) = 0.0;
+
+	  	return 10.0;
+	}
   	//find correspondence
   	est.setInputSource (read_cloud);
   	est.setInputTarget (ref_cloud);
@@ -1930,6 +1952,7 @@ void Keyframe::DetectNearestKeyframe()
 	}
 }
 
+//option 0: regular option 1: homing updated
 void Keyframe::TkeyTomap_Pub(int option)
 {
 	float x_filter_pub = 0;
@@ -1953,13 +1976,13 @@ void Keyframe::TkeyTomap_Pub(int option)
 	tkeytomap_msg.heading_filter = heading_filter_pub;
 
 	if(option == 1)
-	{
-		tkeytomap_msg.homing_updated = true;
-	}
-	else
-	{
-		tkeytomap_msg.homing_updated = false;
-	}
+ 	{
+ 		tkeytomap_msg.homing_updated = true;
+ 	}
+ 	else
+ 	{
+ 		tkeytomap_msg.homing_updated = false;
+ 	}
 
 	TkeyTomapPub.publish(tkeytomap_msg);
 

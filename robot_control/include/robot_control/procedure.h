@@ -131,8 +131,8 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float end
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = pushToFront;
-		execActionSrv.request.bool3 = false;
-		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool3 = waypointsToTravel.at(i).unskippable;
+		execActionSrv.request.bool4 = waypointsToTravel.at(i).roiWaypoint;
 		execActionSrv.request.bool5 = false;
 		execActionSrv.request.bool6 = false;
 		execActionSrv.request.bool7 = false;
@@ -164,8 +164,8 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
-		execActionSrv.request.bool3 = false;
-		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool3 = waypointsToTravel.at(i).unskippable;
+		execActionSrv.request.bool4 = waypointsToTravel.at(i).roiWaypoint;
 		execActionSrv.request.bool5 = false;
 		execActionSrv.request.bool6 = false;
 		execActionSrv.request.bool7 = false;
@@ -227,8 +227,8 @@ void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endH
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
-		execActionSrv.request.bool3 = false;
-		execActionSrv.request.bool4 = false;
+		execActionSrv.request.bool3 = waypointsToTravel.at(i).unskippable;
+		execActionSrv.request.bool4 = waypointsToTravel.at(i).roiWaypoint;
 		execActionSrv.request.bool5 = false;
 		execActionSrv.request.bool6 = false;
 		execActionSrv.request.bool7 = false;
