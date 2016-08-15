@@ -15,7 +15,7 @@ int main(int argc, char **argv)
        ros::console::notifyLoggerLevelsChanged();
     }
     //Q_INIT_RESOURCE(resources);
-    ros::init(argc, argv, "GUI_Node");
+    ros::init(argc, argv, "GUI_Node", ros::init_options::AnonymousName);
     ROS_INFO("GUI_Node - ros::init complete");
     boost::shared_ptr<ros::NodeHandle> nh(new ros::NodeHandle());
     ROS_INFO("GUI_Node - node handle created");
@@ -33,3 +33,13 @@ int main(int argc, char **argv)
 
     
 }
+
+
+//porlar grid from starting platform
+
+//cartesian grid relative to map NA
+
+
+//local map to disply NA changes with a submit button to HSM and NAV
+
+//each sample candidate should display location, what CV thought type, and confidence

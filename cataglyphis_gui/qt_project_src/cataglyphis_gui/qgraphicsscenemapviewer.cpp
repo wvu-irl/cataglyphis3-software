@@ -24,7 +24,6 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
         drawingScene.addItem(tempitem.get());
 
         //drawingView.setSizeAdjustPolicy(QAbstractScrollArea::AdjustIgnored);
-        drawingScene.removeItem(tempitem.get());
         //if(gridMapContainer.isValid())
         {
             for(grid_map::GridMapIterator it(gridMapContainer); !it.isPastEnd(); it= (++it))
@@ -37,7 +36,7 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                         && (mapValue != MAP_CELL_NOOP_VALUE))
                 {
                     map_viewer_rect *gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE);
-                    ROS_DEBUG("Position %2.3f %2.3f %2.3f %2.3f %2.3f %2.3f",cellPosition[0], cellPosition[1], cellPosition[0]*pixelsPerDistance+2, cellPosition[1]*pixelsPerDistance+2, pixelsPerDistance, pixelsPerDistance);
+                    //ROS_DEBUG("Position %2.3f %2.3f %2.3f %2.3f %2.3f %2.3f",cellPosition[0], cellPosition[1], cellPosition[0]*pixelsPerDistance, cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
                     gridRectangle->setRect((float)cellPosition[0]*pixelsPerDistance, (float)cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
                     gridRectangle->setTransformOriginPoint(startPlatformCenter);
                     gridRectangle->setTransform(robotToObjTransform);
@@ -49,20 +48,21 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
             ROS_DEBUG("SCENE:: Finished Reading Global Map");
             ROS_DEBUG("Number of items in scene: %d", layer->itemList->size());
             ROS_DEBUG("SCENE:: adding group to scene");
-            //drawingScene.addItem(layer->items.get());
+//            drawingScene.addItem(layer->items.get());
 
             this->addItem(layer->items.get());
-            //drawingScene.setSceneRect(drawingScene.itemsBoundingRect());
+//            drawingScene.removeItem(tempitem.get());
+//            drawingView.fitInView(this->sceneRect(), Qt::KeepAspectRatio);
             ROS_DEBUG("SCENE:: showing layer");
             layer->items->show();
             ROS_DEBUG("SCENE:: DONE");
 
-            ROS_DEBUG("SCENE:: Generating drawingScene Texture");
-            /*QPixmap temp = drawingView.grab(drawingScene.);
-            layer->gridPixmap->swap(temp);
-            QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(*layer->gridPixmap);
-            pixmapItem->setFlag(QGraphicsItem::ItemIsMovable)*/;
-            ROS_DEBUG("SCENE:: Rendering texture of field display");
+//            ROS_DEBUG("SCENE:: Generating drawingScene Texture");
+//            QPixmap temp = drawingView.grab();
+//            layer->gridPixmap->swap(temp);
+//            QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(*layer->gridPixmap);
+//            pixmapItem->setFlag(QGraphicsItem::ItemIsMovable);
+//            ROS_DEBUG("SCENE:: Rendering texture of field display");
             //this->addItem(pixmapItem);
 
             layer->properties.isLayerSetup = true;
