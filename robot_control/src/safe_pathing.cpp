@@ -184,16 +184,16 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                     deltatime = nexttime - firsttime;
                     firsttime = nexttime;
                     ROS_INFO("time of arrival map FMM deltaT = %lf",deltatime);
-                    ROS_INFO("before gradientDescent");
+                    //ROS_INFO("before gradientDescent");
                     //ROS_INFO("optimalPath.size() = %u",optimalPath.size());
                     gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
                     if(optimalPath.size()>1)
                     {
-                        ROS_INFO("before chooseWaypointsFromOptimalPath");
-                        ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                        //ROS_INFO("before chooseWaypointsFromOptimalPath");
+                        //ROS_INFO("optimalPath.size() = %u",optimalPath.size());
                         chooseWaypointsFromOptimalPath();
-                        ROS_INFO("before waypointsOut.insert");
-                        ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+                        //ROS_INFO("before waypointsOut.insert");
+                        //ROS_INFO("optimalPath.size() = %u",optimalPath.size());
                     }
                     if(waypointsToInsert.size()>0)
                     {
@@ -554,68 +554,72 @@ void SafePathing::chooseWaypointsFromOptimalPath()
     {
         timeOfArrivalMap.getPosition(startIndex, startIndexPos);
         timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
-        ROS_INFO("################################################");
-        ROS_INFO("startIndex = (%i,%i)",startIndex[0],startIndex[1]);
-        ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
+        //ROS_INFO("################################################");
+        //ROS_INFO("startIndex = (%i,%i)",startIndex[0],startIndex[1]);
+        //ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
         /*if(hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]) < minWaypointDistance)
         {
             continueLoop = false;
             break;
         }*/
         //ROS_INFO("hazardAlongPossiblePathThresh = %f",hazardAlongPossiblePathThresh);
-        if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh, numCellsOverThreshLimit, false)!=_driveable && !intersectingMinDistance)
+        if(straightLineDriveable(resistanceMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh, numCellsOverThreshLimit, false)!=_driveable && !intersectingMinDistance)
         {
-            ROS_INFO("========= numHazardsOverLimit");
+            //ROS_INFO("========= numHazardsOverLimit");
             prevIndex = indexToConsider;
-            ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
-            ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
+            //ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
+            //ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
             for(optimalPathConsiderIndex; optimalPathConsiderIndex>=optimalPathStartIndex; optimalPathConsiderIndex--)
             {
-                ROS_INFO("optimalPath.size = %u",optimalPath.size());
-                ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
-                ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
+                //ROS_INFO("optimalPath.size = %u",optimalPath.size());
+                //ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
+                //ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
                 indexToConsider = optimalPath.at(optimalPathConsiderIndex);
                 timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
                 timeOfArrivalMap.getPosition(prevIndex, prevIndexPos);
-                ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
-                ROS_INFO("considerIndexPos = (%f,%f)",considerIndexPos[0],considerIndexPos[1]);
-                ROS_INFO("prevIndexPos = (%f,%f)",prevIndexPos[0],prevIndexPos[1]);
+                //ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
+                //ROS_INFO("considerIndexPos = (%f,%f)",considerIndexPos[0],considerIndexPos[1]);
+                //ROS_INFO("prevIndexPos = (%f,%f)",prevIndexPos[0],prevIndexPos[1]);
                 distanceBetweenIndices = hypot(considerIndexPos[0]-prevIndexPos[0], considerIndexPos[1]-prevIndexPos[1]);
-                ROS_INFO("distanceBetween = %f",distanceBetweenIndices);
+                //ROS_INFO("distanceBetween = %f",distanceBetweenIndices);
                 distanceToStartIndex = hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]);
-                ROS_INFO("distanceToStartIndex = %f",distanceToStartIndex);
-                ROS_INFO("optimalPath.back = (%i,%i", optimalPath.back()[0], optimalPath.back()[1]);
-                ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0], indexToConsider[1]);
+                //ROS_INFO("distanceToStartIndex = %f",distanceToStartIndex);
+                //ROS_INFO("optimalPath.back = (%i,%i", optimalPath.back()[0], optimalPath.back()[1]);
+                //ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0], indexToConsider[1]);
                 if(distanceToStartIndex<=minWaypointDistance && distanceBetweenIndices<=minWaypointDistance)
                 {
-                    ROS_WARN("%%%% intersecting min distance");
+                    //ROS_INFO("%%%% intersecting min distance");
                     intersectingMinDistance = true;
                 }
                 if(distanceToStartIndex<minWaypointDistance)
                 {
-                    ROS_INFO("!*!* distance to start index < min");
+                    //ROS_INFO("!*!* distance to start index < min");
                     hazardAlongPossiblePathThresh += hazardThreshIncrementAmount;
-                    if(!intersectingMinDistance) optimalPathConsiderIndex = optimalPath.size()-1;
+                    if(!intersectingMinDistance)
+                    {
+                        optimalPathConsiderIndex = optimalPath.size()-1;
+                        indexToConsider = optimalPath.at(optimalPathConsiderIndex);
+                    }
                     break;
                 }
                 else if(distanceBetweenIndices>minWaypointDistance)
                 {
-                    ROS_INFO("distacenBetweenIndices > min");
+                    //ROS_INFO("distacenBetweenIndices > min");
                     break;
                 }
-                if(optimalPathConsiderIndex == optimalPathStartIndex)
+                /*if(optimalPathConsiderIndex == optimalPathStartIndex)
                 {
                     std::cout << "enter a character to continue" << std::endl;
                     std::cin >> temp;
                     if(temp == 'q') exit(1);
-                }
+                }*/
             }
             continueLoop = true;
         }
         else if(indexToConsider[0] == optimalPath.back()[0] && indexToConsider[1] == optimalPath.back()[1]) continueLoop = false; // Straight line path to end point is clear, do not insert any waypoints
         else
         {
-            ROS_INFO("push back waypoint to insert");
+            //ROS_INFO("push back waypoint to insert");
             waypointToPushBack.x = considerIndexPos[0];
             waypointToPushBack.y = considerIndexPos[1];
             waypointsToInsert.push_back(waypointToPushBack);
@@ -665,16 +669,16 @@ STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &
     {
         if(map.at(layer, *it) >= hazardThresh) numCellsOverThresh++;
     }
-    ROS_INFO("startPos = (%f,%f), endPos = (%f,%f)", startPos[0], startPos[1], endPos[0], endPos[1]);
-    ROS_INFO("hazardThresh = %f",hazardThresh);
-    ROS_INFO("numCellsLimit = %u",numCellsLimit);
-    ROS_INFO("numCellsOverThresh = %u",numCellsOverThresh);
+    //ROS_INFO("startPos = (%f,%f), endPos = (%f,%f)", startPos[0], startPos[1], endPos[0], endPos[1]);
+    //ROS_INFO("hazardThresh = %f",hazardThresh);
+    //ROS_INFO("numCellsLimit = %u",numCellsLimit);
+    //ROS_INFO("numCellsOverThresh = %u",numCellsOverThresh);
     //ROS_INFO("after polygon iterator loop");
-    if(numCellsOverThresh>=numCellsLimit) {ROS_WARN("too many obstacles"); return _tooManyObstacles;}
+    if(numCellsOverThresh>=numCellsLimit) {ROS_INFO("too many obstacles"); return _tooManyObstacles;}
     else
     {
-        if(hypot(endPos[0]-startPos[0], endPos[1]-startPos[1]) > maxDriveDistance) {ROS_WARN("distance to long"); return _distanceTooLong;}
-        else {ROS_WARN("driveable"); return _driveable;}
+        if(hypot(endPos[0]-startPos[0], endPos[1]-startPos[1]) > maxDriveDistance) {ROS_INFO("distance to long"); return _distanceTooLong;}
+        else {ROS_INFO("driveable"); return _driveable;}
     }
 }
 
@@ -685,8 +689,10 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
     float firstWaypointDistance;
     float secondWaypointDistance;
     float distanceBetweenWaypoints;
+    float angleBetweenWaypoints; // radians
     float robotCurrentRadius;
     bool distanceFromLineToOriginLessThanHomingRadius;
+    bool angleBetweenWaypointsGreaterThan90;
     bool oneHomingWaypointSelected;
     float A;
     float B;
@@ -703,60 +709,72 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
     robot_control::Waypoint waypoint1;
     robot_control::Waypoint waypoint2;
 
+    waypointsOutInitSize = waypointList.size();
     if(waypointsOutInitSize>1)
     {
         // Corner waypoint check
         robotCurrentRadius = hypot(waypointList.front().x, waypointList.front().y);
+        //ROS_INFO("robotCurrentRadius = %f",robotCurrentRadius);
         if(waypointList.back().x == homeWaypoint.x && waypointList.back().y == homeWaypoint.y && robotCurrentRadius > atHomeRadius)
         {
+            ROS_INFO("coming home, insert corner tansition waypoints");
             lastWaypointBeforeHome.x = waypointList.at(waypointList.size()-2).x;
             lastWaypointBeforeHome.y = waypointList.at(waypointList.size()-2).y;
             if(lastWaypointBeforeHome.x>0.0 && lastWaypointBeforeHome.y>0.0)
             {
+                ROS_INFO("quad 1");
                 waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted++;
             }
             else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y>0.0)
             {
+                ROS_INFO("quad 2");
                 waypointList.insert(waypointList.end()-1, quad2MagneticWaypoint);
                 waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted+=2;
             }
             else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y<0.0)
             {
+                ROS_INFO("quad 3");
                 waypointList.insert(waypointList.end()-1, quad3MagneticWaypoint);
                 waypointList.insert(waypointList.end()-1, quad4MagneticWaypoint);
                 numTransitionWaypointsInserted+=2;
             }
             else
             {
+                ROS_INFO("quad 4");
                 waypointList.insert(waypointList.end()-1, quad4MagneticWaypoint);
                 numTransitionWaypointsInserted++;
             }
         }
         else if(robotCurrentRadius <= atHomeRadius && hypot(waypointList.at(1).x, waypointList.at(1).y) > atHomeRadius)
         {
+            ROS_INFO("leaving home, insert corner tansition waypoints");
             firstWaypointOutFromHome.x = waypointList.at(1).x;
             firstWaypointOutFromHome.y = waypointList.at(1).y;
             if(firstWaypointOutFromHome.x>0.0 && firstWaypointOutFromHome.y>0.0)
             {
+                ROS_INFO("quad 1");
                 waypointList.insert(waypointList.begin()+1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted++;
             }
             else if(firstWaypointOutFromHome.x<0.0 && firstWaypointOutFromHome.y>0.0)
             {
+                ROS_INFO("quad 2");
                 waypointList.insert(waypointList.begin()+1, quad2MagneticWaypoint);
                 waypointList.insert(waypointList.begin()+1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted+=2;
             }
             else if(firstWaypointOutFromHome.x<0.0 && firstWaypointOutFromHome.y<0.0)
             {
+                ROS_INFO("quad 3");
                 waypointList.insert(waypointList.begin()+1, quad3MagneticWaypoint);
                 waypointList.insert(waypointList.begin()+1, quad4MagneticWaypoint);
                 numTransitionWaypointsInserted+=2;
             }
             else
             {
+                ROS_INFO("quad 4");
                 waypointList.insert(waypointList.begin()+1, quad4MagneticWaypoint);
                 numTransitionWaypointsInserted++;
             }
@@ -776,12 +794,16 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             distanceBetweenWaypoints = hypot(waypoint1.x-waypoint2.x, waypoint1.y-waypoint2.y);
             if((fabs(waypoint1.x*waypoint2.y - waypoint1.y*waypoint2.x)/distanceBetweenWaypoints) < homingRadius) distanceFromLineToOriginLessThanHomingRadius = true;
             else distanceFromLineToOriginLessThanHomingRadius = false;
+            angleBetweenWaypoints = acos((pow(firstWaypointDistance, 2.0) + pow(secondWaypointDistance, 2.0) - pow(distanceBetweenWaypoints, 2.0))/
+                                         (2.0*firstWaypointDistance*secondWaypointDistance)); // radians
+            if(angleBetweenWaypoints > PI/2.0) angleBetweenWaypointsGreaterThan90 = true;
+            else angleBetweenWaypointsGreaterThan90 = false;
             //ROS_INFO("firstWaypointDistance = %f",firstWaypointDistance);
             //ROS_INFO("secondWaypointDistance = %f",secondWaypointDistance);
             //ROS_INFO("distanceBetweenWaypoints = %f",distanceBetweenWaypoints);
-            if((firstWaypointDistance > homingRadius && secondWaypointDistance < homingRadius) ||
-                    (distanceFromLineToOriginLessThanHomingRadius && firstWaypointDistance > homingRadius && secondWaypointDistance > homingRadius)
-                    && !oneHomingWaypointSelected)
+            if(((firstWaypointDistance > homingRadius && secondWaypointDistance < homingRadius) ||
+                    (distanceFromLineToOriginLessThanHomingRadius && firstWaypointDistance > homingRadius && secondWaypointDistance > homingRadius
+                     && angleBetweenWaypointsGreaterThan90)) && !oneHomingWaypointSelected)
             {
                 ROS_INFO("stop at homing radius");
                 oneHomingWaypointSelected = true;
@@ -793,26 +815,26 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
                 A = 1.0 + pow(m, 2.0);
                 B = -2.0*pow(m, 2.0)*waypoint2.x + 2.0*m*waypoint2.y;
                 C = pow(m, 2.0)*pow(waypoint2.x, 2.0) - 2.0*m*waypoint2.x*waypoint2.y + pow(waypoint2.y, 2.0) - pow(homingRadius, 2.0);
-                ROS_INFO("m = %f",m);
-                ROS_INFO("A = %f",A);
-                ROS_INFO("B = %f",B);
-                ROS_INFO("C = %f",C);
+                //ROS_INFO("m = %f",m);
+                //ROS_INFO("A = %f",A);
+                //ROS_INFO("B = %f",B);
+                //ROS_INFO("C = %f",C);
                 xSol[0] = (-B+sqrt(pow(B, 2.0) - 4.0*A*C))/(2.0*A);
                 xSol[1] = (-B-sqrt(pow(B, 2.0) - 4.0*A*C))/(2.0*A);
                 ySol[0] = waypoint2.y + m*(xSol[0] - waypoint2.x);
                 ySol[1] = waypoint2.y + m*(xSol[1] - waypoint2.x);
-                ROS_INFO("homing solutions: (%f,%f); (%f,%f)", xSol[0], ySol[0], xSol[1], ySol[1]);
+                //ROS_INFO("homing solutions: (%f,%f); (%f,%f)", xSol[0], ySol[0], xSol[1], ySol[1]);
                 if(hypot(xSol[1]-waypoint1.x, ySol[1]-waypoint1.y) < hypot(xSol[0]-waypoint1.x, ySol[0]-waypoint1.y))
                 {
                     homingWaypoint.x = xSol[1];
                     homingWaypoint.y = ySol[1];
-                    ROS_INFO("homing solution 1 chosen");
+                    //ROS_INFO("homing solution 1 chosen");
                 }
                 else
                 {
                     homingWaypoint.x = xSol[0];
                     homingWaypoint.y = ySol[0];
-                    ROS_INFO("homing solution 0 chosen");
+                    //ROS_INFO("homing solution 0 chosen");
                 }
                 waypointList.insert(waypointList.begin()+1+i+numTransitionWaypointsInserted, homingWaypoint);
                 numTransitionWaypointsInserted++;
@@ -824,13 +846,13 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
 void SafePathing::generateAndPubVizMap(std::vector<robot_control::Waypoint> waypointList)
 {
     grid_map::Position waypointPositions;
-    ROS_INFO("before setGeometry");
+    //ROS_INFO("before setGeometry");
     vizMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-    ROS_INFO("before add layers");
+    //ROS_INFO("before add layers");
     vizMap.add(vizResistanceLayer, 0.0);
     vizMap.add(vizTimeOfArrivalLayer, 0.0);
     vizMap.add(vizOptimalPathLayer, 0.0);
-    ROS_INFO("before iterator loop");
+    //ROS_INFO("before iterator loop");
     for(grid_map::GridMapIterator it(vizMap); !it.isPastEnd(); ++it)
     {
         vizMap.at(vizResistanceLayer, *it) = resistanceMap.at(timeLayer, *it);
@@ -838,8 +860,8 @@ void SafePathing::generateAndPubVizMap(std::vector<robot_control::Waypoint> wayp
     }
     if(optimalPath.size()>1)
     {
-        ROS_INFO("before optimalPath loop");
-        ROS_INFO("optimalPath.size() = %u",optimalPath.size());
+        //ROS_INFO("before optimalPath loop");
+        //ROS_INFO("optimalPath.size() = %u",optimalPath.size());
         for(int i=0; i<optimalPath.size(); i++)
         {
             //ROS_INFO("i = %i", i);
@@ -853,9 +875,9 @@ void SafePathing::generateAndPubVizMap(std::vector<robot_control::Waypoint> wayp
         waypointPositions[1] = waypointList.at(i).y;
         vizMap.atPosition(vizOptimalPathLayer, waypointPositions) = 10.0;
     }
-    ROS_INFO("before toMessage");
+    //ROS_INFO("before toMessage");
     grid_map::GridMapRosConverter::toMessage(vizMap, vizMapMsg);
-    ROS_INFO("before publish");
+    //ROS_INFO("before publish");
     vizMapPub.publish(vizMapMsg);
 }
 
