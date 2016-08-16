@@ -48,6 +48,12 @@ private:
 	int _poleWidthSlider = 0;
 	int _poleHeightMax = 5792/2;
 	int _poleHeightSlider = 0;
+	int _grabberWidthMax = 5792;
+	int _grabberWidthSlider = 0;
+	int _grabberHeightMax = 5792/2;
+	int _grabberHeightSlider = 0;
+	int _grabberShiftMax = 5792;
+	int _grabberShiftSlider = 0;
 	int _rollMax = 100;
 	int _rollSlider = 0;//_rollMax/2;
 	int _rollOffset = -_rollMax/2;
@@ -99,6 +105,21 @@ private:
 	};
 
 	static void onTrackbarPoleHeight(int, void*)
+	{
+
+	};
+
+	static void onTrackbarGrabberWidth(int, void*)
+	{
+
+	};
+
+	static void onTrackbarGrabberHeight(int, void*)
+	{
+
+	};
+
+	static void onTrackbarGrabberShift(int, void*)
 	{
 
 	};

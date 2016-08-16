@@ -25,7 +25,10 @@ void CalibrateCamera::initializeTrackbars()
     cv::createTrackbar( "body-shift", "", &_robotShiftSlider, _robotShiftMax, onTrackbarRobotShift );
     cv::createTrackbar( "radius", "", &_radiusSlider, _radiusMax, onTrackbarRadius );
     cv::createTrackbar( "pole-w", "", &_poleWidthSlider, _poleWidthMax, onTrackbarPoleWidth );
-    cv::createTrackbar( "pole-h", "", &_poleHeightSlider, _poleHeightMax, onTrackbarPoleHeight );  
+    cv::createTrackbar( "pole-h", "", &_poleHeightSlider, _poleHeightMax, onTrackbarPoleHeight );
+    cv::createTrackbar( "grab-w", "", &_grabberWidthSlider, _grabberWidthMax, onTrackbarGrabberWidth );
+    cv::createTrackbar( "grab-h", "", &_grabberHeightSlider, _grabberHeightMax, onTrackbarGrabberHeight );
+    cv::createTrackbar( "grab-shift", "", &_grabberShiftSlider, _grabberShiftMax, onTrackbarGrabberShift );
     cv::createTrackbar( "roll-deg", "", &_rollSlider, _rollMax, onTrackbarRoll );
     cv::createTrackbar( "pitch-px", "", &_pitchSlider, _pitchMax, onTrackbarPitch );
     cv::createTrackbar( "yaw-px", "", &_yawSlider, _yawMax, onTrackbarYaw );
@@ -56,6 +59,10 @@ void CalibrateCamera::updateImage()
     int limitPoleLeftWidth = (_poleWidthMax - _poleWidthSlider)/2;
     int limitPoleRightWidth = (_poleWidthMax - _poleWidthSlider)/2 + _poleWidthSlider;
     int limitPoleHeight = _poleHeightMax*2 - _poleHeightSlider;
+    int limitGrabberLeftWidth = (_grabberWidthMax - _grabberWidthSlider)/2;
+    int limitGrabberRightWidth = (_grabberWidthMax - _grabberWidthSlider)/2 + _grabberWidthSlider;
+    int limitGrabberHeightTop = _grabberHeightMax - _grabberHeightSlider - _grabberShiftSlider;
+    int limitGrabberHeightBottom = _grabberHeightMax - _grabberShiftSlider;
 
     //update calibration mask from limits
     for(int i=0; i<_calibrationMask.cols; i++)
@@ -87,6 +94,14 @@ void CalibrateCamera::updateImage()
                     _calibrationMask.at<uchar>(j,i)=0;
                 }
             }
+
+            if(_showGrabber)
+            {
+                if(i > limitGrabberLeftWidth && i < limitGrabberRightWidth && j > limitGrabberHeightTop && j < limitGrabberHeightBottom)
+                {
+                    _calibrationMask.at<uchar>(j,i)=0;
+                }
+            }
         }
     }
 
@@ -98,68 +113,64 @@ void CalibrateCamera::updateImage()
     cv::threshold(calibrationRGB,blendMask,0,100,1);
     cv::add(_dstCopy,blendMask,_dst);
 
- 	if(_showLines)
-	{
-		//compensation
-		float rollCompensation = (_rollSlider+_rollOffset)/10.0*3.14159265/180.0;
-		int pitchCompensationX = 0;
-		int pitchCompensationY = -(_pitchSlider+_pitchOffset);
-		int yawCompensationX = (_yawSlider+_yawOffset);
-		int yawCompensationY = 0;
+	//compensation
+	float rollCompensation = (_rollSlider+_rollOffset)/10.0*3.14159265/180.0;
+	int pitchCompensationX = 0;
+	int pitchCompensationY = -(_pitchSlider+_pitchOffset);
+	int yawCompensationX = (_yawSlider+_yawOffset);
+	int yawCompensationY = 0;
 
-		//vertical line
-		cv::Point P_V1 = cv::Point( 5792/2, 5792 ); //endpoint1 of line segment
-		P_V1 = cv::Point( P_V1.x - 5792/2, P_V1.y - 5792/2 ); //transform from image to robot
-		P_V1 = cv::Point(P_V1.x*cos(-rollCompensation) + P_V1.y*sin(-rollCompensation), -P_V1.x*sin(-rollCompensation) + P_V1.y*cos(-rollCompensation)); //roll rotation
-		P_V1 = cv::Point( P_V1.x + 5792/2, P_V1.y + 5792/2 ); //transform from robot to image
-		P_V1 = cv::Point(P_V1.x + pitchCompensationX + yawCompensationX, P_V1.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
+	//vertical line
+	cv::Point P_V1 = cv::Point( 5792/2, 5792 ); //endpoint1 of line segment
+	P_V1 = cv::Point( P_V1.x - 5792/2, P_V1.y - 5792/2 ); //transform from image to robot
+	P_V1 = cv::Point(P_V1.x*cos(-rollCompensation) + P_V1.y*sin(-rollCompensation), -P_V1.x*sin(-rollCompensation) + P_V1.y*cos(-rollCompensation)); //roll rotation
+	P_V1 = cv::Point( P_V1.x + 5792/2, P_V1.y + 5792/2 ); //transform from robot to image
+	P_V1 = cv::Point(P_V1.x + pitchCompensationX + yawCompensationX, P_V1.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
 
+	cv::Point P_V2 = cv::Point(5792/2, 0);
+	P_V2 = cv::Point( P_V2.x - 5792/2, P_V2.y - 5792/2 ); //transform from image to robot
+	P_V2 = cv::Point(P_V2.x*cos(-rollCompensation) + P_V2.y*sin(-rollCompensation), -P_V2.x*sin(-rollCompensation) + P_V2.y*cos(-rollCompensation)); //roll rotation
+	P_V2 = cv::Point( P_V2.x + 5792/2, P_V2.y + 5792/2 ); //transform from robot to image
+	P_V2 = cv::Point(P_V2.x + pitchCompensationX + yawCompensationX, P_V2.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
 
-		cv::Point P_V2 = cv::Point(5792/2, 0);
-		P_V2 = cv::Point( P_V2.x - 5792/2, P_V2.y - 5792/2 ); //transform from image to robot
-		P_V2 = cv::Point(P_V2.x*cos(-rollCompensation) + P_V2.y*sin(-rollCompensation), -P_V2.x*sin(-rollCompensation) + P_V2.y*cos(-rollCompensation)); //roll rotation
-		P_V2 = cv::Point( P_V2.x + 5792/2, P_V2.y + 5792/2 ); //transform from robot to image
-		P_V2 = cv::Point(P_V2.x + pitchCompensationX + yawCompensationX, P_V2.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
+	//horizontal line
+	cv::Point P_H1 = cv::Point( 5792, 5792/2 );
+	P_H1 = cv::Point( P_H1.x - 5792/2, P_H1.y - 5792/2 ); //transform from image to robot
+	P_H1 = cv::Point(P_H1.x*cos(-rollCompensation) + P_H1.y*sin(-rollCompensation), -P_H1.x*sin(-rollCompensation) + P_H1.y*cos(-rollCompensation)); //roll rotation
+	P_H1 = cv::Point( P_H1.x + 5792/2, P_H1.y + 5792/2 ); //transform from robot to image
+	P_H1 = cv::Point(P_H1.x + pitchCompensationX + yawCompensationX, P_H1.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
 
-		//horizontal line
-		cv::Point P_H1 = cv::Point( 5792, 5792/2 );
-		P_H1 = cv::Point( P_H1.x - 5792/2, P_H1.y - 5792/2 ); //transform from image to robot
-		P_H1 = cv::Point(P_H1.x*cos(-rollCompensation) + P_H1.y*sin(-rollCompensation), -P_H1.x*sin(-rollCompensation) + P_H1.y*cos(-rollCompensation)); //roll rotation
-		P_H1 = cv::Point( P_H1.x + 5792/2, P_H1.y + 5792/2 ); //transform from robot to image
-		P_H1 = cv::Point(P_H1.x + pitchCompensationX + yawCompensationX, P_H1.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
+	cv::Point P_H2 = cv::Point( 0, 5792/2);
+	P_H2 = cv::Point( P_H2.x - 5792/2, P_H2.y - 5792/2 ); //transform from image to robot
+	P_H2 = cv::Point(P_H2.x*cos(-rollCompensation) + P_H2.y*sin(-rollCompensation), -P_H2.x*sin(-rollCompensation) + P_H2.y*cos(-rollCompensation)); //roll rotation
+	P_H2 = cv::Point( P_H2.x + 5792/2, P_H2.y + 5792/2 ); //transform from robot to image
+	P_H2 = cv::Point(P_H2.x + pitchCompensationX + yawCompensationX, P_H2.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
 
-		cv::Point P_H2 = cv::Point( 0, 5792/2);
-		P_H2 = cv::Point( P_H2.x - 5792/2, P_H2.y - 5792/2 ); //transform from image to robot
-		P_H2 = cv::Point(P_H2.x*cos(-rollCompensation) + P_H2.y*sin(-rollCompensation), -P_H2.x*sin(-rollCompensation) + P_H2.y*cos(-rollCompensation)); //roll rotation
-		P_H2 = cv::Point( P_H2.x + 5792/2, P_H2.y + 5792/2 ); //transform from robot to image
-		P_H2 = cv::Point(P_H2.x + pitchCompensationX + yawCompensationX, P_H2.y + pitchCompensationY + yawCompensationY); //pitch and yaw rotation
+    //calculate attitude with respect to the camera coordinate systems
+    int u = (P_V1.x+P_V2.x)/2;
+    int v = (P_V1.y+P_V2.y)/2;
+    int x = -(v-5792/2);
+    int y = u - 5792/2;
+    _rollAngle = rollCompensation;
+    _pitchAngle = -y*IMAGE_SENSOR_PIXEL_SIZE/G_FOCAL_LENGTH;//atan2(y*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
+    _yawAngle = -x*IMAGE_SENSOR_PIXEL_SIZE/G_FOCAL_LENGTH;//atan2(x*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
 
+    if(_showLines)
+    {
 		//line for local yaw offset
 		cv::line(_dst, P_V1, P_V2, cv::Scalar(0,0,255), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT); //vertical
 		cv::line(_dst, P_H1, P_H2, cv::Scalar(0,0,255), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT); //horizontal
-
-		//calculate attitude with respect to the camera coordinate systems
-        int u = (P_V1.x+P_V2.x)/2;
-        int v = (P_V1.y+P_V2.y)/2;
-        int x = -(v-5792/2);
-        int y = u - 5792/2;
-        _rollAngle = rollCompensation;
-        _pitchAngle = atan2(y*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
-        _yawAngle = atan2(x*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
-        // ROS_INFO("_rollAngle = %f", _rollAngle*180.0/3.14159265);
-        // ROS_INFO("_pitchAngle = %f", _pitchAngle*180.0/3.14159265);
-        // ROS_INFO("_yawAngle = %f", _yawAngle*180.0/3.14159265);
 
         //draw circle for distances (NOTE THAT THE CIRCLES ARE NOT THE EXACT REPRESENTATION OF THE DISTANCES)
         float theta1 = atan(0.05/G_SENSOR_HEIGHT);
         float dp1 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta1);
         int r1 = dp1;
-        cv::circle(_dst,cv::Point(u,v), r1, cv::Scalar(200,0,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+        cv::circle(_dst,cv::Point(u,v), r1, cv::Scalar(255,0,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
 
         float theta2 = atan((0.55)/G_SENSOR_HEIGHT);
         float dp2 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta2);
         int r2 = dp2;
-        cv::circle(_dst,cv::Point(u,v), r2, cv::Scalar(200,100,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+        cv::circle(_dst,cv::Point(u,v), r2, cv::Scalar(255,50,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
 
         float theta3 = atan((0.55+0.5)/G_SENSOR_HEIGHT);
         float dp3 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta3);
@@ -202,10 +213,18 @@ void CalibrateCamera::saveCalibration()
     logger << _radiusSlider << std::endl;
     logger << _poleWidthSlider << std::endl;
     logger << _poleHeightSlider << std::endl;
+    logger << _grabberWidthSlider << std::endl;
+    logger << _grabberHeightSlider << std::endl;
+    logger << _grabberShiftSlider << std::endl;
     logger << _rollSlider << std::endl;
     logger << _pitchSlider << std::endl;
     logger << _yawSlider << std::endl;
     logger.close();
+
+    //print saved attitude calibration
+    ROS_INFO("_rollAngle = %f degrees", _rollAngle*180.0/3.14159265);
+    ROS_INFO("_pitchAngle = %f degrees", _pitchAngle*180.0/3.14159265);
+    ROS_INFO("_yawAngle = %f degrees", _yawAngle*180.0/3.14159265);
 }
 
 void CalibrateCamera::loadCalibration()
@@ -233,6 +252,9 @@ void CalibrateCamera::loadCalibration()
     inputFile >> _radiusSlider;
     inputFile >> _poleWidthSlider;
     inputFile >> _poleHeightSlider;
+    inputFile >> _grabberWidthSlider;
+    inputFile >> _grabberHeightSlider;
+    inputFile >> _grabberShiftSlider;
     inputFile >> _rollSlider;
     inputFile >> _pitchSlider;
     inputFile >> _yawSlider;

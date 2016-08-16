@@ -112,10 +112,6 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	double zi = v; //pixels
 	double yi = u; //pixels
 
-	//convert pixels to distance in mm (pixel is 4.14 micrometer square)
-	// zi = zi*4.1436e-6; //mm
-	// yi = yi*4.1436e-6; //mm
-
 	//calculate distance from center of image sensor
 	float pixel_distance_from_center = sqrt(zi*zi + yi*yi); //mm
 
@@ -137,7 +133,7 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 
 	//apply rotation from calibration
     cv::Mat sample_position_t = G_rotation_camera_2_robot*sample_position;
-    double x_t = sample_position_t.at<double>(0,0) - 0.45;
+    double x_t = sample_position_t.at<double>(0,0) + 0.45;
     double y_t = sample_position_t.at<double>(1,0);
     double z_t = sample_position_t.at<double>(2,0);
 

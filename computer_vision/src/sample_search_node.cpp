@@ -9,7 +9,6 @@ int main(int argc, char **argv)
 	samplesSearch.createFolderForImageData();
 	samplesSearch.createFileForImageData();
 	samplesSearch.loadCalibrationData();
-	//samplesSearch.calculateFlatGroundPositionOfPixel(5792/4,5792/4);
 	ros::spin();
 	return 0;
 } 
