@@ -171,10 +171,11 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                     // resistanceMap + satMap
                     for(grid_map::GridMapIterator it(resistanceMap); !it.isPastEnd(); ++it)
                     {
-                        globalMapValue = globalMap.at(layerToString(_satDriveability), *it);
+                        resistanceMap.at(timeLayer, *it) = globalMap.at(layerToString(_satDriveability), *it);
+                        /*globalMapValue = globalMap.at(layerToString(_satDriveability), *it);
                         if(globalMapValue >= maxTimeValue) resistanceMap.at(timeLayer, *it) += globalMapValue; // Just add or average?
                         else if(globalMapValue < maxTimeValue && globalMapValue > 0.0) resistanceMap.at(timeLayer, *it) += globalMapValueScaleFactor*globalMapValue; // Just add or average?
-                        if(resistanceMap.at(timeLayer, *it) > maxTimeValue) resistanceMap.at(timeLayer, *it) = maxTimeValue;
+                        if(resistanceMap.at(timeLayer, *it) > maxTimeValue) resistanceMap.at(timeLayer, *it) = maxTimeValue;*/
                     }
                     ROS_INFO("before timeOfArrivalMap FMM");
                     firsttime = ros::Time::now().toSec();
@@ -562,36 +563,39 @@ void SafePathing::chooseWaypointsFromOptimalPath()
         //ROS_INFO("hazardAlongPossiblePathThresh = %f",hazardAlongPossiblePathThresh);
         if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh, numCellsOverThreshLimit, false)!=_driveable && !intersectingMinDistance)
         {
-            //ROS_INFO("numHazardsOverLimit");
+            ROS_INFO("numHazardsOverLimit");
             prevIndex = indexToConsider;
-            //ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
-            //ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
+            ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
+            ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
             for(optimalPathConsiderIndex; optimalPathConsiderIndex>=optimalPathStartIndex; optimalPathConsiderIndex--)
             {
-                //ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
+                ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
+                ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
                 indexToConsider = optimalPath.at(optimalPathConsiderIndex);
                 timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
                 timeOfArrivalMap.getPosition(prevIndex, prevIndexPos);
-                //ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
-                //ROS_INFO("considerIndexPos = (%f,%f)",considerIndexPos[0],considerIndexPos[1]);
-                //ROS_INFO("prevIndexPos = (%f,%f)",prevIndexPos[0],prevIndexPos[1]);
+                ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
+                ROS_INFO("considerIndexPos = (%f,%f)",considerIndexPos[0],considerIndexPos[1]);
+                ROS_INFO("prevIndexPos = (%f,%f)",prevIndexPos[0],prevIndexPos[1]);
                 distanceBetweenIndices = hypot(considerIndexPos[0]-prevIndexPos[0], considerIndexPos[1]-prevIndexPos[1]);
-                //ROS_INFO("distanceBetween = %f",distanceBetweenIndices);
+                ROS_INFO("distanceBetween = %f",distanceBetweenIndices);
                 distanceToStartIndex = hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]);
-                //ROS_INFO("distanceToStartIndex = %f",distanceToStartIndex);
+                ROS_INFO("distanceToStartIndex = %f",distanceToStartIndex);
                 if(distanceToStartIndex<=minWaypointDistance && distanceBetweenIndices<=minWaypointDistance)
                 {
+                    ROS_INFO("intersecting min distance");
                     intersectingMinDistance = true;
                 }
                 if(distanceToStartIndex<minWaypointDistance)
                 {
-                    //ROS_INFO("!*!* distance to start index < min");
+                    ROS_INFO("!*!* distance to start index < min");
                     hazardAlongPossiblePathThresh += hazardThreshIncrementAmount;
                     if(!intersectingMinDistance) optimalPathConsiderIndex = optimalPath.size()-1;
                     break;
                 }
                 else if(distanceBetweenIndices>minWaypointDistance)
                 {
+                    ROS_INFO("distacenBetweenIndices > min");
                     break;
                 }
 
@@ -650,6 +654,9 @@ STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &
     {
         if(map.at(layer, *it) >= hazardThresh) numCellsOverThresh++;
     }
+    ROS_INFO("hazardThresh = %f",hazardThresh);
+    ROS_INFO("numCellsLimit = %u",numCellsLimit);
+    ROS_INFO("numCellsOverThresh = %u",numCellsOverThresh);
     //ROS_INFO("after polygon iterator loop");
     if(numCellsOverThresh>=numCellsLimit) return _tooManyObstacles;
     else
@@ -665,10 +672,10 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
     unsigned int numTransitionWaypointsInserted = 0;
     float firstWaypointDistance;
     float secondWaypointDistance;
-    float angleBetweenWaypoints;
-    float distanceFromInnerWaypoint;
     float distanceBetweenWaypoints;
     float robotCurrentRadius;
+    bool distanceFromLineToOriginLessThanHomingRadius;
+    bool oneHomingWaypointSelected;
     float A;
     float B;
     float C;
@@ -743,6 +750,7 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             }
         }
         // Homing waypoint check
+        oneHomingWaypointSelected = false;
         waypointsOutInitSize = waypointList.size();
         for(int i=0; i<(waypointsOutInitSize-1); i++)
         {
@@ -754,12 +762,17 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             firstWaypointDistance = hypot(waypoint1.x, waypoint1.y);
             secondWaypointDistance = hypot(waypoint2.x, waypoint2.y);
             distanceBetweenWaypoints = hypot(waypoint1.x-waypoint2.x, waypoint1.y-waypoint2.y);
+            if((fabs(waypoint1.x*waypoint2.y - waypoint1.y*waypoint2.x)/distanceBetweenWaypoints) < homingRadius) distanceFromLineToOriginLessThanHomingRadius = true;
+            else distanceFromLineToOriginLessThanHomingRadius = false;
             //ROS_INFO("firstWaypointDistance = %f",firstWaypointDistance);
             //ROS_INFO("secondWaypointDistance = %f",secondWaypointDistance);
             //ROS_INFO("distanceBetweenWaypoints = %f",distanceBetweenWaypoints);
-            if(firstWaypointDistance > homingRadius && secondWaypointDistance < homingRadius)
+            if((firstWaypointDistance > homingRadius && secondWaypointDistance < homingRadius) ||
+                    (distanceFromLineToOriginLessThanHomingRadius && firstWaypointDistance > homingRadius && secondWaypointDistance > homingRadius)
+                    && !oneHomingWaypointSelected)
             {
                 ROS_INFO("stop at homing radius");
+                oneHomingWaypointSelected = true;
                 dy = waypoint1.y - waypoint2.y;
                 dx = waypoint1.x - waypoint2.x;
                 if(dx>=0.0 && fabs(dx) < minDX) dx = minDX;

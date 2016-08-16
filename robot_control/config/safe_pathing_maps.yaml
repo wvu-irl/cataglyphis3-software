@@ -5,13 +5,13 @@ grid_map_visualizations:
     params:
      layer: resistance
      data_min: 0.0
-     data_max: 10.0
+     data_max: 100.0
   - name: timeOfArrival
     type: occupancy_grid
     params:
      layer: timeOfArrival
      data_min: 0.0
-     data_max: 10.0
+     data_max: 100.0
   - name: optimalPath
     type: occupancy_grid
     params:

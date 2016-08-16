@@ -25,8 +25,8 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-//#include "evansdale_map.h"
-#include "wpi_map.h"
+#include "evansdale_map.h"
+//#include "wpi_map.h"
 //#include other maps...
 
 class MapManager
@@ -156,7 +156,7 @@ public:
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 	const float randomWaypointMinDistance = 2.0; // m
-	const float satDriveabilityInitialValue = 10.0;
+	const float satDriveabilityInitialValue = 100.0;
 	const float satDriveabilityInitialConf = 0.5;
 	const float keyframeDriveabilityInitialValue = 0.0;
 	const float keyframeDriveabilityInitialConf = 0.0;

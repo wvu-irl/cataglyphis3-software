@@ -84,8 +84,9 @@ public:
 	std::vector<grid_map::Position> hazardMapPoints;
 	grid_map::GridMap initialViscosityMap;
 	//const float initialTimeValue = 0.0005;
-	const float initialTimeValue = 0.000002;
-	const float maxTimeValue = 10.0;
+	//const float initialTimeValue = 0.000002;
+	const float initialTimeValue = 0.01;
+	const float maxTimeValue = 100.0;
 	const float minFMMTimeValue = 0.0;
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
