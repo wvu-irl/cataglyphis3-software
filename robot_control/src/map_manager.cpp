@@ -26,20 +26,34 @@ MapManager::MapManager()
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
     srand(time(NULL));
 
-    // Square around starting platform. Must initialize with north angle = 90.0 degrees
+// Square around starting platform. Must initialize with north angle = 90.0 degrees
 //#include <robot_control/square_rois.h>
 
-    // Dense ROIs to search directly in front of library
+#ifdef EVANSDALE
+// Dense ROIs to search directly in front of library
 //#include <robot_control/evansdale_short_dense_rois.h>
 
-    // Limited set of ROIs covering eastern half of Evansdale in front of library
-#include <robot_control/evansdale_library_rois.h>
+// Limited set of ROIs covering eastern half of Evansdale in front of library
+//#include <robot_control/evansdale_library_rois.h>
 
-    // Full set of ROIs covering Evansdale in front of library and engineering
-//#include <robot_control/evansdale_full_rois.h>
+// Full set of ROIs covering Evansdale in front of library and engineering
+#include <robot_control/evansdale_full_rois.h>
+#endif // EVANSDALE
 
-    // WPI Institute Park ROIs
-//#include <robot_control/wpi_rois.h>
+#ifdef WPI
+// WPI Institute Park ROIs
+#include <robot_control/wpi_rois.h>
+#endif // WPI
+
+#ifdef QUAD
+// Quad at WPI ROIs
+#include <robot_control/quad_rois.h>
+#endif // QUAD
+
+#ifdef CHESTNUT_RIDGE
+// ROIs for Chestnut Ridge Park
+#include <robot_control/quad_rois.h>
+#endif // CHESTNUT_RIDGE
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);

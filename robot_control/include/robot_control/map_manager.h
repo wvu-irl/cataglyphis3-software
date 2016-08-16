@@ -25,8 +25,27 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-//#include "evansdale_map.h"
+#define EVANSDALE
+//#define WPI
+//#define QUAD
+//#define CHESTNUT_RIDGE
+
+#ifdef EVANSDALE
+#include "evansdale_map.h"
+#endif // EVANSDALE
+
+#ifdef WPI
 #include "wpi_map.h"
+#endif // WPI
+
+#ifdef QUAD
+#include "quad_map.h"
+#endif // QUAD
+
+#ifdef CHESTNUT_RIDGE
+#include "chestnut_ridge_map.h"
+#endif // CHESTNUT_RIDGE
+
 //#include other maps...
 
 class MapManager
