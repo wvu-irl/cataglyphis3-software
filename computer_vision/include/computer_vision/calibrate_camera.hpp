@@ -64,7 +64,13 @@ private:
 	bool _showRadius = false;
 	bool _showLines = false;
 
-	const double IMAGE_SENSOR_PIXEL_SIZE = 4.14e-6;
+	const double G_FOCAL_LENGTH = 0.01;
+	const double IMAGE_SENSOR_PIXEL_SIZE = 4.1436e-6;
+	const double G_SENSOR_HEIGHT = 1.45;
+
+	double _rollAngle = 0;
+	double _pitchAngle = 0;
+	double _yawAngle = 0;
 
 	//interface callbacks
 	static void onTrackbarRobotWidth(int, void*)

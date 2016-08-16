@@ -26,39 +26,133 @@ void SampleSearch::createFileForImageData()
     G_outputInfoFile.close();
 }
 
+void SampleSearch::loadCalibrationData()
+{
+	bool error = false;
+
+    //get path to calibration parameters
+    boost::filesystem::path P( ros::package::getPath("computer_vision") );
+    std::string filename = P.string() + "/data/calibration/cameraCalibration.csv";
+
+    //open file containing calibration parameters
+    std::ifstream inputFile;
+    inputFile.open(filename.c_str());
+    if(!inputFile)
+    {
+        ROS_ERROR("Error! Failed to open calibration file.");
+        error = true;
+    }
+
+    //load roll, pitch, and yaw offsets of camera (wrt to the camera frame of reference)
+    //note that x is the optical axis, y is positive to the right of the camera, and z is positive down
+    if(inputFile.eof()) error=true;
+    double roll;
+	inputFile >> roll;
+	roll = -roll; //need the reverse direction
+	if(inputFile.eof()) error=true;
+	double pitch;
+    inputFile >> pitch;
+    pitch = -pitch; //need the reverse direction
+    if(inputFile.eof()) error=true;
+    double yaw;
+    inputFile >> yaw;
+    yaw = -yaw; //need the reverse direction
+
+    //close file
+    inputFile.close();
+
+    if(error==true)
+    {
+    	roll = 0;
+    	pitch = 0;
+    	yaw = 0;
+    	ROS_WARN("Could not load calibration parameters for camera. Using identity for camera attitude offset...");
+    }
+
+    //rotation from uncalibrated camera to calibrated camera 
+    cv::Mat R1x = (cv::Mat_<double>(3,3) << 1,       0,           0,     
+    										0,       cos(roll),  -sin(roll),     
+    										0,       sin(roll),   cos(roll));
+    cv::Mat R1y = (cv::Mat_<double>(3,3) << cos(pitch),  0,       sin(pitch),    
+                                            0,           1,       0,     
+                                            -sin(pitch), 0,       cos(pitch));
+    cv::Mat R1z = (cv::Mat_<double>(3,3) << cos(yaw),   -sin(yaw),    0,     
+    	                                    sin(yaw),    cos(yaw),    0,     
+    	                                    0,           0,           1);
+    cv::Mat rotation_uncalibrated_to_calibrated_camera = R1x*R1y*R1z;
+
+    //rotation from calibrated camera to robot body frame
+    cv::Mat R2x = (cv::Mat_<double>(3,3) << 1,    0,         0,     
+    										0,    cos(0),   -sin(0),     
+    										0,    sin(0),    cos(0));
+    cv::Mat R2y = (cv::Mat_<double>(3,3) << cos(-3.14159265/2),  0,  sin(-3.14159265/2),    
+                                            0,                   1,  0,     
+                                            -sin(-3.14159265/2), 0,  cos(-3.14159265/2));
+    cv::Mat R2z = (cv::Mat_<double>(3,3) << cos(0),   -sin(0),    0,     
+    	                                    sin(0),    cos(0),    0,     
+    	                                    0,         0,         1);
+    cv::Mat calibrated_camera_to_robot = R2x*R2y*R2z;
+
+    //rotation from uncalibrated camera to robot body frame
+    G_rotation_camera_2_robot = calibrated_camera_to_robot*rotation_uncalibrated_to_calibrated_camera;
+}
+
 std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int v)
 {
-	//transform pixels to coordinate system centered around the image
+	//NOTE THAT 
+	//X AXIS IS THE OPTICAL AXIS (POSITIVE OUT OF LENS), 
+	//Y AXIS IS POSITIVE TO THE RIGHT WRT THE CAMERA,
+	//Z AXIS IS POSITIVE DOWN WRT THE CAMERA
+
+	//transform pixels to coordinate system centered around the image center
 	u = u - G_IMAGE_WIDTH/2;
 	v = v - G_IMAGE_HEIGHT/2;
 
-	//transform u and v pixels to align with robot x and y 
-	double x = -v; //pixels
-	double y = u; //pixels
+	//transform u and v pixels to align with camera z and y 
+	double zi = v; //pixels
+	double yi = u; //pixels
 
 	//convert pixels to distance in mm (pixel is 4.14 micrometer square)
-	x = x*4.14e-3; //mm
-	y = y*4.14e-3; //mm
+	// zi = zi*4.1436e-6; //mm
+	// yi = yi*4.1436e-6; //mm
 
 	//calculate distance from center of image sensor
-	float pixel_distance_from_center = sqrt(x*x + y*y); //mm
+	float pixel_distance_from_center = sqrt(zi*zi + yi*yi); //mm
 
-	//convert distance to angle of view (distance must be in mm and output will be in degrees)
-	double angle = ((pixel_distance_from_center-0.18753)/0.16637)*3.14159265/180.0; //radians (converted from degrees)
+	//convert distance to angle of view (source http://wiki.panotools.org/Fisheye_Projection)
+	//this is the angle between the optical axis and the sample position 
+	double angle_between_optical_and_sample = pixel_distance_from_center*G_SIZE_OF_PIXEL/G_FOCAL_LENGTH; //radians
 
-	//calculate distance assuming flat ground tan(angle) = x/z where z is the sensor height
-	double flat_ground_distance_distance = G_SENSOR_HEIGHT*tan(angle);
+	//calculate distance assuming flat ground tan(angle) = (horizontal distance to sample)/(vertical distance to sample)
+	double flat_ground_distance_distance = G_SENSOR_HEIGHT*tan(angle_between_optical_and_sample);
 
-	//calculate angle about the z axis to the sample (angle to rotate to face the sample)
-	double delta_theta = atan2(y,x);
-	double x_t = flat_ground_distance_distance*cos(delta_theta) + 0.45;
-	double y_t = flat_ground_distance_distance*sin(delta_theta);
-	double distance_t = sqrt(x_t*x_t + y_t*y_t);
-	double delta_theta_t = atan2(y_t,x_t);
+	//calculate angle about the x axis to the sample (angle to rotate to face the sample)
+	double delta_angle = atan2(yi,zi);
+
+	//convert to cartesian coordinates
+	double x = 0;
+	double y = flat_ground_distance_distance*sin(delta_angle);
+	double z = flat_ground_distance_distance*cos(delta_angle);
+	cv::Mat sample_position = (cv::Mat_<double>(3,1) << x, y, z);
+
+	//apply rotation from calibration
+    cv::Mat sample_position_t = G_rotation_camera_2_robot*sample_position;
+    double x_t = sample_position_t.at<double>(0,0) - 0.45;
+    double y_t = sample_position_t.at<double>(1,0);
+    double z_t = sample_position_t.at<double>(2,0);
+
+    //convert back to polar for output
+	double flat_ground_distance_distance_t = sqrt(x_t*x_t + y_t*y_t);
+	double delta_angle_t = atan2(y_t,x_t);
+
+	// ROS_INFO("x, y, z = %f, %f, %f", x, y, z);
+	// ROS_INFO("d, bearing (before calibration) = %f, %f", flat_ground_distance_distance, atan2(yi,-zi)*180/3.14159265);
+	// ROS_INFO("x_t, y_t, z_t = %f, %f, %f", x_t, y_t, z_t);
+	// ROS_INFO("d_t, bearing_t = %f, %f", flat_ground_distance_distance_t, delta_angle_t*180/3.14159265);
 
 	//push back output in vector
 	std::vector<double> relative_position;
-	if(angle > 3.1415926/2)
+	if(angle_between_optical_and_sample > 3.1415926/2)
 	{
 		ROS_ERROR("Error! Object detectable outside of visible region of image...");
 		relative_position.push_back(0);
@@ -66,8 +160,8 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	}
 	else
 	{
-		relative_position.push_back(distance_t);
-		relative_position.push_back(delta_theta_t*180/3.14159265-3);
+		relative_position.push_back(flat_ground_distance_distance_t);
+		relative_position.push_back(delta_angle_t*180/3.14159265);
 	}
 
 	//return the relative position with flat ground assumption

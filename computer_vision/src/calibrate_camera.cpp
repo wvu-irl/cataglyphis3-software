@@ -107,8 +107,6 @@ void CalibrateCamera::updateImage()
 		int yawCompensationX = (_yawSlider+_yawOffset);
 		int yawCompensationY = 0;
 
-		cv::Mat R = (cv::Mat_<double>(2,2) << cos(rollCompensation), sin(rollCompensation), -sin(rollCompensation), cos(rollCompensation));
-
 		//vertical line
 		cv::Point P_V1 = cv::Point( 5792/2, 5792 ); //endpoint1 of line segment
 		P_V1 = cv::Point( P_V1.x - 5792/2, P_V1.y - 5792/2 ); //transform from image to robot
@@ -140,22 +138,48 @@ void CalibrateCamera::updateImage()
 		cv::line(_dst, P_V1, P_V2, cv::Scalar(0,0,255), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT); //vertical
 		cv::line(_dst, P_H1, P_H2, cv::Scalar(0,0,255), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT); //horizontal
 
-		//convert to meaningful stuff
+		//calculate attitude with respect to the camera coordinate systems
         int u = (P_V1.x+P_V2.x)/2;
         int v = (P_V1.y+P_V2.y)/2;
-        // ROS_INFO("u,v = %i,%i",u,v);
         int x = -(v-5792/2);
         int y = u - 5792/2;
-        // ROS_INFO("x,y = %i,%i",x,y);
+        _rollAngle = rollCompensation;
+        _pitchAngle = atan2(y*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
+        _yawAngle = atan2(x*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
+        // ROS_INFO("_rollAngle = %f", _rollAngle*180.0/3.14159265);
+        // ROS_INFO("_pitchAngle = %f", _pitchAngle*180.0/3.14159265);
+        // ROS_INFO("_yawAngle = %f", _yawAngle*180.0/3.14159265);
 
-        //attitude with respect to the camera
-        double rollAngle = rollCompensation;
-        double yawAngle = atan2(y*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
-        double pitchAngle = atan2(x*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
-        ROS_INFO("rollAngle = %f", rollAngle*180.0/3.14159265);
-        ROS_INFO("yawAngle = %f", yawAngle*180.0/3.14159265);
-        ROS_INFO("pitchAngle = %f", pitchAngle*180.0/3.14159265);
+        //draw circle for distances (NOTE THAT THE CIRCLES ARE NOT THE EXACT REPRESENTATION OF THE DISTANCES)
+        float theta1 = atan(0.05/G_SENSOR_HEIGHT);
+        float dp1 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta1);
+        int r1 = dp1;
+        cv::circle(_dst,cv::Point(u,v), r1, cv::Scalar(200,0,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
 
+        float theta2 = atan((0.55)/G_SENSOR_HEIGHT);
+        float dp2 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta2);
+        int r2 = dp2;
+        cv::circle(_dst,cv::Point(u,v), r2, cv::Scalar(200,100,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+
+        float theta3 = atan((0.55+0.5)/G_SENSOR_HEIGHT);
+        float dp3 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta3);
+        int r3 = dp3;
+        cv::circle(_dst,cv::Point(u,v), r3, cv::Scalar(255,100,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+
+        float theta4 = atan((0.55+1.0)/G_SENSOR_HEIGHT);
+        float dp4 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta4);
+        int r4 = dp4;
+        cv::circle(_dst,cv::Point(u,v), r4, cv::Scalar(255,150,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+
+        float theta5 = atan((0.55+1.5)/G_SENSOR_HEIGHT);
+        float dp5 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta5);
+        int r5 = dp5;
+        cv::circle(_dst,cv::Point(u,v), r5, cv::Scalar(255,200,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
+
+        float theta6 = atan((0.55+2.0)/G_SENSOR_HEIGHT);
+        float dp6 = G_FOCAL_LENGTH/IMAGE_SENSOR_PIXEL_SIZE*tan(theta6);
+        int r6 = dp6;
+        cv::circle(_dst,cv::Point(u,v), r6, cv::Scalar(255,255,0), _LINE_THICKNESS, _LINE_TYPE, _LINE_SHIFT);
 	}
 }
 
@@ -168,7 +192,10 @@ void CalibrateCamera::saveCalibration()
     //write calibration parameters to file
     std::ofstream logger;
     std::string filename = P.string() + "/data/calibration/cameraCalibration.csv";
-    logger.open(filename.c_str(), std::ofstream::out | std::ofstream::trunc); 
+    logger.open(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
+    logger << _rollAngle << std::endl;
+    logger << _pitchAngle << std::endl;
+    logger << _yawAngle << std::endl;
     logger << _robotWidthSlider << std::endl;
     logger << _robotHeightSlider << std::endl;
     logger << _robotShiftSlider << std::endl;
@@ -176,11 +203,8 @@ void CalibrateCamera::saveCalibration()
     logger << _poleWidthSlider << std::endl;
     logger << _poleHeightSlider << std::endl;
     logger << _rollSlider << std::endl;
-    logger << _rollOffset << std::endl;
     logger << _pitchSlider << std::endl;
-    logger << _pitchOffset << std::endl;
     logger << _yawSlider << std::endl;
-    logger << _yawOffset;
     logger.close();
 }
 
@@ -199,27 +223,27 @@ void CalibrateCamera::loadCalibration()
         return;
     }
 
-    //load data in the lookup table
-    int element = 0;
-
-    while(!inputFile.eof())
-    {
-        inputFile >> _robotWidthSlider;
-        inputFile >> _robotHeightSlider;
-        inputFile >> _robotShiftSlider;
-        inputFile >> _radiusSlider;
-        inputFile >> _poleWidthSlider;
-        inputFile >> _poleHeightSlider;
-        inputFile >> _rollSlider;
-        inputFile >> _rollOffset;
-        inputFile >> _pitchSlider;
-        inputFile >> _pitchOffset;
-        inputFile >> _yawSlider;
-        inputFile >> _yawOffset;
-    }
+    //load data from calibration file
+    inputFile >> _rollAngle;
+    inputFile >> _pitchAngle;
+    inputFile >> _yawAngle;
+    inputFile >> _robotWidthSlider;
+    inputFile >> _robotHeightSlider;
+    inputFile >> _robotShiftSlider;
+    inputFile >> _radiusSlider;
+    inputFile >> _poleWidthSlider;
+    inputFile >> _poleHeightSlider;
+    inputFile >> _rollSlider;
+    inputFile >> _pitchSlider;
+    inputFile >> _yawSlider;
 
     //close file
     inputFile.close();
+
+    //print loaded attitude calibration
+    ROS_INFO("_rollAngle = %f degrees", _rollAngle*180.0/3.14159265);
+    ROS_INFO("_pitchAngle = %f degrees", _pitchAngle*180.0/3.14159265);
+    ROS_INFO("_yawAngle = %f degrees", _yawAngle*180.0/3.14159265);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,7 +335,7 @@ void CalibrateCamera::loadCalibrationButtonImplementation()
     loadCalibration();
     updateImage();
     ROS_INFO("Complete.");
-    ROS_WARN("Note only the image show the current calibration not the sliders.");
+    ROS_WARN("Note only the image shows the current calibration (the sliders do not show what is on the image).");
 }
 
 void CalibrateCamera::exitButtonImplementation()
