@@ -544,6 +544,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
     int optimalPathConsiderIndex = optimalPath.size()-1;
     int optimalPathStartIndex = 0;
     bool intersectingMinDistance = false;
+    char temp;
 
     waypointsToInsert.clear();
     startIndex = optimalPath.front();
@@ -553,8 +554,9 @@ void SafePathing::chooseWaypointsFromOptimalPath()
     {
         timeOfArrivalMap.getPosition(startIndex, startIndexPos);
         timeOfArrivalMap.getPosition(indexToConsider, considerIndexPos);
-        //ROS_INFO("startIndex = (%i,%i)",startIndex[0],startIndex[1]);
-        //ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
+        ROS_INFO("################################################");
+        ROS_INFO("startIndex = (%i,%i)",startIndex[0],startIndex[1]);
+        ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0],indexToConsider[1]);
         /*if(hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]) < minWaypointDistance)
         {
             continueLoop = false;
@@ -563,12 +565,13 @@ void SafePathing::chooseWaypointsFromOptimalPath()
         //ROS_INFO("hazardAlongPossiblePathThresh = %f",hazardAlongPossiblePathThresh);
         if(straightLineDriveable(timeOfArrivalMap, timeLayer, startIndexPos, considerIndexPos, hazardAlongPossiblePathThresh, numCellsOverThreshLimit, false)!=_driveable && !intersectingMinDistance)
         {
-            ROS_INFO("numHazardsOverLimit");
+            ROS_INFO("========= numHazardsOverLimit");
             prevIndex = indexToConsider;
             ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
             ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
             for(optimalPathConsiderIndex; optimalPathConsiderIndex>=optimalPathStartIndex; optimalPathConsiderIndex--)
             {
+                ROS_INFO("optimalPath.size = %u",optimalPath.size());
                 ROS_INFO("optimalPathStartIndex = %i",optimalPathStartIndex);
                 ROS_INFO("optimalPathConsiderIndex = %i",optimalPathConsiderIndex);
                 indexToConsider = optimalPath.at(optimalPathConsiderIndex);
@@ -581,9 +584,11 @@ void SafePathing::chooseWaypointsFromOptimalPath()
                 ROS_INFO("distanceBetween = %f",distanceBetweenIndices);
                 distanceToStartIndex = hypot(considerIndexPos[0]-startIndexPos[0], considerIndexPos[1]-startIndexPos[1]);
                 ROS_INFO("distanceToStartIndex = %f",distanceToStartIndex);
+                ROS_INFO("optimalPath.back = (%i,%i", optimalPath.back()[0], optimalPath.back()[1]);
+                ROS_INFO("indexToConsider = (%i,%i)",indexToConsider[0], indexToConsider[1]);
                 if(distanceToStartIndex<=minWaypointDistance && distanceBetweenIndices<=minWaypointDistance)
                 {
-                    ROS_INFO("intersecting min distance");
+                    ROS_WARN("%%%% intersecting min distance");
                     intersectingMinDistance = true;
                 }
                 if(distanceToStartIndex<minWaypointDistance)
@@ -598,14 +603,19 @@ void SafePathing::chooseWaypointsFromOptimalPath()
                     ROS_INFO("distacenBetweenIndices > min");
                     break;
                 }
-
+                if(optimalPathConsiderIndex == optimalPathStartIndex)
+                {
+                    std::cout << "enter a character to continue" << std::endl;
+                    std::cin >> temp;
+                    if(temp == 'q') exit(1);
+                }
             }
             continueLoop = true;
         }
         else if(indexToConsider[0] == optimalPath.back()[0] && indexToConsider[1] == optimalPath.back()[1]) continueLoop = false; // Straight line path to end point is clear, do not insert any waypoints
         else
         {
-            //ROS_INFO("push back waypoint to insert");
+            ROS_INFO("push back waypoint to insert");
             waypointToPushBack.x = considerIndexPos[0];
             waypointToPushBack.y = considerIndexPos[1];
             waypointsToInsert.push_back(waypointToPushBack);
@@ -617,6 +627,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             intersectingMinDistance = false;
             continueLoop = true;
         }
+        std::printf("\n");
     }
 }
 
@@ -654,15 +665,16 @@ STRAIGHT_LINE_CONDITION_T SafePathing::straightLineDriveable(grid_map::GridMap &
     {
         if(map.at(layer, *it) >= hazardThresh) numCellsOverThresh++;
     }
+    ROS_INFO("startPos = (%f,%f), endPos = (%f,%f)", startPos[0], startPos[1], endPos[0], endPos[1]);
     ROS_INFO("hazardThresh = %f",hazardThresh);
     ROS_INFO("numCellsLimit = %u",numCellsLimit);
     ROS_INFO("numCellsOverThresh = %u",numCellsOverThresh);
     //ROS_INFO("after polygon iterator loop");
-    if(numCellsOverThresh>=numCellsLimit) return _tooManyObstacles;
+    if(numCellsOverThresh>=numCellsLimit) {ROS_WARN("too many obstacles"); return _tooManyObstacles;}
     else
     {
-        if(hypot(endPos[0]-startPos[0], endPos[1]-startPos[1]) > maxDriveDistance) return _distanceTooLong;
-        else return _driveable;
+        if(hypot(endPos[0]-startPos[0], endPos[1]-startPos[1]) > maxDriveDistance) {ROS_WARN("distance to long"); return _distanceTooLong;}
+        else {ROS_WARN("driveable"); return _driveable;}
     }
 }
 
