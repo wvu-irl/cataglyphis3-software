@@ -410,6 +410,8 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
                 res.waypointList.at(numRandomWaypointsSelected-1).sampleProb = searchLocalMap.at(layerToString(_sampleProb), randomWaypointIndex);
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
+                res.waypointList.at(numRandomWaypointsSelected-1).unskippable = false;
+                res.waypointList.at(numRandomWaypointsSelected-1).maxAvoids = maxNormalWaypointAvoidCount;
             }
             if(numRandomWaypointSearchDistanceCriteriaFailed > randomWaypointDistanceCriteriaFailedLimit)
             {

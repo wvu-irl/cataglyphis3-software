@@ -180,6 +180,7 @@ public:
 	const float keyframeDriveabilityInitialValue = 0.0;
 	const float keyframeDriveabilityInitialConf = 0.0;
 	const float keyframeSize = 80.0;
+	const unsigned int maxNormalWaypointAvoidCount = 3;
 	arma::Mat<float> distanceMat;
 };
 
