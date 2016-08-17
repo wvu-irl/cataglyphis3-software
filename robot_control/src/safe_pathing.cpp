@@ -20,19 +20,23 @@ SafePathing::SafePathing()
     transitionWaypoint3.searchable = false;
     quad1MagneticWaypoint.x = 7.0;
     quad1MagneticWaypoint.y = 7.0;
-    quad1MagneticWaypoint.unskippable = true;
+    quad1MagneticWaypoint.unskippable = false;
+    quad1MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad1MagneticWaypoint.roiWaypoint = false;
     quad2MagneticWaypoint.x = 7.0;
     quad2MagneticWaypoint.y = -7.0;
-    quad2MagneticWaypoint.unskippable = true;
+    quad2MagneticWaypoint.unskippable = false;
+    quad2MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad2MagneticWaypoint.roiWaypoint = false;
     quad3MagneticWaypoint.x = -7.0;
     quad3MagneticWaypoint.y = -7.0;
-    quad3MagneticWaypoint.unskippable = true;
+    quad3MagneticWaypoint.unskippable = false;
+    quad3MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad3MagneticWaypoint.roiWaypoint = false;
     quad4MagneticWaypoint.x = 7.0;
     quad4MagneticWaypoint.y = -7.0;
-    quad4MagneticWaypoint.unskippable = true;
+    quad4MagneticWaypoint.unskippable = false;
+    quad4MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad4MagneticWaypoint.roiWaypoint = false;
     homeWaypoint.x = 5.0;
     homeWaypoint.y = 0.0;
@@ -203,6 +207,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                     {
                         insertWaypoint.x = maxDriveDistance*cos(angleBetweenStartAndGoal) + workingPos[0];
                         insertWaypoint.y = maxDriveDistance*sin(angleBetweenStartAndGoal) + workingPos[1];
+                        insertWaypoint.maxAvoids = maxNormalWaypointAvoidCount;
                         res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, insertWaypoint);
                         numInsertedWaypoints++;
                         if(hypot(goalPoint[0]-insertWaypoint.x, goalPoint[1]-insertWaypoint.y) < maxDriveDistance) stillInsertingWaypoints = false;
@@ -614,6 +619,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             //ROS_INFO("push back waypoint to insert");
             waypointToPushBack.x = considerIndexPos[0];
             waypointToPushBack.y = considerIndexPos[1];
+            waypointToPushBack.maxAvoids = maxNormalWaypointAvoidCount;
             waypointsToInsert.push_back(waypointToPushBack);
             //if(indexToConsider[0]==optimalPath.back()[0] && indexToConsider[1]==optimalPath.back()[1]) continueLoop = false;
             startIndex = indexToConsider;
@@ -828,6 +834,7 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
                     homingWaypoint.y = ySol[0];
                     //ROS_INFO("homing solution 0 chosen");
                 }
+                homingWaypoint.maxAvoids = maxNormalWaypointAvoidCount;
                 waypointList.insert(waypointList.begin()+1+i+numTransitionWaypointsInserted, homingWaypoint);
                 numTransitionWaypointsInserted++;
             }

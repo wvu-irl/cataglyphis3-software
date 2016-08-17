@@ -16,9 +16,13 @@ bool Avoid::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
         avoidCount++;
-        if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool4[interruptedAvoid])
+        if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal) maxAvoidCount = execInfoMsg.actionInt1[interruptedAvoid];
+        else {maxAvoidCount = maxNormalWaypointAvoidCount; ROS_WARN("avoided on something that's not driveGlobal, set max avoid to default");}
+        ROS_INFO("avoidCount = %u",avoidCount);
+        ROS_INFO("maxAvoidCount = %u",maxAvoidCount);
+        /*if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool4[interruptedAvoid])
             maxAvoidCount = maxROIWaypointAvoidCount;
-        else maxAvoidCount = maxNormalWaypointAvoidCount;
+        else maxAvoidCount = maxNormalWaypointAvoidCount;*/
         if(avoidCount > maxAvoidCount)
         {
             //ROS_INFO("avoid count limit reached");

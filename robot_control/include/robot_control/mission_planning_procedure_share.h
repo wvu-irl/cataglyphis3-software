@@ -123,8 +123,11 @@ public:
 	static bool giveUpROI;
 	static bool searchTimedOut;
 	static unsigned int avoidCount;
-	const unsigned int maxNormalWaypointAvoidCount = 3;
-	const unsigned int maxROIWaypointAvoidCount = 5;
+	const unsigned int maxNormalWaypointAvoidCount = 5;
+	const unsigned int maxROIWaypointAvoidCount = 8;
+	const unsigned int maxCornerWaypointAvoidCount = 12;
+	const unsigned int maxHomeWaypointAvoidCount = 20;
+	const unsigned int fullyBlockedAvoidCountIncrement = 5;
 	const float metersPerAvoidCountDecrement = 3.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;

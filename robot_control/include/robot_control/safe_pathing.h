@@ -129,6 +129,9 @@ public:
 	robot_control::Waypoint quad4MagneticWaypoint;
 	robot_control::Waypoint homeWaypoint;
 	Voice voiceSay;
+	const unsigned int maxNormalWaypointAvoidCount = 5;
+	const unsigned int maxROIWaypointAvoidCount = 8;
+	const unsigned int maxCornerWaypointAvoidCount = 12;
 };
 
 #endif // SAFE_PATHING_H 
