@@ -9,6 +9,7 @@ int main(int argc, char **argv)
 	ros::Publisher pub_col = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout",1);
 	CollisionDetection collision_detection;
 	messages::CollisionOut msg_CollisionOut;
+	collision_detection.Initializations();
 
 	while(ros::ok())
 	{
