@@ -52,7 +52,7 @@ public:
         
         //int16_t potValues[8];
         
-        	uint8_t num_imus;
+        uint8_t imu_status; //bit shifted field containing info on IMU health
 		uint8_t pause_switch;
 		uint16_t main_loop_counter;
 		uint8_t checksum;
