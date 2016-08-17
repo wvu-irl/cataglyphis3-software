@@ -66,7 +66,12 @@ void NB1_To_I7::unpackMsg()
     msg.rate_q3          	= pkt.rate_q3*0.02/65536.0;
     msg.rate_r3          	= pkt.rate_r3*0.02/65536.0;
     
-    msg.num_imus			= pkt.num_imus;
+    msg.num_imus        = pkt.imu_status;
+
+    msg.imu_1_good			= (pkt.imu_status & 0x01) == 0x01; //IMU 1 health
+    msg.imu_2_good			= (pkt.imu_status & 0x02) == 0x02; //IMU 2 health
+    msg.imu_3_good			= (pkt.imu_status & 0x04) == 0x04; //IMU 3 health
+
     msg.pause_switch		= pkt.pause_switch;
     msg.main_loop_counter	= pkt.main_loop_counter;
     msg.i7_clock            = ros::Time::now().toSec();
