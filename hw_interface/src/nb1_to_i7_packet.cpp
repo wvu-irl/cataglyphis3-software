@@ -44,7 +44,7 @@ void NB1_To_I7::unpackMsg()
      * Copy packet data into topic msg data structure for ROS publishing
      */
     msg.counter         	= pkt.counter;
-    msg.nb_cloc			= ((double)pkt.clock_reg_count + ((double)pkt.clock_reg_reset_count * ((double) 0xFFFFFFFF + 1.0))) / (double)125000000.0;
+    msg.nb_clock			= ((double)pkt.clock_reg_count + ((double)pkt.clock_reg_reset_count * ((double) 0xFFFFFFFF + 1.0))) / (double)125000000.0;
     msg.acc_x1 			= pkt.acc_x1*0.00025/65536.0;
     msg.acc_y1 			= pkt.acc_y1*0.00025/65536.0;
     msg.acc_z1 			= pkt.acc_z1*0.00025/65536.0;
@@ -93,14 +93,14 @@ void NB1_To_I7::packMsg(const messages::nb1_to_i7_msg::ConstPtr& msg)
     /**
      * Copy topic msg data into packet data structure for writing to the port
      */
-    pkt.counter         	= msg->counter;
+    /*pkt.counter         	= msg->counter;
     //pkt.clock				= msg->clock;
     pkt.acc_x  				= msg->acc_x/0.00025*65536.0;
     pkt.acc_y  				= msg->acc_y/0.00025*65536.0;
     pkt.acc_z  				= msg->acc_z/0.00025*65536.0;
     pkt.rate_p          	= msg->rate_p/0.02*65536.0;
     pkt.rate_q          	= msg->rate_q/0.02*65536.0;
-    pkt.rate_r          	= msg->rate_r/0.02*65536.0;
+    pkt.rate_r          	= msg->rate_r/0.02*65536.0;*/
 }
 
 void NB1_To_I7::publishMsg(ros::Publisher* pub_ptr)
