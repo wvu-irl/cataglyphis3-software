@@ -14,7 +14,6 @@ NavigationFilter::NavigationFilter()
     homing_found=false;
 
 	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
-	filter.set_imu_offset(0,0);
 	encoders.set_wheel_radius(0.2286/2);
 	encoders.set_counts_per_revolution(4476.16*1.062);
 	current_time = ros::Time::now().toSec();
@@ -40,9 +39,7 @@ void NavigationFilter::update_time()
 
 void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 {
-    if (user_input_nav_act.bias_removal_forklift!=1
-            && !(latest_nav_control_request.runBiasRemoval)
-            )
+    if (user_input_nav_act.bias_removal_forklift!=1 && !(latest_nav_control_request.runBiasRemoval))
 	{
 		first_pass = true;
 		ROS_INFO("user_input_nav_act.bias_removal_forklift!=1");
@@ -54,19 +51,19 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 	if (first_pass == true)
 	{
 		filter.clear_accelerometer_values();
-		imu.clear_gyro1_values();
-		imu.clear_gyro2_values();
-		imu.clear_gyro3_values();
+		imu.clear_gyro_values();
 		prev_stopped = false;
 		collecting_accelerometer_data = false;
 		collected_gyro_data = false;
 		collected_gyro1_data = false;
 		collected_gyro2_data = false;
 		collected_gyro3_data = false;
+		collected_gyro4_data = false;
+		collected_gyro5_data = false;
+		collected_gyro6_data = false;
 		first_pass = false;
 	}
-	imu.determine_new_data();
-	imu.filter_imu_values();
+
 	if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.01) && encoders.delta_distance == 0)
 	{
 		if (collecting_accelerometer_data)
@@ -82,9 +79,7 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 				filter.collect_accelerometer_data(imu.ax, imu.ay, imu.az);
 			}
 		}
-        if (user_input_nav_act.bias_removal_forklift==1
-                || latest_nav_control_request.runBiasRemoval
-                )
+        if (user_input_nav_act.bias_removal_forklift==1 || latest_nav_control_request.runBiasRemoval)
 		{
 			if (imu.p1_values.size() > 500 && collected_gyro1_data!=true)
 			{
@@ -101,6 +96,7 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 				imu.collect_gyro1_data();
 				collected_gyro1_data = false;
 			}
+
 			if (imu.p2_values.size() > 500 && collected_gyro2_data!=true)
 			{
 				collected_gyro2_data = true;
@@ -116,6 +112,7 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 				imu.collect_gyro2_data();
 				collected_gyro2_data = false;
 			}
+
 			if (imu.p3_values.size() > 500 && collected_gyro3_data!=true)
 			{
 				collected_gyro3_data = true;
@@ -131,7 +128,57 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 				imu.collect_gyro3_data();
 				collected_gyro3_data = false;
 			}
-			if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data)
+
+			if (imu.p4_values.size() > 500 && collected_gyro4_data!=true)
+			{
+				collected_gyro4_data = true;
+				imu.calculate_gyro4_offset();
+				imu.set_gyro4_offset();
+			}
+			else if (collected_gyro4_data==true)
+			{
+				collected_gyro4_data = true;
+			}
+			else
+			{
+				imu.collect_gyro4_data();
+				collected_gyro4_data = false;
+			}
+
+			if (imu.p5_values.size() > 500 && collected_gyro5_data!=true)
+			{
+				collected_gyro5_data = true;
+				imu.calculate_gyro5_offset();
+				imu.set_gyro5_offset();
+			}
+			else if (collected_gyro5_data==true)
+			{
+				collected_gyro5_data = true;
+			}
+			else
+			{
+				imu.collect_gyro5_data();
+				collected_gyro5_data = false;
+			}
+
+			if (imu.p6_values.size() > 500 && collected_gyro6_data!=true)
+			{
+				collected_gyro6_data = true;
+				imu.calculate_gyro6_offset();
+				imu.set_gyro6_offset();
+			}
+			else if (collected_gyro6_data==true)
+			{
+				collected_gyro6_data = true;
+			}
+			else
+			{
+				imu.collect_gyro6_data();
+                collected_gyro6_data = false;
+			}
+
+
+			if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data)
 			{
 				collected_gyro_data = true;
 			}
@@ -141,10 +188,7 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 			}
 		}
 	}
-    if ((user_input_nav_act.bias_removal_forklift==1
-         || latest_nav_control_request.runBiasRemoval
-         )
-            && collected_gyro_data)
+    if ((user_input_nav_act.bias_removal_forklift==1 || latest_nav_control_request.runBiasRemoval) && collected_gyro_data)
 	{
 		nav_status_output = 1;
 	}
@@ -153,16 +197,13 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 		nav_status_output = 0;
 	}
     ROS_INFO("collected_gyro_data = %d \n", collected_gyro_data);
-	imu.set_prev_counters();
-    if(user_input_nav_act.begin_dead_reckoning==1
-            || latest_nav_control_request.beginForkliftDeadReckoning
-            )
+
+    if(user_input_nav_act.begin_dead_reckoning==1 || latest_nav_control_request.beginForkliftDeadReckoning)
 	{
 		state = _forklift_drive;
 		init_filter.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		filter1.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		filter2.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter3.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		init_filter.initialize_variance(collected_gyro_data,2.0*PI/180.0); //performed bias removal, north_angle_unc
 		first_pass = true;
 	}
@@ -172,88 +213,50 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 
 void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 {
-	encoders.adjustEncoderWrapError();
-	encoders.calculateWheelDistancesFromEncoders();
-	encoders.calculateDeltaDistance6Wheels(0, 0); //turnFlag, stopFlag
-	imu.determine_new_data();
-	imu.filter_imu_values();
-	if (imu.new_imu1!=0)
+    init_filter.which_nb_to_keep(imu.nb1_drive_counter, imu.nb1_current, imu.nb2_drive_counter, imu.nb2_current, imu.nb1_good_prev, imu.nb2_good_prev);
+	if (imu.new_nb1!=0)
 	{
-		filter1.turning(imu.p1,imu.q1,imu.r1,imu.dt1);
+		filter1.turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
 	}
 	else
 	{
-		filter1.blind_turning(imu.p1,imu.q1,imu.r1,imu.dt1);
-	}
-	if (imu.new_imu2!=0)
-	{
-		filter2.turning(imu.p2,imu.q2,imu.r2,imu.dt2);
-	}
-	else
-	{
-		filter2.blind_turning(imu.p2,imu.q2,imu.r2,imu.dt2);
-	}
-	if (imu.new_imu3!=0)
-	{
-		filter3.turning(imu.p3,imu.q3,imu.r3,imu.dt3);
-	}
-	else
-	{
-		filter3.blind_turning(imu.p3,imu.q3,imu.r3,imu.dt3);
+		filter1.blind_turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
 	}
 
-	init_filter.which_nb_to_keep(filter1.psi, filter2.psi, filter3.psi);
-	if(init_filter.keep_nb == 1)
+	if (imu.new_nb2!=0)
 	{
-		if (imu.new_imu1!=0)
-		{
-			init_filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		}
-		else if (imu.new_imu2!=0)
-		{
-			init_filter.keep_nb = 2;
-			init_filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		}
-		else
-		{
-			init_filter.keep_nb = 3;
-			init_filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		}
-	}
-	else if(init_filter.keep_nb == 2)
-	{
-		if (imu.new_imu2!=0)
-		{
-			init_filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		}
-		else if (imu.new_imu1!=0)
-		{
-			init_filter.keep_nb = 1;
-			init_filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		}
-		else
-		{
-			init_filter.keep_nb = 3;
-			init_filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		}
+		filter2.turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
 	}
 	else
 	{
-		if (imu.new_imu3!=0)
+		filter2.blind_turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
+	}
+
+
+	if(filter.keep_nb == 1)
+	{
+		filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+	}
+	else if(filter.keep_nb == 2)
+	{
+		filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+	}
+	else
+	{
+		if (imu.nb1_good_prev)
 		{
-			init_filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		}
-		else if (imu.new_imu1!=0)
+		else if (imu.nb2_good_prev)
 		{
-			init_filter.keep_nb = 1;
-			init_filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		}
 		else
 		{
-			init_filter.keep_nb = 2;
-			init_filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		}
 	}
+
 
 	if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
 	{
@@ -266,15 +269,12 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 		filter.P_north_angle = filter.north_angle_thresh*filter.north_angle_thresh;
 	}
 
-	imu.set_prev_counters();
 	if(pause_switch==false) 
 	{
 		state = _run; 
 		filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
 		filter1.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
 		filter2.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter3.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter.set_imu_offset(0,0); //x_offset, y_offset
 		if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
 		{
 			filter.north_angle = init_filter.psi;
@@ -291,12 +291,8 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 
 void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 {
-	encoders.adjustEncoderWrapError();
-	encoders.calculateWheelDistancesFromEncoders();
-	encoders.calculateDeltaDistance6Wheels(0, 0); //turnFlag, stopFlag
-	imu.determine_new_data();
-	imu.filter_imu_values();
-	
+    filter.which_nb_to_keep(imu.nb1_drive_counter, imu.nb1_current, imu.nb2_drive_counter, imu.nb2_current, imu.nb1_good_prev, imu.nb2_good_prev);
+
 	// Predict Methods
 	if(pause_switch==false) 
 	{
@@ -307,32 +303,25 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			collected_gyro_data = false;
 			collected_gyro1_data = false;
 			collected_gyro2_data = false;
-			collected_gyro3_data = false;
-			if (imu.new_imu1!=0)
+
+			if (imu.new_nb1!=0)
 			{
-				filter1.turning(imu.p1,imu.q1,imu.r1,imu.dt1);
+				filter1.turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
 			}
 			else
 			{
-				filter1.blind_turning(imu.p1,imu.q1,imu.r1,imu.dt1);
+				filter1.blind_turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
 			}
-			if (imu.new_imu2!=0)
+
+			if (imu.new_nb2!=0)
 			{
-				filter2.turning(imu.p2,imu.q2,imu.r2,imu.dt2);
+				filter2.turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
 			}
 			else
 			{
-				filter2.blind_turning(imu.p2,imu.q2,imu.r2,imu.dt2);
+				filter2.blind_turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
 			}
-			if (imu.new_imu3!=0)
-			{
-				filter3.turning(imu.p3,imu.q3,imu.r3,imu.dt3);
-			}
-			else
-			{
-				filter3.blind_turning(imu.p3,imu.q3,imu.r3,imu.dt3);
-			}
-		
+
 
 			if(filter.keep_nb == 1)
 			{
@@ -344,76 +333,63 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			}
 			else
 			{
-				filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				if (imu.nb1_good_prev)
+				{
+					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				else if (imu.nb2_good_prev)
+				{
+					filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				else
+				{
+					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
 			}
 
 
 			filter.clear_accelerometer_values();
-			//got_sun_here = false;
-			imu.clear_gyro1_values();
-			imu.clear_gyro2_values();
-			imu.clear_gyro3_values();
+			imu.clear_gyro_values();
 		}
 		else if (stopFlag)
 		{
-			if (!prev_stopped)
+			if (!prev_stopped && !stop_request)
 			{
-				filter.which_nb_to_keep(filter1.psi, filter2.psi, filter3.psi);
 				if(filter.keep_nb == 1)
 				{
-					if (imu.new_imu1!=0)
-					{
-						filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					else if (imu.new_imu2!=0)
-					{
-						filter.keep_nb = 2;
-						filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					else
-					{
-						filter.keep_nb = 3;
-						filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
+					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 				}
 				else if(filter.keep_nb == 2)
 				{
-					if (imu.new_imu2!=0)
-					{
-						filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					else if (imu.new_imu1!=0)
-					{
-						filter.keep_nb = 1;
-						filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					else
-					{
-						filter.keep_nb = 3;
-						filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
+					filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 				}
 				else
 				{
-					if (imu.new_imu3!=0)
+					if(imu.nb1_good_prev && !imu.nb2_good_prev)
 					{
-						filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					else if (imu.new_imu1!=0)
-					{
-						filter.keep_nb = 1;
 						filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						filter1.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						filter2.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					}
+					else if (!imu.nb1_good_prev && imu.nb2_good_prev)
+					{
+						filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						filter1.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						filter2.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					}
+					else if (imu.nb1_good_prev && imu.nb2_good_prev)
+					{
+						filter.initialize_states((filter1.phi+filter2.phi)/2.0,(filter1.theta+filter2.theta)/2.0,(filter1.psi+filter2.psi)/2.0,(filter1.x+filter2.x)/2.0,(filter1.y+filter2.y)/2.0,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 					}
 					else
 					{
-						filter.keep_nb = 2;
-						filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						// serial
 					}
+					imu.nb1_good_prev = true;
+					imu.nb2_good_prev = true;
 				}
-				filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filter3.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-
 			}
 
 
@@ -433,40 +409,201 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 						filter.clear_accelerometer_values();
 						filter1.initialize_states(filter.phi,filter.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 						filter2.initialize_states(filter.phi,filter.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-						filter3.initialize_states(filter.phi,filter.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 					}
 					else
 					{
 						filter.collect_accelerometer_data(imu.ax, imu.ay, imu.az);
 					}
 				}
+				if (latest_nav_control_request.runBiasRemoval)
+				{
+					if (imu.p1_values.size() > 500 && collected_gyro1_data!=true)
+					{
+						imu.calculate_gyro1_offset();
+						if(imu.good_bias1)
+						{
+							collected_gyro1_data = true;
+							imu.set_gyro1_offset();
+							filter1.Q_phi = 2.2847e-008;
+							filter1.Q_theta = 2.2847e-008;
+							filter1.Q_psi = 2.2847e-008;
+						}
+						else
+						{
+							imu.clear_gyro1_values();
+						}
+					}
+					else if (collected_gyro1_data==true)
+					{
+						collected_gyro1_data = true;
+					}
+					else
+					{
+						imu.collect_gyro1_data();
+						collected_gyro1_data = false;
+					}
+
+					if (imu.p2_values.size() > 500 && collected_gyro2_data!=true)
+					{
+						imu.calculate_gyro2_offset();
+						if(imu.good_bias2)
+						{
+							collected_gyro2_data = true;
+							imu.set_gyro2_offset();
+							filter1.Q_phi = 2.2847e-008;
+							filter1.Q_theta = 2.2847e-008;
+							filter1.Q_psi = 2.2847e-008;
+						}
+						else
+						{
+							imu.clear_gyro2_values();
+						}
+					}
+					else if (collected_gyro2_data==true)
+					{
+						collected_gyro2_data = true;
+					}
+					else
+					{
+						imu.collect_gyro2_data();
+						collected_gyro2_data = false;
+					}
+
+					if (imu.p3_values.size() > 500 && collected_gyro3_data!=true)
+					{
+						imu.calculate_gyro3_offset();
+						if(imu.good_bias3)
+						{
+							collected_gyro3_data = true;
+							imu.set_gyro3_offset();
+							filter1.Q_phi = 2.2847e-008;
+							filter1.Q_theta = 2.2847e-008;
+							filter1.Q_psi = 2.2847e-008;
+						}
+						else
+						{
+							imu.clear_gyro3_values();
+						}
+					}
+					else if (collected_gyro3_data==true)
+					{
+						collected_gyro3_data = true;
+					}
+					else
+					{
+						imu.collect_gyro3_data();
+						collected_gyro3_data = false;
+					}
+
+					if (imu.p4_values.size() > 500 && collected_gyro4_data!=true)
+					{
+						imu.calculate_gyro4_offset();
+						if(imu.good_bias4)
+						{
+							collected_gyro4_data = true;
+							imu.set_gyro4_offset();
+							filter2.Q_phi = 2.2847e-008;
+							filter2.Q_theta = 2.2847e-008;
+							filter2.Q_psi = 2.2847e-008;
+						}
+						else
+						{
+							imu.clear_gyro4_values();
+						}
+					}
+					else if (collected_gyro4_data==true)
+					{
+						collected_gyro4_data = true;
+					}
+					else
+					{
+						imu.collect_gyro4_data();
+						collected_gyro4_data = false;
+					}
+
+					if (imu.p5_values.size() > 500 && collected_gyro5_data!=true)
+					{
+						imu.calculate_gyro5_offset();
+						if(imu.good_bias5)
+						{
+							collected_gyro5_data = true;
+							imu.set_gyro5_offset();
+							filter2.Q_phi = 2.2847e-008;
+							filter2.Q_theta = 2.2847e-008;
+							filter2.Q_psi = 2.2847e-008;
+						}
+						else
+						{
+							imu.clear_gyro5_values();
+						}
+					}
+					else if (collected_gyro5_data==true)
+					{
+						collected_gyro5_data = true;
+					}
+					else
+					{
+						imu.collect_gyro5_data();
+						collected_gyro5_data = false;
+					}
+
+					if (imu.p6_values.size() > 500 && collected_gyro6_data!=true)
+					{
+						imu.calculate_gyro6_offset();
+						if(imu.good_bias6)
+						{
+							collected_gyro6_data = true;
+							imu.set_gyro6_offset();
+							filter2.Q_phi = 2.2847e-008;
+							filter2.Q_theta = 2.2847e-008;
+							filter2.Q_psi = 2.2847e-008;
+						}
+						else
+						{
+							imu.clear_gyro6_values();
+						}
+					}
+					else if (collected_gyro6_data==true)
+					{
+						collected_gyro6_data = true;
+					}
+					else
+					{
+						imu.collect_gyro6_data();
+						collected_gyro6_data = false;
+					}
+
+
+					if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data)
+					{
+						collected_gyro_data = true;
+					}
+					else
+					{
+						collected_gyro_data = false;
+					}
+				}
 			}
 			else
 			{
-				if (imu.new_imu1!=0)
+				if (imu.new_nb1!=0)
 				{
-					filter1.dead_reckoning(imu.p1,imu.q1,imu.r1,encoders.delta_distance,imu.dt1);
+					filter1.dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 				}
 				else
 				{
-					filter1.blind_dead_reckoning(imu.p1,imu.q1,imu.r1,encoders.delta_distance,imu.dt1);
+					filter1.blind_dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 				}
-				if (imu.new_imu2!=0)
+				if (imu.new_nb2!=0)
 				{
-					filter2.dead_reckoning(imu.p2,imu.q2,imu.r2,encoders.delta_distance,imu.dt2);
+					filter2.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
 				}
 				else
 				{
-					filter2.blind_dead_reckoning(imu.p2,imu.q2,imu.r2,encoders.delta_distance,imu.dt2);
+					filter2.blind_dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
 				}
-				if (imu.new_imu3!=0)
-				{
-					filter3.dead_reckoning(imu.p3,imu.q3,imu.r3,encoders.delta_distance,imu.dt3);
-				}
-				else
-				{
-					filter3.blind_dead_reckoning(imu.p3,imu.q3,imu.r3,encoders.delta_distance,imu.dt3);
-				}
+
+
 
 				if(filter.keep_nb == 1)
 				{
@@ -478,7 +615,19 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 				}
 				else
 				{
-					filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					if (imu.nb1_good_prev)
+					{
+						filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					}
+					else if (imu.nb2_good_prev)
+					{
+						filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					}
+					else
+					{
+						filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					}
+
 				}
 			}
 			prev_stopped = true;
@@ -491,34 +640,26 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			collected_gyro1_data = false;
 			collected_gyro2_data = false;
 			collected_gyro3_data = false;
+			collected_gyro4_data = false;
+			collected_gyro5_data = false;
+			collected_gyro6_data = false;
 			filter.clear_accelerometer_values();
-			//got_sun_here = false;
-			imu.clear_gyro1_values();
-			imu.clear_gyro2_values();
-			imu.clear_gyro3_values();
-			if (imu.new_imu1!=0)
+			imu.clear_gyro_values();
+			if (imu.new_nb1!=0)
 			{
-				filter1.dead_reckoning(imu.p1,imu.q1,imu.r1,encoders.delta_distance,imu.dt1);
+				filter1.dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 			}
 			else
 			{
-				filter1.blind_dead_reckoning(imu.p1,imu.q1,imu.r1,encoders.delta_distance,imu.dt1);
+				filter1.blind_dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 			}
-			if (imu.new_imu2!=0)
+			if (imu.new_nb2!=0)
 			{
-				filter2.dead_reckoning(imu.p2,imu.q2,imu.r2,encoders.delta_distance,imu.dt2);
-			}
-			else
-			{
-				filter2.blind_dead_reckoning(imu.p2,imu.q2,imu.r2,encoders.delta_distance,imu.dt2);
-			}
-			if (imu.new_imu3!=0)
-			{
-				filter3.dead_reckoning(imu.p3,imu.q3,imu.r3,encoders.delta_distance,imu.dt3);
+				filter2.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
 			}
 			else
 			{
-				filter3.blind_dead_reckoning(imu.p3,imu.q3,imu.r3,encoders.delta_distance,imu.dt3);
+				filter2.blind_dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
 			}
 		
 
@@ -532,7 +673,19 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			}
 			else
 			{
-				filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				if (imu.nb1_good_prev)
+				{
+					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				else if (imu.nb2_good_prev)
+				{
+					filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				else
+				{
+					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+
 			}
 		}
 
@@ -545,40 +698,34 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		collected_gyro1_data = false;
 		collected_gyro2_data = false;
 		collected_gyro3_data = false;
+		collected_gyro4_data = false;
+		collected_gyro5_data = false;
+		collected_gyro6_data = false;
 		filter.clear_accelerometer_values();
-		imu.clear_gyro1_values();
-		imu.clear_gyro2_values();
-		imu.clear_gyro3_values();
-		//got_sun_here = false;
+		imu.clear_gyro_values();
 		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.01) && encoders.delta_distance == 0)
 		{
 		}
 		else
 		{
-			if (imu.new_imu1!=0)
+			if (imu.new_nb1!=0)
 			{
-				filter1.dead_reckoning(imu.p1,imu.q1,imu.r1,encoders.delta_distance,imu.dt1);
+				filter1.dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 			}
 			else
 			{
-				filter1.blind_dead_reckoning(imu.p1,imu.q1,imu.r1,encoders.delta_distance,imu.dt1);
+				filter1.blind_dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 			}
-			if (imu.new_imu2!=0)
+
+			if (imu.new_nb2!=0)
 			{
-				filter2.dead_reckoning(imu.p2,imu.q2,imu.r2,encoders.delta_distance,imu.dt2);
+				filter2.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
 			}
 			else
 			{
-				filter2.blind_dead_reckoning(imu.p2,imu.q2,imu.r2,encoders.delta_distance,imu.dt2);
+				filter2.blind_dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
 			}
-			if (imu.new_imu3!=0)
-			{
-				filter3.dead_reckoning(imu.p3,imu.q3,imu.r3,encoders.delta_distance,imu.dt3);
-			}
-			else
-			{
-				filter3.blind_dead_reckoning(imu.p3,imu.q3,imu.r3,encoders.delta_distance,imu.dt3);
-			}
+
 			
 			if(filter.keep_nb == 1)
 			{
@@ -590,27 +737,105 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			}
 			else
 			{
-				filter.initialize_states(filter3.phi,filter3.theta,filter3.psi,filter3.x,filter3.y,filter3.P_phi,filter3.P_theta,filter3.P_psi,filter3.P_x,filter3.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				if (imu.nb1_good_prev)
+				{
+					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				else if (imu.nb2_good_prev)
+				{
+					filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				else
+				{
+					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
 			}
 		}
 	}
 
 	if (stopFlag && homing_found)
 	{
-		filter.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter3.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		homing_updated = true;
 	}
-	// else if (!stopFlag)
-	// {
-		// 
-	// }
 	else
 	{
 		homing_updated = false;
 	}
+
+
+	if ((imu.nb1_missed_counter>5 && imu.nb1_good || imu.nb2_missed_counter>5 && imu.nb2_good) && stop_request == false)
+	{
+		stop_request = true;
+		stop_time = ros::Time::now().toSec();
+	}
+    else if (stop_request == true && ((imu.nb1_current && imu.nb2_current)||(imu.nb1_current && !imu.nb2_good)||(!imu.nb1_good && imu.nb2_current)))
+	{
+		stop_request = false;
+		if (imu.nb1_current && imu.nb2_current)
+		{
+			if(imu.nb1_good_prev && !imu.nb2_good_prev)
+			{
+				filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter1.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter2.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			}
+			else if (!imu.nb1_good_prev && imu.nb2_good_prev)
+			{
+				filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter1.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter2.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			}
+			else if (imu.nb1_good_prev && imu.nb2_good_prev)
+			{
+				filter.initialize_states((filter1.phi+filter2.phi)/2.0,(filter1.theta+filter2.theta)/2.0,(filter1.psi+filter2.psi)/2.0,(filter1.x+filter2.x)/2.0,(filter1.y+filter2.y)/2.0,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			}
+			else
+			{
+				//serial
+			}
+			imu.nb1_good_prev = true;
+			imu.nb2_good_prev = true;
+		}
+		else if (imu.nb1_current)
+		{
+			filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			imu.nb1_good_prev = true;
+		}
+		else
+		{
+			filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			imu.nb2_good_prev = true;
+		}
+	}
+	else if (ros::Time::now().toSec()-stop_time>10.0) 
+	{
+		stop_request = false;
+		if (imu.nb1_missed_counter>5)
+		{
+			 imu.nb1_good = false;
+			 imu.nb1_good_prev = false;
+		}
+		if (imu.nb2_missed_counter>5)
+		{
+			 imu.nb2_good = false;
+			 imu.nb2_good_prev = false;
+		}
+	}
+
+	if (latest_nav_control_request.runBiasRemoval && collected_gyro_data)
+	{
+		nav_status_output = 1;
+	}
+	else
+	{
+		nav_status_output = 0;
+	}
+
 }
 
 void NavigationFilter::getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg)

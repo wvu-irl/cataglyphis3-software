@@ -20,8 +20,6 @@ public:
 	double y_prev;
 	double x_prev_waiting;
 	double y_prev_waiting;
-	double imu_offset_x;
-	double imu_offset_y;
 	double pqr_stddev;
 	double PI;
 	double a_stddev;
@@ -54,13 +52,12 @@ public:
 	void initialize_variance(int performed_bias_removal, double north_angle_unc);
 	void dead_reckoning(double p, double q, double r, double delta_distance, double dt);
 	void turning(double p, double q, double r, double dt);
-	void set_imu_offset(double offset_x_init, double offset_y_init);
 	void collect_accelerometer_data(double ax, double ay, double az);
 	void roll_pitch_G_update();
 	void clear_accelerometer_values();
 	void blind_dead_reckoning(double p, double q, double r, double delta_distance, double dt);
 	void blind_turning(double p, double q, double r, double dt);
-	void which_nb_to_keep(double heading1, double heading2, double heading3);
+	void which_nb_to_keep(int nb1_drive_counter, bool nb1_current, int nb2_drive_counter, bool nb2_current, bool nb1_good_prev, bool nb2_good_prev);
 
 };
 
