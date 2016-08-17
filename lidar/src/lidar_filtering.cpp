@@ -410,7 +410,7 @@ void LidarFilter::doMathMapping()
 	    point.push_back(object_filtered->points[i].z);
 
 	    //the index checks which gird a point belongs to 
-	    index = floor(object_filtered->points[i].x + map_range)*(map_range) + floor(object_filtered->points[i].y + map_range);
+	    index = floor(object_filtered->points[i].x + map_range)*(2*map_range) + floor(object_filtered->points[i].y + map_range);
 	    grid_map_cells[index].push_back(point);
 	    point.clear();
 	}
