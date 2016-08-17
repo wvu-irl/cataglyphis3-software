@@ -21,19 +21,38 @@ public:
 		uint16_t counter;
 		uint32_t clock_reg_count;
 		uint32_t clock_reg_reset_count;
-		int32_t acc_x;
-		int32_t acc_y;
-		int32_t acc_z;
-		int32_t rate_p;
-		int32_t rate_q;
-		int32_t rate_r;
-		/*int32_t xda;
+		
+		int32_t acc_x1;
+		int32_t acc_y1;
+		int32_t acc_z1;
+		int32_t rate_p1;
+		int32_t rate_q1;
+		int32_t rate_r1;
+		
+		int32_t acc_x2;
+		int32_t acc_y2;
+		int32_t acc_z2;
+		int32_t rate_p2;
+		int32_t rate_q2;
+		int32_t rate_r2;
+		
+		int32_t acc_x3;
+		int32_t acc_y3;
+		int32_t acc_z3;
+		int32_t rate_p3;
+		int32_t rate_q3;
+		int32_t rate_r3;
+		
+        /*int32_t xda;
         int32_t yda;
         int32_t zda;
         int32_t xdv;
         int32_t ydv;
         int32_t zdv;*/
-		uint8_t num_imus;
+        
+        //int16_t potValues[8];
+        
+        uint8_t imu_status; //bit shifted field containing info on IMU health
 		uint8_t pause_switch;
 		uint16_t main_loop_counter;
 		uint8_t checksum;

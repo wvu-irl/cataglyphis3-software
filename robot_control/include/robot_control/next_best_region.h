@@ -18,8 +18,9 @@ public:
 	const float numHazardsPerDistanceToTerrainHazardGain = 1.0; // terrainHzardIndex/(numHazards/m)
 	const float sampleProbGain = 1.0; // value/conf
 	const float sampleSigGain = 0.1; // value/sample significance
-	const float distanceGain = 0.0033; // value/m
-	const float terrainGain = 0.2; // value/terrainHazardIndex
+	const float distanceGain = 0.00165; // value/m
+	const float terrainGain = 0.02; // value/terrainHazardIndex
+	const float riskGain = 0.1;
     // Methods
     bool runProc();
 };

@@ -48,6 +48,7 @@ bool SearchRegion::runProc()
             modROISrv.request.sampleProb = roiTimeExpiredNewSampleProb;
             modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
 			modROISrv.request.addNewROI = false;
+            modROISrv.request.editGroup = false;
 			if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
 			else ROS_ERROR("modify ROI service call unsuccessful");
 			inSearchableRegion = false;
@@ -89,12 +90,12 @@ bool SearchRegion::runProc()
         procsToResume[procType] = false;
 		computeDriveSpeeds();
 		serviceAvoidCounterDecrement();
-        if((possibleSample || definiteSample) && !(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
+        if((possibleSample || definiteSample) && !searchEnded()) // Found a possible or definite sample, but did not finish set of waypoints. Clear exec deque before moving on.
 		{
 			sendDequeClearAll();
 			state = _finish_;
 		}
-		else if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_; // Last search action ended, but nothing found. Finish the proc.
+        else if(searchEnded()) state = _finish_; // Last search action ended, but nothing found. Finish the proc.
 		else state = _exec_; // Not finished, keep executing.
 		break;
 	case _interrupt_:

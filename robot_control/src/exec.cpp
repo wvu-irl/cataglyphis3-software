@@ -8,6 +8,8 @@ Exec::Exec()
     navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
     driveSpeedsSub = nh.subscribe<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1, &Exec::driveSpeedsCallback_, this);
+    leftRoboteqSub = nh.subscribe<messages::encoder_data>("/roboteq/drivemotorin/left", 1, &Exec::leftRoboteqCallback_, this);
+    rightRoboteqSub = nh.subscribe<messages::encoder_data>("/roboteq/drivemotorin/right", 1, &Exec::rightRoboteqCallback_, this);
 	actuatorPub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
     actionEndedPub = nh.advertise<messages::ExecActionEnded>("control/exec/actionended",1);
@@ -109,8 +111,10 @@ void Exec::run()
 	pausePrev_ = pause_;
 	packActuatorMsgOut_();
 	packInfoMsgOut_();
+    packNextWaypointOut_();
 	actuatorPub.publish(actuatorMsgOut_);
 	infoPub.publish(execInfoMsgOut_);
+    nextWaypointOutPub.publish(nextWaypointMsgOut_);
     /*execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
     ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
     for(int i=0; i<NUM_ACTIONS; i++) ROS_INFO("actionPoolIndex[%i] = %i",i,actionPoolIndex_[i]);
@@ -181,6 +185,20 @@ void Exec::driveSpeedsCallback_(const robot_control::DriveSpeeds::ConstPtr &msg)
     robotStatus.rMax = msg->rMax;
 }
 
+void Exec::leftRoboteqCallback_(const messages::encoder_data::ConstPtr &msg)
+{
+    robotStatus.flEncoder = msg->motor_1_encoder_count;
+    robotStatus.mlEncoder = msg->motor_2_encoder_count;
+    robotStatus.blEncoder = msg->motor_3_encoder_count;
+}
+
+void Exec::rightRoboteqCallback_(const messages::encoder_data::ConstPtr &msg)
+{
+    robotStatus.frEncoder = msg->motor_1_encoder_count;
+    robotStatus.mrEncoder = msg->motor_2_encoder_count;
+    robotStatus.brEncoder = msg->motor_3_encoder_count;
+}
+
 void Exec::packActuatorMsgOut_()
 {
 	actuatorMsgOut_.fl_speed_cmd = robotOutputs.flMotorSpeed;
@@ -244,10 +262,13 @@ void Exec::packInfoMsgOut_()
 
 void Exec::packNextWaypointOut_()
 {
-    if(actionDeque_.at(0)->params.actionType == _driveGlobal)
+    if(actionDeque_.size()>0)
     {
-        nextWaypointMsgOut_.globalX = actionDeque_.at(0)->params.float1;
-        nextWaypointMsgOut_.globalY = actionDeque_.at(0)->params.float2;
+        if(actionDeque_.at(0)->params.actionType == _driveGlobal)
+        {
+            nextWaypointMsgOut_.globalX = actionDeque_.at(0)->params.float1;
+            nextWaypointMsgOut_.globalY = actionDeque_.at(0)->params.float2;
+            //nextWaypointMsgOut_.unskippable = actionDeque_.at(0)->params.bool3;
+        }
     }
-
 }

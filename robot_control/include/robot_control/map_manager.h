@@ -25,8 +25,27 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-//#include "evansdale_map.h"
+#define EVANSDALE
+//#define WPI
+//#define QUAD
+//#define CHESTNUT_RIDGE
+
+#ifdef EVANSDALE
+#include "evansdale_map.h"
+#endif // EVANSDALE
+
+#ifdef WPI
 #include "wpi_map.h"
+#endif // WPI
+
+#ifdef QUAD
+#include "quad_map.h"
+#endif // QUAD
+
+#ifdef CHESTNUT_RIDGE
+#include "chestnut_ridge_map.h"
+#endif // CHESTNUT_RIDGE
+
 //#include other maps...
 
 class MapManager
@@ -56,6 +75,7 @@ public:
 	void writeKeyframesIntoGlobalMap();
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
+	void setStartingPlatform();
 	void calculateGlobalMapSize();
 	void cutOutGlobalSubMap();
 	// Members
@@ -156,12 +176,16 @@ public:
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 	const float randomWaypointMinDistance = 2.0; // m
-	const float satDriveabilityInitialValue = 10.0;
+	const float satDriveabilityInitialValue = 100.0;
 	const float satDriveabilityInitialConf = 0.5;
 	const float keyframeDriveabilityInitialValue = 0.0;
 	const float keyframeDriveabilityInitialConf = 0.0;
 	const float keyframeSize = 80.0;
+	const unsigned int maxNormalWaypointAvoidCount = 3;
 	arma::Mat<float> distanceMat;
+	int startingPlatformLocation;
+	float satMapStartE;
+	float satMapStartS;
 };
 
 #endif // MAP_MANAGER_H

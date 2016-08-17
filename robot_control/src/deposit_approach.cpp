@@ -55,6 +55,7 @@ bool DepositApproach::runProc()
 		clearAndResizeWTT();
 		waypointsToTravel.at(0).x = depositAlignXDistance;
 		waypointsToTravel.at(0).y = depositLocations.at(samplesCollected).y;
+        waypointsToTravel.at(0).maxAvoids = maxHomeWaypointAvoidCount;
 		callIntermediateWaypoints();
         sendDriveGlobal(false, false, 0.0);
 		state = _exec_;

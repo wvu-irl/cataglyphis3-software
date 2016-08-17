@@ -9,3 +9,4 @@ float32 sampleSig
 float32 allocatedTime
 uint8 highRisk
 bool hardLockout
+uint8 roiGroup

@@ -5,6 +5,7 @@ int main(int argc, char **argv)
 {
 	//Initialize ROS Node
 	ros::init(argc, argv, "calibrate_camera_node");
+	ros::Time::init();
 	ROS_INFO("calibrate_camera_node running...");
 
 	//Initialize Camera and Caliration Objects
@@ -12,52 +13,51 @@ int main(int argc, char **argv)
 	CalibrateCamera calibrateCamera;
 
 	//Capture Initial Image
-	calibrateCamera._dst = cv::imread("/home/jared/cataglyphis_ws/src/computer_vision/f10.jpg");
-	calibrateCamera._dstCopy = calibrateCamera._dst.clone();
-
-	// if(capture.capture_image()==0)
-	// {
-	// 	ROS_ERROR("Could not capture initial image from camera. Terminating...");
-	// 	return 0;
-	// }
-	// else
-	// {
-	// 	dst = capture.image_Mat.clone();
-	// 	dstCopy = dst.clone();
-	// }
-
+	if(argc>1)
+	{
+		boost::filesystem::path P( ros::package::getPath("computer_vision") );
+		std::string filename = P.string() + "/f10.jpg";
+		cv::Mat tempImage = cv::imread(filename.c_str());
+		calibrateCamera.setImage(tempImage);
+	}
+	else
+	{
+		if(capture.capture_image()==0)
+		{
+			ROS_ERROR("Could not capture initial image from camera. Terminating...");
+			return 0;
+		}
+		else
+		{
+			cv::Mat tempImage = capture.image_Mat.clone();
+			calibrateCamera.setImage(tempImage);
+		}		
+	}
+	
 	//Main Loop
+	calibrateCamera.loadCalibration();
+	calibrateCamera.initializeTrackbars();
 	calibrateCamera.updateImage();
 	while(ros::ok())
 	{
 		calibrateCamera.displayImage();
 		
 		char keyPress = cv::waitKey(30);
-		if(keyPress == 'r')
+		if(calibrateCamera._captureImage == true || keyPress == 'r')
 		{
+			calibrateCamera._captureImage = false;
 			if(capture.capture_image()==0)
 			{
 				ROS_ERROR("Could not capture a new image from camera. Terminating...");
-				return 0;
 			}
 			else
 			{
-				calibrateCamera._dst = capture.image_Mat.clone();
-				calibrateCamera._dstCopy = calibrateCamera._dst.clone();
+				cv::Mat tempImg = cv::Mat(capture.image_Mat.clone());
+				calibrateCamera.setImage(tempImg);
+				calibrateCamera.updateImage();
 			}
 		}
-		else if(keyPress == 'u')
-		{
-			ROS_INFO("Updating image...");
-			calibrateCamera.updateImage();
-
-		}
-		else if(keyPress == 's')
-		{
-		    ROS_INFO("Writing new mask to file...");
-			calibrateCamera.saveCalibration();
-		}
-		else if(keyPress == 'q')
+		else if(calibrateCamera._exit == true || keyPress == 'q')
 		{
 			break;
 		}

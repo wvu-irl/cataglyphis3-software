@@ -18,6 +18,12 @@ public:
 	float velocity = 0.0; // m/s
 	float vMax = 1.2; // m/s
 	float rMax = 45.0; // deg/s
+	long int flEncoder = 0;
+	long int mlEncoder = 0;
+	long int blEncoder = 0;
+	long int frEncoder = 0;
+	long int mrEncoder = 0;
+	long int brEncoder = 0;
 	// Grabber data
 	int grabberSlideStatus = 0;
 	int grabberDropStatus = 0;

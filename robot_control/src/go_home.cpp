@@ -20,13 +20,14 @@ bool GoHome::runProc()
 		clearAndResizeWTT();
         waypointsToTravel.at(0).x = homeWaypointX;
         waypointsToTravel.at(0).y = homeWaypointY;
-        waypointsToTravel.at(0).unskippable = true;
+        waypointsToTravel.at(0).unskippable = false;
+        waypointsToTravel.at(0).maxAvoids = maxHomeWaypointAvoidCount;
 		callIntermediateWaypoints();
         sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
 		state = _exec_;
 		break;
 	case _exec_:
-        if(execLastProcType == procType && execLastSerialNum == (serialNum-1)) avoidLockout = true;
+        if(execLastProcType == procType && execLastSerialNum == (serialNum-1)) avoidLockout = true; // *** Not sure if this is really the right condition...
         else avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;

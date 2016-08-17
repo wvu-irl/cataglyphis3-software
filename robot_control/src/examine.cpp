@@ -33,7 +33,7 @@ bool Examine::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
 		computeDriveSpeeds();
-		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) state = _finish_;
+        if(searchEnded()) state = _finish_;
 		else state = _exec_;
 		break;
 	case _interrupt_:

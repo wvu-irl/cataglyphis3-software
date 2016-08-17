@@ -19,6 +19,7 @@ MissionPlanning::MissionPlanning()
     lidarFilterSub = nh.subscribe<messages::LidarFilterOut>("lidar/lidarfilteringout/lidarfilteringout", 1, &MissionPlanning::lidarFilterCallback_, this);
     hsmMasterStatusSub = nh.subscribe<messages::MasterStatus>("hsm/masterexecutive/masterstatus", 1, &MissionPlanning::hsmMasterStatusCallback_, this);
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
+    nextWaypointSub = nh.subscribe<messages::NextWaypointOut>("/control/exec/nextwaypoint", 1, &MissionPlanning::nextWaypointCallback_, this);
     navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
     controlServ = nh.advertiseService("/control/missionplanning/control", &MissionPlanning::controlCallback_, this);
@@ -53,6 +54,8 @@ MissionPlanning::MissionPlanning()
     escapeLockout = false;
     roiKeyframed = false;
     startSLAM = false;
+    giveUpROI = false;
+    searchTimedOut = false;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
     prevAvoidCountDecYPos = robotStatus.yPos;
@@ -84,6 +87,8 @@ MissionPlanning::MissionPlanning()
     homingUpdatedFailedCount = 0;
     timers[_biasRemovalTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalTimerCallback_, this);
     timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
+    timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
+    timers[_searchTimer_]->stop();
     timers[_biasRemovalTimer_]->setPeriod(biasRemovalTimeoutPeriod);
     timers[_homingTimer_]->setPeriod(homingTimeoutPeriod);
     timers[_biasRemovalTimer_]->start();
@@ -134,7 +139,8 @@ void MissionPlanning::run()
     //ROS_DEBUG("after evalConditions");
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch) runPause_();
-    else runProcesses_();
+    else runProcedures_();
+    serviceSearchTimer_();
     packAndPubInfoMsg_();
     //std::printf("\n");
     //ROS_INFO("END <<<<<<<<<<<<<\n");
@@ -194,19 +200,21 @@ void MissionPlanning::evalConditions_()
         //for(int i; i<NUM_PROC_TYPES; i++) {procsToExecute.at(i) = false; procsToInterrupt.at(i) = false;}
         calcnumProcsBeingOrToBeExecOrRes_();
         //ROS_INFO("numProcsBeingOrToBeExecOrRes = %i", numProcsBeingOrToBeExecOrRes);
-        if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !missionEnded) //  Emergency Escape
+        if(escapeCondition && !execInfoMsg.stopFlag && !escapeLockout && !robotStatus.pauseSwitch && !missionEnded) //  Emergency Escape
         {
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             if(procsBeingExecuted[__emergencyEscape__]) {procsToInterrupt[__emergencyEscape__] = true; ROS_INFO("to interrupt emergencyEscape"); voiceSay->call("interrupt emergency escape");}
             else {procsToExecute[__emergencyEscape__] = true; procsToInterrupt[__emergencyEscape__] = false; ROS_INFO("to execute emergencyEscape"); voiceSay->call("emergency escape");}
         }
-        if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !missionEnded) // Avoid
+        if(!escapeCondition && collisionMsg.collision!=0 && !execInfoMsg.turnFlag && !execInfoMsg.stopFlag && !avoidLockout && !robotStatus.pauseSwitch && !missionEnded) // Avoid
         {
             ROS_INFO("avoid case");
+            avoidLockout = true;
             shouldExecuteAvoidManeuver = true;
             for(int i=0; i<NUM_PROC_TYPES; i++) procsToInterrupt[i] = procsBeingExecuted[i];
             procsToInterrupt[__avoid__] = false;
-            if(procsToInterrupt[__emergencyEscape__]) avoid.dequeClearFront = true; // If avoid occured during emergency escape, just treat the avoid maneuver as the offset drive in emergency escape
+            if(procsToInterrupt[__emergencyEscape__]) avoid.interruptedEmergencyEscape = true; // If avoid occured during emergency escape, just treat the avoid maneuver as the offset drive in emergency escape
+            else avoid.interruptedEmergencyEscape = false;
             if(procsToInterrupt[__nextBestRegion__] || procsToInterrupt[__searchRegion__] || procsToInterrupt[__goHome__]) // If avoid occured while driving to a waypoint globally (which occurs in these procedures), check if the remaining distance to the waypoint is small enough to just end the drive there
             {
                 //ROS_INFO("was executing proc with driveGlobal");
@@ -215,12 +223,11 @@ void MissionPlanning::evalConditions_()
                     //ROS_INFO("was executing driveGlobal");
                     avoidRemainingWaypointDistance = hypot(execInfoMsg.actionFloat1[0] - robotStatus.xPos, execInfoMsg.actionFloat2[0] - robotStatus.yPos);
                     //ROS_INFO("avoidRemainingWaypointDistance = %f",avoidRemainingWaypointDistance);
-                    if(avoidRemainingWaypointDistance <= minAvoidRemainingWaypointDistance)
+                    if(avoidRemainingWaypointDistance <= minAvoidRemainingWaypointDistance && !execInfoMsg.actionBool3[0])
                     {
                         //ROS_INFO("closer than avoid remaining waypoint distance. End drive here");
                         avoid.sendDequeClearFront();
                         shouldExecuteAvoidManeuver = false;
-                        avoidLockout = true;
                     }
                 }
                 /*robotStatus.pauseSwitch = true;
@@ -232,8 +239,20 @@ void MissionPlanning::evalConditions_()
             }
             if(shouldExecuteAvoidManeuver)
             {
-                if(!procsBeingExecuted[__avoid__]) {procsToExecute[__avoid__] = true; ROS_INFO("to execute avoid"); voiceSay->call("avoid");}
-                else if((collisionMsg.distance_to_collision <= collisionInterruptThresh) && procsBeingExecuted[__avoid__]) {procsToInterrupt[__avoid__] = true; ROS_INFO("to interrput avoid"); voiceSay->call("interrupt avoid");}
+                if(procsBeingExecuted[__avoid__])
+                {
+                    procsToInterrupt[__avoid__] = true;
+                    avoid.interruptedAvoid = 1;
+                    ROS_INFO("to interrput avoid");
+                    voiceSay->call("interrupt avoid");
+                }
+                else
+                {
+                    procsToExecute[__avoid__] = true;
+                    avoid.interruptedAvoid = 0;
+                    ROS_INFO("to execute avoid");
+                    voiceSay->call("avoid");
+                }
             }
         }
         if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !performBiasRemoval && !performHoming && !performSafeMode && !missionEnded) // Next Best Region
@@ -337,7 +356,7 @@ void MissionPlanning::evalConditions_()
     }
 }
 
-void MissionPlanning::runProcesses_()
+void MissionPlanning::runProcedures_()
 {
     if(pauseStarted == true) {pause.sendUnPause(); resumeTimers_(); voiceSay->call("un pause"); startSLAM = true;} // !!!! startSLAM needs to go in init proc when implemented
     pauseStarted = false;
@@ -371,6 +390,11 @@ void MissionPlanning::pauseAllTimers_()
 void MissionPlanning::resumeTimers_()
 {
     for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
+}
+
+void MissionPlanning::serviceSearchTimer_()
+{
+    if(execInfoMsg.actionDeque[0] == _search && !timers[_searchTimer_]->running && !searchTimedOut) {timers[_searchTimer_]->start(); ROS_INFO("start searchTimer");}
 }
 
 void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
@@ -505,6 +529,11 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
     sampleDataActedUpon = false;
 }
 
+void MissionPlanning::nextWaypointCallback_(const messages::NextWaypointOut::ConstPtr &msg)
+{
+    nextWaypointMsg = *msg;
+}
+
 bool MissionPlanning::emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res)
 {
     escapeCondition = req.escapeCondition;
@@ -597,4 +626,11 @@ void MissionPlanning::homingTimerCallback_(const ros::TimerEvent &event)
     performHoming = true;
     ROS_INFO("homingTimerExpired");
     voiceSay->call("homing timer expired");
+}
+
+void MissionPlanning::searchTimerCallback_(const ros::TimerEvent &event)
+{
+    searchTimedOut = true;
+    ROS_INFO("searchTimer expired");
+    voiceSay->call("search timer expired");
 }

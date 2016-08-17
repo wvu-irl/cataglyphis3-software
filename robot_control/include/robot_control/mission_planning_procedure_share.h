@@ -20,6 +20,7 @@
 #include <messages/LidarFilterOut.h>
 #include <messages/MasterStatus.h>
 #include <messages/NavFilterControl.h>
+#include <messages/NextWaypointOut.h>
 #include <hsm/voice.h>
 #include <armadillo>
 #include <math.h>
@@ -29,10 +30,10 @@
 #define RAD2DEG 180.0/PI
 #define NUM_PROC_TYPES 14
 #define MAX_SAMPLES 10
-#define NUM_TIMERS 3
+#define NUM_TIMERS 5
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
 enum PROC_TYPES_T {__emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
-enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
+enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_, _searchTimer_};
 
 class MissionPlanningProcedureShare
 {
@@ -54,6 +55,8 @@ public:
 	static messages::LidarFilterOut lidarFilterMsg;
 	static ros::Subscriber hsmMasterStatusSub;
 	static messages::MasterStatus hsmMasterStatusMsg;
+	static ros::Subscriber nextWaypointSub;
+	static messages::NextWaypointOut nextWaypointMsg;
     static ros::ServiceClient intermediateWaypointsClient;
     static robot_control::IntermediateWaypoints intermediateWaypointsSrv;
     static ros::ServiceClient reqROIClient;
@@ -117,8 +120,14 @@ public:
 	static bool escapeLockout;
 	static bool roiKeyframed;
 	static bool startSLAM;
+	static bool giveUpROI;
+	static bool searchTimedOut;
 	static unsigned int avoidCount;
-	const unsigned int maxAvoidCount = 3;
+	const unsigned int maxNormalWaypointAvoidCount = 5;
+	const unsigned int maxROIWaypointAvoidCount = 8;
+	const unsigned int maxCornerWaypointAvoidCount = 12;
+	const unsigned int maxHomeWaypointAvoidCount = 20;
+	const unsigned int fullyBlockedAvoidCountIncrement = 5;
 	const float metersPerAvoidCountDecrement = 3.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
@@ -146,9 +155,13 @@ public:
 	const float defaultRMax = 45.0; // deg/s
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m
-	const float lidarUpdateWaitTime = 1.0; // sec
+	const float lidarUpdateWaitTime = 2.0; // sec
 	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
+	const float searchTimeoutPeriod = 15.0; // sec
+	const float sampleFoundNewROIProb = 0.01;
+	const float roiTimeExpiredNewSampleProb = 0.05;
+	const float giveUpROIFromAvoidNewSampleProb = 0.01;
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -168,6 +181,8 @@ ros::Subscriber MissionPlanningProcedureShare::lidarFilterSub;
 messages::LidarFilterOut MissionPlanningProcedureShare::lidarFilterMsg;
 ros::Subscriber MissionPlanningProcedureShare::hsmMasterStatusSub;
 messages::MasterStatus MissionPlanningProcedureShare::hsmMasterStatusMsg;
+ros::Subscriber MissionPlanningProcedureShare::nextWaypointSub;
+messages::NextWaypointOut MissionPlanningProcedureShare::nextWaypointMsg;
 ros::ServiceClient MissionPlanningProcedureShare::intermediateWaypointsClient;
 robot_control::IntermediateWaypoints MissionPlanningProcedureShare::intermediateWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::reqROIClient;
@@ -223,6 +238,8 @@ bool MissionPlanningProcedureShare::avoidLockout;
 bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
 bool MissionPlanningProcedureShare::startSLAM;
+bool MissionPlanningProcedureShare::giveUpROI;
+bool MissionPlanningProcedureShare::searchTimedOut;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

@@ -24,22 +24,37 @@ MapManager::MapManager()
     mapPathHazardsVertices.resize(4);
     globalPose.northAngle = 90.0; // degrees. initial guess
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
+    startingPlatformLocation = 2; // By default, assume starting platform location 2
     srand(time(NULL));
 
-    // Square around starting platform. Must initialize with north angle = 90.0 degrees
+// Square around starting platform. Must initialize with north angle = 90.0 degrees
 //#include <robot_control/square_rois.h>
 
-    // Dense ROIs to search directly in front of library
+#ifdef EVANSDALE
+// Dense ROIs to search directly in front of library
 //#include <robot_control/evansdale_short_dense_rois.h>
 
-    // Limited set of ROIs covering eastern half of Evansdale in front of library
+// Limited set of ROIs covering eastern half of Evansdale in front of library
 //#include <robot_control/evansdale_library_rois.h>
 
-    // Full set of ROIs covering Evansdale in front of library and engineering
-//#include <robot_control/evansdale_full_rois.h>
+// Full set of ROIs covering Evansdale in front of library and engineering
+#include <robot_control/evansdale_full_rois.h>
+#endif // EVANSDALE
 
-    // WPI Institute Park ROIs
+#ifdef WPI
+// WPI Institute Park ROIs
 #include <robot_control/wpi_rois.h>
+#endif // WPI
+
+#ifdef QUAD
+// Quad at WPI ROIs
+#include <robot_control/quad_rois.h>
+#endif // QUAD
+
+#ifdef CHESTNUT_RIDGE
+// ROIs for Chestnut Ridge Park
+#include <robot_control/quad_rois.h>
+#endif // CHESTNUT_RIDGE
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -92,6 +107,7 @@ MapManager::MapManager()
     satMapSize[1] = ((float)driveabilityNumRows)*driveabilityMapRes;
     globalMapOrigin[0] = 0.0;
     globalMapOrigin[1] = 0.0;
+    setStartingPlatform();
     calculateGlobalMapSize();
     //globalMapSize[0] = hypot(satMapSize[0],satMapSize[1]) + std::max(fabs(globalMapOrigin[0]),fabs(globalMapOrigin[1]));
     //globalMapSize[1] = globalMapSize[0];
@@ -152,6 +168,13 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
     {
         regionsOfInterest.at(req.modROIIndex).sampleProb = req.sampleProb;
         regionsOfInterest.at(req.modROIIndex).sampleSig = req.sampleSig;
+        if(req.editGroup && regionsOfInterest.at(req.modROIIndex).roiGroup != 0)
+        {
+            for(int i=0; i<regionsOfInterest.size(); i++)
+            {
+                if(regionsOfInterest.at(i).roiGroup == regionsOfInterest.at(req.modROIIndex).roiGroup) regionsOfInterest.at(i).sampleProb = req.sampleProb;
+            }
+        }
     }
     if(req.addNewROI)
     {
@@ -389,6 +412,8 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
                 res.waypointList.at(numRandomWaypointsSelected-1).sampleProb = searchLocalMap.at(layerToString(_sampleProb), randomWaypointIndex);
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
+                res.waypointList.at(numRandomWaypointsSelected-1).unskippable = false;
+                res.waypointList.at(numRandomWaypointsSelected-1).maxAvoids = maxNormalWaypointAvoidCount;
             }
             if(numRandomWaypointSearchDistanceCriteriaFailed > randomWaypointDistanceCriteriaFailedLimit)
             {
@@ -845,6 +870,29 @@ void MapManager::updateNorthTransformedMapData() // tested* ^^^
     }
     globalMap.addDataFrom(globalMapTemp, false, true, false, std::vector<std::string>(1,layerToString(_driveability)));
 }*/
+
+void MapManager::setStartingPlatform()
+{
+    switch(startingPlatformLocation)
+    {
+    case 1:
+        satMapStartE = satMapStartE1;
+        satMapStartS = satMapStartS1;
+        break;
+    case 2:
+        satMapStartE = satMapStartE2;
+        satMapStartS = satMapStartS2;
+        break;
+    case 3:
+        satMapStartE = satMapStartE3;
+        satMapStartS = satMapStartS3;
+        break;
+    default:
+        satMapStartE = satMapStartE2;
+        satMapStartS = satMapStartS2;
+        break;
+    }
+}
 
 void MapManager::calculateGlobalMapSize()
 {

@@ -25,7 +25,7 @@ bool ConfirmCollect::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-		if(cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum)
+        if(searchEnded())
 		{
 			computeSampleValuesWithExpectedDistance();
             ROS_INFO("confirmCollect bestSampleValue = %f",bestSampleValue);
@@ -50,6 +50,7 @@ bool ConfirmCollect::runProc()
                 modROISrv.request.setSampleProps = true;
                 modROISrv.request.sampleProb = sampleFoundNewROIProb;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.editGroup = true;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
                 roiKeyframed = false;

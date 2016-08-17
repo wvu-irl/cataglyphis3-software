@@ -1,3 +1,2 @@
 float32 globalX
 float32 globalY
-bool unskippable

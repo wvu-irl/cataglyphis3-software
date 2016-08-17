@@ -12,6 +12,7 @@
 #include <iterator>
 #include "map_layers.h"
 #include <messages/GlobalMapFull.h>
+#include <hsm/voice.h>
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
@@ -49,7 +50,7 @@ public:
 	bool narrowBandNotEmpty();
 	void gradientDescent(grid_map::GridMap& map, grid_map::Position startPosition, std::vector<grid_map::Index>& pathOut);
 	void chooseWaypointsFromOptimalPath();
-	STRAIGHT_LINE_CONDITION_T straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh, unsigned int numCellsLimit);
+	STRAIGHT_LINE_CONDITION_T straightLineDriveable(grid_map::GridMap& map, std::string layer, grid_map::Position& startPos, grid_map::Position& endPos, float hazardThresh, unsigned int numCellsLimit, bool useMinDistanceLimit);
 	void transitionWaypoints(std::vector<robot_control::Waypoint>& waypointList);
 	void generateAndPubVizMap(std::vector<robot_control::Waypoint> waypointList);
 	void addToSet(std::multiset<MapData, MapDataLess>& set, MapData& cell);
@@ -83,8 +84,9 @@ public:
 	std::vector<grid_map::Position> hazardMapPoints;
 	grid_map::GridMap initialViscosityMap;
 	//const float initialTimeValue = 0.0005;
-	const float initialTimeValue = 0.000002;
-	const float maxTimeValue = 10.0;
+	//const float initialTimeValue = 0.000002;
+	const float initialTimeValue = 0.01;
+	const float maxTimeValue = 1000.0;
 	const float minFMMTimeValue = 0.0;
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
@@ -110,21 +112,26 @@ public:
 	bool stillInsertingWaypoints;
 	grid_map::Position workingPos;
 	robot_control::Waypoint insertWaypoint;
-	const float initialHazardAlongPossiblePathThresh = 5.0;
+	const float initialHazardAlongPossiblePathThresh = 3.0;
 	const float hazardThreshIncrementAmount = 1.0;
-	const unsigned int numCellsOverThreshLimit = 8;
+	const unsigned int numCellsOverThreshLimit = 5;
 	const float straightLineCheckHazardThresh = 2.0;
 	const unsigned int straightLineNumCellsOverThreshLimit = 5;
 	const float minWaypointDistance = 5.0; // m
 	const float corridorWidth = 2.0; // m
+	const float minDriveDistanceForFMM = 10.0; // m
 	const float maxDriveDistance = 35.0; // m
 	const float homingRadius = 20.0; // m
-	const float atHomeRadius = 10.0; // m
+	const float atHomeRadius = 12.0; // m
 	robot_control::Waypoint quad1MagneticWaypoint;
 	robot_control::Waypoint quad2MagneticWaypoint;
 	robot_control::Waypoint quad3MagneticWaypoint;
 	robot_control::Waypoint quad4MagneticWaypoint;
 	robot_control::Waypoint homeWaypoint;
+	Voice voiceSay;
+	const unsigned int maxNormalWaypointAvoidCount = 5;
+	const unsigned int maxROIWaypointAvoidCount = 8;
+	const unsigned int maxCornerWaypointAvoidCount = 12;
 };
 
 #endif // SAFE_PATHING_H 

@@ -26,6 +26,7 @@ public:
 	bool searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
 	void createFolderForImageData();
 	void createFileForImageData();
+	void loadCalibrationData();
 	void drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &coordinates);
 	void saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, const std::vector<int> &coordinates);
 	std::vector<double> calculateFlatGroundPositionOfPixel(int u, int v);
@@ -38,12 +39,14 @@ public:
 	computer_vision::SegmentImage segmentImageSrv;
 	computer_vision::ImageProbabilities imageProbabilitiesSrv;
 	messages::CVSamplesFound searchForSamplesMsgOut;
-	const double G_SENSOR_HEIGHT = 1.45;
+	const double G_SENSOR_HEIGHT = 1.5;
 	const double G_IMAGE_WIDTH = 5792;
 	const double G_IMAGE_HEIGHT = 5792;
 	const double G_FOCAL_LENGTH = 0.01;
-	const double G_IMAGE_SENSOR_PIXEL_WIDTH = 4.14e-6;
-	const double G_IMAGE_SENSOR_PIXEL_HEIGHT = 4.14e-6;
+	const double G_SIZE_OF_PIXEL = 4.1436e-6;
+	const double G_IMAGE_SENSOR_PIXEL_WIDTH = 4.1436e-6;
+	const double G_IMAGE_SENSOR_PIXEL_HEIGHT = 4.1436e-6;
+	cv::Mat G_rotation_camera_2_robot;
 	boost::filesystem::path G_data_folder;
 	boost::filesystem::path G_data_folder_full_images;
 	std::string G_data_folder_name;
