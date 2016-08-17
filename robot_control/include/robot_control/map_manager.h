@@ -15,6 +15,7 @@
 #include <messages/MapPathHazards.h>
 #include <messages/SearchLocalMapInfo.h>
 #include <messages/GlobalMapFull.h>
+#include <messages/SetStartingPlatform.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
@@ -61,6 +62,7 @@ public:
 	bool searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res);
 	bool randomSearchWaypointsCallback(robot_control::RandomSearchWaypoints::Request &req, robot_control::RandomSearchWaypoints::Response &res);
 	bool globalMapFullCallback(messages::GlobalMapFull::Request &req, messages::GlobalMapFull::Response &res);
+	bool setStartingPlatformCallback(messages::SetStartingPlatform::Request &req, messages::SetStartingPlatform::Response &res);
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
@@ -77,6 +79,7 @@ public:
 	void updateNorthTransformedMapData();
 	void setStartingPlatform();
 	void calculateGlobalMapSize();
+	void initializeGlobalMap();
 	void cutOutGlobalSubMap();
 	// Members
 	ros::NodeHandle nh;
@@ -88,6 +91,7 @@ public:
 	ros::ServiceServer searchLocalMapInfoServ;
 	ros::ServiceServer randomSearchWaypointsServ;
 	ros::ServiceServer globalMapFullServ;
+	ros::ServiceServer setStartingPlatformServ;
 	ros::ServiceClient createROIHazardMapClient;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
@@ -186,6 +190,12 @@ public:
 	int startingPlatformLocation;
 	float satMapStartE;
 	float satMapStartS;
+	float satMapStartE1Offset;
+	float satMapStartS1Offset;
+	float satMapStartE2Offset;
+	float satMapStartS2Offset;
+	float satMapStartE3Offset;
+	float satMapStartS3Offset;
 };
 
 #endif // MAP_MANAGER_H

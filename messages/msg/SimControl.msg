@@ -6,7 +6,8 @@ bool setSimSpeed
 float64 simSpeed
 bool pauseSwitch
 uint8 collision
-float32 collisionDistance
+float32 avoidDriveDistance
+float32 avoidDriveAngle
 bool cvFindSample
 int32 cvType
 float32 cvDistance
