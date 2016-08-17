@@ -24,6 +24,7 @@ MapManager::MapManager()
     mapPathHazardsVertices.resize(4);
     globalPose.northAngle = 90.0; // degrees. initial guess
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
+    startingPlatformLocation = 2; // By default, assume starting platform location 2
     srand(time(NULL));
 
 // Square around starting platform. Must initialize with north angle = 90.0 degrees
@@ -106,6 +107,7 @@ MapManager::MapManager()
     satMapSize[1] = ((float)driveabilityNumRows)*driveabilityMapRes;
     globalMapOrigin[0] = 0.0;
     globalMapOrigin[1] = 0.0;
+    setStartingPlatform();
     calculateGlobalMapSize();
     //globalMapSize[0] = hypot(satMapSize[0],satMapSize[1]) + std::max(fabs(globalMapOrigin[0]),fabs(globalMapOrigin[1]));
     //globalMapSize[1] = globalMapSize[0];
@@ -868,6 +870,29 @@ void MapManager::updateNorthTransformedMapData() // tested* ^^^
     }
     globalMap.addDataFrom(globalMapTemp, false, true, false, std::vector<std::string>(1,layerToString(_driveability)));
 }*/
+
+void MapManager::setStartingPlatform()
+{
+    switch(startingPlatformLocation)
+    {
+    case 1:
+        satMapStartE = satMapStartE1;
+        satMapStartS = satMapStartS1;
+        break;
+    case 2:
+        satMapStartE = satMapStartE2;
+        satMapStartS = satMapStartS2;
+        break;
+    case 3:
+        satMapStartE = satMapStartE3;
+        satMapStartS = satMapStartS3;
+        break;
+    default:
+        satMapStartE = satMapStartE2;
+        satMapStartS = satMapStartS2;
+        break;
+    }
+}
 
 void MapManager::calculateGlobalMapSize()
 {

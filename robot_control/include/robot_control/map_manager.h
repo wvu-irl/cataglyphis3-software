@@ -75,6 +75,7 @@ public:
 	void writeKeyframesIntoGlobalMap();
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
+	void setStartingPlatform();
 	void calculateGlobalMapSize();
 	void cutOutGlobalSubMap();
 	// Members
@@ -182,6 +183,9 @@ public:
 	const float keyframeSize = 80.0;
 	const unsigned int maxNormalWaypointAvoidCount = 3;
 	arma::Mat<float> distanceMat;
+	int startingPlatformLocation;
+	float satMapStartE;
+	float satMapStartS;
 };
 
 #endif // MAP_MANAGER_H
