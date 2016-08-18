@@ -22,7 +22,7 @@ CollisionDetection::CollisionDetection()
 	_sub_position = _nh.subscribe("/hsm/masterexec/globalpose", 1, &CollisionDetection::positionCallback, this);
 
 	//predictive avoidance service
-	// returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
+	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
 	
 	//collision output
 	_collision_status = 0;
@@ -33,7 +33,7 @@ void CollisionDetection::Initializations()
 	//parameters
 	short_distance = 3;
 	long_distance = 5;
-	threshold_obstacle_distance = 1.1;
+	threshold_obstacle_distance = 0.5;
 	threshold_obstacle_number = 0;
 
 	error_angle = 5 * PI / 180;	//turn more 5 degree
@@ -133,16 +133,22 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			//check if point in corridor (length check)
 			if(cloud->points[i].x > 0 && cloud->points[i].x < _CORRIDOR_LENGTH)
 			{
-
-				//increment collision counter
-				collision_point_counter++;
-				//check how many degree the robot should turn
-				angle.push_back((double)atan2(cloud->points[i].x,cloud->points[i].y));	//radian
+				//check if point is outside of safe envelope
+				if(fabs(atan2( (_LIDAR_HEIGHT - cloud->points[i].z),cloud->points[i].x )) > _SAFE_ENVELOPE_ANGLE )
+				{
+					//increment collision counter
+					collision_point_counter++;
+					//check how many degree the robot should turn
+					angle.push_back((double)atan2(cloud->points[i].x,cloud->points[i].y));	//radian
+				}
+				
 
 
 			}
 		}
 	}
+
+	ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
 
 	//check if points exceed threshold
 	if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
@@ -186,8 +192,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		{
 			small_angle = small_angle - 0.017;
 		} 
-		
-		generateHazardmap();
+
+		generateAvoidancemap();
 
 		int count_big_long_first;
 		int count_big_short_first;
@@ -419,8 +425,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 // }
 
-// 20 * 10 map
-void CollisionDetection::generateHazardmap()
+// 20 * 10 avoidance map
+void CollisionDetection::generateAvoidancemap()
 {
 
 	//trigger the hazard map generation function
@@ -443,6 +449,7 @@ void CollisionDetection::generateHazardmap()
 	pass.setFilterLimits(-5,5); //positive z is down, negative z is up
 	pass.filter(*hazard_cloud);
 
+
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
 	pcl::SACSegmentation<pcl::PointXYZI> plane;
 	plane.setOptimizeCoefficients (true); //optional (why is this optional??)
@@ -461,10 +468,18 @@ void CollisionDetection::generateHazardmap()
 
 	//segment the points fitted to the plane using ransac
 	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
+	seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
+	seg_plane.setModelType (pcl::SACMODEL_PLANE);
+	seg_plane.setMethodType (pcl::SAC_RANSAC);
+	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
+	seg_plane.setDistanceThreshold (0.75); //ground detection threshold parameter
+	seg_plane.setInputCloud (hazard_cloud); //was raw_cloud
+
 	pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ()); 
 	pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ()); 
 	seg_plane.segment (*inliers_hazard, *coefficients_hazard);
 
+	
 	//seperate the ground points and the points above the ground (object points)
 	pcl::ExtractIndices<pcl::PointXYZI> extract;
 	extract.setInputCloud (hazard_cloud);
@@ -479,6 +494,8 @@ void CollisionDetection::generateHazardmap()
 	std::vector<std::vector<std::vector<float> > > hazard_map_cells((hazard_map_size_x)*(hazard_map_size_y*2));
 	int index = 0;
 
+	
+
 	//hazard_map_cells is a vector of vectors, each element of it is a grid in the hazard map that includes 0-N points
 	for (int i = 0; i< hazard_filtered->points.size(); i++)
 	{
@@ -492,7 +509,7 @@ void CollisionDetection::generateHazardmap()
 	    //maybe this is right, need to check
 	    //**********************************
 
-	    index = floor(hazard_filtered->points[i].x + hazard_map_size_x)*(hazard_map_size_x) + floor(hazard_filtered->points[i].y + hazard_map_size_y);
+	    index = floor(hazard_filtered->points[i].x)*(2 * hazard_map_size_y) + floor(hazard_filtered->points[i].y + hazard_map_size_y);
 
 	    hazard_map_cells[index].push_back(point);
 	    point.clear();
@@ -543,17 +560,139 @@ void CollisionDetection::generateHazardmap()
 
 }
 
-// bool CollisionDetection::returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res)
-// {
-// 	res.x_mean.clear();
-// 	res.y_mean.clear();
-// 	for(int i=0; i<_hazard_x.size();i++)
-// 	{
-// 		res.x_mean.push_back(_hazard_x[i]);
-// 		res.y_mean.push_back(_hazard_y[i]);
-// 	}
-// 	return true;
-// }
+void CollisionDetection::generateHazardmap()
+{
+	//trigger the hazard map generation function
+	pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_cloud (new pcl::PointCloud<pcl::PointXYZI>);
+    *hazard_cloud = _input_cloud;
+
+    int hazard_map_size = 30; //so each side is 30*2 = 60 
+
+	//remove points based on hard thresholds (too far, too high, too low)
+	pcl::PassThrough<pcl::PointXYZI> pass;
+	pass.setInputCloud(hazard_cloud);
+	pass.setFilterFieldName("x");
+	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.filter(*hazard_cloud);
+	pass.setFilterFieldName("y");
+	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.filter(*hazard_cloud);
+	pass.setFilterFieldName("z");
+	pass.setFilterLimits(-5,5); //positive z is down, negative z is up
+	pass.filter(*hazard_cloud);
+
+	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
+	pcl::SACSegmentation<pcl::PointXYZI> plane;
+	plane.setOptimizeCoefficients (true); //optional (why is this optional??)
+	plane.setModelType (pcl::SACMODEL_PLANE);
+	plane.setMethodType (pcl::SAC_RANSAC);
+	plane.setMaxIterations (1000); //max iterations for RANSAC
+
+	//******************************
+	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put 
+	//more points to the ground, therefore the object cluster (hazard cluster) only has real hazarad, therefore, the false alarm rate will reduce
+	//In other words, hazard map and path planning only consider real big hazard while small obstacle should be leave to the pure reactive layer
+	//******************************
+
+	plane.setDistanceThreshold (0.75); //ground detection threshold parameter
+	plane.setInputCloud (hazard_cloud); //was raw_cloud
+
+	//segment the points fitted to the plane using ransac
+	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
+	pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ()); 
+	pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ()); 
+	seg_plane.segment (*inliers_hazard, *coefficients_hazard);
+
+	//seperate the ground points and the points above the ground (object points)
+	pcl::ExtractIndices<pcl::PointXYZI> extract;
+	extract.setInputCloud (hazard_cloud);
+	extract.setIndices (inliers_hazard);
+
+	extract.setNegative (true);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+	extract.filter (*hazard_filtered);
+
+    //define variables used in this section
+	std::vector<float> point;
+	std::vector<std::vector<std::vector<float> > > hazard_map_cells((hazard_map_size*2)*(hazard_map_size*2));
+	int index = 0;
+
+	//hazard_map_cells is a vector of vectors, each element of it is a grid in the hazard map that includes 0-N points
+	for (int i = 0; i< hazard_filtered->points.size(); i++)
+	{
+	    point.push_back(hazard_filtered->points[i].x);
+	    point.push_back(hazard_filtered->points[i].y);
+	    point.push_back(hazard_filtered->points[i].z);
+
+	    //the index checks which gird a point belongs to 
+
+	    //**********************************
+	    //maybe this is right, need to check
+	    //**********************************
+
+	    index = floor(hazard_filtered->points[i].x + hazard_map_size)*(2*hazard_map_size) + floor(hazard_filtered->points[i].y + hazard_map_size);
+
+	    hazard_map_cells[index].push_back(point);
+	    point.clear();
+	}
+
+	//do the calculation
+	_hazard_map_x.clear();
+	_hazard_map_y.clear();
+	for (int i = 0; i < hazard_map_cells.size(); i++) // for every cell
+	{
+		//cout << i << endl;
+		//define variables used to calculate mean x y z and variance of z
+		float total_x = 0;
+		float total_y = 0;
+		float total_z = 0;
+		float average_z = 0;
+		float variance_z = 0;
+
+	    for (int j = 0; j < hazard_map_cells[i].size(); j++)
+	    {
+	        total_x += hazard_map_cells[i][j][0];
+	        total_y += hazard_map_cells[i][j][1];
+	        total_z += hazard_map_cells[i][j][2];
+	    }
+	    average_z = total_z/hazard_map_cells[i].size();
+	    for (int j = 0; j < hazard_map_cells[i].size(); j++)
+	    {
+	        variance_z = (hazard_map_cells[i][j][2]-average_z) * (hazard_map_cells[i][j][2]-average_z);
+	    }
+	    variance_z = sqrt(variance_z);
+
+	    //the point should have at least one of the x, y or z not equal to 0 inorder to be included in the local map
+
+	    //**********************************
+	    //the threshold of variance_z can be adjusted as well
+	    //**********************************
+
+	    if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
+	    {
+	    	for (int j = 0; j < hazard_map_cells[i].size(); j++)
+		    {
+		        _hazard_map_x.push_back(hazard_map_cells[i][j][0]);
+				_hazard_map_y.push_back(hazard_map_cells[i][j][1]);
+		    }
+	    }
+	}
+}
+
+bool CollisionDetection::returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res)
+{
+	res.x_mean.clear();
+	res.y_mean.clear();
+
+	generateHazardmap();
+
+	for(int i=0; i<_hazard_x.size();i++)
+	{
+		res.x_mean.push_back(_hazard_map_x[i]);
+		res.y_mean.push_back(_hazard_map_y[i]);
+	}
+	return true;
+}
 
 int CollisionDetection::firstChoice(double angle, double distance)
 {

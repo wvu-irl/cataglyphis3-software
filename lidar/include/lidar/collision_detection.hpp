@@ -42,7 +42,7 @@
 #include <pcl-1.7/pcl/segmentation/approximate_progressive_morphological_filter.h> //added because of error ApproximateProgressiveMorphologicalFilter not a member of pcl
 #include <armadillo>
 #include <messages/CollisionOut.h>
-// #include <messages/CreateROIHazardMap.h>
+#include <messages/CreateROIHazardMap.h>
 #include <messages/NextWaypointOut.h>
 #include <messages/RobotPose.h>
 #include "pcl/conversions.h"
@@ -105,11 +105,15 @@ private:
 	double _yposition;
 	double _headingposition;
 
-	//preductive avoidance
-	// ros::ServiceServer returnHazardMapServ;
 	std::vector<float> _hazard_x;
 	std::vector<float> _hazard_y;
-	// bool returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res);
+
+	//preductive avoidance
+	ros::ServiceServer returnHazardMapServ;
+	std::vector<float> _hazard_map_x;
+	std::vector<float> _hazard_map_y;
+
+	bool returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res);
 
 	//collision output
 	short int _collision_status;
@@ -122,6 +126,7 @@ private:
 
 	int firstChoice(double angle, double distance);
 	int secondChoice(double angle, double distance, double xg, double yg);
+	void generateAvoidancemap();
 	void generateHazardmap();
 	// void service(messages::::Request &req, messages::::Response &res);
 };
