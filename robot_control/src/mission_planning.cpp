@@ -162,8 +162,9 @@ void MissionPlanning::evalConditions_()
     }
     else
     {
-        /*ROS_INFO("=========================================");
-        ROS_INFO("escapeCondition = %i",escapeCondition);
+        //std::printf("\n");
+        //ROS_INFO("=========================================");
+        /*ROS_INFO("escapeCondition = %i",escapeCondition);
         ROS_INFO("escapeLockout = %i",escapeLockout);
         ROS_INFO("collisionCondition = %i",collisionMsg.collision);
         ROS_INFO("avoidLockout = %i",avoidLockout);
