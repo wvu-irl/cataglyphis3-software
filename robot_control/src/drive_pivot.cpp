@@ -31,7 +31,9 @@ int DrivePivot::run()
     rMax_ = robotStatus.rMax;
 	deltaHeading_ = robotStatus.heading - initHeading_;
 	rDes_ = kpR_*(desiredDeltaHeading_-deltaHeading_);
+	ROS_INFO("rDes before dogLeg = %f",rDes_);
     dogLeg_();
+    ROS_INFO("rDes_ after dogLeg = %f",rDes_);
 	if(rDes_>rMax_) rDes_ = rMax_;
 	else if(rDes_<(-rMax_)) rDes_ = -rMax_;
     if(rDes_>0.0)
@@ -92,7 +94,7 @@ int DrivePivot::run()
 }
 
 void DrivePivot::dogLeg_()
-{
+{ROS_INFO("dogLegState = %i",dogLegState);
     switch(dogLegState)
     {
     case _monitoring:

@@ -27,6 +27,7 @@ Filter::Filter()
 	north_angle = 0.0;
 	P_north_angle = 25.0;
 	keep_nb = 3;
+	heading_verified = false;
 	E_north_angle = 111.0*PI/180.0;
 	north_angle_thresh = 75.0*PI/180.0;
 }
@@ -369,4 +370,35 @@ void Filter::blind_turning(double p, double q, double r, double dt)
 	P_phi = P_phi+p*p*dt*dt;
 	P_theta = P_theta+q*q*dt*dt;
 	P_psi = P_psi+r*r*dt*dt;
+}
+
+void Filter::verify_homing_heading(double psi, double homing_heading)
+{
+	if (homing_heading<psi)
+	{
+		while (homing_heading<psi)
+		{
+			homing_heading = homing_heading+2*PI;
+		}
+		if (fabs(homing_heading-psi)>fabs((homing_heading-2*PI)-psi))
+		{
+			homing_heading = homing_heading-2*PI;
+		}
+	}
+	if (homing_heading>psi)
+	{
+		while (homing_heading>psi)
+		{
+			homing_heading = homing_heading-2*PI;
+		}
+		if (fabs(homing_heading-psi)>fabs((homing_heading+2*PI)-psi))
+		{
+			homing_heading = homing_heading+2*PI;
+		}
+	}
+	if(fabs(homing_heading-psi)<5.0)
+	{
+		heading_verified = true;
+	}
+
 }

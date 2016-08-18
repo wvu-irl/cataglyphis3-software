@@ -47,10 +47,12 @@ bool Avoid::runProc()
             if((dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
                     (dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]))
             {
+                ROS_INFO("clear two actions from actionDeque");
                 sendDequeClearFront(); // Send once to clear the avoid drive action
                 sendDequeClearFront(); // And send again to clear prev proc's drive action as well
                 dequeClearFront = false;
                 interruptedEmergencyEscape = false;
+                interruptedAvoid = 0;
                 avoidCount = 0;
                 procsBeingExecuted[procType] = false;
                 procsToExecute[procType] = false;
@@ -60,11 +62,13 @@ bool Avoid::runProc()
             else if((dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool3[interruptedAvoid]) ||
                     (!dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
                     (!dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
-                    interruptedEmergencyEscape)
+                    interruptedEmergencyEscape || interruptedAvoid)
             {
+                ROS_INFO("clear one action from actionDeque");
                 sendDequeClearFront(); // Send once to clear the avoid drive action
                 dequeClearFront = false;
                 interruptedEmergencyEscape = false;
+                interruptedAvoid = 0;
                 avoidCount = 0;
                 procsBeingExecuted[procType] = false;
                 procsToExecute[procType] = false;

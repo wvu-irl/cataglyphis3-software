@@ -16,9 +16,9 @@ RobotPoseMonitor::RobotPoseMonitor()
 void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 {
 	// compute confidence in nav filter solution
-	navFilterConf = 0.0;
+	navFilterConf = 1.0;
 	// compute confidence in slam solution
-	slamConf = 1.0;
+	slamConf = 0.0;
 	// compare confidences in soltions and choose the one with the higher confidence
 	if(slamConf > navFilterConf)
 	{
