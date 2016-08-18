@@ -97,6 +97,7 @@ private:
 	void biasRemovalTimerCallback_(const ros::TimerEvent& event);
 	void homingTimerCallback_(const ros::TimerEvent& event);
 	void searchTimerCallback_(const ros::TimerEvent& event);
+	void biasRemovalActionTimerCallback_(const ros::TimerEvent &event);
 };
 
 #endif // MISSION_PLANNING_H

@@ -122,6 +122,8 @@ public:
 	static bool startSLAM;
 	static bool giveUpROI;
 	static bool searchTimedOut;
+	static bool tiltTooExtremeForBiasRemoval;
+	static bool biasRemovalTimedOut;
 	static unsigned int avoidCount;
 	const unsigned int maxNormalWaypointAvoidCount = 5;
 	const unsigned int maxROIWaypointAvoidCount = 8;
@@ -162,6 +164,8 @@ public:
 	const float sampleFoundNewROIProb = 0.01;
 	const float roiTimeExpiredNewSampleProb = 0.05;
 	const float giveUpROIFromAvoidNewSampleProb = 0.01;
+	const float biasRemovalTiltLimit = 5.0; // deg
+	const float biasRemovalActionTimeoutTime = 20.0; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -239,7 +243,9 @@ bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
 bool MissionPlanningProcedureShare::startSLAM;
 bool MissionPlanningProcedureShare::giveUpROI;
+bool MissionPlanningProcedureShare::tiltTooExtremeForBiasRemoval;
 bool MissionPlanningProcedureShare::searchTimedOut;
+bool MissionPlanningProcedureShare::biasRemovalTimedOut;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

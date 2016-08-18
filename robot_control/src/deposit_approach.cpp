@@ -42,7 +42,6 @@ bool DepositApproach::runProc()
 	{
 	case _init_:
 		avoidLockout = true;
-		step = _align;
 		procsBeingExecuted[procType] = true;
         procsToExecute[procType] = false;
         procsToResume[procType] = false;
@@ -57,7 +56,20 @@ bool DepositApproach::runProc()
 		waypointsToTravel.at(0).y = depositLocations.at(samplesCollected).y;
         waypointsToTravel.at(0).maxAvoids = maxHomeWaypointAvoidCount;
 		callIntermediateWaypoints();
-        sendDriveGlobal(false, false, 0.0);
+        if(!tiltTooExtremeForBiasRemoval)
+        {
+            biasRemovalTimedOut = false;
+            timers[_biasRemovalActionTimeoutTimer_]->start();
+            navControlSrv.request.runBiasRemoval = true;
+            if(navControlClient.call(navControlSrv)) ROS_DEBUG("navFilterControlService call successful");
+            else ROS_ERROR("navFilterControlService call unsuccessful");
+            step = _biasRemoval;
+        }
+        else
+        {
+            voiceSay->call("Tilt too extreme for bias removal. Moving on.");
+            step = _align;
+        }
 		state = _exec_;
 		break;
 	case _exec_:
@@ -67,6 +79,20 @@ bool DepositApproach::runProc()
         procsToResume[procType] = false;
 		switch(step)
 		{
+        case _biasRemoval:
+            if(navStatus!=0 || biasRemovalTimedOut)
+            {
+                timers[_biasRemovalActionTimeoutTimer_]->stop();
+                timers[_biasRemovalTimer_]->stop();
+                timers[_biasRemovalTimer_]->start();
+                biasRemovalTimedOut = false;
+                performBiasRemoval = false;
+                sendDriveGlobal(false, false, 0.0);
+                step = _align;
+            }
+            else step = _biasRemoval;
+            state = _exec_;
+            break;
 		case _align:
 			if(execLastProcType == procType && execLastSerialNum == serialNum)
 			{
@@ -98,7 +124,7 @@ bool DepositApproach::runProc()
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
-		step = _align;
+        step = _biasRemoval;
 		state = _exec_;
 		break;
 	case _finish_:
@@ -107,7 +133,7 @@ bool DepositApproach::runProc()
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-		step = _align;
+        step = _biasRemoval;
 		state = _init_;
 		break;
 	}

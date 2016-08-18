@@ -56,6 +56,7 @@ MissionPlanning::MissionPlanning()
     startSLAM = false;
     giveUpROI = false;
     searchTimedOut = false;
+    tiltTooExtremeForBiasRemoval = true;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
     prevAvoidCountDecYPos = robotStatus.yPos;
@@ -66,7 +67,7 @@ MissionPlanning::MissionPlanning()
     emergencyEscape.reg(__emergencyEscape__);
     avoid.reg(__avoid__);
     biasRemoval.reg(__biasRemoval__);
-    nextBestRegion.reg(__nextBestRegion__); // consider polymorphic constructor
+    nextBestRegion.reg(__nextBestRegion__);
     searchRegion.reg(__searchRegion__);
     examine.reg(__examine__);
     approach.reg(__approach__);
@@ -77,7 +78,7 @@ MissionPlanning::MissionPlanning()
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
     safeMode.reg(__safeMode__);
-    depositSample.sendOpen(); // Make sure the grabber is open initially
+    depositSample.sendOpen(); // Make sure the grabber is open initially, I don't think this works here. Needs to go in init proc
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
     currentROIIndex = 99;
@@ -88,7 +89,10 @@ MissionPlanning::MissionPlanning()
     timers[_biasRemovalTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalTimerCallback_, this);
     timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
     timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
+    timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalActionTimerCallback_, this);
+    timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
     timers[_searchTimer_]->stop();
+    timers[_biasRemovalActionTimeoutTimer_]->stop();
     timers[_biasRemovalTimer_]->setPeriod(biasRemovalTimeoutPeriod);
     timers[_homingTimer_]->setPeriod(homingTimeoutPeriod);
     timers[_biasRemovalTimer_]->start();
@@ -495,6 +499,8 @@ void MissionPlanning::collisionCallback_(const messages::CollisionOut::ConstPtr 
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
 {
     navStatus = msg->nav_status;
+    if(hypot(msg->roll, msg->pitch) > biasRemovalTiltLimit) tiltTooExtremeForBiasRemoval = true;
+    else tiltTooExtremeForBiasRemoval = false;
 }
 
 void MissionPlanning::execInfoCallback_(const messages::ExecInfo::ConstPtr &msg)
@@ -634,4 +640,10 @@ void MissionPlanning::searchTimerCallback_(const ros::TimerEvent &event)
     searchTimedOut = true;
     ROS_INFO("searchTimer expired");
     voiceSay->call("search timer expired");
+}
+
+void MissionPlanning::biasRemovalActionTimerCallback_(const ros::TimerEvent &event)
+{
+    ROS_WARN("biasRemovalTimedOut");
+    biasRemovalTimedOut = true;
 }
