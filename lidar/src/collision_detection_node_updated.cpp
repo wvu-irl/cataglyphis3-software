@@ -16,13 +16,13 @@ int main(int argc, char **argv)
 	collision_detection.Initializations();
 
 	//timer definition, for testing
-	clock_t start, finish;
-	double totaltime;
+	// clock_t start, finish;
+	// double totaltime;
 
 	while(ros::ok())
 	{
 		//timer, debug
-		start = clock();
+		// start = clock();
 
 		if(collision_detection.newPointCloudAvailable())
 		{
@@ -35,8 +35,8 @@ int main(int argc, char **argv)
 		loop_rate.sleep();
 		ros::spinOnce();
 
-		finish = clock();
-		totaltime = (double)(finish - start) / CLOCKS_PER_SEC;		
+		// finish = clock();
+		// totaltime = (double)(finish - start) / CLOCKS_PER_SEC;		
 
 		// ROS_INFO_STREAM("time: " << totaltime << "s");
 	}

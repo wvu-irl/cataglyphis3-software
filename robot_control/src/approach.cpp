@@ -146,7 +146,7 @@ void Approach::computeManeuver_()
     }
     else
     {
-        distanceToDrive = bestSample.distance - distanceToGrabber - blindDriveDistance + pitchCorrectionGain*robotStatus.pitchAngle;
+        distanceToDrive = bestSample.distance - distanceToBlindDriveLocation - blindDriveDistance + pitchCorrectionGain*robotStatus.pitchAngle;
         angleToTurn = bestSample.bearing;
     }
     if(distanceToDrive > maxDriveDistance) distanceToDrive = maxDriveDistance;

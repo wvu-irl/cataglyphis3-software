@@ -313,15 +313,19 @@ void LidarFilter::doMathMapping()
     pmf.setMaxDistance (2.0f);
     //cout << "Cell size is " << pmf.getCellSize() << endl;
     pmf.extract (ground->indices);
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+
     // Create the filtering object
     pcl::ExtractIndices<pcl::PointXYZI> extract;
     extract.setInputCloud (cloud);
     extract.setIndices (ground);
     extract.filter (*ground_filtered);
+
     //std::cerr << "Ground cloud after filtering: " << std::endl;
     //std::cerr << *ground_filtered << std::endl;
+
     // Extract non-ground returns
     extract.setNegative (true);
     extract.filter (*object_filtered);
@@ -687,7 +691,7 @@ void LidarFilter::doMathHoming()
 					current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
 					current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
 			    	
-					current_cylinder.points.zeros(4,cloud_cylinder->points.size());
+					current_cylinder.points.zeros(3,cloud_cylinder->points.size());
 					for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
 					{
 						current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
@@ -927,13 +931,12 @@ void LidarFilter::doLongDistanceHoming()
 
     		// save this high intensity cluster into vector A
     		cylinder current_potential_cylinder_intensity;
-    		current_potential_cylinder_intensity.points.zeros(4,points_cluster[i]->points.size());
+    		current_potential_cylinder_intensity.points.zeros(3,points_cluster[i]->points.size());
 	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
 	        {
 				current_potential_cylinder_intensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
 	            current_potential_cylinder_intensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
 	            current_potential_cylinder_intensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
-	            current_potential_cylinder_intensity.points(3,jj)= points_cluster[i]->points[jj].intensity; //intensity
 	        }	
 			_potential_cylinders_intensity.push_back(current_potential_cylinder_intensity);
 			//std::cout << "_potential_cylinders_intensity.size() = " << _potential_cylinders_intensity.size() << std::endl;
@@ -942,13 +945,12 @@ void LidarFilter::doLongDistanceHoming()
     	{
     		std::cout << "L" << std::endl;
 	 	    cylinder current_potential_cylinder_nonintensity;
-	 	    current_potential_cylinder_nonintensity.points.zeros(4,points_cluster[i]->points.size());
+	 	    current_potential_cylinder_nonintensity.points.zeros(3,points_cluster[i]->points.size());
 	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
 	        {
 				current_potential_cylinder_nonintensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
 				current_potential_cylinder_nonintensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
 				current_potential_cylinder_nonintensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
-				current_potential_cylinder_nonintensity.points(3,jj)= points_cluster[i]->points[jj].intensity; //intensity
 	        }
 			_potential_cylinders_nonintensity.push_back(current_potential_cylinder_nonintensity);  
 			//std::cout << "_potential_cylinders_nonintensity.size() = " << _potential_cylinders_nonintensity.size() << std::endl;
@@ -1200,44 +1202,6 @@ void LidarFilter::fitCylinderLong()
 		_homing_heading=0;
 		_homing_found=false;
 	} //end if cylinder found
-	
-	double diff1, diff2;
-	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
-	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
-	
-	if(_homing_found==true && (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14))
-	{
-		std::ofstream outputFile;
-		outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::out | ofstream::trunc);
-		for (int i=0; i<_cylinders.size(); i++)
-		{
-			for (int jj=0; jj<_cylinders[i].points.n_cols; jj++)
-			{
-
-				outputFile << _cylinders[i].points(0,jj) << ",";
-				outputFile << _cylinders[i].points(1,jj) << ",";
-				outputFile << _cylinders[i].points(2,jj) << ",";
-				outputFile << _cylinders[i].points(3,jj) << ",";
-				outputFile << i << ","; //cylinder number
-				outputFile << _cylinders[i].point_in_space(0,0) << ",";
-				outputFile << _cylinders[i].point_in_space(1,0) << ",";
-				outputFile << _cylinders[i].point_in_space(2,0) << ",";
-				outputFile << _cylinders[i].axis_direction(0,0) << ",";
-				outputFile << _cylinders[i].axis_direction(1,0) << ",";
-				outputFile << _cylinders[i].axis_direction(2,0) << ",";
-				outputFile << _cylinders[i].raius_estimate(0,0) << ",";
-				outputFile << X(0) << ",";
-				outputFile << X(1) << ",";
-				outputFile << X(2) << ",";
-				outputFile << X(3) << ",";
-				outputFile << diff1+diff2; 
-				outputFile << explode; 
-				outputFile << std::endl; 	
-			}
-		}
-		outputFile.close();
-	} 	//end log data
-
 }
 
 void LidarFilter::fitCylinderShort()

@@ -92,7 +92,8 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.257; // m
+	const float distanceToBlindDriveLocation = 0.96; // m
+	const float blindDriveDistance = 0.36; // m
 	const float sideGrabAngleOffset = 15.0; // deg
 	const float initGrabberDistanceTolerance = 0.17; // m
 	const float initGrabberAngleTolerance = 6.0; // deg

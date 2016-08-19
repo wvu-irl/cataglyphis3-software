@@ -372,7 +372,7 @@ void Filter::blind_turning(double p, double q, double r, double dt)
 	P_psi = P_psi+r*r*dt*dt;
 }
 
-void Filter::verify_homing_heading(double psi, double homing_heading)
+void Filter::verify_homing(double homing_heading, double homing_x, double homing_y)
 {
 	if (homing_heading<psi)
 	{
@@ -396,9 +396,17 @@ void Filter::verify_homing_heading(double psi, double homing_heading)
 			homing_heading = homing_heading+2*PI;
 		}
 	}
-	if(fabs(homing_heading-psi)<5.0)
+	if(fabs(homing_heading-psi)<5.0*PI/180.0)
 	{
 		heading_verified = true;
+	}
+	else
+	{
+		heading_verified = false;
+	}
+	if(sqrt((homing_x-x)*(homing_x-x)+(homing_y-y)*(homing_y-y))>30.0)
+	{
+		heading_verified = false;
 	}
 
 }

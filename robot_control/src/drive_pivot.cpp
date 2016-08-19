@@ -119,6 +119,8 @@ void DrivePivot::dogLeg_()
             if(encDelta_[i] < minRightDelta_) minRightDelta_ = encDelta_[i];
             if(encDelta_[i] > maxRightDelta_) maxRightDelta_ = encDelta_[i];
         }
+        ROS_INFO("left dog leg delta = %i",abs(maxLeftDelta_ - minLeftDelta_));
+        ROS_INFO("right dog leg delta = %i",abs(maxRightDelta_ - minRightDelta_));
         if((abs(maxLeftDelta_ - minLeftDelta_) > encoderDogLegTriggerValue_ || abs(maxRightDelta_ - minRightDelta_) > encoderDogLegTriggerValue_)
                 && !dogLegDetectTimeStarted_) {dogLegDetectTimeStarted_ = true; dogLegDetectTime_ = ros::Time::now().toSec();}
         else if(encoderDiffSum_ <= encoderDogLegTriggerValue_ && dogLegDetectTimeStarted_) dogLegDetectTimeStarted_ = false;

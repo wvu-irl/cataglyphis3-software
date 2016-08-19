@@ -15,7 +15,7 @@ bool Avoid::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        if(collisionMsg.collision==2) {avoidCount += fullyBlockedAvoidCountIncrement; ROS_INFO("fully blocked avoid");}
+        if(collisionMsg.collision==2) {avoidCount += fullyBlockedAvoidCountIncrement; ROS_INFO("fully blocked avoid"); voiceSay->call("fully blocked avoid");}
         else {avoidCount++; ROS_INFO("normal avoid");}
         if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal) maxAvoidCount = execInfoMsg.actionInt1[interruptedAvoid];
         else {maxAvoidCount = maxNormalWaypointAvoidCount; ROS_WARN("avoided on something that's not driveGlobal, set max avoid to default");}

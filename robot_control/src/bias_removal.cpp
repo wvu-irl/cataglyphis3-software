@@ -22,6 +22,7 @@ bool BiasRemoval::runProc()
         }
         else
         {
+        	biasRemovalTimedOut = false;
             voiceSay->call("Tilt too extreme for bias removal. Moving on.");
             state = _finish_;
         }

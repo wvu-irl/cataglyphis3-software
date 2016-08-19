@@ -59,7 +59,7 @@ public:
 	void blind_dead_reckoning(double p, double q, double r, double delta_distance, double dt);
 	void blind_turning(double p, double q, double r, double dt);
 	void which_nb_to_keep(int nb1_drive_counter, bool nb1_current, int nb2_drive_counter, bool nb2_current, bool nb1_good_prev, bool nb2_good_prev);
-	void verify_homing_heading(double psi, double homing_heading);
+	void verify_homing(double homing_heading, double homing_x, double homing_y);
 
 };
 
