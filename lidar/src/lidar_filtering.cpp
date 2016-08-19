@@ -225,6 +225,7 @@ void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 
 	//forward relavent startSLAM information
 	msg.startSLAM = this->_mission_startSLAM;
+	// msg.startSLAM = 1;
 
 	//flag the data as new
 	msg.new_data = _registration_new;

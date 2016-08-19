@@ -93,11 +93,15 @@ public:
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
 	const float blindDriveDistance = 0.257; // m
-	const float grabberDistanceTolerance = 0.17; // m
-	const float grabberAngleTolerance = 6.0; // deg
+	const float sideGrabAngleOffset = 15.0; // deg
+	const float initGrabberDistanceTolerance = 0.17; // m
+	const float initGrabberAngleTolerance = 6.0; // deg
+	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
+	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
 	const float possibleSampleConfThresh = 0.5;
 	const float definiteSampleConfThresh = 0.7;
 	static int currentROIIndex;
+	static bool initialized;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
 	static bool performHoming;
@@ -108,6 +112,7 @@ public:
 	static bool definiteSample;
 	static bool sampleDataActedUpon;
 	static bool sampleInCollectPosition;
+	static bool sideOffsetGrab;
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool homingUpdateFailed;
@@ -122,6 +127,8 @@ public:
 	static bool startSLAM;
 	static bool giveUpROI;
 	static bool searchTimedOut;
+	static bool tiltTooExtremeForBiasRemoval;
+	static bool biasRemovalTimedOut;
 	static unsigned int avoidCount;
 	const unsigned int maxNormalWaypointAvoidCount = 5;
 	const unsigned int maxROIWaypointAvoidCount = 8;
@@ -162,6 +169,8 @@ public:
 	const float sampleFoundNewROIProb = 0.01;
 	const float roiTimeExpiredNewSampleProb = 0.05;
 	const float giveUpROIFromAvoidNewSampleProb = 0.01;
+	const float biasRemovalTiltLimit = 5.0; // deg
+	const float biasRemovalActionTimeoutTime = 20.0; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -216,6 +225,7 @@ ros::Subscriber MissionPlanningProcedureShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcedureShare::cvSamplesFoundMsg;
 messages::CVSampleProps MissionPlanningProcedureShare::bestSample;
 int MissionPlanningProcedureShare::currentROIIndex;
+bool MissionPlanningProcedureShare::initialized;
 bool MissionPlanningProcedureShare::escapeCondition;
 bool MissionPlanningProcedureShare::performBiasRemoval;
 bool MissionPlanningProcedureShare::performHoming;
@@ -226,6 +236,7 @@ bool MissionPlanningProcedureShare::possibleSample;
 bool MissionPlanningProcedureShare::definiteSample;
 bool MissionPlanningProcedureShare::sampleDataActedUpon;
 bool MissionPlanningProcedureShare::sampleInCollectPosition;
+bool MissionPlanningProcedureShare::sideOffsetGrab;
 bool MissionPlanningProcedureShare::confirmedPossession;
 bool MissionPlanningProcedureShare::atHome;
 bool MissionPlanningProcedureShare::homingUpdateFailed;
@@ -239,7 +250,9 @@ bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
 bool MissionPlanningProcedureShare::startSLAM;
 bool MissionPlanningProcedureShare::giveUpROI;
+bool MissionPlanningProcedureShare::tiltTooExtremeForBiasRemoval;
 bool MissionPlanningProcedureShare::searchTimedOut;
+bool MissionPlanningProcedureShare::biasRemovalTimedOut;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

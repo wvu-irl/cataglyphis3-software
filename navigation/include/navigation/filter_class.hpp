@@ -38,6 +38,7 @@ public:
 	double E_north_angle;
 	double north_angle_thresh;
 	int keep_nb;
+	bool heading_verified;
 	arma::mat p_values;
 	arma::mat q_values;
 	arma::mat r_values;
@@ -58,6 +59,7 @@ public:
 	void blind_dead_reckoning(double p, double q, double r, double delta_distance, double dt);
 	void blind_turning(double p, double q, double r, double dt);
 	void which_nb_to_keep(int nb1_drive_counter, bool nb1_current, int nb2_drive_counter, bool nb2_current, bool nb1_good_prev, bool nb2_good_prev);
+	void verify_homing_heading(double psi, double homing_heading);
 
 };
 

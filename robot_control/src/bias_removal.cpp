@@ -1,10 +1,5 @@
 #include <robot_control/bias_removal.h>
 
-BiasRemoval::BiasRemoval()
-{
-	timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer<BiasRemoval>(&BiasRemoval::callback, this);
-}
-
 bool BiasRemoval::runProc()
 {
     //ROS_INFO("biasRemoval state = %i", state);
@@ -15,14 +10,21 @@ bool BiasRemoval::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-		sendPause();
-		biasRemovalTimedOut = false;
-		timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
-		timers[_biasRemovalActionTimeoutTimer_]->start();
-		navControlSrv.request.runBiasRemoval = true;
-		if(navControlClient.call(navControlSrv)) ROS_DEBUG("navFilterControlService call successful");
-		else ROS_ERROR("navFilterControlService call unsuccessful");
-		state = _exec_;
+        if(!tiltTooExtremeForBiasRemoval)
+        {
+            sendPause();
+            biasRemovalTimedOut = false;
+            timers[_biasRemovalActionTimeoutTimer_]->start();
+            navControlSrv.request.runBiasRemoval = true;
+            if(navControlClient.call(navControlSrv)) ROS_DEBUG("navFilterControlService call successful");
+            else ROS_ERROR("navFilterControlService call unsuccessful");
+            state = _exec_;
+        }
+        else
+        {
+            voiceSay->call("Tilt too extreme for bias removal. Moving on.");
+            state = _finish_;
+        }
 		break;
 	case _exec_:
 		avoidLockout = true;
@@ -52,10 +54,4 @@ bool BiasRemoval::runProc()
 		state = _init_;
 		break;
 	}
-}
-
-void BiasRemoval::callback(const ros::TimerEvent &event)
-{
-	ROS_WARN("biasRemovalTimedOut");
-	biasRemovalTimedOut = true;
 }

@@ -465,7 +465,7 @@ void Procedure::sendDequeClearFront()
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
 	ROS_INFO("send dequeClearFront");
-	voiceSay->call("queue clear front");
+	//voiceSay->call("queue clear front");
 }
 
 void Procedure::sendDequeClearAll()

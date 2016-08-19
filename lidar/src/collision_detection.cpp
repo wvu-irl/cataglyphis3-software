@@ -33,7 +33,7 @@ void CollisionDetection::Initializations()
 	//parameters
 	short_distance = 3;
 	long_distance = 5;
-	threshold_obstacle_distance = 0.5;
+	threshold_obstacle_distance = 0.7;
 	threshold_obstacle_number = 0;
 	threshold_min_angle = 15; //degree, min angle to turn
 

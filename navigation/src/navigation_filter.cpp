@@ -755,12 +755,17 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 	if (stopFlag && homing_found)
 	{
-		filter.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		homing_updated = true;
+		filter.verify_homing_heading(filter.psi,homing_heading);
+		if(filter.heading_verified)
+		{
+			filter.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			homing_updated = true;
+		}
+		filter.heading_verified = false;
 	}
-	else
+	else if (!stopFlag)
 	{
 		homing_updated = false;
 	}
