@@ -17,6 +17,8 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QTransform>
 #include <QLinearGradient>
+#include <QWidget>
+#include <QPaintDevice>
 
 #include <map_viewer_rect.h>
 
@@ -75,7 +77,7 @@ public:
         pixelsPerDistance = pixelsPerDist;
         ignoreSetup = ignoreSetupStep;
         mapSetup = false;
-        this->addItem(new QGraphicsPixmapItem(QPixmap::fromImage(*areaImage)));
+        areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
     }
     //this constructor takes ownership of the pointer
     QGraphicsSceneMapViewer(QImage *image, float pixelsPerDist, bool ignoreSetupStep = false, QObject * parent = 0,
@@ -87,7 +89,7 @@ public:
         ignoreSetup = ignoreSetupStep;
         mapSetup = false;
         *areaImage = *image;
-        this->addItem(new QGraphicsPixmapItem(QPixmap::fromImage(*areaImage)));
+        areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
     }
 
     void mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent);
@@ -125,6 +127,7 @@ private:
     QTransform robotToObjTransform;
     messages::RobotPose lastRobotPose;
     boost::scoped_ptr<QImage> areaImage;
+    QGraphicsPixmapItem *areaImagePixmap;
     boost::shared_ptr<map_viewer_rect> cataglyphisRect;
     boost::scoped_ptr<map_viewer_rect> startingPlatformRect;
 
@@ -135,6 +138,10 @@ private:
     void _implInitLayer(mapLayer_t *layer, bool reInit);
     void _implConnectSignals();
     void _implDisconnectSignals();
+
+    bool _implSatelliteMapDisplay();
+    bool _implHazardMapDisplay();
+    bool _implGenericGridMapLayerDisplay();
 
 };
 

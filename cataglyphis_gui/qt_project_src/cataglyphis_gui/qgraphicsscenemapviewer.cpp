@@ -13,15 +13,16 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
         grid_map::GridMapRosConverter::fromMessage(gridMapFull.response.globalMap, gridMapContainer);
         ROS_WARN("SCENE:: Grid MAP size %d, %d", gridMapContainer.getSize()[0], gridMapContainer.getSize()[1]);
         std::string gridMapLayerName = map_viewer_enums::gridMapLayersToString.find(map_viewer_enums::mapViewerLayersToGridMapLayers.find(requestedLayer)->second)->second;
-        QGraphicsScene drawingScene;
-        QGraphicsView drawingView;
+        //QGraphicsScene drawingScene;
+        QGraphicsView drawingView;// = this->views().front();
         drawingView.setStyleSheet("background: transparent;");
         drawingView.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        drawingView.setScene(&drawingScene);
+        drawingView.setScene(this);
         drawingView.setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-        boost::scoped_ptr<QGraphicsPixmapItem> tempitem;
-        tempitem.reset(new QGraphicsPixmapItem(QPixmap::fromImage(*areaImage)));
-        drawingScene.addItem(tempitem.get());
+        drawingView.setTransform(this->views().front()->transform());
+        //boost::scoped_ptr<QGraphicsPixmapItem> tempitem;
+        //tempitem.reset(new QGraphicsPixmapItem(QPixmap::fromImage(*areaImage)));
+        //drawingScene.addItem(tempitem.get());
 
         //drawingView.setSizeAdjustPolicy(QAbstractScrollArea::AdjustIgnored);
         //if(gridMapContainer.isValid())
@@ -48,22 +49,29 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
             ROS_DEBUG("SCENE:: Finished Reading Global Map");
             ROS_DEBUG("Number of items in scene: %d", layer->itemList->size());
             ROS_DEBUG("SCENE:: adding group to scene");
-//            drawingScene.addItem(layer->items.get());
+            //drawingScene.addItem(layer->items.get());
 
             this->addItem(layer->items.get());
-//            drawingScene.removeItem(tempitem.get());
-//            drawingView.fitInView(this->sceneRect(), Qt::KeepAspectRatio);
+            areaImagePixmap->hide();
+            //drawingScene.removeItem(tempitem.get());
+            //drawingView.fitInView(layer->items->childrenBoundingRect(), Qt::KeepAspectRatio);
+            drawingView.setFixedSize(areaImagePixmap->boundingRect().width(),
+                                        areaImagePixmap->boundingRect().height());
+            drawingView.setTransform(this->views().front()->transform());
             ROS_DEBUG("SCENE:: showing layer");
             layer->items->show();
             ROS_DEBUG("SCENE:: DONE");
 
-//            ROS_DEBUG("SCENE:: Generating drawingScene Texture");
-//            QPixmap temp = drawingView.grab();
-//            layer->gridPixmap->swap(temp);
-//            QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(*layer->gridPixmap);
-//            pixmapItem->setFlag(QGraphicsItem::ItemIsMovable);
-//            ROS_DEBUG("SCENE:: Rendering texture of field display");
-            //this->addItem(pixmapItem);
+            ROS_DEBUG("SCENE:: Generating drawingScene Texture");
+            QPixmap temp = drawingView.grab();
+            layer->gridPixmap->swap(temp);
+            QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(*layer->gridPixmap);
+            pixmapItem->setFlag(QGraphicsItem::ItemIsMovable);
+            ROS_DEBUG("SCENE:: Rendering texture of field display");
+            layer->items->hide();
+            areaImagePixmap->show();
+            this->addItem(pixmapItem);
+            //fix scrollbar on virtual scene
 
             layer->properties.isLayerSetup = true;
             layer->properties.isLayerVisible = true;
@@ -73,6 +81,21 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
     {
         ROS_WARN("SCENE:: Service returned was not sucessful");
     }
+}
+
+bool QGraphicsSceneMapViewer::_implGenericGridMapLayerDisplay()
+{
+    return true;
+}
+
+bool QGraphicsSceneMapViewer::_implSatelliteMapDisplay()
+{
+    return true;
+}
+
+bool QGraphicsSceneMapViewer::_implHazardMapDisplay()
+{
+    return true;
 }
 
 void QGraphicsSceneMapViewer::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent)
