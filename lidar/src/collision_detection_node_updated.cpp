@@ -1,5 +1,9 @@
 #include <lidar/collision_detection.hpp>
 
+//test
+// #include <time.h>	// show calculation time
+
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "collision_filtering_node");
@@ -11,8 +15,15 @@ int main(int argc, char **argv)
 	messages::CollisionOut msg_CollisionOut;
 	collision_detection.Initializations();
 
+	//timer definition, for testing
+	clock_t start, finish;
+	double totaltime;
+
 	while(ros::ok())
 	{
+		//timer, debug
+		start = clock();
+
 		if(collision_detection.newPointCloudAvailable())
 		{
 			collision_detection.doMathSafeEnvelope();
@@ -22,7 +33,12 @@ int main(int argc, char **argv)
 		collision_detection.setPreviousCounters();
 		pub_col.publish(msg_CollisionOut);
 		loop_rate.sleep();
-		ros::spinOnce();		
+		ros::spinOnce();
+
+		finish = clock();
+		totaltime = (double)(finish - start) / CLOCKS_PER_SEC;		
+
+		// ROS_INFO_STREAM("time: " << totaltime << "s");
 	}
 
 	return 0;

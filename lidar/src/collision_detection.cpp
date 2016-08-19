@@ -35,8 +35,9 @@ void CollisionDetection::Initializations()
 	long_distance = 5;
 	threshold_obstacle_distance = 0.7;
 	threshold_obstacle_number = 0;
+	threshold_min_angle = 15; //degree, min angle to turn
 
-	error_angle = 5 * PI / 180;	//turn more 5 degree
+	error_angle = 11 * PI / 180;	//turn more 10 degree, one more for floor
 }
 
 void CollisionDetection::waypointsCallback(messages::NextWaypointOut const &waypoint_msg)
@@ -155,8 +156,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	{	
 		_collision_status = 1;	//detected a obstacle
 
-		int choice;	//0: big long; 1: big short; 2: small long; 3: small short; 4: no option
-		int choice_angle; //0: big; 1: small
+		int choice;	//0: big long; 1: big short; 2: small long; 3: small short; 4: no option; x0: normal; x1: one side
+		int choice_angle; //00: normal big; 10: normalsmall; 01: one side big; 11: one side small
 		int choice_big_long = 0;
 		int choice_big_short = 0;
 		int choice_small_long = 0;
@@ -179,6 +180,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 		big_angle = angle[angle.size() - 1];
 		small_angle = angle[0];
+
+		ROS_INFO_STREAM("big_angle: " << big_angle * 180 / PI << " small_angle: " << small_angle * 180 / PI);
 
 		big_angle = big_angle + error_angle;
 		small_angle = small_angle - error_angle;
@@ -272,38 +275,54 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		{
 			if((big_angle * 180 / PI - 90) > (90 - small_angle * 180 / PI))
 			{
-				choice_angle = 1;
+				choice_angle = 10;
 			}
 			else
 			{
-				choice_angle = 0;
+				choice_angle = 00;
 			}
 		}
 		else if(big_angle * 180 / PI < 90)
 		{
-			choice_angle = 0;
+			choice_angle = 01;
 		}
 		else if(small_angle * 180 / PI > 90)
 		{
-			choice_angle = 1;
+			choice_angle = 11;
 		}
 
 		//make a decision
-		if(choice_angle == 0 && choice_big_short == 1)
+		if(choice_angle == 00 && choice_big_short == 1)
 		{
-			choice = 1;	//big short
+			choice = 10;	//big short normal
 		}
-		else if(choice_angle == 1 && choice_small_short == 1)
+		else if(choice_angle == 10 && choice_small_short == 1)
 		{
-			choice = 3;	//small short
+			choice = 30;	//small short normal
 		}
-		else if(choice_angle == 0 && choice_big_long == 1)
+		else if(choice_angle == 00 && choice_big_long == 1)
 		{
-			choice = 0;	//big long
+			choice = 00;	//big long normal
 		}
-		else if(choice_angle == 1 && choice_small_long == 1)
+		else if(choice_angle == 10 && choice_small_long == 1)
 		{
-			choice = 2;	//small long
+			choice = 20;	//small long normal
+		}
+		else if(choice_angle == 01 && choice_big_short == 1)
+		{
+			choice = 11;	//big short one side
+		}
+		else if(choice_angle == 11 && choice_small_short == 1)
+		{
+			choice = 31;	//small short one side
+		}
+		else if(choice_angle == 01 && choice_big_long == 1)
+		{
+			choice = 01;	//big long one side
+		}
+		else if(choice_angle == 11 && choice_small_long == 1)
+		{
+			choice = 21;	//small long one side
 		}
 		else
 		{
@@ -311,24 +330,68 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		}
 
 		//save angle and distance for publishing
-		if(choice == 1)
+		if(choice == 10)
 		{
-			_angle_to_drive = 90 - big_angle * 180 / PI;
+			_angle_to_drive = floor(90 - big_angle * 180 / PI);
+			
+			if(abs(_angle_to_drive) < threshold_min_angle)
+			{
+				_angle_to_drive = _angle_to_drive / abs(_angle_to_drive) * threshold_min_angle;
+			}
+
 			_distance_to_drive = short_distance;			
 		}
-		else if(choice == 3)
+		else if(choice == 30)
 		{
-			_angle_to_drive = 90 - small_angle * 180 / PI;
+			_angle_to_drive = floor(90 - small_angle * 180 / PI);
+
+			if(abs(_angle_to_drive) < threshold_min_angle)
+			{
+				_angle_to_drive = _angle_to_drive / abs(_angle_to_drive) * threshold_min_angle;
+			}
+
 			_distance_to_drive = short_distance;
 		}
-		else if(choice == 0)
+		else if(choice == 00)
 		{
-			_angle_to_drive = 90 - big_angle * 180 / PI;
+			_angle_to_drive = floor(90 - big_angle * 180 / PI);
+
+			if(abs(_angle_to_drive) < threshold_min_angle)
+			{
+				_angle_to_drive = _angle_to_drive / abs(_angle_to_drive) * threshold_min_angle;
+			}
+
 			_distance_to_drive = long_distance;
 		}
-		else if(choice == 2)
+		else if(choice == 20)
 		{
-			_angle_to_drive = 90 - small_angle * 180 / PI;
+			_angle_to_drive = floor(90 - small_angle * 180 / PI);
+
+			if(abs(_angle_to_drive) < threshold_min_angle)
+			{
+				_angle_to_drive = _angle_to_drive / abs(_angle_to_drive) * threshold_min_angle;
+			}
+
+			_distance_to_drive = long_distance;
+		}
+		else if(choice == 11)
+		{
+			_angle_to_drive = 0;
+			_distance_to_drive = short_distance;			
+		}
+		else if(choice == 31)
+		{
+			_angle_to_drive = 0;
+			_distance_to_drive = short_distance;
+		}
+		else if(choice == 01)
+		{
+			_angle_to_drive = 0;
+			_distance_to_drive = long_distance;
+		}
+		else if(choice == 21)
+		{
+			_angle_to_drive = 0;
 			_distance_to_drive = long_distance;
 		}
 		else if(choice == 4)
@@ -433,14 +496,15 @@ void CollisionDetection::generateAvoidancemap()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_cloud (new pcl::PointCloud<pcl::PointXYZI>);
     *hazard_cloud = _input_cloud;
 
-    int hazard_map_size_x = 10; 
+    int hazard_map_size_x_pos = 10; 
+    int hazard_map_size_x_neg = 5;
     int hazard_map_size_y = 10;	// 2 * 10 both sides
 
 	//remove points based on hard thresholds (too far, too high, too low)
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(hazard_cloud);
 	pass.setFilterFieldName("x");
-	pass.setFilterLimits(0,hazard_map_size_x);
+	pass.setFilterLimits(-hazard_map_size_x_neg,hazard_map_size_x_pos);
 	pass.filter(*hazard_cloud);
 	pass.setFilterFieldName("y");
 	pass.setFilterLimits(-hazard_map_size_y,hazard_map_size_y);
@@ -491,7 +555,7 @@ void CollisionDetection::generateAvoidancemap()
 
     //define variables used in this section
 	std::vector<float> point;
-	std::vector<std::vector<std::vector<float> > > hazard_map_cells((hazard_map_size_x)*(hazard_map_size_y*2));
+	std::vector<std::vector<std::vector<float> > > hazard_map_cells((hazard_map_size_x_pos + hazard_map_size_x_neg)*(hazard_map_size_y*2));
 	int index = 0;
 
 	
@@ -509,7 +573,7 @@ void CollisionDetection::generateAvoidancemap()
 	    //maybe this is right, need to check
 	    //**********************************
 
-	    index = floor(hazard_filtered->points[i].x)*(2 * hazard_map_size_y) + floor(hazard_filtered->points[i].y + hazard_map_size_y);
+	    index = floor(hazard_filtered->points[i].x + hazard_map_size_x_neg) * (2 * hazard_map_size_y) + floor(hazard_filtered->points[i].y + hazard_map_size_y);
 
 	    hazard_map_cells[index].push_back(point);
 	    point.clear();
