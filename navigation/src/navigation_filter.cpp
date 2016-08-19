@@ -233,44 +233,41 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 	}
 
 
-	if(filter.keep_nb == 1)
+    if(init_filter.keep_nb == 1)
 	{
-		filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+        init_filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 	}
-	else if(filter.keep_nb == 2)
+    else if(init_filter.keep_nb == 2)
 	{
-		filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+        init_filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 	}
 	else
 	{
 		if (imu.nb1_good_prev)
 		{
-			filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+            init_filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		}
 		else if (imu.nb2_good_prev)
 		{
-			filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+            init_filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		}
 		else
 		{
-			filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+            init_filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		}
 	}
-
-
-	if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
-	{
-		filter.north_angle = init_filter.psi;
-		filter.P_north_angle = init_filter.P_psi;
-	}
-	else
-	{	
-		filter.north_angle = filter.E_north_angle;
-		filter.P_north_angle = filter.north_angle_thresh*filter.north_angle_thresh;
-	}
-
 	if(pause_switch==false) 
 	{
+        if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
+        {
+            filter.north_angle = init_filter.psi;
+            filter.P_north_angle = init_filter.P_psi;
+        }
+        else
+        {
+            filter.north_angle = filter.E_north_angle;
+            filter.P_north_angle = filter.north_angle_thresh*filter.north_angle_thresh;
+        }
 		state = _run; 
 		filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
 		filter1.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
