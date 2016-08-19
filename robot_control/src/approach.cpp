@@ -48,7 +48,7 @@ bool Approach::runProc()
 			{
                 if(sampleInPosition_())
 				{
-                    if(backUpCount>=backUpsBeforeSideGrab) sideOffsetGrab = true;
+                    if(confirmCollectFailedCount>=confirmCollectsFailedBeforeSideGrab) sideOffsetGrab = true;
                     else sideOffsetGrab = false;
 					sampleInCollectPosition = true;
 					backUpCount = 0;
@@ -138,7 +138,7 @@ bool Approach::runProc()
 void Approach::computeManeuver_()
 {
     float deltaAngle; // degrees
-    if(backUpCount>=backUpsBeforeSideGrab)
+    if(confirmCollectFailedCount>=confirmCollectsFailedBeforeSideGrab)
     {
         deltaAngle = RAD2DEG*asin(distanceToGrabber/bestSample.distance*sin(DEG2RAD*(180.0-sideGrabAngleOffset))); // degrees
         distanceToDrive = distanceToGrabber*sin(DEG2RAD*(sideGrabAngleOffset-deltaAngle))/sin(DEG2RAD*deltaAngle) + pitchCorrectionGain*robotStatus.pitchAngle;
@@ -154,7 +154,7 @@ void Approach::computeManeuver_()
 
 bool Approach::sampleInPosition_()
 {
-    if(backUpCount>=backUpsBeforeSideGrab)
+    if(confirmCollectFailedCount>=confirmCollectsFailedBeforeSideGrab)
     {
         return (bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber) <= grabberDistanceTolerance) &&
                 (fabs(bestSample.bearing - sideGrabAngleOffset) <= grabberAngleTolerance);

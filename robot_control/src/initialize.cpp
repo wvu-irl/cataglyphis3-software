@@ -63,6 +63,7 @@ bool Initialize::runProc()
 		state = _finish_;
 		break;
 	case _finish_:
+		startSLAM = true;
 		avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

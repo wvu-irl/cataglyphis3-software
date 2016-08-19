@@ -9,6 +9,7 @@
 #include <messages/MissionPlanningInfo.h>
 #include <messages/MissionPlanningControl.h>
 #include <messages/NavFilterOut.h>
+#include "initialize.h"
 #include "emergency_escape.h"
 #include "avoid.h"
 #include "bias_removal.h"
@@ -45,6 +46,7 @@ public:
 	messages::MissionPlanningInfo infoMsg;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
+	Initialize initialize;
 	EmergencyEscape emergencyEscape;
 	Avoid avoid;
 	BiasRemoval biasRemoval;

@@ -7,3 +7,4 @@ bool nb2_go
 bool nb3_go # to be deleted
 bool lidar_go
 bool zed_go
+bool navSolutionsDiverged
