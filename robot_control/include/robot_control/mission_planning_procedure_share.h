@@ -93,8 +93,11 @@ public:
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
 	const float blindDriveDistance = 0.257; // m
-	const float grabberDistanceTolerance = 0.17; // m
-	const float grabberAngleTolerance = 6.0; // deg
+	const float sideGrabAngleOffset = 15.0; // deg
+	const float initGrabberDistanceTolerance = 0.17; // m
+	const float initGrabberAngleTolerance = 6.0; // deg
+	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
+	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
 	const float possibleSampleConfThresh = 0.5;
 	const float definiteSampleConfThresh = 0.7;
 	static int currentROIIndex;
@@ -108,6 +111,7 @@ public:
 	static bool definiteSample;
 	static bool sampleDataActedUpon;
 	static bool sampleInCollectPosition;
+	static bool sideOffsetGrab;
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool homingUpdateFailed;
@@ -230,6 +234,7 @@ bool MissionPlanningProcedureShare::possibleSample;
 bool MissionPlanningProcedureShare::definiteSample;
 bool MissionPlanningProcedureShare::sampleDataActedUpon;
 bool MissionPlanningProcedureShare::sampleInCollectPosition;
+bool MissionPlanningProcedureShare::sideOffsetGrab;
 bool MissionPlanningProcedureShare::confirmedPossession;
 bool MissionPlanningProcedureShare::atHome;
 bool MissionPlanningProcedureShare::homingUpdateFailed;

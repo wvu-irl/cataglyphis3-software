@@ -37,6 +37,7 @@ MissionPlanning::MissionPlanning()
     definiteSample = false;
     sampleDataActedUpon = false;
     sampleInCollectPosition = false;
+    sideOffsetGrab = false;
     confirmedPossession = false;
     atHome = false;
     homingUpdateFailed = false;
@@ -498,6 +499,8 @@ void MissionPlanning::collisionCallback_(const messages::CollisionOut::ConstPtr 
 
 void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
 {
+    robotStatus.rollAngle = msg->roll;
+    robotStatus.pitchAngle = msg->pitch;
     navStatus = msg->nav_status;
     if(hypot(msg->roll, msg->pitch) > biasRemovalTiltLimit) tiltTooExtremeForBiasRemoval = true;
     else tiltTooExtremeForBiasRemoval = false;
