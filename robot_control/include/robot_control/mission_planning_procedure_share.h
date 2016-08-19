@@ -129,6 +129,7 @@ public:
 	static bool searchTimedOut;
 	static bool tiltTooExtremeForBiasRemoval;
 	static bool biasRemovalTimedOut;
+	static bool navStopRequest;
 	static unsigned int avoidCount;
 	const unsigned int maxNormalWaypointAvoidCount = 5;
 	const unsigned int maxROIWaypointAvoidCount = 8;
@@ -253,6 +254,7 @@ bool MissionPlanningProcedureShare::giveUpROI;
 bool MissionPlanningProcedureShare::tiltTooExtremeForBiasRemoval;
 bool MissionPlanningProcedureShare::searchTimedOut;
 bool MissionPlanningProcedureShare::biasRemovalTimedOut;
+bool MissionPlanningProcedureShare::navStopRequest;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

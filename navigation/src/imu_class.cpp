@@ -1295,9 +1295,9 @@ void IMU::filter_imu_values()
 		{
 			dt1 = 0.0;
 		}
-		if (fabs(dt1)>1000.0)
+        if (fabs(dt1)>0.1)
 		{
-			dt1 = 0.0;
+            dt1 = 0.1;
 		}
 
 		new_imu1 = 1;
@@ -1350,9 +1350,9 @@ void IMU::filter_imu_values()
 		{
 			dt2 = 0.0;
 		}
-		if (fabs(dt2)>1000.0)
+        if (fabs(dt2)>0.1)
 		{
-			dt2 = 0.0;
+            dt2 = 0.1;
 		}
 
 		new_imu4 = 1;

@@ -59,6 +59,7 @@ MissionPlanning::MissionPlanning()
     giveUpROI = false;
     searchTimedOut = false;
     tiltTooExtremeForBiasRemoval = true;
+    navStopRequest = false;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
     prevAvoidCountDecYPos = robotStatus.yPos;
@@ -144,7 +145,7 @@ void MissionPlanning::run()
     evalConditions_();
     //ROS_DEBUG("after evalConditions");
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
-    if(robotStatus.pauseSwitch) runPause_();
+    if(robotStatus.pauseSwitch || navStopRequest) runPause_();
     else runProcedures_();
     //serviceSearchTimer_();
     packAndPubInfoMsg_();
@@ -511,6 +512,7 @@ void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
     robotStatus.rollAngle = msg->roll;
     robotStatus.pitchAngle = msg->pitch;
     navStatus = msg->nav_status;
+    navStopRequest = msg->stop_request;
     if(hypot(msg->roll, msg->pitch) > biasRemovalTiltLimit) tiltTooExtremeForBiasRemoval = true;
     else tiltTooExtremeForBiasRemoval = false;
 }

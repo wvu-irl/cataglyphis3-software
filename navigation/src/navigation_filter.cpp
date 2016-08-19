@@ -768,7 +768,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 	}
 
 
-	if ((imu.nb1_missed_counter>5 && imu.nb1_good || imu.nb2_missed_counter>5 && imu.nb2_good) && stop_request == false)
+    if ((imu.nb1_missed_counter>50 && imu.nb1_good || imu.nb2_missed_counter>50 && imu.nb2_good) && stop_request == false)
 	{
 		stop_request = true;
 		stop_time = ros::Time::now().toSec();
@@ -814,15 +814,15 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			imu.nb2_good_prev = true;
 		}
 	}
-	else if (ros::Time::now().toSec()-stop_time>10.0) 
+    else if (ros::Time::now().toSec()-stop_time>20.0)
 	{
 		stop_request = false;
-		if (imu.nb1_missed_counter>5)
+        if (imu.nb1_missed_counter>50)
 		{
 			 imu.nb1_good = false;
 			 imu.nb1_good_prev = false;
 		}
-		if (imu.nb2_missed_counter>5)
+        if (imu.nb2_missed_counter>50)
 		{
 			 imu.nb2_good = false;
 			 imu.nb2_good_prev = false;
