@@ -28,12 +28,12 @@
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
-#define NUM_PROC_TYPES 14
+#define NUM_PROC_TYPES 15
 #define MAX_SAMPLES 10
-#define NUM_TIMERS 3
+#define NUM_TIMERS 5
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
-enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_};
+enum PROC_TYPES_T {__initialize__, __emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__};
+enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_, _searchTimer_};
 
 class MissionPlanningProcedureShare
 {
@@ -92,12 +92,17 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
-	const float blindDriveDistance = 0.257; // m
-	const float grabberDistanceTolerance = 0.17; // m
-	const float grabberAngleTolerance = 6.0; // deg
+	const float distanceToBlindDriveLocation = 0.96; // m
+	const float blindDriveDistance = 0.36; // m
+	const float sideGrabAngleOffset = 15.0; // deg
+	const float initGrabberDistanceTolerance = 0.17; // m
+	const float initGrabberAngleTolerance = 6.0; // deg
+	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
+	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
 	const float possibleSampleConfThresh = 0.5;
 	const float definiteSampleConfThresh = 0.7;
 	static int currentROIIndex;
+	static bool initialized;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
 	static bool performHoming;
@@ -108,6 +113,7 @@ public:
 	static bool definiteSample;
 	static bool sampleDataActedUpon;
 	static bool sampleInCollectPosition;
+	static bool sideOffsetGrab;
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool homingUpdateFailed;
@@ -121,9 +127,16 @@ public:
 	static bool roiKeyframed;
 	static bool startSLAM;
 	static bool giveUpROI;
+	static bool searchTimedOut;
+	static bool tiltTooExtremeForBiasRemoval;
+	static bool biasRemovalTimedOut;
+	static bool navStopRequest;
 	static unsigned int avoidCount;
-	const unsigned int maxNormalWaypointAvoidCount = 3;
-	const unsigned int maxROIWaypointAvoidCount = 5;
+	const unsigned int maxNormalWaypointAvoidCount = 5;
+	const unsigned int maxROIWaypointAvoidCount = 8;
+	const unsigned int maxCornerWaypointAvoidCount = 12;
+	const unsigned int maxHomeWaypointAvoidCount = 20;
+	const unsigned int fullyBlockedAvoidCountIncrement = 5;
 	const float metersPerAvoidCountDecrement = 3.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
@@ -154,9 +167,12 @@ public:
 	const float lidarUpdateWaitTime = 2.0; // sec
 	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
+	const float searchTimeoutPeriod = 15.0; // sec
 	const float sampleFoundNewROIProb = 0.01;
 	const float roiTimeExpiredNewSampleProb = 0.05;
 	const float giveUpROIFromAvoidNewSampleProb = 0.01;
+	const float biasRemovalTiltLimit = 5.0; // deg
+	const float biasRemovalActionTimeoutTime = 20.0; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -211,6 +227,7 @@ ros::Subscriber MissionPlanningProcedureShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcedureShare::cvSamplesFoundMsg;
 messages::CVSampleProps MissionPlanningProcedureShare::bestSample;
 int MissionPlanningProcedureShare::currentROIIndex;
+bool MissionPlanningProcedureShare::initialized;
 bool MissionPlanningProcedureShare::escapeCondition;
 bool MissionPlanningProcedureShare::performBiasRemoval;
 bool MissionPlanningProcedureShare::performHoming;
@@ -221,6 +238,7 @@ bool MissionPlanningProcedureShare::possibleSample;
 bool MissionPlanningProcedureShare::definiteSample;
 bool MissionPlanningProcedureShare::sampleDataActedUpon;
 bool MissionPlanningProcedureShare::sampleInCollectPosition;
+bool MissionPlanningProcedureShare::sideOffsetGrab;
 bool MissionPlanningProcedureShare::confirmedPossession;
 bool MissionPlanningProcedureShare::atHome;
 bool MissionPlanningProcedureShare::homingUpdateFailed;
@@ -234,6 +252,10 @@ bool MissionPlanningProcedureShare::escapeLockout;
 bool MissionPlanningProcedureShare::roiKeyframed;
 bool MissionPlanningProcedureShare::startSLAM;
 bool MissionPlanningProcedureShare::giveUpROI;
+bool MissionPlanningProcedureShare::tiltTooExtremeForBiasRemoval;
+bool MissionPlanningProcedureShare::searchTimedOut;
+bool MissionPlanningProcedureShare::biasRemovalTimedOut;
+bool MissionPlanningProcedureShare::navStopRequest;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

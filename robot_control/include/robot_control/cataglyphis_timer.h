@@ -60,6 +60,7 @@ void CataglyphisTimer<T>::start()
 {
 	if(!running)
 	{
+	    setPeriod(period);
 		rosTimer.start();
 		startTime = ros::Time::now().toSec();
 		paused = false;

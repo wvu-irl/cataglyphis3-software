@@ -43,11 +43,12 @@
 #include <armadillo>
 #include <messages/CollisionOut.h>
 #include <messages/CreateROIHazardMap.h>
+#include <messages/NextWaypointOut.h>
+#include <messages/RobotPose.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <pcl/common/transforms.h>
 
-// #include <messages::>;
 
 class CollisionDetection
 {
@@ -57,13 +58,16 @@ public:
 	// Members
 	ros::NodeHandle _nh;
 	ros::Subscriber _sub_velodyne;
+	ros::Subscriber _sub_waypoint;
+	ros::Subscriber _sub_position;
 	// ros::ServerService ;
 	void setPreviousCounters();
 	bool newPointCloudAvailable();
 	void packCollisionMessage(messages::CollisionOut &msg);
 	int doMathSafeEnvelope();
-	int doMathRANSAC();
-	bool doPredictiveAovidance();
+	void Initializations();
+	// int doMathRANSAC();
+	// bool doPredictiveAovidance();
 
 private:
 	//transform points from lidar frame to robot body
@@ -82,16 +86,49 @@ private:
 	const float _SAFE_ENVELOPE_ANGLE = 15.0*3.14159265/180.0; //safe envelope angle (radians)
 	const short int _TRIGGER_POINT_THRESHOLD = 10; //number of points in safe envelope that will trigger the avoidance
 
-	//preductive avoidance
-	ros::ServiceServer returnHazardMapServ;
+	const double PI = 3.1415926;
+
+	//parameters
+	double short_distance;
+	double long_distance;
+	double threshold_obstacle_distance;
+	int threshold_obstacle_number;
+	double threshold_min_angle;
+
+	double error_angle;
+
+	//waypoints
+	double _xg;
+	double _yg;
+
+	//position
+	double _xposition;
+	double _yposition;
+	double _headingposition;
+
 	std::vector<float> _hazard_x;
 	std::vector<float> _hazard_y;
+
+	//preductive avoidance
+	ros::ServiceServer returnHazardMapServ;
+	std::vector<float> _hazard_map_x;
+	std::vector<float> _hazard_map_y;
+
 	bool returnHazardMap(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res);
 
 	//collision output
 	short int _collision_status;
+	double _distance_to_drive;
+	double _angle_to_drive;
 
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
+	void waypointsCallback(messages::NextWaypointOut const &waypoint_msg);
+	void positionCallback(messages::RobotPose const &position_msg);
+
+	int firstChoice(double angle, double distance);
+	int secondChoice(double angle, double distance, double xg, double yg);
+	void generateAvoidancemap();
+	void generateHazardmap();
 	// void service(messages::::Request &req, messages::::Response &res);
 };
 

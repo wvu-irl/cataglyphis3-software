@@ -15,10 +15,16 @@ bool Avoid::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        avoidCount++;
-        if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool4[interruptedAvoid])
+        if(collisionMsg.collision==2) {avoidCount += fullyBlockedAvoidCountIncrement; ROS_INFO("fully blocked avoid"); voiceSay->call("fully blocked avoid");}
+        else {avoidCount++; ROS_INFO("normal avoid");}
+        if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal) maxAvoidCount = execInfoMsg.actionInt1[interruptedAvoid];
+        else {maxAvoidCount = maxNormalWaypointAvoidCount; ROS_WARN("avoided on something that's not driveGlobal, set max avoid to default");}
+        //ROS_INFO("avoidCount = %u",avoidCount);
+        //ROS_INFO("maxAvoidCount = %u",maxAvoidCount);
+        //ROS_INFO("interruptedAvoid = %i",interruptedAvoid);
+        /*if(static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool4[interruptedAvoid])
             maxAvoidCount = maxROIWaypointAvoidCount;
-        else maxAvoidCount = maxNormalWaypointAvoidCount;
+        else maxAvoidCount = maxNormalWaypointAvoidCount;*/
         if(avoidCount > maxAvoidCount)
         {
             //ROS_INFO("avoid count limit reached");
@@ -39,25 +45,27 @@ bool Avoid::runProc()
                 sendDequeClearAll();
                 ROS_INFO("AVOID gave up ROI number %i",currentROIIndex);
             }
-            if((dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
-                    (dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]))
+            if(!execInfoMsg.actionBool3[interruptedAvoid] && (interruptedAvoid || interruptedEmergencyEscape))
             {
+                ROS_INFO("clear two actions from actionDeque");
                 sendDequeClearFront(); // Send once to clear the avoid drive action
                 sendDequeClearFront(); // And send again to clear prev proc's drive action as well
                 dequeClearFront = false;
+                interruptedEmergencyEscape = false;
+                interruptedAvoid = 0;
                 avoidCount = 0;
                 procsBeingExecuted[procType] = false;
                 procsToExecute[procType] = false;
                 state = _init_;
                 break;
             }
-            else if((dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) == _driveGlobal && execInfoMsg.actionBool3[interruptedAvoid]) ||
-                    (!dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
-                    (!dequeClearFront && static_cast<ACTION_TYPE_T>(execInfoMsg.actionDeque[interruptedAvoid]) != _driveGlobal && !execInfoMsg.actionBool3[interruptedAvoid]) ||
-                    interruptedEmergencyEscape)
+            else if(!execInfoMsg.actionBool3[interruptedAvoid] != !(interruptedAvoid || interruptedEmergencyEscape))
             {
-                sendDequeClearFront(); // Send once to clear the avoid drive action
+                ROS_INFO("clear one action from actionDeque");
+                sendDequeClearFront(); // Send once to clear the current drive action
                 dequeClearFront = false;
+                interruptedEmergencyEscape = false;
+                interruptedAvoid = 0;
                 avoidCount = 0;
                 procsBeingExecuted[procType] = false;
                 procsToExecute[procType] = false;
@@ -65,41 +73,14 @@ bool Avoid::runProc()
                 break;
             }
         }
+        if(interruptedAvoid || interruptedEmergencyEscape)
+        {
+            sendDequeClearFront(); // Send once to clear the avoid or emergency escape drive action
+            interruptedAvoid = 0;
+            interruptedEmergencyEscape = false;
+        }
         computeDriveSpeeds();
-		intermediateWaypointsSrv.request.collision = collisionMsg.collision;
-		intermediateWaypointsSrv.request.collisionDistance = collisionMsg.distance_to_collision;
-        intermediateWaypointsSrv.request.start_x = robotStatus.xPos;
-        intermediateWaypointsSrv.request.start_y = robotStatus.yPos;
-		intermediateWaypointsSrv.request.current_heading = robotStatus.heading;
-        intermediateWaypointsSrv.request.waypointArrayIn.resize(1);
-		if(execInfoMsg.actionDeque[0]==_driveGlobal)
-		{
-            intermediateWaypointsSrv.request.waypointArrayIn.at(0).x = execInfoMsg.actionFloat1[0];
-            intermediateWaypointsSrv.request.waypointArrayIn.at(0).y = execInfoMsg.actionFloat2[0];
-		}
-		else // _driveRelative // Else if? Don't want undefined behavior, but should not happen for anything other than driveGlobal and driveRelative
-		{
-            intermediateWaypointsSrv.request.waypointArrayIn.at(0).x = robotStatus.xPos + execInfoMsg.actionFloat1[0]*cos(execInfoMsg.actionFloat2[0]*DEG2RAD);
-            intermediateWaypointsSrv.request.waypointArrayIn.at(0).y = robotStatus.yPos + execInfoMsg.actionFloat1[0]*sin(execInfoMsg.actionFloat2[0]*DEG2RAD);
-		}
-		if(intermediateWaypointsClient.call(intermediateWaypointsSrv)) ROS_DEBUG("intermediateWaypoints service call successful");
-		else ROS_ERROR("intermediateWaypoints service call unsuccessful");
-        if(intermediateWaypointsSrv.response.waypointArrayOut.size() > 0)
-		{
-            numWaypointsToTravel = intermediateWaypointsSrv.response.waypointArrayOut.size();
-			clearAndResizeWTT();
-            for(int i=0; i<numWaypointsToTravel; i++) waypointsToTravel.at(i) = intermediateWaypointsSrv.response.waypointArrayOut.at(numWaypointsToTravel-1-i);
-            if(dequeClearFront || interruptedEmergencyEscape)
-            {
-                sendDequeClearFront();
-                dequeClearFront = false;
-                interruptedEmergencyEscape = false;
-                ROS_INFO("avoid dequeClearFront or interruptedEmergencyEscape true");
-            }
-            sendDriveGlobal(true, false, 0.0);
-            //ROS_INFO("avoid sendDriveGlobal(front)");
-
-		}
+        sendDriveRel(collisionMsg.distance_to_drive, collisionMsg.angle_to_drive, false, 0.0, true, false);
 		state = _exec_;
 		break;
 	case _exec_:
@@ -114,7 +95,6 @@ bool Avoid::runProc()
 	case _interrupt_:
         procsBeingExecuted[procType] = true;
 		procsToInterrupt[procType] = false;
-        dequeClearFront = true;
 		state = _init_;
 		break;
 	case _finish_:

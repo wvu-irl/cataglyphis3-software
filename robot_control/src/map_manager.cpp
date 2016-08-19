@@ -10,6 +10,7 @@ MapManager::MapManager()
     searchLocalMapInfoServ = nh.advertiseService("/control/mapmanager/searchlocalmapinfo", &MapManager::searchLocalMapInfoCallback, this);
     randomSearchWaypointsServ = nh.advertiseService("/control/mapmanager/randomsearchwaypoints", &MapManager::randomSearchWaypointsCallback, this);
     globalMapFullServ = nh.advertiseService("/control/mapmanager/globalmapfull", &MapManager::globalMapFullCallback, this);
+    setStartingPlatformServ = nh.advertiseService("/control/mapmanager/setstartingplatform", &MapManager::setStartingPlatformCallback, this);
     createROIHazardMapClient = nh.serviceClient<messages::CreateROIHazardMap>("/lidar/collisiondetection/createroihazardmap");
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, &MapManager::keyframesCallback, this);
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
@@ -24,22 +25,45 @@ MapManager::MapManager()
     mapPathHazardsVertices.resize(4);
     globalPose.northAngle = 90.0; // degrees. initial guess
     previousNorthAngle = 89.999; // degrees. different than actual north angle to force update first time through
+    // By default, assume starting platform location 2
+    startingPlatformLocation = 2;
+    satMapStartE1Offset = 0.0;
+    satMapStartS1Offset = 0.0;
+    satMapStartE2Offset = 0.0;
+    satMapStartS2Offset = 0.0;
+    satMapStartE3Offset = 0.0;
+    satMapStartS3Offset = 0.0;
+    setStartingPlatform();
     srand(time(NULL));
 
-    // Square around starting platform. Must initialize with north angle = 90.0 degrees
+// Square around starting platform. Must initialize with north angle = 90.0 degrees
 //#include <robot_control/square_rois.h>
 
-    // Dense ROIs to search directly in front of library
+#ifdef EVANSDALE
+// Dense ROIs to search directly in front of library
 //#include <robot_control/evansdale_short_dense_rois.h>
 
-    // Limited set of ROIs covering eastern half of Evansdale in front of library
+// Limited set of ROIs covering eastern half of Evansdale in front of library
 //#include <robot_control/evansdale_library_rois.h>
 
-    // Full set of ROIs covering Evansdale in front of library and engineering
-//#include <robot_control/evansdale_full_rois.h>
+// Full set of ROIs covering Evansdale in front of library and engineering
+#include <robot_control/evansdale_full_rois.h>
+#endif // EVANSDALE
 
-    // WPI Institute Park ROIs
+#ifdef WPI
+// WPI Institute Park ROIs
 #include <robot_control/wpi_rois.h>
+#endif // WPI
+
+#ifdef QUAD
+// Quad at WPI ROIs
+#include <robot_control/quad_rois.h>
+#endif // QUAD
+
+#ifdef CHESTNUT_RIDGE
+// ROIs for Chestnut Ridge Park
+#include <robot_control/quad_rois.h>
+#endif // CHESTNUT_RIDGE
 
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
@@ -92,15 +116,9 @@ MapManager::MapManager()
     satMapSize[1] = ((float)driveabilityNumRows)*driveabilityMapRes;
     globalMapOrigin[0] = 0.0;
     globalMapOrigin[1] = 0.0;
+    setStartingPlatform();
     calculateGlobalMapSize();
-    //globalMapSize[0] = hypot(satMapSize[0],satMapSize[1]) + std::max(fabs(globalMapOrigin[0]),fabs(globalMapOrigin[1]));
-    //globalMapSize[1] = globalMapSize[0];
-    globalMap.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
-    globalMapTemp.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
-    globalMapRowsCols = globalMap.getSize();
-    //gridMapAddLayers(0, MAP_KEYFRAME_LAYERS_END_INDEX, globalMap);
-    gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMap);
-    gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMapTemp);
+    initializeGlobalMap();
     writeSatMapIntoGlobalMap();
     globalMapPathHazardsPolygon.setFrameId(globalMap.getFrameId());
 
@@ -396,6 +414,8 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 res.waypointList.at(numRandomWaypointsSelected-1).y = randomWaypointPosition[1];
                 res.waypointList.at(numRandomWaypointsSelected-1).sampleProb = searchLocalMap.at(layerToString(_sampleProb), randomWaypointIndex);
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
+                res.waypointList.at(numRandomWaypointsSelected-1).unskippable = false;
+                res.waypointList.at(numRandomWaypointsSelected-1).maxAvoids = maxNormalWaypointAvoidCount;
             }
             if(numRandomWaypointSearchDistanceCriteriaFailed > randomWaypointDistanceCriteriaFailedLimit)
             {
@@ -429,6 +449,60 @@ bool MapManager::globalMapFullCallback(messages::GlobalMapFull::Request &req, me
 {
     grid_map::GridMapRosConverter::toMessage(globalMap, res.globalMap);
     return true;
+}
+
+bool MapManager::setStartingPlatformCallback(messages::SetStartingPlatform::Request &req, messages::SetStartingPlatform::Response &res)
+{
+    startingPlatformLocation = req.startingPlatformNum;
+    if(req.fineAdjustment)
+    {
+        switch(startingPlatformLocation)
+        {
+        case 1:
+            satMapStartE1Offset += req.deltaE;
+            satMapStartS1Offset -= req.deltaN;
+            break;
+        case 2:
+            satMapStartE2Offset += req.deltaE;
+            satMapStartS2Offset -= req.deltaN;
+            break;
+        case 3:
+            satMapStartE3Offset += req.deltaE;
+            satMapStartS3Offset -= req.deltaN;
+            break;
+        default:
+            satMapStartE2Offset += req.deltaE;
+            satMapStartS2Offset -= req.deltaN;
+            break;
+        }
+    }
+    if(req.resetFineAdjustment)
+    {
+        switch(startingPlatformLocation)
+        {
+        case 1:
+            satMapStartE1Offset = 0.0;
+            satMapStartS1Offset = 0.0;
+            break;
+        case 2:
+            satMapStartE2Offset = 0.0;
+            satMapStartS2Offset = 0.0;
+            break;
+        case 3:
+            satMapStartE3Offset = 0.0;
+            satMapStartS3Offset = 0.0;
+            break;
+        default:
+            satMapStartE2Offset = 0.0;
+            satMapStartS2Offset = 0.0;
+            break;
+        }
+    }
+    setStartingPlatform();
+    calculateGlobalMapSize();
+    initializeGlobalMap();
+    writeSatMapIntoGlobalMap();
+    writeKeyframesIntoGlobalMap();
 }
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested
@@ -853,6 +927,29 @@ void MapManager::updateNorthTransformedMapData() // tested* ^^^
     globalMap.addDataFrom(globalMapTemp, false, true, false, std::vector<std::string>(1,layerToString(_driveability)));
 }*/
 
+void MapManager::setStartingPlatform()
+{
+    switch(startingPlatformLocation)
+    {
+    case 1:
+        satMapStartE = satMapStartE1 + satMapStartE1Offset;
+        satMapStartS = satMapStartS1 + satMapStartS1Offset;
+        break;
+    case 2:
+        satMapStartE = satMapStartE2 + satMapStartE2Offset;
+        satMapStartS = satMapStartS2 + satMapStartS2Offset;
+        break;
+    case 3:
+        satMapStartE = satMapStartE3 + satMapStartE3Offset;
+        satMapStartS = satMapStartS3 + satMapStartS3Offset;
+        break;
+    default:
+        satMapStartE = satMapStartE2 + satMapStartE2Offset;
+        satMapStartS = satMapStartS2 + satMapStartS2Offset;
+        break;
+    }
+}
+
 void MapManager::calculateGlobalMapSize()
 {
     float candidateSize;
@@ -878,6 +975,15 @@ void MapManager::calculateGlobalMapSize()
     globalMapSize[0] = bestCandidateSize*2.0;
     globalMapSize[1] = bestCandidateSize*2.0;
     //ROS_INFO("globalMapSize[0] = %f, [1] = %f",globalMapSize[0],globalMapSize[1]);
+}
+
+void MapManager::initializeGlobalMap()
+{
+    globalMap.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
+    globalMapTemp.setGeometry(globalMapSize, mapResolution, globalMapOrigin);
+    globalMapRowsCols = globalMap.getSize();
+    gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMap);
+    gridMapAddLayers(0, NUM_MAP_LAYERS-1, globalMapTemp);
 }
 
 void MapManager::cutOutGlobalSubMap()

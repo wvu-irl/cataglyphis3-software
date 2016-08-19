@@ -20,6 +20,8 @@ public:
 	int runDeques();
 	void clearDeques();
 	void initDequesFront();
+	float nextGlobalX;
+	float nextGlobalY;
 };
 
 #endif // ACTION_H

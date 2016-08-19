@@ -1,0 +1,6 @@
+int16 startingPlatformNum
+bool fineAdjustment
+float32 deltaE
+float32 deltaN
+bool resetFineAdjustment
+---

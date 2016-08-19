@@ -31,7 +31,9 @@ int DrivePivot::run()
     rMax_ = robotStatus.rMax;
 	deltaHeading_ = robotStatus.heading - initHeading_;
 	rDes_ = kpR_*(desiredDeltaHeading_-deltaHeading_);
+    //ROS_INFO("rDes before dogLeg = %f",rDes_);
     dogLeg_();
+    //ROS_INFO("rDes_ after dogLeg = %f",rDes_);
 	if(rDes_>rMax_) rDes_ = rMax_;
 	else if(rDes_<(-rMax_)) rDes_ = -rMax_;
     if(rDes_>0.0)
@@ -93,6 +95,7 @@ int DrivePivot::run()
 
 void DrivePivot::dogLeg_()
 {
+    //ROS_INFO("dogLegState = %i",dogLegState);
     switch(dogLegState)
     {
     case _monitoring:
@@ -116,6 +119,8 @@ void DrivePivot::dogLeg_()
             if(encDelta_[i] < minRightDelta_) minRightDelta_ = encDelta_[i];
             if(encDelta_[i] > maxRightDelta_) maxRightDelta_ = encDelta_[i];
         }
+        ROS_INFO("left dog leg delta = %i",abs(maxLeftDelta_ - minLeftDelta_));
+        ROS_INFO("right dog leg delta = %i",abs(maxRightDelta_ - minRightDelta_));
         if((abs(maxLeftDelta_ - minLeftDelta_) > encoderDogLegTriggerValue_ || abs(maxRightDelta_ - minRightDelta_) > encoderDogLegTriggerValue_)
                 && !dogLegDetectTimeStarted_) {dogLegDetectTimeStarted_ = true; dogLegDetectTime_ = ros::Time::now().toSec();}
         else if(encoderDiffSum_ <= encoderDogLegTriggerValue_ && dogLegDetectTimeStarted_) dogLegDetectTimeStarted_ = false;

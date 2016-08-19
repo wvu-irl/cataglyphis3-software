@@ -8,6 +8,7 @@ int main(int argc, char **argv)
 	SampleSearch samplesSearch;
 	samplesSearch.createFolderForImageData();
 	samplesSearch.createFileForImageData();
+	samplesSearch.loadCalibrationData();
 	ros::spin();
 	return 0;
 } 

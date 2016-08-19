@@ -84,8 +84,9 @@ public:
 	std::vector<grid_map::Position> hazardMapPoints;
 	grid_map::GridMap initialViscosityMap;
 	//const float initialTimeValue = 0.0005;
-	const float initialTimeValue = 0.000002;
-	const float maxTimeValue = 10.0;
+	//const float initialTimeValue = 0.000002;
+	const float initialTimeValue = 0.01;
+	const float maxTimeValue = 1000.0;
 	const float minFMMTimeValue = 0.0;
 	grid_map::GridMap resistanceMap;
 	grid_map::GridMap globalMap;
@@ -111,9 +112,9 @@ public:
 	bool stillInsertingWaypoints;
 	grid_map::Position workingPos;
 	robot_control::Waypoint insertWaypoint;
-	const float initialHazardAlongPossiblePathThresh = 5.0;
+	const float initialHazardAlongPossiblePathThresh = 3.0;
 	const float hazardThreshIncrementAmount = 1.0;
-	const unsigned int numCellsOverThreshLimit = 8;
+	const unsigned int numCellsOverThreshLimit = 5;
 	const float straightLineCheckHazardThresh = 2.0;
 	const unsigned int straightLineNumCellsOverThreshLimit = 5;
 	const float minWaypointDistance = 5.0; // m
@@ -121,13 +122,16 @@ public:
 	const float minDriveDistanceForFMM = 10.0; // m
 	const float maxDriveDistance = 35.0; // m
 	const float homingRadius = 20.0; // m
-	const float atHomeRadius = 10.0; // m
+	const float atHomeRadius = 12.0; // m
 	robot_control::Waypoint quad1MagneticWaypoint;
 	robot_control::Waypoint quad2MagneticWaypoint;
 	robot_control::Waypoint quad3MagneticWaypoint;
 	robot_control::Waypoint quad4MagneticWaypoint;
 	robot_control::Waypoint homeWaypoint;
 	Voice voiceSay;
+	const unsigned int maxNormalWaypointAvoidCount = 5;
+	const unsigned int maxROIWaypointAvoidCount = 8;
+	const unsigned int maxCornerWaypointAvoidCount = 12;
 };
 
 #endif // SAFE_PATHING_H 

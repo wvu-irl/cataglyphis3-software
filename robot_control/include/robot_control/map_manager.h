@@ -15,6 +15,7 @@
 #include <messages/MapPathHazards.h>
 #include <messages/SearchLocalMapInfo.h>
 #include <messages/GlobalMapFull.h>
+#include <messages/SetStartingPlatform.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
@@ -25,8 +26,27 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-//#include "evansdale_map.h"
+#define EVANSDALE
+//#define WPI
+//#define QUAD
+//#define CHESTNUT_RIDGE
+
+#ifdef EVANSDALE
+#include "evansdale_map.h"
+#endif // EVANSDALE
+
+#ifdef WPI
 #include "wpi_map.h"
+#endif // WPI
+
+#ifdef QUAD
+#include "quad_map.h"
+#endif // QUAD
+
+#ifdef CHESTNUT_RIDGE
+#include "chestnut_ridge_map.h"
+#endif // CHESTNUT_RIDGE
+
 //#include other maps...
 
 class MapManager
@@ -42,6 +62,7 @@ public:
 	bool searchLocalMapInfoCallback(messages::SearchLocalMapInfo::Request &req, messages::SearchLocalMapInfo::Response &res);
 	bool randomSearchWaypointsCallback(robot_control::RandomSearchWaypoints::Request &req, robot_control::RandomSearchWaypoints::Response &res);
 	bool globalMapFullCallback(messages::GlobalMapFull::Request &req, messages::GlobalMapFull::Response &res);
+	bool setStartingPlatformCallback(messages::SetStartingPlatform::Request &req, messages::SetStartingPlatform::Response &res);
 	void keyframesCallback(const messages::KeyframeList::ConstPtr& msg);
 	void globalPoseCallback(const messages::RobotPose::ConstPtr& msg);
 	void keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr& msg);
@@ -56,7 +77,9 @@ public:
 	void writeKeyframesIntoGlobalMap();
 	void northTransformROIs();
 	void updateNorthTransformedMapData();
+	void setStartingPlatform();
 	void calculateGlobalMapSize();
+	void initializeGlobalMap();
 	void cutOutGlobalSubMap();
 	// Members
 	ros::NodeHandle nh;
@@ -68,6 +91,7 @@ public:
 	ros::ServiceServer searchLocalMapInfoServ;
 	ros::ServiceServer randomSearchWaypointsServ;
 	ros::ServiceServer globalMapFullServ;
+	ros::ServiceServer setStartingPlatformServ;
 	ros::ServiceClient createROIHazardMapClient;
 	ros::Subscriber keyframesSub;
 	ros::Subscriber globalPoseSub;
@@ -156,12 +180,22 @@ public:
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 	const float randomWaypointMinDistance = 2.0; // m
-	const float satDriveabilityInitialValue = 10.0;
+	const float satDriveabilityInitialValue = 100.0;
 	const float satDriveabilityInitialConf = 0.5;
 	const float keyframeDriveabilityInitialValue = 0.0;
 	const float keyframeDriveabilityInitialConf = 0.0;
 	const float keyframeSize = 80.0;
+	const unsigned int maxNormalWaypointAvoidCount = 3;
 	arma::Mat<float> distanceMat;
+	int startingPlatformLocation;
+	float satMapStartE;
+	float satMapStartS;
+	float satMapStartE1Offset;
+	float satMapStartS1Offset;
+	float satMapStartE2Offset;
+	float satMapStartS2Offset;
+	float satMapStartE3Offset;
+	float satMapStartS3Offset;
 };
 
 #endif // MAP_MANAGER_H

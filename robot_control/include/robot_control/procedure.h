@@ -39,9 +39,7 @@ public:
 	void findHighestConfSample();
 	void computeDriveSpeeds();
 	void serviceAvoidCounterDecrement();
-	void startTimer(TIMER_NAMES_T timerName);
-	void stopTimer(TIMER_NAMES_T timerName);
-	void setPeriodTimer(TIMER_NAMES_T timerName, float period);
+	bool searchEnded();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -68,7 +66,6 @@ void Procedure::clearAndResizeWTT()
 
 void Procedure::callIntermediateWaypoints()
 {
-	intermediateWaypointsSrv.request.collision = 0;
     initNumWaypointsToTravel = numWaypointsToTravel;
     totalIntermWaypoints = 0;
 	intermediateWaypointsSrv.request.start_x = robotStatus.xPos;
@@ -127,7 +124,7 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float end
 		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
         execActionSrv.request.float5 = 0.0;
-        execActionSrv.request.int1 = 0;
+		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = pushToFront;
@@ -161,7 +158,7 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.float3 = 0.0;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
-		execActionSrv.request.int1 = 0;
+		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
 		execActionSrv.request.bool3 = waypointsToTravel.at(i).unskippable;
@@ -223,7 +220,7 @@ void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endH
 		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
-		execActionSrv.request.int1 = 0;
+		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
@@ -468,7 +465,7 @@ void Procedure::sendDequeClearFront()
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
 	else ROS_ERROR("exec action service call unsuccessful");
 	ROS_INFO("send dequeClearFront");
-	voiceSay->call("queue clear front");
+	//voiceSay->call("queue clear front");
 }
 
 void Procedure::sendDequeClearAll()
@@ -626,6 +623,18 @@ void Procedure::serviceAvoidCounterDecrement()
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
 	}
+}
+
+bool Procedure::searchEnded()
+{
+	if((cvSamplesFoundMsg.procType==this->procType && cvSamplesFoundMsg.serialNum==this->serialNum) || searchTimedOut)
+	{
+		ROS_INFO("searchEnded return true");
+		timers[_searchTimer_]->stop();
+		searchTimedOut = false;
+		return true;
+	}
+	else return false;
 }
 
 #endif // PROCEDURE_H

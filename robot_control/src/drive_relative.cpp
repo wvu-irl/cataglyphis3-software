@@ -8,6 +8,8 @@ void DriveRelative::init()
 	endHeading_ = params.bool1;
     pushedToFront_ = params.bool2;
     closedLoop_ = params.bool3;
+    nextGlobalX = distanceToDrive_*cos(DEG2RAD*(angleToTurn_ + robotStatus.heading)) + robotStatus.xPos;
+    nextGlobalY = distanceToDrive_*sin(DEG2RAD*(angleToTurn_ + robotStatus.heading)) + robotStatus.yPos;
     clearDeques();
 	pushTask(_pivot_);
 	driveDeque.back()->params.float1 = angleToTurn_;
