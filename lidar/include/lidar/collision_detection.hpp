@@ -93,6 +93,7 @@ private:
 	double long_distance;
 	double threshold_obstacle_distance;
 	int threshold_obstacle_number;
+	double threshold_min_angle;
 
 	double error_angle;
 
