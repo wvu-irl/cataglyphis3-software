@@ -101,6 +101,7 @@ public:
 	const float possibleSampleConfThresh = 0.5;
 	const float definiteSampleConfThresh = 0.7;
 	static int currentROIIndex;
+	static bool initialized;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
 	static bool performHoming;
@@ -224,6 +225,7 @@ ros::Subscriber MissionPlanningProcedureShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcedureShare::cvSamplesFoundMsg;
 messages::CVSampleProps MissionPlanningProcedureShare::bestSample;
 int MissionPlanningProcedureShare::currentROIIndex;
+bool MissionPlanningProcedureShare::initialized;
 bool MissionPlanningProcedureShare::escapeCondition;
 bool MissionPlanningProcedureShare::performBiasRemoval;
 bool MissionPlanningProcedureShare::performHoming;

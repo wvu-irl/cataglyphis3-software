@@ -26,6 +26,7 @@ MissionPlanning::MissionPlanning()
     infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
     driveSpeedsPub = nh.advertise<robot_control::DriveSpeeds>("/control/missionplanning/drivespeeds", 1);
     voiceSay = new Voice;
+    initialized = false;
     collisionInterruptTrigger = false;
     escapeCondition = false;
     performBiasRemoval = false;
@@ -79,7 +80,6 @@ MissionPlanning::MissionPlanning()
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
     safeMode.reg(__safeMode__);
-    depositSample.sendOpen(); // Make sure the grabber is open initially, I don't think this works here. Needs to go in init proc
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
     currentROIIndex = 99;
