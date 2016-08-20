@@ -60,7 +60,7 @@ add_service_files(
   FILES
   SegmentImage.srv
   ImageProbabilities.srv
-  
+  ExtractColor.srv
 )
 
 ## Generate actions in the 'action' folder

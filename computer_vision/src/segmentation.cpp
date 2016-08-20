@@ -3,6 +3,7 @@
 Segmentation::Segmentation()
 {
 	segmentationServ = nh.advertiseService("/vision/segmentation/segmentimage", &Segmentation::segmentImage, this);
+    extractColorServ = nh.advertiseService("/vision/segmentation/extractcolor", &Segmentation::extractColor, this);
 }
 
 int Segmentation::setCalibration()
@@ -201,7 +202,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         }
 
         float ratio = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)/(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
-        if( ratio > 2.5/1.0 || ratio < 1.0/2.5 )
+        if( ratio > 3.0/1.0 || ratio < 1.0/3.0 )
         {
             //ignore blob
             ROS_INFO("ignoring blob (ratio) %i",i);
@@ -288,7 +289,7 @@ std::vector<int> Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectang
 //callback function for segmentating image into blobs
 bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, computer_vision::SegmentImage::Response &res)
 {
-    ROS_INFO("calling segmentations service...");
+    ROS_INFO("calling segmentation service...");
    /*
         LOAD IMAGE FROM CAMERA OR FILE
     */
@@ -411,4 +412,62 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
     res.coordinates = coordinates;
 	return true;
+}
+
+bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, computer_vision::ExtractColor::Response &res)
+{
+    ROS_INFO("calling extract color service...");
+    //ROS_INFO("number of blobs of interest = %i",req.blobsOfInterest.size());
+
+    //vector of colors for samples
+    std::vector<int> colors;
+    colors.clear();
+
+    //loop over all blobs
+    boost::filesystem::path P( ros::package::getPath("computer_vision") );
+    for(int i=0; i<req.blobsOfInterest.size(); i++)
+    {
+        //load image
+        boost::filesystem::path file_name(P.string() + "/data/blobs/blob" + patch::to_string(req.blobsOfInterest[i]) + ".jpg");
+        cv::Mat blob = cv::imread(file_name.string());
+        
+        //assign colors to pixels
+        assign_colors(blob, G_lookup_table); //replace blue channel with integer value representing the color
+
+        //extract channel containing color information
+        std::vector<cv::Mat> channels(3);
+        split(blob, channels);
+
+        //morph image
+        cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(12, 12)); 
+
+        erode(channels[0], channels[0], erodeElement);
+        erode(channels[0], channels[0], erodeElement);
+        
+        //extract histogram of colors
+        cv::Mat thresh;
+        int maxPixels = 0;
+        int medPixels = 0;
+        int bestColor = 0;
+        int okayColor = 0;
+        for(int j=0; j<12; j++)
+        {
+            inRange(channels[0], j+1, j+1, thresh);
+            int pixels = countNonZero(thresh);
+            //ROS_INFO("pixels = %i", pixels);
+            if(pixels > maxPixels)
+            {
+                medPixels = maxPixels;
+                maxPixels = pixels;
+                okayColor = bestColor;
+                bestColor = j+1; //0 nothing, 1 white, 2 silver, 3 blue/purple, 4 pink, 5 red, 6 orange, 7 yellow
+            }
+        }
+
+        ROS_INFO("med c-#, max c-#, idx = %i-%i, %i-%i, %i", okayColor, medPixels, bestColor, maxPixels, req.blobsOfInterest[i]);
+        colors.push_back(bestColor);
+    }
+
+    res.colors = colors;
+    return true;
 }

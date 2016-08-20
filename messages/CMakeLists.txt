@@ -97,6 +97,7 @@ find_package(catkin REQUIRED COMPONENTS
    MissionPlanningControl.srv
    GlobalMapFull.srv
    SetStartingPlatform.srv
+   ExecManualOverride.srv
  )
 
 ## Generate actions in the 'action' folder
