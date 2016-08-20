@@ -93,7 +93,6 @@ find_package(catkin REQUIRED COMPONENTS
    SearchLocalMapInfo.srv
    MapPathHazards.srv
    EmergencyEscapeTrigger.srv
-   HSMSetNorthAngle.srv
    MissionPlanningControl.srv
    GlobalMapFull.srv
    SetStartingPlatform.srv

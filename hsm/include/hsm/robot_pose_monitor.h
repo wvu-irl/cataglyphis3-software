@@ -14,7 +14,6 @@ public:
 	ros::Publisher bestPosePub;
 	ros::Subscriber navSub;
 	ros::Subscriber slamSub;
-	ros::ServiceServer setNorthAngleServ;
 	messages::RobotPose bestPoseMsg;
 	messages::NavFilterOut navMsg;
 	messages::SLAMPoseOut slamMsg;
@@ -22,13 +21,11 @@ public:
 	const float poseMonitorPeriod = 0.05;
 	float navFilterConf;
 	float slamConf;
-	float northAngle;
 	// methods
 	RobotPoseMonitor();
 	void serviceMonitor(const ros::TimerEvent&);
 	void navCallback(const messages::NavFilterOut::ConstPtr& msg);
 	void slamCallback(const messages::SLAMPoseOut::ConstPtr& msg);
-	bool setNorthAngleCallback(messages::HSMSetNorthAngle::Request& req, messages::HSMSetNorthAngle::Response& res);
 };
 
 #endif // ROBOT_POSE_MONITOR_H

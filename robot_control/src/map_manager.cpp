@@ -453,56 +453,61 @@ bool MapManager::globalMapFullCallback(messages::GlobalMapFull::Request &req, me
 
 bool MapManager::setStartingPlatformCallback(messages::SetStartingPlatform::Request &req, messages::SetStartingPlatform::Response &res)
 {
-    startingPlatformLocation = req.startingPlatformNum;
-    if(req.fineAdjustment)
+    if(!req.responseOnly)
     {
-        switch(startingPlatformLocation)
+        startingPlatformLocation = req.startingPlatformNum;
+        if(req.fineAdjustment)
         {
-        case 1:
-            satMapStartE1Offset += req.deltaE;
-            satMapStartS1Offset -= req.deltaN;
-            break;
-        case 2:
-            satMapStartE2Offset += req.deltaE;
-            satMapStartS2Offset -= req.deltaN;
-            break;
-        case 3:
-            satMapStartE3Offset += req.deltaE;
-            satMapStartS3Offset -= req.deltaN;
-            break;
-        default:
-            satMapStartE2Offset += req.deltaE;
-            satMapStartS2Offset -= req.deltaN;
-            break;
+            switch(startingPlatformLocation)
+            {
+            case 1:
+                satMapStartE1Offset += req.deltaE;
+                satMapStartS1Offset -= req.deltaN;
+                break;
+            case 2:
+                satMapStartE2Offset += req.deltaE;
+                satMapStartS2Offset -= req.deltaN;
+                break;
+            case 3:
+                satMapStartE3Offset += req.deltaE;
+                satMapStartS3Offset -= req.deltaN;
+                break;
+            default:
+                satMapStartE2Offset += req.deltaE;
+                satMapStartS2Offset -= req.deltaN;
+                break;
+            }
         }
-    }
-    if(req.resetFineAdjustment)
-    {
-        switch(startingPlatformLocation)
+        if(req.resetFineAdjustment)
         {
-        case 1:
-            satMapStartE1Offset = 0.0;
-            satMapStartS1Offset = 0.0;
-            break;
-        case 2:
-            satMapStartE2Offset = 0.0;
-            satMapStartS2Offset = 0.0;
-            break;
-        case 3:
-            satMapStartE3Offset = 0.0;
-            satMapStartS3Offset = 0.0;
-            break;
-        default:
-            satMapStartE2Offset = 0.0;
-            satMapStartS2Offset = 0.0;
-            break;
+            switch(startingPlatformLocation)
+            {
+            case 1:
+                satMapStartE1Offset = 0.0;
+                satMapStartS1Offset = 0.0;
+                break;
+            case 2:
+                satMapStartE2Offset = 0.0;
+                satMapStartS2Offset = 0.0;
+                break;
+            case 3:
+                satMapStartE3Offset = 0.0;
+                satMapStartS3Offset = 0.0;
+                break;
+            default:
+                satMapStartE2Offset = 0.0;
+                satMapStartS2Offset = 0.0;
+                break;
+            }
         }
+        setStartingPlatform();
+        calculateGlobalMapSize();
+        initializeGlobalMap();
+        writeSatMapIntoGlobalMap();
+        writeKeyframesIntoGlobalMap();
     }
-    setStartingPlatform();
-    calculateGlobalMapSize();
-    initializeGlobalMap();
-    writeSatMapIntoGlobalMap();
-    writeKeyframesIntoGlobalMap();
+    res.startingPlatformNum = startingPlatformLocation;
+    return true;
 }
 
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested

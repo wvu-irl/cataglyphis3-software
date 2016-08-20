@@ -5,12 +5,11 @@ RobotPoseMonitor::RobotPoseMonitor()
 	bestPosePub = nh.advertise<messages::RobotPose>("/hsm/masterexec/globalpose", 1);
 	navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &RobotPoseMonitor::navCallback, this);
 	slamSub = nh.subscribe<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, &RobotPoseMonitor::slamCallback, this);
-	setNorthAngleServ = nh.advertiseService("/hsm/masterexec/setnorthangle", &RobotPoseMonitor::setNorthAngleCallback, this);
 	poseMonitorTimer = nh.createTimer(ros::Duration(poseMonitorPeriod), &RobotPoseMonitor::serviceMonitor, this);
 	// Trust dead reckoning right at beginning before any keyframes have been generated
 	navFilterConf = 1.0;
 	slamConf = 0.9;
-	northAngle = 90.0;
+    navMsg.north_angle = 90.0;
 }
 
 void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
@@ -26,7 +25,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.y = slamMsg.globalY;
 		bestPoseMsg.heading = slamMsg.globalHeading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
-		bestPoseMsg.northAngle = northAngle;
+        bestPoseMsg.northAngle = navMsg.north_angle;
 		bestPoseMsg.homingUpdated = navMsg.homing_updated;
 	}
 	else
@@ -35,7 +34,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.y = navMsg.y_position;
 		bestPoseMsg.heading = navMsg.heading;
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
-		bestPoseMsg.northAngle = northAngle;
+        bestPoseMsg.northAngle = navMsg.north_angle;
 		bestPoseMsg.homingUpdated = navMsg.homing_updated;
 	}
 	bestPosePub.publish(bestPoseMsg);
@@ -49,10 +48,4 @@ void RobotPoseMonitor::navCallback(const messages::NavFilterOut::ConstPtr &msg)
 void RobotPoseMonitor::slamCallback(const messages::SLAMPoseOut::ConstPtr &msg)
 {
 	slamMsg = *msg;
-}
-
-bool RobotPoseMonitor::setNorthAngleCallback(messages::HSMSetNorthAngle::Request &req, messages::HSMSetNorthAngle::Response &res)
-{
-	northAngle = req.northAngle;
-	return true;
 }

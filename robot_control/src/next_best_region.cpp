@@ -60,7 +60,11 @@ bool NextBestRegion::runProc()
             ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
             ROS_INFO("hardLockout = %i",regionsOfInterestSrv.response.ROIList.at(i).hardLockout);
             ROS_INFO("currentROIIndex = %i",currentROIIndex);
-            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex) roiValue = 0.001;
+            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex)
+            {
+                roiValue += negValueIncrement;
+                if(roiValue > maxCoercedNegValue) roiValue = maxCoercedNegValue;
+            }
             else if(regionsOfInterestSrv.response.ROIList.at(i).hardLockout || i == currentROIIndex) roiValue = 0.0;
             ROS_INFO("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
