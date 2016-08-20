@@ -18,7 +18,7 @@ import rospkg
 from computer_vision.srv import *
 from std_msgs.msg import String
 # from DeepFishNet import DeepFishNet
-from DeepFishNet150 import DeepFishNet150
+# from DeepFishNet150 import DeepFishNet150
 from DeepFishNet50 import DeepFishNet50
 
 class ClassifierService:
@@ -118,36 +118,36 @@ if __name__ == "__main__":
 	# get CV module path
 	cvModulePath = rospack.get_path('computer_vision')
 
-	# imgSize
-	imgSize = 150
+	# # imgSize
+	# imgSize = 150
 	
 	# dictionary to store classifier parameters
 	classifierDict = {}
 
-	# read the mean data
-	meanData150Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
-	# meanData150Path = cvModulePath+ "/data/mean_file/50_x_50_mean/allData_150_lmdb.npy"
-	meanData150 = np.load(meanData150Path)
-	meanData150 = np.reshape(meanData150, (1, 3, imgSize, imgSize))
+	# # read the mean data
+	# meanData150Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	# # meanData150Path = cvModulePath+ "/data/mean_file/50_x_50_mean/allData_150_lmdb.npy"
+	# meanData150 = np.load(meanData150Path)
+	# meanData150 = np.reshape(meanData150, (1, 3, imgSize, imgSize))
 	
-	# read the classifier
-	# classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
-	classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/best_9epoch_'+str(imgSize)+'.npz'
+	# # read the classifier
+	# # classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	# classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/best_9epoch_'+str(imgSize)+'.npz'
 
-	# set dropout parameters for better performance
-	dropoutParams150 = {}
-	dropoutParams150['conv'] = 0.5
-	dropoutParams150['fc'] = 0.5
+	# # set dropout parameters for better performance
+	# dropoutParams150 = {}
+	# dropoutParams150['conv'] = 0.5
+	# dropoutParams150['fc'] = 0.5
 	
-	# initialize DeepFishNet150
-	# myClassifier = DeepFishNet(mode='Test', modelToLoad = classifier150Path, dropout_params = dropoutParams150)
-	myClassifier150 = DeepFishNet150(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams150, mode='Test', modelToLoad = classifier150Path)
+	# # initialize DeepFishNet150
+	# # myClassifier = DeepFishNet(mode='Test', modelToLoad = classifier150Path, dropout_params = dropoutParams150)
+	# myClassifier150 = DeepFishNet150(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams150, mode='Test', modelToLoad = classifier150Path)
 	
-	# store 150 x 150 classifier details
-	classifierDict[imgSize] = {}
-	classifierDict[imgSize]['classifier'] = myClassifier150
-	classifierDict[imgSize]['mean'] = meanData150
-	classifierDict[imgSize]['modulePath'] = cvModulePath
+	# # store 150 x 150 classifier details
+	# classifierDict[imgSize] = {}
+	# classifierDict[imgSize]['classifier'] = myClassifier150
+	# classifierDict[imgSize]['mean'] = meanData150
+	# classifierDict[imgSize]['modulePath'] = cvModulePath
 	
 	# imgSize
 	imgSize = 50
