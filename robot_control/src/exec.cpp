@@ -4,6 +4,7 @@ Exec::Exec()
 {
 	robotStatus.loopRate = loopRate;
     actionServ = nh.advertiseService("control/exec/actionin", &Exec::actionCallback_, this);
+    manualOverrideServ = nh.advertiseService("/control/exec/manualoverride", &Exec::manualOverrideCallback_, this);
     poseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &Exec::poseCallback_, this);
     navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &Exec::navCallback_, this);
 	grabberSub = nh.subscribe<messages::GrabberFeedback>("roboteq/grabberin/grabberin", 1, &Exec::grabberCallback_, this);
@@ -112,8 +113,11 @@ void Exec::run()
 	packActuatorMsgOut_();
 	packInfoMsgOut_();
     packNextWaypointOut_();
-	actuatorPub.publish(actuatorMsgOut_);
-	infoPub.publish(execInfoMsgOut_);
+    if(!manualOverride_)
+    {
+        actuatorPub.publish(actuatorMsgOut_);
+        infoPub.publish(execInfoMsgOut_);
+    }
     nextWaypointOutPub.publish(nextWaypointMsgOut_);
     /*execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
     ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
@@ -152,6 +156,12 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.serialNum = req.serialNum;
     //ROS_INFO("ACTION CALLBACK,\n\t nextActionType = %i,\n\t newActionFlag = %i,\n\t pushToFrontFlag = %i,\n\t clearDequeFlag = %i,\n\t clearFrontFlag = %i,\n\t pause = %i,\n\t float1 = %f,\n\t float2 = %f",
     //         nextActionType_, newActionFlag_, pushToFrontFlag_, clearDequeFlag_, clearFrontFlag_, pause_, params_.float1,params_.float2);
+    return true;
+}
+
+bool Exec::manualOverrideCallback_(messages::ExecManualOverride::Request &req, messages::ExecManualOverride::Response &res)
+{
+    manualOverride_ = req.manualOverride;
     return true;
 }
 

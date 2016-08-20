@@ -23,6 +23,7 @@
 #include <messages/GrabberFeedback.h>
 #include <messages/NextWaypointOut.h>
 #include <messages/encoder_data.h>
+#include <messages/ExecManualOverride.h>
 #include <robot_control/DriveSpeeds.h>
 
 #define ACTION_POOL_SIZE 100
@@ -37,6 +38,7 @@ public:
 	ros::Publisher actionEndedPub;
 	ros::Publisher nextWaypointOutPub;
 	ros::ServiceServer actionServ;
+	ros::ServiceServer manualOverrideServ;
 	ros::Subscriber poseSub;
 	ros::Subscriber navSub;
 	ros::Subscriber grabberSub;
@@ -59,6 +61,7 @@ private:
 	bool clearFrontFlag_ = false;
 	bool pause_ = false;
 	bool pausePrev_ = false;
+	bool manualOverride_ = false;
 	bool actionDequeEmptyPrev_;
 	int currentActionDone_ = 0;
 	size_t actionDequeSize_ = 0;
@@ -73,6 +76,7 @@ private:
 	double execElapsedTime_;
 	// Methods
 	bool actionCallback_(messages::ExecAction::Request &req, messages::ExecAction::Response &res);
+	bool manualOverrideCallback_(messages::ExecManualOverride::Request &req, messages::ExecManualOverride::Response &res);
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void grabberCallback_(const messages::GrabberFeedback::ConstPtr& msg);
