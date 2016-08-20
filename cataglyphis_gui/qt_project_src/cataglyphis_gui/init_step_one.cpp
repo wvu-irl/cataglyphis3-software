@@ -5,6 +5,7 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
     QWidget(parent),
     ui(new Ui::init_step_one_form)
 {
+    //if not in init, hide skip init button
     ui->setupUi(this);
     worker = workerArg;
     connect(this, &init_step_one::init_nav_filter,
@@ -47,8 +48,8 @@ void init_step_one::on_continue_button_clicked()
     ROS_DEBUG("init_step_one:: continue init clicked");
     navInitService.request.northAngle = ui->input_NA_spinbox->value();
     navInitService.request.setNorthAngle = true;
-    navInitService.request.sunnyDay = ui->sunny_day_checkbox->isChecked();
-    navInitService.request.setSunnyDay = true;
+    //navInitService.request.sunnyDay = ui->sunny_day_checkbox->isChecked();
+    //navInitService.request.setSunnyDay = true;
     emit init_nav_filter(navInitService);
 }
 

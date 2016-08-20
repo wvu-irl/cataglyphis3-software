@@ -11,6 +11,9 @@
  
 #include <messages/NavFilterControl.h> //added for new User Interface -Matt G.
 
+#define DEG_2_RAD (PI/180.0)
+#define RAD_2_DEG (180.0/PI)
+
 class NavigationFilter
 {
 public:

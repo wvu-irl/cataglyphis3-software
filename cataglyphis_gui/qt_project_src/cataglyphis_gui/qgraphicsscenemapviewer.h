@@ -39,9 +39,9 @@
 #include <ros/ros.h>
 #include <ros_workers.h>
 
-#define MAP_CELL_MAX_VALUE 10.0
-#define MAP_CELL_MIN_VALUE 0.0
-#define MAP_CELL_NOOP_VALUE 1.0
+#define MAP_CELL_MAX_VALUE 100.0
+#define MAP_CELL_MIN_VALUE 1.0
+#define MAP_CELL_NOOP_VALUE -5.0
 
 class QGraphicsSceneMapViewer : public QGraphicsScene
 {

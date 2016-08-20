@@ -3,15 +3,17 @@ bool runBiasRemoval
 bool setNorthAngle
 float32 northAngle
 
+float32 initNorthAngle
+
 bool setSunnyDay
 bool sunnyDay
 
 bool beginForkliftDeadReckoning
 
 bool setGlobalPose
-float32 range
-float32 bearing
-float32 heading
+float32 newX
+float32 newY
+float32 newHeading
 
 ---
 float32 p1Offset
