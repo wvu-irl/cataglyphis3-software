@@ -2,7 +2,5 @@ Waypoint[] waypointArrayIn
 float64 start_x
 float64 start_y
 float64 current_heading
-uint8 collision
-float32 collisionDistance
 ---
 Waypoint[] waypointArrayOut

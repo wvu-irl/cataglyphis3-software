@@ -88,11 +88,13 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).searchable = true; // !!!!! NEEDS TO BE TRUE to search
             waypointsToTravel.at(0).unskippable = false;
             waypointsToTravel.at(0).roiWaypoint = true;
+            waypointsToTravel.at(0).maxAvoids = maxROIWaypointAvoidCount;
             waypointsToTravel.at(1).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
             waypointsToTravel.at(1).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(1).searchable = true; // !!!!! NEEDS TO BE TRUE to search
             waypointsToTravel.at(1).unskippable = false;
             waypointsToTravel.at(1).roiWaypoint = true;
+            waypointsToTravel.at(1).maxAvoids = maxROIWaypointAvoidCount;
             callIntermediateWaypoints();
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
             //sendWait(10.0);

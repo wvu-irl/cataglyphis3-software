@@ -2,7 +2,7 @@
 #define DEPOSIT_APPROACH_H
 #include "procedure.h"
 
-enum DEPOSIT_APPROACH_STEP_T {_align, _platform};
+enum DEPOSIT_APPROACH_STEP_T {_biasRemoval ,_align, _platform};
 
 class DepositApproach : public Procedure
 {

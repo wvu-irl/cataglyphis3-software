@@ -44,10 +44,10 @@ public:
 	Filter filter;
 	Filter filter1;
 	Filter filter2;
-	Filter filter3;
 	Filter init_filter;
 
 	double current_time;
+	double stop_time;
 	double dt = 0;
 
 	const double PI = 3.14159265;
@@ -60,8 +60,12 @@ public:
 	bool collected_gyro1_data = false;
 	bool collected_gyro2_data = false;
 	bool collected_gyro3_data = false;
+	bool collected_gyro4_data = false;
+	bool collected_gyro5_data = false;
+	bool collected_gyro6_data = false;
 	bool first_pass = true;
 	bool homing_updated = false;
+	bool stop_request = false;
 	double drop_off_dist = 10000;
 	int nav_status_output = 0;
 

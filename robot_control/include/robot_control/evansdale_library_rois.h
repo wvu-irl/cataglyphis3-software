@@ -1,8 +1,8 @@
 #ifndef EVANSDALE_LIBRARY_ROIS_H
 #define EVANSDALE_LIBRARY_ROIS_H
 
-ROI.e = 171.5 - satMapStartE;
-ROI.s = 152.4 - satMapStartS;
+ROI.e = 166.5 - satMapStartE;
+ROI.s = 167.4 - satMapStartS;
 ROI.sampleProb = 1.0;
 ROI.sampleSig = 1000.0;
 ROI.radialAxis = 5.0;

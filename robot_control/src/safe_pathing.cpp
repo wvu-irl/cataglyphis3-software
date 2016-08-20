@@ -11,34 +11,32 @@ SafePathing::SafePathing()
     finishRadialDistance = 0.0;
     transitionWaypoint1.x = 8.0;
     transitionWaypoint1.y = 5.0;
-    transitionWaypoint1.sampleProb = 0.0;
-    transitionWaypoint1.terrainHazard = 0.0;
     transitionWaypoint1.searchable = false;
     transitionWaypoint2.x = 15.2711;
     transitionWaypoint2.y = 17.9457;
-    transitionWaypoint2.sampleProb = 0.0;
-    transitionWaypoint2.terrainHazard = 0.0;
     transitionWaypoint2.searchable = false;
     transitionWaypoint3.x = 31.9061;
     transitionWaypoint3.y = 22.1341;
-    transitionWaypoint3.sampleProb = 0.0;
-    transitionWaypoint3.terrainHazard = 0.0;
     transitionWaypoint3.searchable = false;
     quad1MagneticWaypoint.x = 7.0;
     quad1MagneticWaypoint.y = 7.0;
-    quad1MagneticWaypoint.unskippable = true;
+    quad1MagneticWaypoint.unskippable = false;
+    quad1MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad1MagneticWaypoint.roiWaypoint = false;
     quad2MagneticWaypoint.x = 7.0;
     quad2MagneticWaypoint.y = -7.0;
-    quad2MagneticWaypoint.unskippable = true;
+    quad2MagneticWaypoint.unskippable = false;
+    quad2MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad2MagneticWaypoint.roiWaypoint = false;
     quad3MagneticWaypoint.x = -7.0;
     quad3MagneticWaypoint.y = -7.0;
-    quad3MagneticWaypoint.unskippable = true;
+    quad3MagneticWaypoint.unskippable = false;
+    quad3MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad3MagneticWaypoint.roiWaypoint = false;
     quad4MagneticWaypoint.x = 7.0;
     quad4MagneticWaypoint.y = -7.0;
-    quad4MagneticWaypoint.unskippable = true;
+    quad4MagneticWaypoint.unskippable = false;
+    quad4MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad4MagneticWaypoint.roiWaypoint = false;
     homeWaypoint.x = 5.0;
     homeWaypoint.y = 0.0;
@@ -65,64 +63,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
     double nexttime;
     double deltatime;
     res.waypointArrayOut.clear();
-
-    if((req.collision==1 || req.collision==2) && req.collisionDistance<minCollisionDistance) // Check if collision distance is less than the minimum. If it is, set it to the minimum.
-    {
-        req.collisionDistance = minCollisionDistance;
-    }
-	if(req.collision==1) //object on left
-	{
-		const float turn_angle = 30; //turn 30 degrees (to right)
-		//avoidance waypoint
-        waypoint.x = req.start_x + req.collisionDistance*(cos(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)-sin(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
-        waypoint.y = req.start_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
-        waypoint.sampleProb = 0.0;
-		waypoint.terrainHazard = 0.0;
-        res.waypointArrayOut.resize(1);
-        res.waypointArrayOut.at(0) = waypoint;
-	}
-	else if(req.collision==2) //object on right
-	{
-		const float turn_angle = -30; //turn 30 degrees (to left)
-		//avoidance waypoint
-        waypoint.x = req.start_x + req.collisionDistance*(cos(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)-sin(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
-        waypoint.y = req.start_y + req.collisionDistance*(cos(turn_angle*3.14159265/180)*sin(req.current_heading*3.14159265/180)+sin(turn_angle*3.14159265/180)*cos(req.current_heading*3.14159265/180)); //turn 30 deg drive 4 meters
-        waypoint.sampleProb = 0.0;
-		waypoint.terrainHazard = 0.0;
-        res.waypointArrayOut.resize(1);
-        res.waypointArrayOut.at(0) = waypoint;
-	}
-    else if(req.collision==3) // Predictive avoidance
-    {
-        /*waypoint.x = req.start_x;
-        waypoint.y = req.start_y;
-        req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
-        res.waypointArrayOut = req.waypointArrayIn;
-        origNumWaypointsIn = req.waypointArrayIn.size();
-        numInsertedWaypoints = 0;
-        if(globalMapFullClient.call(globalMapFullSrv)) ROS_DEBUG("globalMapFull service call successful");
-        else ROS_ERROR("globalMapFull service call unsuccessful");
-        grid_map::GridMapRosConverter::fromMessage(globalMapFullSrv.response.globalMap, globalMap);
-        // Call service to get local hazard map and then merge it into the global map
-        mapDimensions = globalMap.getLength();
-        timeOfArrivalMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-        initialViscosityMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-        resistanceMap.setGeometry(mapDimensions, mapResolution, mapOrigin);
-        timeOfArrivalMap.add(timeLayer, initialTimeValue);
-        timeOfArrivalMap.add(setLayer, (float)_unknown);
-        initialViscosityMap.add(timeLayer, initialTimeValue);
-        initialViscosityMap.add(setLayer, (float)_unknown);
-        resistanceMap.add(timeLayer, initialTimeValue);
-        resistanceMap.add(setLayer, (float)_unknown);
-        FMM(initialViscosityMap, resistanceMap, goalPoints...);
-        // resistanceMap + satMap + localHazardMap
-        FMM(resistanceMap, timeOfArrivalMap, finalDestination...);
-        gradientDescent(timeOfArrivalMap, startPosition, optimalPath);
-        chooseWaypointsFromOptimalPath();
-        res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, waypointsToInsert.begin(), waypointsToInsert.end());
-        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel*/
-    }
-    else if(req.collision==0) // No collision
+    if(req.waypointArrayIn.size()>0)
     {
         waypoint.x = req.start_x;
         waypoint.y = req.start_y;
@@ -211,6 +152,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
                     {
                         insertWaypoint.x = maxDriveDistance*cos(angleBetweenStartAndGoal) + workingPos[0];
                         insertWaypoint.y = maxDriveDistance*sin(angleBetweenStartAndGoal) + workingPos[1];
+                        insertWaypoint.maxAvoids = maxNormalWaypointAvoidCount;
                         res.waypointArrayOut.insert(res.waypointArrayOut.begin()+1+i+numInsertedWaypoints, insertWaypoint);
                         numInsertedWaypoints++;
                         if(hypot(goalPoint[0]-insertWaypoint.x, goalPoint[1]-insertWaypoint.y) < maxDriveDistance) stillInsertingWaypoints = false;
@@ -232,44 +174,7 @@ bool SafePathing::FindPath(robot_control::IntermediateWaypoints::Request &req, r
             res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel
         }
         else ROS_ERROR("called intermediate waypoints with no waypointsIn");
-
-        /*waypoint.x = req.start_x;
-        waypoint.y = req.start_y;
-        req.waypointArrayIn.insert(req.waypointArrayIn.begin(),waypoint);
-        res.waypointArrayOut = req.waypointArrayIn;
-        origNumWaypointsIn = req.waypointArrayIn.size();
-        numInsertedWaypoints = 0;
-        for(int i=0; i<(origNumWaypointsIn-1); i++)
-        {
-            startRadialDistance = hypot(req.waypointArrayIn.at(i).x, req.waypointArrayIn.at(i).y);
-            finishRadialDistance = hypot(req.waypointArrayIn.at(i+1).x, req.waypointArrayIn.at(i+1).y);
-            if(finishRadialDistance>=transitionWaypointOuterRadius && startRadialDistance<transitionWaypointInnerRadius)
-            {
-                ROS_INFO("going out transition waypoints");
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+1+numInsertedWaypoints, transitionWaypoint1);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+2+numInsertedWaypoints, transitionWaypoint2);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+3+numInsertedWaypoints, transitionWaypoint3);
-                numInsertedWaypoints+=3;
-                //intermediateWaypoints.push_back(transitionWaypoint1);
-                //intermediateWaypoints.push_back(transitionWaypoint2);
-                //intermediateWaypoints.push_back(transitionWaypoint3);
-            }
-            else if(finishRadialDistance<transitionWaypointInnerRadius && startRadialDistance>=transitionWaypointOuterRadius)
-            {
-                ROS_INFO("going back transition waypoints");
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+1+numInsertedWaypoints, transitionWaypoint3);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+2+numInsertedWaypoints, transitionWaypoint2);
-                res.waypointArrayOut.insert(res.waypointArrayOut.begin() + i+3+numInsertedWaypoints, transitionWaypoint1);
-                numInsertedWaypoints+=3;
-                //intermediateWaypoints.push_back(transitionWaypoint3);
-                //intermediateWaypoints.push_back(transitionWaypoint2);
-                //intermediateWaypoints.push_back(transitionWaypoint1);
-            }
-        }
-        res.waypointArrayOut.erase(res.waypointArrayOut.begin()); // Do not send current location as a waypoint to travel*/
     }
-
-    //res.waypointArrayOut = intermediateWaypoints;
 	return true;
 }
 
@@ -319,6 +224,7 @@ void SafePathing::FMM(grid_map::GridMap &mapIn, grid_map::GridMap &mapOut, grid_
     mapCell.value = 0.0;
     mapCell.mapIndex = currentIndex;
     addToSet(narrowBandSet, mapCell);
+    ROS_INFO("before set initial goalpoint value");
     mapOut.atPosition(timeLayer, goalPointIn) = 0.0;
     mapOut.atPosition(setLayer, goalPointIn) = (float)_narrowBand;
     //ROS_INFO("mapSize = (%i,%i)",mapSize[0],mapSize[1]);
@@ -486,6 +392,7 @@ void SafePathing::gradientDescent(grid_map::GridMap &map, grid_map::Position sta
 {
     grid_map::Size mapSize;
     bool continueLoop = true;
+    ROS_INFO("before gradient descent start position atPosition");
     float nextBestValue = map.atPosition(timeLayer, startPosition); // Initialize nextBestValue to starting position value
     grid_map::Index currentIndex;
     grid_map::Index offsetIndex;
@@ -622,6 +529,7 @@ void SafePathing::chooseWaypointsFromOptimalPath()
             //ROS_INFO("push back waypoint to insert");
             waypointToPushBack.x = considerIndexPos[0];
             waypointToPushBack.y = considerIndexPos[1];
+            waypointToPushBack.maxAvoids = maxNormalWaypointAvoidCount;
             waypointsToInsert.push_back(waypointToPushBack);
             //if(indexToConsider[0]==optimalPath.back()[0] && indexToConsider[1]==optimalPath.back()[1]) continueLoop = false;
             startIndex = indexToConsider;
@@ -720,20 +628,20 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             ROS_INFO("coming home, insert corner tansition waypoints");
             lastWaypointBeforeHome.x = waypointList.at(waypointList.size()-2).x;
             lastWaypointBeforeHome.y = waypointList.at(waypointList.size()-2).y;
-            if(lastWaypointBeforeHome.x>0.0 && lastWaypointBeforeHome.y>0.0)
+            if(lastWaypointBeforeHome.x>=0.0 && lastWaypointBeforeHome.y>=0.0)
             {
                 ROS_INFO("quad 1");
                 waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted++;
             }
-            else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y>0.0)
+            else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y>=0.0)
             {
                 ROS_INFO("quad 2");
                 waypointList.insert(waypointList.end()-1, quad2MagneticWaypoint);
                 waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted+=2;
             }
-            else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y<0.0)
+            else if(lastWaypointBeforeHome.x<=0.0 && lastWaypointBeforeHome.y<0.0)
             {
                 ROS_INFO("quad 3");
                 waypointList.insert(waypointList.end()-1, quad3MagneticWaypoint);
@@ -752,20 +660,20 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             ROS_INFO("leaving home, insert corner tansition waypoints");
             firstWaypointOutFromHome.x = waypointList.at(1).x;
             firstWaypointOutFromHome.y = waypointList.at(1).y;
-            if(firstWaypointOutFromHome.x>0.0 && firstWaypointOutFromHome.y>0.0)
+            if(firstWaypointOutFromHome.x>=0.0 && firstWaypointOutFromHome.y>=0.0)
             {
                 ROS_INFO("quad 1");
                 waypointList.insert(waypointList.begin()+1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted++;
             }
-            else if(firstWaypointOutFromHome.x<0.0 && firstWaypointOutFromHome.y>0.0)
+            else if(firstWaypointOutFromHome.x<0.0 && firstWaypointOutFromHome.y>=0.0)
             {
                 ROS_INFO("quad 2");
                 waypointList.insert(waypointList.begin()+1, quad2MagneticWaypoint);
                 waypointList.insert(waypointList.begin()+1, quad1MagneticWaypoint);
                 numTransitionWaypointsInserted+=2;
             }
-            else if(firstWaypointOutFromHome.x<0.0 && firstWaypointOutFromHome.y<0.0)
+            else if(firstWaypointOutFromHome.x<=0.0 && firstWaypointOutFromHome.y<0.0)
             {
                 ROS_INFO("quad 3");
                 waypointList.insert(waypointList.begin()+1, quad3MagneticWaypoint);
@@ -836,6 +744,7 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
                     homingWaypoint.y = ySol[0];
                     //ROS_INFO("homing solution 0 chosen");
                 }
+                homingWaypoint.maxAvoids = maxNormalWaypointAvoidCount;
                 waypointList.insert(waypointList.begin()+1+i+numTransitionWaypointsInserted, homingWaypoint);
                 numTransitionWaypointsInserted++;
             }
@@ -873,6 +782,7 @@ void SafePathing::generateAndPubVizMap(std::vector<robot_control::Waypoint> wayp
     {
         waypointPositions[0] = waypointList.at(i).x;
         waypointPositions[1] = waypointList.at(i).y;
+        ROS_INFO("before viz atPosition");
         vizMap.atPosition(vizOptimalPathLayer, waypointPositions) = 10.0;
     }
     //ROS_INFO("before toMessage");

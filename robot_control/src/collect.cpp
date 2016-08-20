@@ -10,7 +10,8 @@ bool Collect::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false, true);
+        if(sideOffsetGrab) {sendDriveRel(0.0, sideGrabAngleOffset, false, 0.0, false, false); ROS_INFO("side offset grab");}
+        else {sendDriveRel(blindDriveDistance, 0.0, false, 0.0, false, true); ROS_INFO("normal straight grab");}
 		sendGrab();
         computeDriveSpeeds();
 		state = _exec_;
@@ -33,6 +34,7 @@ bool Collect::runProc()
 	case _finish_:
 		avoidLockout = true;
 		possessingSample = true;
+        sideOffsetGrab = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

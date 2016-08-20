@@ -7,8 +7,6 @@ Filter::Filter()
 	psi=0;
 	x=0;
 	y=0;
-	imu_offset_x=0;
-	imu_offset_y=0;
 	PI = 3.1415927;
 	counter=0;
 	pqr_stddev = 0.01;
@@ -28,8 +26,8 @@ Filter::Filter()
 	Q_psi = 2.2847e-008;
 	north_angle = 0.0;
 	P_north_angle = 25.0;
-	//homing_side = 1;
-	keep_nb = 1;
+	keep_nb = 3;
+	heading_verified = false;
 	E_north_angle = 111.0*PI/180.0;
 	north_angle_thresh = 75.0*PI/180.0;
 }
@@ -60,26 +58,53 @@ void Filter::initialize_variance(int performed_bias_removal, double north_angle_
 		
 }
 
-void Filter::set_imu_offset(double offset_x_init, double offset_y_init)
+void Filter::which_nb_to_keep(int nb1_drive_counter, bool nb1_current, int nb2_drive_counter, bool nb2_current, bool nb1_good_prev, bool nb2_good_prev)
 {
-	imu_offset_x=offset_x_init;
-	imu_offset_y=offset_y_init;
-}
-
-void Filter::which_nb_to_keep(double heading1, double heading2, double heading3)
-{
-	if ((heading1>=heading2 && heading1<=heading3)||(heading1<=heading2 && heading1>=heading3))
-	{
-		keep_nb = 1;
-	} 
-	else if ((heading2>=heading1 && heading2<=heading3)||(heading2<=heading1 && heading2>=heading3))
-	{
-		keep_nb = 2;
-	} 
-	else
+	if (nb1_current && nb2_current)
 	{
 		keep_nb = 3;
-	} 
+	}
+	else if (nb1_current && !nb2_current && nb1_good_prev)
+	{
+		keep_nb = 1;
+	}
+	else if (!nb1_current && nb2_current && nb2_good_prev)
+	{
+		keep_nb = 2;
+	}
+	else
+	{
+		if (nb1_drive_counter <= nb2_drive_counter)
+		{
+			if(nb1_good_prev)
+			{
+				keep_nb = 1;
+			}
+			else if (nb2_good_prev)
+			{
+				keep_nb = 2;
+			}
+			else
+			{
+				keep_nb = 1;
+			}
+		}
+		else
+		{
+			if(nb2_good_prev)
+			{
+				keep_nb = 2;
+			}
+			else if (nb1_good_prev)
+			{
+				keep_nb = 1;
+			}
+			else
+			{
+				keep_nb = 2;
+			}
+		}
+	}
 }
 
 void Filter::collect_accelerometer_data(double ax, double ay, double az)
@@ -347,3 +372,41 @@ void Filter::blind_turning(double p, double q, double r, double dt)
 	P_psi = P_psi+r*r*dt*dt;
 }
 
+void Filter::verify_homing(double homing_heading, double homing_x, double homing_y)
+{
+	if (homing_heading<psi)
+	{
+		while (homing_heading<psi)
+		{
+			homing_heading = homing_heading+2*PI;
+		}
+		if (fabs(homing_heading-psi)>fabs((homing_heading-2*PI)-psi))
+		{
+			homing_heading = homing_heading-2*PI;
+		}
+	}
+	if (homing_heading>psi)
+	{
+		while (homing_heading>psi)
+		{
+			homing_heading = homing_heading-2*PI;
+		}
+		if (fabs(homing_heading-psi)>fabs((homing_heading+2*PI)-psi))
+		{
+			homing_heading = homing_heading+2*PI;
+		}
+	}
+	if(fabs(homing_heading-psi)<5.0*PI/180.0)
+	{
+		heading_verified = true;
+	}
+	else
+	{
+		heading_verified = false;
+	}
+	if(sqrt((homing_x-x)*(homing_x-x)+(homing_y-y)*(homing_y-y))>30.0)
+	{
+		heading_verified = false;
+	}
+
+}

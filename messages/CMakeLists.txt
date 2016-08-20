@@ -96,6 +96,7 @@ find_package(catkin REQUIRED COMPONENTS
    HSMSetNorthAngle.srv
    MissionPlanningControl.srv
    GlobalMapFull.srv
+   SetStartingPlatform.srv
  )
 
 ## Generate actions in the 'action' folder

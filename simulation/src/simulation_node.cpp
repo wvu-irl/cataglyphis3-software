@@ -132,7 +132,8 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     if(msg->pauseSwitch) robotSim.nb1PauseSwitch = 255;
     else robotSim.nb1PauseSwitch = 0;
     collisionMsgOut.collision = msg->collision;
-    collisionMsgOut.distance_to_collision = msg->collisionDistance;
+    collisionMsgOut.distance_to_drive = msg->avoidDriveDistance;
+    collisionMsgOut.angle_to_drive = msg->avoidDriveAngle;
     cvFindSample = msg->cvFindSample;
     cvSampleProps.type = msg->cvType;
     cvSampleProps.distance = msg->cvDistance;

@@ -8,7 +8,7 @@ public:
 	// Members
 	uint8_t sampleTypeMux;
 	const float backUpDistance = -1.0; // m
-	const float confirmCollectValueThreshold = 0.4;
+	const float confirmCollectValueThreshold = 0.3;
 	const int confirmCollectFailedLimit = 3;
 	bool noSampleOnGround;
 	// Methods

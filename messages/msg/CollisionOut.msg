@@ -1,2 +1,3 @@
 uint8 collision
-float32 distance_to_collision
+float32 distance_to_drive
+float32 angle_to_drive

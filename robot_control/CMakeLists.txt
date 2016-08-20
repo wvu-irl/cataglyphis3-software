@@ -142,6 +142,7 @@ include_directories(
  
  add_library(mission_planning src/mission_planning.cpp)
  add_library(pause src/pause.cpp)
+ add_library(initialize src/initialize.cpp)
  add_library(emergency_escape src/emergency_escape.cpp)
  add_library(avoid src/avoid.cpp)
  add_library(bias_removal src/bias_removal.cpp)
@@ -217,6 +218,7 @@ include_directories(
    ${catkin_LIBRARIES}
    mission_planning
    pause
+   initialize
    emergency_escape
    avoid
    bias_removal

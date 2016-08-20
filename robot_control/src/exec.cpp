@@ -150,8 +150,8 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.bool8 = req.bool8;
     params_.procType = static_cast<PROC_TYPES_T>(req.procType);
     params_.serialNum = req.serialNum;
-    ROS_INFO("ACTION CALLBACK,\n\t nextActionType = %i,\n\t newActionFlag = %i,\n\t pushToFrontFlag = %i,\n\t clearDequeFlag = %i,\n\t clearFrontFlag = %i,\n\t pause = %i,\n\t float1 = %f,\n\t float2 = %f",
-             nextActionType_, newActionFlag_, pushToFrontFlag_, clearDequeFlag_, clearFrontFlag_, pause_, params_.float1,params_.float2);
+    //ROS_INFO("ACTION CALLBACK,\n\t nextActionType = %i,\n\t newActionFlag = %i,\n\t pushToFrontFlag = %i,\n\t clearDequeFlag = %i,\n\t clearFrontFlag = %i,\n\t pause = %i,\n\t float1 = %f,\n\t float2 = %f",
+    //         nextActionType_, newActionFlag_, pushToFrontFlag_, clearDequeFlag_, clearFrontFlag_, pause_, params_.float1,params_.float2);
     return true;
 }
 
@@ -264,10 +264,10 @@ void Exec::packNextWaypointOut_()
 {
     if(actionDeque_.size()>0)
     {
-        if(actionDeque_.at(0)->params.actionType == _driveGlobal)
+        if(actionDeque_.at(0)->params.actionType == _driveGlobal || actionDeque_.at(0)->params.actionType == _driveRelative)
         {
-            nextWaypointMsgOut_.globalX = actionDeque_.at(0)->params.float1;
-            nextWaypointMsgOut_.globalY = actionDeque_.at(0)->params.float2;
+            nextWaypointMsgOut_.globalX = actionDeque_.at(0)->nextGlobalX;
+            nextWaypointMsgOut_.globalY = actionDeque_.at(0)->nextGlobalY;
             //nextWaypointMsgOut_.unskippable = actionDeque_.at(0)->params.bool3;
         }
     }

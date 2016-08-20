@@ -9,6 +9,7 @@
 #include <messages/MissionPlanningInfo.h>
 #include <messages/MissionPlanningControl.h>
 #include <messages/NavFilterOut.h>
+#include "initialize.h"
 #include "emergency_escape.h"
 #include "avoid.h"
 #include "bias_removal.h"
@@ -45,6 +46,7 @@ public:
 	messages::MissionPlanningInfo infoMsg;
     messages::nb1_to_i7_msg nb1Msg;
 	const int loopRate = 20; // Hz
+	Initialize initialize;
 	EmergencyEscape emergencyEscape;
 	Avoid avoid;
 	BiasRemoval biasRemoval;
@@ -97,6 +99,7 @@ private:
 	void biasRemovalTimerCallback_(const ros::TimerEvent& event);
 	void homingTimerCallback_(const ros::TimerEvent& event);
 	void searchTimerCallback_(const ros::TimerEvent& event);
+	void biasRemovalActionTimerCallback_(const ros::TimerEvent &event);
 };
 
 #endif // MISSION_PLANNING_H
