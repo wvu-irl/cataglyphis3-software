@@ -1205,10 +1205,19 @@ void LidarFilter::fitCylinderLong()
 	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
 	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
 	
-	if(_homing_found==true && (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14))
+	if(_homing_found==true /*&& (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14)*/)
 	{
 		std::ofstream outputFile;
-		outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::out | ofstream::trunc);
+		static bool openFileForFirstTime = false;
+		if(openFileForFirstTime == false)
+		{
+			openFileForFirstTime = true;
+			outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::out | ofstream::trunc);
+		}
+		else
+		{
+			outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::app);
+		}
 		for (int i=0; i<_cylinders.size(); i++)
 		{
 			for (int jj=0; jj<_cylinders[i].points.n_cols; jj++)
@@ -1230,7 +1239,7 @@ void LidarFilter::fitCylinderLong()
 				outputFile << X(1) << ",";
 				outputFile << X(2) << ",";
 				outputFile << X(3) << ",";
-				outputFile << diff1+diff2; 
+				outputFile << diff1+diff2 << ","; 
 				outputFile << explode; 
 				outputFile << std::endl; 	
 			}

@@ -179,7 +179,7 @@ public:
 	const float searchLocalMapWidth = 40.0; // m
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
-	const float randomWaypointMinDistance = 2.0; // m
+	const float randomWaypointMinDistance = 4.0; // m
 	const float satDriveabilityInitialValue = 100.0;
 	const float satDriveabilityInitialConf = 0.5;
 	const float keyframeDriveabilityInitialValue = 0.0;

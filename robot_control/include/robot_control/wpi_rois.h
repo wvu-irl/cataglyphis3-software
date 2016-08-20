@@ -4,7 +4,7 @@
 ROI.e = 99.0 - satMapStartE; // precached (0)
 ROI.s = 28.0 - satMapStartS;
 ROI.sampleProb = 1.0;
-ROI.sampleSig = 1000.0;
+ROI.sampleSig = 10.0;
 ROI.radialAxis = 9.5;
 ROI.tangentialAxis = 9.5;
 ROI.allocatedTime = 420.0;

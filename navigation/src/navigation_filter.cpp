@@ -258,7 +258,7 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 	}
 	if(pause_switch==false) 
 	{
-        if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
+        /*if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
         {
             filter.north_angle = init_filter.psi;
             filter.P_north_angle = init_filter.P_psi;
@@ -267,12 +267,12 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
         {
             filter.north_angle = filter.E_north_angle;
             filter.P_north_angle = filter.north_angle_thresh*filter.north_angle_thresh;
-        }
+        }*/
 		state = _run; 
 		filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
 		filter1.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
 		filter2.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
+		/*if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
 		{
 			filter.north_angle = init_filter.psi;
 			filter.P_north_angle = init_filter.P_psi;
@@ -281,7 +281,9 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 		{	
 			filter.north_angle = filter.E_north_angle;
 			filter.P_north_angle = filter.north_angle_thresh*filter.north_angle_thresh;
-		}
+		}*/
+		filter.north_angle = init_filter.psi;
+		filter.P_north_angle = init_filter.P_psi;
 	}
 	else state = _forklift_drive;
 }
