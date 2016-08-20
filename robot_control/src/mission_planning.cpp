@@ -82,6 +82,7 @@ MissionPlanning::MissionPlanning()
     depositApproach.reg(__depositApproach__);
     depositSample.reg(__depositSample__);
     safeMode.reg(__safeMode__);
+    sosMode.reg(__sosMode__);
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
     currentROIIndex = 99;
@@ -160,7 +161,6 @@ void MissionPlanning::run()
 
 void MissionPlanning::evalConditions_()
 {
-    int temp;
     if(multiProcLockout)
     {
         multiProcLockout = true;
@@ -356,6 +356,7 @@ void MissionPlanning::evalConditions_()
             voiceSay->call("safe mode");
         }
 
+
         // *************** Multi Proc Lockout for testing *************************
         lockoutSum = 0;
         for(int i=0; i<NUM_PROC_TYPES; i++) if(procsToExecute[i] && !procsToInterrupt[i]) lockoutSum++;
@@ -390,6 +391,7 @@ void MissionPlanning::runProcedures_()
     depositApproach.run();
     depositSample.run();
     safeMode.run();
+    sosMode.run();
 }
 
 void MissionPlanning::runPause_()
@@ -635,6 +637,10 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
             break;
         case __safeMode__:
             safeMode.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
+        case __sosMode__:
+            sosMode.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            break;
         }
     }
     return true;

@@ -24,6 +24,7 @@
 #include "deposit_approach.h"
 #include "deposit_sample.h"
 #include "safe_mode.h"
+#include "sos_mode.h"
 #include "pause.h"
 #include "bit_utils.h"
 
@@ -61,6 +62,7 @@ public:
 	DepositApproach depositApproach;
 	DepositSample depositSample;
 	SafeMode safeMode;
+	SosMode sosMode;
     Pause pause;
 
 	bool collisionInterruptTrigger;
