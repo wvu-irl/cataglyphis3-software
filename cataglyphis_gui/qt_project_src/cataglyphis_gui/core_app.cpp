@@ -38,15 +38,13 @@ core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
 #endif
 
 
-    cataglyphisStartupFormPtr =
-            boost::shared_ptr<init_container>
-                            (new init_container(ui->guiTabber, nh));
-
-    mapViewFormPtr =
-            boost::shared_ptr<map_viewer>(new map_viewer(ui->guiTabber, 0, nh));
+    cataglyphisStartupFormPtr.reset(new init_container(ui->guiTabber, nh));
+    mapViewFormPtr.reset(new map_viewer(ui->guiTabber, 0, nh));
+    manualControlFormPtr.reset(new manual_control(ui->guiTabber));
 
     ui->guiTabber->addTab(cataglyphisStartupFormPtr.get(), "Startup");
     ui->guiTabber->addTab(mapViewFormPtr.get(), "Map");
+    ui->guiTabber->addTab(manualControlFormPtr.get(), "Manual Control");
 }
 
 core_app::~core_app()

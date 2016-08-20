@@ -31,7 +31,8 @@ signals:
 
 public:
     explicit init_step_one(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
-                                                    boost::shared_ptr<ros_workers>());
+                                                    boost::shared_ptr<ros_workers>(),
+                                                bool startup = true);
     ~init_step_one();
 
     Ui::init_step_one_form *ui;

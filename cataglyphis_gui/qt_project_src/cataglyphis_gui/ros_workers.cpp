@@ -1,16 +1,43 @@
  #include <ros_workers.h>
 
-ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
+ros_workers::ros_workers()
 {
-    nh = nhArg;
-
+    nh.reset(new ros::NodeHandle());
     qRegisterMetaType<messages::NavFilterControl>("messages::NavFilterControl");
-    qRegisterMetaType<messages::HSMSetNorthAngle>("messages::HSMSetNorthAngle");
+    //qRegisterMetaType<messages::HSMSetNorthAngle>("messages::HSMSetNorthAngle");
     qRegisterMetaType<robot_control::RegionsOfInterest>("robot_control::RegionsOfInterest");
     qRegisterMetaType<messages::GlobalMapFull>("messages::GlobalMapFull");
     qRegisterMetaType<messages::NavFilterOut>("messages::NavFilterOut");
     qRegisterMetaType<messages::RobotPose>("messages::RobotPose");
     qRegisterMetaType<map_viewer_enums::mapViewerLayers_t>("map_viewer_enums::mapViewerLayers_t");
+    qRegisterMetaType<messages::SetStartingPlatform>("messages::SetStartingPlatform");
+
+    navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
+    //hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
+    mapManagerROIClient = nh->serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
+    mapManagerGlobalMapClient = nh->serviceClient<messages::GlobalMapFull>("/control/mapmanager/globalmapfull");
+
+    navInfoTime = ros::Time::now();
+    navInfoSubStarted = false;
+    navInfoSub = ros::Subscriber();
+
+    hsmGlobalPoseTime = ros::Time::now();
+    hsmGlobalPoseSubStarted = false;
+    hsmGlobalPosSub = ros::Subscriber();
+}
+
+ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
+{
+    nh = nhArg;
+
+    qRegisterMetaType<messages::NavFilterControl>("messages::NavFilterControl");
+    //qRegisterMetaType<messages::HSMSetNorthAngle>("messages::HSMSetNorthAngle");
+    qRegisterMetaType<robot_control::RegionsOfInterest>("robot_control::RegionsOfInterest");
+    qRegisterMetaType<messages::GlobalMapFull>("messages::GlobalMapFull");
+    qRegisterMetaType<messages::NavFilterOut>("messages::NavFilterOut");
+    qRegisterMetaType<messages::RobotPose>("messages::RobotPose");
+    qRegisterMetaType<map_viewer_enums::mapViewerLayers_t>("map_viewer_enums::mapViewerLayers_t");
+    qRegisterMetaType<messages::SetStartingPlatform>("messages::SetStartingPlatform");
 
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     //hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
@@ -25,6 +52,40 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
     hsmGlobalPoseSubStarted = false;
     hsmGlobalPosSub = ros::Subscriber();
     //workerMutex = boost::shared_ptr<QMutex>(new QMutex);
+}
+
+void ros_workers::on_run_set_starting_platform_service(messages::SetStartingPlatform serviceRequest)
+{
+    bool successful = serviceCall<messages::SetStartingPlatform>("/control/mapmanager/setstartingplatform", &serviceRequest);
+    emit map_manager_set_starting_platform_service_returned(serviceRequest, successful);
+}
+
+template<typename T>
+bool ros_workers::serviceCall(const char *serviceName, T *serviceRequest)
+{
+    bool wasSuccessful = false;
+    ros::ServiceClient serviceClient = nh->serviceClient<T>(serviceName);
+    if(serviceClient.exists())
+    {
+        ROS_DEBUG("ros_workers::%s Exists", serviceName);
+        if(serviceClient.call(*serviceRequest))
+        {
+            ROS_DEBUG("ros_workers::%s Success!", serviceName);
+            wasSuccessful = true;
+        }
+        else
+        {
+            ROS_WARN("ros_workers:: %s failure!", serviceName);
+        }
+    }
+    else
+    {
+        ROS_WARN("ros_workers::%s Does not Exist!", serviceName);
+        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
+        pause.sleep();
+    }
+    return wasSuccessful;
 }
 
 void ros_workers::on_run_map_manager_global_map_request(map_viewer_enums::mapViewerLayers_t requestedLayer)
@@ -52,6 +113,8 @@ void ros_workers::on_run_map_manager_global_map_request(map_viewer_enums::mapVie
     }
     emit map_manager_global_map_service_returned(lastGlobalMapMsg, requestedLayer, wasSucessful);
 }
+
+
 
 void ros_workers::on_run_map_manager_ROI_service()
 {

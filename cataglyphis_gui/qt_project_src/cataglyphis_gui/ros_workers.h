@@ -18,6 +18,8 @@
 #include <messages/RobotPose.h>
 #include <messages/GlobalMapFull.h>
 
+#include <messages/SetStartingPlatform.h>
+
 #include <robot_control/RegionsOfInterest.h>
 #include <robot_control/ROI.h>
 
@@ -54,12 +56,17 @@ signals:
     void map_manager_global_map_service_returned(messages::GlobalMapFull gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer,
                                                     bool wasSucessful);
 
+    void map_manager_set_starting_platform_service_returned(messages::SetStartingPlatform,
+                                                                bool wasSucessful);
+
 public slots:
     void on_run_nav_service(messages::NavFilterControl serviceRequest, const int callerID);
 
     void on_run_bias_removal_service();
     void on_run_start_dead_reckoning_service();
     void on_run_nav_init_service(messages::NavFilterControl serviceRequest);
+
+    void on_run_set_starting_platform_service(messages::SetStartingPlatform serviceRequest);
 
     void on_run_map_manager_ROI_service();
     void on_run_map_manager_global_map_request(map_viewer_enums::mapViewerLayers_t requestedLayer);
@@ -96,7 +103,11 @@ private:
     void getHSMGlobalPoseCallback(const messages::RobotPose::ConstPtr &msg);
 
 public:
+    ros_workers();
     ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg);
+
+    template<typename T>
+    bool serviceCall(const char * serviceName, T *serviceRequest);
 
 };
 

@@ -31,7 +31,7 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QRadioButton" name="platform_two">
+        <widget class="QRadioButton" name="platform_one_radio">
          <property name="text">
           <string>Platform 1</string>
          </property>
@@ -41,7 +41,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="platform_one">
+        <widget class="QRadioButton" name="platform_two_radio">
          <property name="text">
           <string>Platform 2</string>
          </property>
@@ -51,7 +51,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QRadioButton" name="platform_three">
+        <widget class="QRadioButton" name="platform_three_radio">
          <property name="text">
           <string>Platform 3</string>
          </property>
@@ -157,6 +157,9 @@ Adjusment</string>
      </item>
      <item>
       <widget class="QPushButton" name="reset_platform_adjustment_button">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -172,19 +175,6 @@ Adjustment</string>
     </layout>
    </item>
   </layout>
-  <zorder>platform_three</zorder>
-  <zorder>platform_two</zorder>
-  <zorder>platform_one</zorder>
-  <zorder>platform_two</zorder>
-  <zorder>submit_map_shift_button</zorder>
-  <zorder>platform_adjustment_checkbox</zorder>
-  <zorder>delta_east_spinbox</zorder>
-  <zorder>delta_north_spinbox</zorder>
-  <zorder>reset_platform_adjustment_button</zorder>
-  <zorder>horizontalSpacer</zorder>
-  <zorder>horizontalSpacer_2</zorder>
-  <zorder>label</zorder>
-  <zorder>label_2</zorder>
  </widget>
  <resources/>
  <connections>
@@ -199,8 +189,8 @@ Adjustment</string>
      <y>20</y>
     </hint>
     <hint type="destinationlabel">
-     <x>232</x>
-     <y>47</y>
+     <x>218</x>
+     <y>79</y>
     </hint>
    </hints>
   </connection>
@@ -215,8 +205,24 @@ Adjustment</string>
      <y>20</y>
     </hint>
     <hint type="destinationlabel">
-     <x>232</x>
-     <y>69</y>
+     <x>218</x>
+     <y>107</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>platform_adjustment_checkbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>reset_platform_adjustment_button</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>225</x>
+     <y>30</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>252</x>
+     <y>132</y>
     </hint>
    </hints>
   </connection>

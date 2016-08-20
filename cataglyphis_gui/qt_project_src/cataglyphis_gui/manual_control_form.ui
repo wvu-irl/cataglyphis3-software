@@ -72,6 +72,9 @@
         <enum>QFrame::Raised</enum>
        </property>
        <widget class="QPushButton" name="forward_button">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="geometry">
          <rect>
           <x>70</x>
@@ -91,6 +94,9 @@
         </property>
        </widget>
        <widget class="QPushButton" name="backward_button">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="geometry">
          <rect>
           <x>70</x>
@@ -109,7 +115,10 @@
          <string>Backward</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="rotate_right_button">
+       <widget class="QPushButton" name="rotate_left_button">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -129,7 +138,10 @@
 Left</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="rotate_left_button">
+       <widget class="QPushButton" name="rotate_right_button">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="geometry">
          <rect>
           <x>140</x>
@@ -210,6 +222,9 @@ Right</string>
        <layout class="QFormLayout" name="formLayout">
         <item row="0" column="0">
          <widget class="QPushButton" name="slide_open_button">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -223,6 +238,9 @@ Right</string>
         </item>
         <item row="1" column="0">
          <widget class="QPushButton" name="slide_close_button">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -236,6 +254,9 @@ Right</string>
         </item>
         <item row="1" column="1">
          <widget class="QPushButton" name="grabber_down_button">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -255,6 +276,9 @@ Right</string>
         </item>
         <item row="0" column="1">
          <widget class="QPushButton" name="grabber_up_button">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -323,7 +347,7 @@ Right</string>
   <connection>
    <sender>manual_override_button</sender>
    <signal>clicked(bool)</signal>
-   <receiver>rotate_left_button</receiver>
+   <receiver>rotate_right_button</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -339,7 +363,7 @@ Right</string>
   <connection>
    <sender>manual_override_button</sender>
    <signal>clicked(bool)</signal>
-   <receiver>rotate_right_button</receiver>
+   <receiver>rotate_left_button</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

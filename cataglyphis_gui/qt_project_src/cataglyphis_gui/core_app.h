@@ -7,6 +7,7 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/atomic.hpp>
 #include <ros/ros.h>
+#include "manual_control.h"
 #include "init_container.h"
 #include "map_viewer.h"
 
@@ -32,6 +33,7 @@ private slots:
 
 private:
 
+    boost::shared_ptr<manual_control> manualControlFormPtr;
     boost::shared_ptr<init_container> cataglyphisStartupFormPtr;
     boost::shared_ptr<map_viewer> mapViewFormPtr;
 

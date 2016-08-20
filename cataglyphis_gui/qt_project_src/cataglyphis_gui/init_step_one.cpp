@@ -1,7 +1,7 @@
 #include "init_step_one.h"
 #include "ui_init_step_one_form.h"
 
-init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> workerArg) :
+init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> workerArg, bool startup) :
     QWidget(parent),
     ui(new Ui::init_step_one_form)
 {
@@ -22,6 +22,12 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
                 worker.get(), &ros_workers::on_run_hsm_global_pose_subscriber_start);
     connect(this, &init_step_one::stop_hsm_pose_subscriber,
                 worker.get(), &ros_workers::on_run_hsm_global_pose_subscriber_stop);
+
+    if(!startup)
+    {
+        ROS_DEBUG("Not Startup");
+        ui->skip_init_button->hide();
+    }
 
 //    connect(worker.get(), &ros_workers::nav_info_callback,
 //                this, &init_step_one::on_nav_info_callback);
