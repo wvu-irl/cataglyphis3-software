@@ -35,8 +35,7 @@ class ros_workers : public QObject
 
 signals:
     void nav_service_returned(const messages::NavFilterControl navResponse,
-                                  bool wasSucessful,
-                                    const int callerID);
+                                  bool wasSucessful);
 
     void nav_init_returned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful);
@@ -56,11 +55,11 @@ signals:
     void map_manager_global_map_service_returned(messages::GlobalMapFull gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer,
                                                     bool wasSucessful);
 
-    void map_manager_set_starting_platform_service_returned(messages::SetStartingPlatform,
+    void map_manager_set_starting_platform_service_returned(messages::SetStartingPlatform response,
                                                                 bool wasSucessful);
 
 public slots:
-    void on_run_nav_service(messages::NavFilterControl serviceRequest, const int callerID);
+    void on_run_nav_service(messages::NavFilterControl serviceRequest);
 
     void on_run_bias_removal_service();
     void on_run_start_dead_reckoning_service();

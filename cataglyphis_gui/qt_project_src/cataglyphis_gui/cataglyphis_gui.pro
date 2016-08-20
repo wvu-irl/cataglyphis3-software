@@ -45,7 +45,8 @@ SOURCES +=\
     map_viewer_rect.cpp \
     shift_map.cpp \
     node_status.cpp \
-    manual_control.cpp
+    manual_control.cpp \
+    teleport.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -66,7 +67,8 @@ HEADERS  += \
     map_viewer_rect.h \
     shift_map.h \
     node_status.h \
-    manual_control.h
+    manual_control.h \
+    teleport.h
 
 FORMS    += \
     generic_error_dialog_form.ui \
@@ -79,7 +81,8 @@ FORMS    += \
     generic_ack_dialog_form.ui \
     shift_map_form.ui \
     node_status_form.ui \
-    manual_control_form.ui
+    manual_control_form.ui \
+    teleport_form.ui
 
 RESOURCES += \
     resources.qrc

@@ -104,12 +104,23 @@ void init_container::on_shift_map_button_clicked()
     ui->input_tabber->setCurrentWidget(shiftMapTab.get());
 }
 
+void init_container::on_teleport_button_clicked()
+{
+    ROS_DEBUG("Teleport button clicked");
+    on_procedure_returned();
+    procedureInProgress = true;
+    teleportTab.reset(new teleport(ui->input_tabber));
+    ui->input_tabber->addTab(teleportTab.get(), "Teleport");
+    ui->input_tabber->setCurrentWidget(teleportTab.get());
+}
+
 void init_container::on_procedure_returned()
 {
     //reset pointers to tabs
     shiftMapTab.reset();
     northAngleTab.reset();
     biasRemovalTab.reset();
+    teleportTab.reset();
     ui->input_tabber->clear();
     procedureInProgress = false;
 }
@@ -128,3 +139,5 @@ void init_container::_implResetTabberIfNeccesary()
         on_procedure_returned();
     }
 }
+
+

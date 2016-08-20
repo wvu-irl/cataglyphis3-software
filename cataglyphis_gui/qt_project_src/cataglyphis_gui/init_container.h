@@ -11,6 +11,7 @@
 #include <init_step_one.h>
 #include <init_step_two.h>
 #include <shift_map.h>
+#include <teleport.h>
 
 #include <generic_error_dialog.h>
 
@@ -50,6 +51,8 @@ private slots:
 
     void on_shift_map_button_clicked();
 
+    void on_teleport_button_clicked();
+
 private:
     QThread rosWorkerThread;
     boost::shared_ptr<ros_workers> rosWorker;
@@ -57,6 +60,7 @@ private:
     boost::shared_ptr<init_step_one> northAngleTab;
     boost::shared_ptr<init_step_two> biasRemovalTab;
     boost::scoped_ptr<shift_map> shiftMapTab;
+    boost::scoped_ptr<teleport> teleportTab;
 
     bool procedureInProgress;
 

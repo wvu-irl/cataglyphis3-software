@@ -60,6 +60,12 @@ void ros_workers::on_run_set_starting_platform_service(messages::SetStartingPlat
     emit map_manager_set_starting_platform_service_returned(serviceRequest, successful);
 }
 
+void ros_workers::on_run_nav_service(messages::NavFilterControl serviceRequest)
+{
+    bool successful = serviceCall<messages::NavFilterControl>("/navigation/navigationfilter/control", &serviceRequest);
+    emit nav_service_returned(serviceRequest, successful);
+}
+
 template<typename T>
 bool ros_workers::serviceCall(const char *serviceName, T *serviceRequest)
 {
@@ -140,33 +146,6 @@ void ros_workers::on_run_map_manager_ROI_service()
         pause.sleep();
     }
     emit map_manager_ROI_service_returned(lastROIMsg, wasSucessful);
-}
-
-void ros_workers::on_run_nav_service(messages::NavFilterControl serviceRequest,
-                                    const int callerID)
-{
-    bool wasSucessful = false;
-    if(navControlClient.exists())
-    {
-        ROS_DEBUG("ros_workers::run_nav_service:: Nav Service Exists!");
-        if(navControlClient.call(serviceRequest))
-        {
-            ROS_DEBUG("ros_workers::run_nav_service:: Nav Service Call Sucess");
-            wasSucessful = true;
-        }
-        else
-        {
-            ROS_WARN("ros_workers::run_nav_service:: Nav Service Call Failure!");
-        }
-    }
-    else
-    {
-        ROS_WARN("ros_workers::run_nav_service:: Nav Service Does not Exist!");
-        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
-        ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
-        pause.sleep();
-    }
-    emit nav_service_returned(serviceRequest, wasSucessful, callerID);
 }
 
 void ros_workers::on_run_nav_init_service(messages::NavFilterControl serviceRequest)
