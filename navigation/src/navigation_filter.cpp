@@ -201,9 +201,9 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
     if(user_input_nav_act.begin_dead_reckoning==1 || latest_nav_control_request.beginForkliftDeadReckoning)
 	{
 		state = _forklift_drive;
-		init_filter.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter1.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter2.initialize_states(filter.phi,filter.theta,user_input_nav_act.north_angle_init,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		init_filter.initialize_states(filter.phi,filter.theta,latest_nav_control_request.initNorthAngle,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter1.initialize_states(filter.phi,filter.theta,latest_nav_control_request.initNorthAngle,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter2.initialize_states(filter.phi,filter.theta,latest_nav_control_request.initNorthAngle,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		init_filter.initialize_variance(collected_gyro_data,2.0*PI/180.0); //performed bias removal, north_angle_unc
 		first_pass = true;
 	}
@@ -871,5 +871,23 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
     response.p3Offset = imu.p3_offset;
     response.q3Offset = imu.q3_offset;
     response.r3Offset = imu.r3_offset;
+    
+    if(request.setGlobalPose)
+    {
+        ROS_INFO("Teleporting to new Location");
+        filter.initialize_states(filter.phi,filter.theta,request.newHeading*DEG_2_RAD,request.newX,request.newY,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter1.initialize_states(filter.phi,filter.theta,request.newHeading*DEG_2_RAD,request.newX,request.newY,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+    	filter2.initialize_states(filter.phi,filter.theta,request.newHeading*DEG_2_RAD,request.newX,request.newY,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+    	
+    	homing_updated = true; // to update the SLAM
+    }
+    if(request.setNorthAngle)
+    {
+        ROS_INFO("Setting New North Angle");
+        filter.north_angle = request.northAngle * DEG_2_RAD;
+        filter1.north_angle = request.northAngle * DEG_2_RAD;
+        filter2.north_angle = request.northAngle * DEG_2_RAD;
+    }
+    
     return true;
 }

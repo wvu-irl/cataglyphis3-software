@@ -1,6 +1,10 @@
 <RCC>
     <qresource prefix="/field_pictures">
-        <file>resources/institute_park.jpg</file>
         <file>resources/pattern_test.jpg</file>
+        <file>resources/esb.jpg</file>
+        <file>resources/institute_park.jpg</file>
+    </qresource>
+    <qresource prefix="/objects">
+        <file>resources/arrowheart2.png</file>
     </qresource>
 </RCC>
