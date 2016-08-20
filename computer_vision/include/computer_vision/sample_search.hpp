@@ -11,6 +11,7 @@
 #include <messages/CVSamplesFound.h>
 #include <computer_vision/SegmentImage.h> 
 #include <computer_vision/ImageProbabilities.h> 
+#include <computer_vision/ExtractColor.h> 
 #include <string>
 #include <fstream>
 #include <vector>
@@ -27,7 +28,7 @@ public:
 	void createFolderForImageData();
 	void createFileForImageData();
 	void loadCalibrationData();
-	void drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &coordinates);
+	void drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &colors);
 	void saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, const std::vector<int> &coordinates);
 	std::vector<double> calculateFlatGroundPositionOfPixel(int u, int v);
 	// Members
@@ -36,8 +37,10 @@ public:
 	ros::ServiceServer searchForSamplesServ;
 	ros::ServiceClient segmentImageClient;
 	ros::ServiceClient classifierClient;
+	ros::ServiceClient extractColorClient;
 	computer_vision::SegmentImage segmentImageSrv;
 	computer_vision::ImageProbabilities imageProbabilitiesSrv;
+	computer_vision::ExtractColor extractColorSrv;
 	messages::CVSamplesFound searchForSamplesMsgOut;
 	const double G_SENSOR_HEIGHT = 1.5;
 	const double G_IMAGE_WIDTH = 5792;

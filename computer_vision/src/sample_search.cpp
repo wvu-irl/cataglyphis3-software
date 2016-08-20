@@ -5,6 +5,7 @@ SampleSearch::SampleSearch()
 	searchForSamplesServ = nh.advertiseService("/vision/samplesearch/searchforsamples", &SampleSearch::searchForSamples, this);
 	segmentImageClient = nh.serviceClient<computer_vision::SegmentImage>("/vision/segmentation/segmentimage");
 	classifierClient = nh.serviceClient<computer_vision::ImageProbabilities>("/classify_feature_vector_service");
+	extractColorClient = nh.serviceClient<computer_vision::ExtractColor>("/vision/segmentation/extractcolor");
 	searchForSamplesPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout",1);
 }
 
@@ -164,23 +165,38 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	return relative_position;
 }
 
-void SampleSearch::drawResultsOnImage(const std::vector<int> &binary, const std::vector<int> &coordinates)
+void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &colors)
 {
+	//setup colors
+	std::vector<cv::Scalar> colorScalars; //0 nothing, 1 white, 2 silver, 3 blue/purple, 4 pink, 5 red, 6 orange, 7 yellow
+	colorScalars.push_back(cv::Scalar(0,0,0)); //nothinig
+	colorScalars.push_back(cv::Scalar(255,255,255)); //white
+	colorScalars.push_back(cv::Scalar(255,200,200)); //silver
+	colorScalars.push_back(cv::Scalar(255,0,0)); //blue/purple
+	colorScalars.push_back(cv::Scalar(147,20,255)); //pink
+	colorScalars.push_back(cv::Scalar(0,0,255)); //red
+	colorScalars.push_back(cv::Scalar(0,69,255)); //orange
+	colorScalars.push_back(cv::Scalar(0,215,255)); //yellow
+	colorScalars.push_back(cv::Scalar(255,0,0)); //white blue/purple
+	colorScalars.push_back(cv::Scalar(147,20,255)); //white pink
+	colorScalars.push_back(cv::Scalar(0,0,255)); //white red
+	colorScalars.push_back(cv::Scalar(0,69,255)); //white orange
+	colorScalars.push_back(cv::Scalar(0,215,255)); //white yellow
+
 	//load image
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	cv::Mat src = cv::imread(P.string()+"/data/images/input_image.jpg");
 
-	//draw circle for detected samples and nonsamples
-	for(int i=0; i<binary.size(); i++)
+	//draw circle for detected samples
+	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
-		if(binary[i]==1)
-		{
-			circle(src, cv::Point(coordinates[i*2],coordinates[i*2+1]), 100, cv::Scalar(0,0,255), 3, 8);
-		}
-		else
-		{
-			circle(src, cv::Point(coordinates[i*2],coordinates[i*2+1]), 100, cv::Scalar(0,0,0), 3, 8);
-		}
+		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 100, colorScalars[colors[i]], 3, 8);
+	}
+
+	//draw circles for detected nonsample
+	for(int i=0; i<blobsOfNotInterest.size(); i++)
+	{
+		circle(src, cv::Point(coordinates[blobsOfNotInterest[i]*2],coordinates[blobsOfNotInterest[i]*2+1]), 100, cv::Scalar(0,255,0), 3, 8);
 	}
 
 	//write image to file
@@ -308,6 +324,42 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     ROS_INFO("Time taken in seconds for classifier service: %f", endClassifierTime - startClassifierTime);
 
 	/*
+		Call color extract color service
+	*/
+
+	gettimeofday(&this->localTimer, NULL);
+    double startColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0); 
+
+    //find samples of interest for extracting colors (sample must have at least 0.5 confidence)
+	std::vector<int> blobsOfInterest, blobsOfNotInterest;
+	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
+	{
+		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.50)
+		{
+			blobsOfInterest.push_back(i);
+		}
+		else
+		{
+			blobsOfNotInterest.push_back(i);
+		}
+	}	
+
+	//call service to extract colors from samples (uses look up table)
+	extractColorSrv.request.blobsOfInterest = blobsOfInterest;
+	if(extractColorClient.call(extractColorSrv))
+	{
+		ROS_INFO("extractColorSrv call successful!");
+	}
+	else
+	{
+		ROS_ERROR("Error! Failed to call service ExtractColor!");
+	}
+
+	gettimeofday(&this->localTimer, NULL);  
+    double endColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for extract color service: %f", endColorTime - startColorTime);
+
+	/*
 		Save image, blobs, and blob info if > 0.2 probability of being a sample
 	*/
 	gettimeofday(&this->localTimer, NULL);
@@ -325,19 +377,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	std::vector<int> binary;
-	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
-	{
-		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.50)
-		{
-			binary.push_back(1);
-		}
-		else
-		{
-			binary.push_back(0);
-		}
-	}
-	drawResultsOnImage(binary, segmentImageSrv.response.coordinates);
+	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.colors);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -352,19 +392,16 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	std::vector<double> position;
 	messages::CVSampleProps sampleProps;
 	searchForSamplesMsgOut.sampleList.clear();
-	for(int i=0; i<binary.size(); i++)
+	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
-		if(binary[i]==1)
-		{
-			position.clear();
-			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[i*2], segmentImageSrv.response.coordinates[i*2+1]);
-			//ROS_INFO("sample(%i) relative polar position = %f, %f", i, position[0], position[1]);
-			sampleProps.type = i;
-			sampleProps.distance = position[0];
-			sampleProps.bearing = position[1];
-            sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i];
-			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
-		}
+		position.clear();
+		position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
+		//ROS_INFO("sample(%i) relative polar position = %f, %f", i, position[0], position[1]);
+		sampleProps.type = i;
+		sampleProps.distance = position[0];
+		sampleProps.bearing = position[1];
+		sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i];
+		searchForSamplesMsgOut.sampleList.push_back(sampleProps);
 	}
 
 	gettimeofday(&this->localTimer, NULL);  
