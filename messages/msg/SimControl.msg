@@ -16,3 +16,4 @@ float32 cvConfidence
 bool pubKeyframeList
 float32 rollAngle
 bool homingUpdated
+bool navStopRequest
