@@ -35,7 +35,7 @@ bool Avoid::runProc()
                 modROISrv.request.hardLockoutROIState = false;
                 modROISrv.request.modROIIndex = currentROIIndex;
                 modROISrv.request.setSampleProps = true;
-                modROISrv.request.sampleProb = giveUpROIFromAvoidNewSampleProb;
+                modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*giveUpROIFromAvoidNewSampleProbMultiplier;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
                 modROISrv.request.addNewROI = false;
                 modROISrv.request.editGroup = false;
@@ -44,6 +44,7 @@ bool Avoid::runProc()
                 giveUpROI = true;
                 sendDequeClearAll();
                 ROS_INFO("AVOID gave up ROI number %i",currentROIIndex);
+                voiceSay->call("give up r o i");
             }
             if(!execInfoMsg.actionBool3[interruptedAvoid] && (interruptedAvoid || interruptedEmergencyEscape))
             {
