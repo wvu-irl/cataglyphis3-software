@@ -7,10 +7,9 @@ class Examine : public Procedure
 public:
 	// Members
 	const int examineLimit = 2;
-	const float offsetPositionAngle = 90.0; // deg
-	const float offsetPositionDistance = 2.0; // m
-	const float examineAngleToTurn = 10.0;
-	float finalHeading;
+	const float examineOffsetAngle = 10.0; // deg
+	const float maxDistanceToDrive = 5.0; // m
+	float finalAngleToTurn;
 	// Methods
 	bool runProc();
 };

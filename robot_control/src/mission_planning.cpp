@@ -325,7 +325,7 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute confirmCollect");
             voiceSay->call("confirm collect");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !performBiasRemoval && !escapeCondition && !performSafeMode && initialized && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !performSafeMode && initialized && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");

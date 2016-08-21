@@ -36,6 +36,8 @@ bool ConfirmCollect::runProc()
                 ROS_INFO("confirmCollect success, no sample on ground");
 				confirmedPossession = true;
                 inSearchableRegion = false;
+                possibleSample = false;
+                definiteSample = false;
                 // Delete searchLocalMap
                 searchMapSrv.request.createMap = false;
                 searchMapSrv.request.deleteMap = true;
