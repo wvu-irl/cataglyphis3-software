@@ -89,6 +89,7 @@ class ClassifierService:
 			predictedProbabilities = predictedProbabilities[:,1]
 			# convert to list and for returning it to the client
 			positiveConfidenceList = predictedProbabilities.tolist()
+			print positiveConfidenceList
 			pass
 		except:
 			print 'obtaining probabilities from extracted probabilities'
@@ -152,15 +153,18 @@ if __name__ == "__main__":
 	# imgSize
 	imgSize = 50
 	
+	# classifier version
+	classifierVersion = '7-7-16'
+
 	# read the mean data
 	# meanData50Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
-	meanData50Path = cvModulePath+ "/data/mean_file/50_x_50_mean/allData_50_lmdb.npy"
+	meanData50Path = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
 	meanData50 = np.load(meanData50Path)
 	meanData50 = np.reshape(meanData50, (1, 3, imgSize, imgSize))
 	
 	# read the classifier
 	# classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
-	classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/best_9epoch_'+str(imgSize)+'.npz'
+	classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
 	
 	# set dropout parameters for better performance
 	dropoutParams50 = {}

@@ -165,7 +165,7 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	return relative_position;
 }
 
-void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types)
+void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types, const std::vector<float> &probabilities)
 {
 	//load image
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
@@ -176,13 +176,28 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, c
 	{
 		std::vector<int> color = map_enum_to_color(static_cast<SAMPLE_TYPE_T>(types[i]));
 		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 100, cv::Scalar(color[0], color[1], color[2]), 3, 8);
+
+		float scale_img  = 600.f/(sqrt(5792*5792*2.5));
+		float scale_font = (float)(2-scale_img)/1.4f;
+
+		int tempProb = 100*probabilities[blobsOfInterest[i]];
+		cv::Size word_size = getTextSize(patch::to_string(tempProb), cv::FONT_HERSHEY_SIMPLEX, (double)scale_font, (int)(3*scale_font), NULL);
+		rectangle(src, cv::Point(coordinates[blobsOfInterest[i]*2], coordinates[blobsOfInterest[i]*2+1] + 100)-cv::Point(3,word_size.height+3), cv::Point(coordinates[blobsOfInterest[i]*2], coordinates[blobsOfInterest[i]*2+1] + 100)+cv::Point(word_size.width,0), cv::Scalar(0,0,0),-1);
+		cv::putText(src, patch::to_string(tempProb), cv::Point(coordinates[blobsOfInterest[i]*2], coordinates[blobsOfInterest[i]*2+1] + 100)-cv::Point(1,1), cv::FONT_HERSHEY_SIMPLEX, scale_font, cv::Scalar(255,255,255),(int)(3*scale_font));
 	}
 
 	//draw circles for detected nonsample
 	for(int i=0; i<blobsOfNotInterest.size(); i++)
 	{
 		circle(src, cv::Point(coordinates[blobsOfNotInterest[i]*2],coordinates[blobsOfNotInterest[i]*2+1]), 100, cv::Scalar(0,255,0), 3, 8);
+		float scale_img  = 600.f/(sqrt(5792*5792*2.5));
+		float scale_font = (float)(2-scale_img)/1.4f;
+		int tempProb = 100*probabilities[blobsOfNotInterest[i]];
+		cv::Size word_size = getTextSize(patch::to_string(tempProb), cv::FONT_HERSHEY_SIMPLEX, (double)scale_font, (int)(3*scale_font), NULL);
+		rectangle(src, cv::Point(coordinates[blobsOfNotInterest[i]*2], coordinates[blobsOfNotInterest[i]*2+1] + 100)-cv::Point(3,word_size.height+3), cv::Point(coordinates[blobsOfNotInterest[i]*2], coordinates[blobsOfNotInterest[i]*2+1] + 100)+cv::Point(word_size.width,0), cv::Scalar(0,0,0),-1);
+		cv::putText(src, patch::to_string(tempProb), cv::Point(coordinates[blobsOfNotInterest[i]*2], coordinates[blobsOfNotInterest[i]*2+1] + 100)-cv::Point(1,1), cv::FONT_HERSHEY_SIMPLEX, scale_font, cv::Scalar(255,255,255),(int)(3*scale_font));
 	}
+
 
 	//write image to file
 	imwrite(P.string() + "/data/images/output_image.jpg", src);
@@ -289,7 +304,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
     //ALL SAMPLE CLASSIFIER
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier	
+	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (150x150 no longer exists)
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
@@ -369,18 +384,19 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types);
+	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types, imageProbabilitiesSrv.response.responseProbabilities);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for drawing output image: %f", endDrawTime - startDrawTime);
 
 	/*
-		Calculate the position of each sample
+		Calculate the position and publish each sample requested
 	*/
 	gettimeofday(&this->localTimer, NULL);
     double startSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
+    std::vector<double> position;
 	messages::CVSampleProps sampleProps;
 	searchForSamplesMsgOut.sampleList.clear();
 	for(int i=0; i<blobsOfInterest.size(); i++)
@@ -391,65 +407,64 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		switch(static_cast<SAMPLE_TYPE_T>(extractColorSrv.response.types[i]))
 		{
 			case _unknown_t:
-				publish_sample = true;
+				publish_sample = true; ROS_INFO("_uknown_t");
 				break;
 			case _white_t:
-				if(req.white > 0.5 || req.silver > 0.5) publish_sample = true;
+				if(req.white > 0.5 || req.silver > 0.5) {publish_sample = true; ROS_INFO("_white_t");}
 				else publish_sample = false;
 				break;
 			case _whiteBlueOrPurple_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.blueOrPurple > 0.5) publish_sample = true;
+				if(req.white > 0.5 || req.silver > 0.5 || req.blueOrPurple > 0.5) {publish_sample = true; ROS_INFO("_whiteBlueOrPurple_t");}
 				else publish_sample = false;
 				break;
 			case _whitePink_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.pink > 0.5) publish_sample = true;
+				if(req.white > 0.5 || req.silver > 0.5 || req.pink > 0.5) {publish_sample = true; ROS_INFO("_whitePink_t");}
 				else publish_sample = false;
 				break;
 			case _whiteRed_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.red > 0.5) publish_sample = true;
+				if(req.white > 0.5 || req.silver > 0.5 || req.red > 0.5) {publish_sample = true; ROS_INFO("_whiteRed_t");}
 				else publish_sample = false;
 				break;
 			case _whiteOrange_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.orange > 0.5) publish_sample = true;
+				if(req.white > 0.5 || req.silver > 0.5 || req.orange > 0.5) {publish_sample = true; ROS_INFO("_whiteOrange_t");}
 				else publish_sample = false;
 				break;
 			case _whiteYellow_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.yellow > 0.5) publish_sample = true;
+				if(req.white > 0.5 || req.silver > 0.5 || req.yellow > 0.5) {publish_sample = true; ROS_INFO("_whiteYellow_t");}
 				else publish_sample = false;
 				break;
 			case _silver_t:
-				if(req.white > 0.5 || req.silver > 0.5) publish_sample = true;
+				if(req.white > 0.5 || req.silver > 0.5) {publish_sample = true; ROS_INFO("_silver_t");}
 				else publish_sample = false;
 				break;
 			case _blueOrPurple_t:
-				if(req.blueOrPurple > 0.5) publish_sample = true;
+				if(req.blueOrPurple > 0.5) {publish_sample = true; ROS_INFO("_blueOrPurple_t");}
 				else publish_sample = false;
 				break;
 			case _pink_t:
-				if(req.pink > 0.5 || req.white > 0.5) publish_sample = true;
+				if(req.pink > 0.5 || req.white > 0.5) {publish_sample = true; ROS_INFO("_pink_t");}
 				else publish_sample = false;
 				break;
 			case _red_t:
-				if(req.red > 0.5) publish_sample = true;
+				if(req.red > 0.5) {publish_sample = true; ROS_INFO("_red_t");}
 				else publish_sample = false;
 				break;
 			case _orange_t:
-				if(req.orange > 0.5) publish_sample = true;
+				if(req.orange > 0.5) {publish_sample = true; ROS_INFO("_orange_t");}
 				else publish_sample = false;
 				break;
 			case _yellow_t:
-				if(req.yellow > 0.5) publish_sample = true;
+				if(req.yellow > 0.5) {publish_sample = true; ROS_INFO("_yellow_t");}
 				else publish_sample = false;
 				break;
 			default:
-				publish_sample = true;
+				publish_sample = true; ROS_INFO("_default");
 				break;
 		}
 
 		//publish the detectable sample
 		if(publish_sample == true)
 		{
-			std::vector<double> position;
 			position.clear();
 			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
 			sampleProps.type = extractColorSrv.response.types[i];
@@ -457,6 +472,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			sampleProps.bearing = position[1];
 			sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i];
 			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
+			ROS_INFO("Adding result to vector for publishing sample information...");
 		}
 	}
 
@@ -470,11 +486,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     searchForSamplesMsgOut.procType = req.procType; //must return req.procType
     searchForSamplesMsgOut.serialNum = req.serialNum; //must return req.serialNum
     searchForSamplesPub.publish(searchForSamplesMsgOut);
-    ros::spinOnce(); //publish results before completing request (important!)
+    ROS_INFO("searchForSamplesMsgOut.sampleList.size() = %i", searchForSamplesMsgOut.sampleList.size());
 
 	gettimeofday(&this->localTimer, NULL);
 	double endSearchTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 	ROS_INFO("Total time for search: %f", endSearchTime - startSearchTime);
 
+    ros::spinOnce(); //publish results before completing request (important!)
 	return true;
 }

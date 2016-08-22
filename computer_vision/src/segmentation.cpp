@@ -439,7 +439,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         split(blob, channels);
 
         //erode image
-        cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(12, 12)); 
+        cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(16, 16)); 
 
         erode(channels[0], channels[0], erodeElement);
         erode(channels[0], channels[0], erodeElement);
