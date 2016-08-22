@@ -45,7 +45,7 @@ bool SearchRegion::runProc()
             modROISrv.request.hardLockoutROIState = false;
             modROISrv.request.modROIIndex = currentROIIndex;
             modROISrv.request.setSampleProps = true;
-            modROISrv.request.sampleProb = roiTimeExpiredNewSampleProb;
+            modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
             modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
 			modROISrv.request.addNewROI = false;
             modROISrv.request.editGroup = false;
@@ -78,7 +78,7 @@ bool SearchRegion::runProc()
 			ROS_INFO("ant colony");
 			antColony_(); // Plan path through waypoints with ant colongy optimization algorithm
 			// Do we really want to do this? Waypoints are very close together. callIntermediateWaypoints(); // Plan around obastacles.
-			sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+            sendDriveAndSearch();
 			state = _exec_;
 		}
 		computeDriveSpeeds();

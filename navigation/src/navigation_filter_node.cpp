@@ -152,6 +152,7 @@ int main(int argc, char **argv)
 		msg_NavFilterOut.north_angle = navigationfilter.filter.north_angle*180.0/navigationfilter.PI; //128.0; // deg+
 		msg_NavFilterOut.homing_updated = navigationfilter.homing_updated;
 		msg_NavFilterOut.stop_request = navigationfilter.stop_request;
+		msg_NavFilterOut.do_homing = navigationfilter.do_homing;
 
 		pub.publish(msg_NavFilterOut);
 

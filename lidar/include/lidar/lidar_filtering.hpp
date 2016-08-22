@@ -81,11 +81,13 @@ public:
 	short int _navigation_filter_counter_prev;
 	short int _registration_counter;
 	short int _registration_counter_prev;
+	short int _stitch_counter;
 
 	float _homing_x = 0;
 	float _homing_y = 0;
 	float _homing_heading = 0;
 	bool _homing_found = 0;
+	bool _do_homing;
 
 private:
 	//navigation filter callback
@@ -118,6 +120,9 @@ private:
 	//stitch clouds function
 	pcl::PointCloud<pcl::PointXYZI> _piece_one;
 	pcl::PointCloud<pcl::PointXYZI> _piece_two;
+	pcl::PointCloud<pcl::PointXYZI> _piece_three;
+	pcl::PointCloud<pcl::PointXYZI> _piece_four;
+	pcl::PointCloud<pcl::PointXYZI> _piece_five;
 
 	//mapping function
 	const int map_range = 60; //
@@ -172,9 +177,3 @@ private:
 };
 
 #endif // LIDAR_FILTERING_H
-
-
-
-
-
-

@@ -39,6 +39,8 @@ float rollAngle = 0.0;
 ros::Timer biasRemovalTimer;
 bool biasRemovalFinished = false;
 bool homingUpdated = false;
+bool navStopRequest = false;
+float northAngle = 90.0;
 
 int main(int argc, char** argv)
 {
@@ -89,11 +91,13 @@ int main(int argc, char** argv)
         navMsgOut.y_position = robotSim.yPos;
         navMsgOut.velocity = linV;
         navMsgOut.yaw_rate = angV;
+        navMsgOut.north_angle = northAngle;
         navMsgOut.heading = robotSim.heading;
         navMsgOut.human_heading = fmod(robotSim.heading, 360.0);
         navMsgOut.roll = rollAngle;
         navMsgOut.nav_status = biasRemovalFinished;
         navMsgOut.homing_updated = homingUpdated;
+        navMsgOut.stop_request = navStopRequest;
         slamPoseMsgOut.globalX = robotSim.xPos;
         slamPoseMsgOut.globalY = robotSim.yPos;
         slamPoseMsgOut.globalHeading = robotSim.heading;
@@ -142,6 +146,7 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     if(msg->pubKeyframeList) publishKeyframeList();
     rollAngle = msg->rollAngle;
     homingUpdated = msg->homingUpdated;
+    navStopRequest = msg->navStopRequest;
 }
 
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
@@ -174,6 +179,7 @@ bool createROIHazardMapCallback(messages::CreateROIHazardMap::Request &req, mess
 bool navControlCallback(messages::NavFilterControl::Request &req, messages::NavFilterControl::Response &res)
 {
     if(req.runBiasRemoval) biasRemovalTimer.start();
+    if(req.setNorthAngle) northAngle = req.northAngle;
     return true;
 }
 

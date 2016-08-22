@@ -42,20 +42,29 @@ private:
 	float rightMiddleWheelMultiplier_;
 	void dogLeg_();
 	double dogLegDetectTime_;
+	double dogLegStopTime_;
 	double dogLegRecoverStartTime_;
-	const double dogLegDetectThreshold_ = 1.5; // sec
-	const double dogLegRecoverDuration_ = 1.0; // sec
-	const long int encoderDogLegTriggerValue_ = 60; // 120
+	const double dogLegDetectThreshold_ = 2.0; // sec
+	const double dogLegStopDuration_ = 0.5; // sec
+	const double dogLegRecoverDuration_ = 0.75; // sec
+	const long int encoderDogLegTriggerValue_ = 80;
 	long int encPrev_[6];
 	long int encDelta_[6];
+	std::vector<long int> leftDeltaVector_;
+	std::vector<long int> rightDeltaVector_;
+	const size_t rollingAverageSize_ = 20;
+	long int leftDeltaAverage_;
+	long int rightDeltaAverage_;
 	long int maxLeftDelta_;
 	long int maxRightDelta_;
 	long int minLeftDelta_;
 	long int minRightDelta_;
-	long int encoderDiffSum_;
+    long int leftMaxMinusMin_;
+    long int rightMaxMinusMin_;
+    const long int maxMinusMinLimit_ = 300;
 	const float dogLegRDes_ = 45.0;
 	bool dogLegDetectTimeStarted_;
-	enum DOG_LEG_STATE_T {_monitoring, _commanding, _recovering} dogLegState;
+	enum DOG_LEG_STATE_T {_monitoring, _stoppingFirst, _recovering, _stoppingSecond} dogLegState;
 };
 
 #endif // DRIVE_PIVOT_H

@@ -60,12 +60,13 @@ bool NextBestRegion::runProc()
             ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
             ROS_INFO("hardLockout = %i",regionsOfInterestSrv.response.ROIList.at(i).hardLockout);
             ROS_INFO("currentROIIndex = %i",currentROIIndex);
-            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex)
+            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex && regionsOfInterestSrv.response.ROIList.at(i).sampleProb!=0.0)
             {
                 roiValue += negValueIncrement;
                 if(roiValue > maxCoercedNegValue) roiValue = maxCoercedNegValue;
             }
-            else if(regionsOfInterestSrv.response.ROIList.at(i).hardLockout || i == currentROIIndex) roiValue = 0.0;
+            else if(regionsOfInterestSrv.response.ROIList.at(i).hardLockout || i == currentROIIndex || regionsOfInterestSrv.response.ROIList.at(i).sampleProb==0.0)
+                roiValue = 0.0;
             ROS_INFO("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
             roiHardLockoutSum += regionsOfInterestSrv.response.ROIList.at(i).hardLockout;
@@ -81,7 +82,7 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            sendWait(10.0);*/
+            sendWait(10.0, false);*/
 
             ROS_INFO("NEXT BEST REGION: bestROINum = %i",bestROINum);
             numWaypointsToTravel = 2;
@@ -100,8 +101,8 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(1).roiWaypoint = true;
             waypointsToTravel.at(1).maxAvoids = maxROIWaypointAvoidCount;
             callIntermediateWaypoints();
-            sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            //sendWait(10.0);
+            sendDriveAndSearch();
+            //sendWait(10.0, false);
 
             currentROIIndex = bestROINum;
             allocatedROITime = regionsOfInterestSrv.response.ROIList.at(bestROINum).allocatedTime;

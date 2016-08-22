@@ -9,6 +9,8 @@ float32 float2
 float32 float3
 float32 float4
 float32 float5
+float32 float6
+float32 float7
 int32 int1
 bool bool1
 bool bool2

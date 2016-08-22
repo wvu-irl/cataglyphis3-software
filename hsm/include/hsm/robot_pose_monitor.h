@@ -21,6 +21,13 @@ public:
 	const float poseMonitorPeriod = 0.05;
 	float navFilterConf;
 	float slamConf;
+	float navSolutionError;
+	bool divergenceDetected;
+	bool navSolutionsDiverged;
+	double divergenceStartTime;
+	const float divergenceTriggerTime = 5.0; // sec
+	const float divergenceTriggerDistance = 15.0; // m
+	enum DIVERGENCE_STATE_T {__notDiverged__, __diverged__} divergenceState;
 	// methods
 	RobotPoseMonitor();
 	void serviceMonitor(const ros::TimerEvent&);

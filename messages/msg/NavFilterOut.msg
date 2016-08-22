@@ -106,3 +106,4 @@ float32 heading_init
 float32 north_angle
 uint8 homing_updated
 uint8 stop_request
+uint8 do_homing

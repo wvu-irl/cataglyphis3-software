@@ -1,10 +1,10 @@
-bool cached
-bool purple
-bool red
-bool blue
-bool silver
-bool brass
-bool confirm
+float32 white
+float32 silver
+float32 blueOrPurple
+float32 pink
+float32 red
+float32 orange
+float32 yellow
 bool save
 bool live
 string path

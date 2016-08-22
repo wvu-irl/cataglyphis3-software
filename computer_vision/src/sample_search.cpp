@@ -165,24 +165,8 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	return relative_position;
 }
 
-void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &colors)
+void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types)
 {
-	//setup colors
-	std::vector<cv::Scalar> colorScalars; //0 nothing, 1 white, 2 silver, 3 blue/purple, 4 pink, 5 red, 6 orange, 7 yellow
-	colorScalars.push_back(cv::Scalar(0,0,0)); //nothinig
-	colorScalars.push_back(cv::Scalar(255,255,255)); //white
-	colorScalars.push_back(cv::Scalar(255,200,200)); //silver
-	colorScalars.push_back(cv::Scalar(255,0,0)); //blue/purple
-	colorScalars.push_back(cv::Scalar(147,20,255)); //pink
-	colorScalars.push_back(cv::Scalar(0,0,255)); //red
-	colorScalars.push_back(cv::Scalar(0,69,255)); //orange
-	colorScalars.push_back(cv::Scalar(0,215,255)); //yellow
-	colorScalars.push_back(cv::Scalar(255,0,0)); //white blue/purple
-	colorScalars.push_back(cv::Scalar(147,20,255)); //white pink
-	colorScalars.push_back(cv::Scalar(0,0,255)); //white red
-	colorScalars.push_back(cv::Scalar(0,69,255)); //white orange
-	colorScalars.push_back(cv::Scalar(0,215,255)); //white yellow
-
 	//load image
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	cv::Mat src = cv::imread(P.string()+"/data/images/input_image.jpg");
@@ -190,7 +174,8 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, c
 	//draw circle for detected samples
 	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
-		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 100, colorScalars[colors[i]], 3, 8);
+		std::vector<int> color = map_enum_to_color(static_cast<SAMPLE_TYPE_T>(types[i]));
+		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 100, cv::Scalar(color[0], color[1], color[2]), 3, 8);
 	}
 
 	//draw circles for detected nonsample
@@ -302,6 +287,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
+    //ALL SAMPLE CLASSIFIER
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier	
 	if(classifierClient.call(imageProbabilitiesSrv))
@@ -318,6 +304,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		ros::spinOnce();
 		return true;
 	}
+
+	//ADD PRECACHED SAMPLE CLASSIFIER
+
+	//ADD COLOR SAMPLE CLASSIFIER
+
+	//ADD HARD SAMPLE CLASSIFIER
 
 	gettimeofday(&this->localTimer, NULL);  
     double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -377,7 +369,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.colors);
+	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -389,19 +381,83 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	std::vector<double> position;
 	messages::CVSampleProps sampleProps;
 	searchForSamplesMsgOut.sampleList.clear();
 	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
-		position.clear();
-		position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
-		//ROS_INFO("sample(%i) relative polar position = %f, %f", i, position[0], position[1]);
-		sampleProps.type = i;
-		sampleProps.distance = position[0];
-		sampleProps.bearing = position[1];
-		sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i];
-		searchForSamplesMsgOut.sampleList.push_back(sampleProps);
+		bool publish_sample = false;
+
+		//only publish detectable samples that are requested
+		switch(static_cast<SAMPLE_TYPE_T>(extractColorSrv.response.types[i]))
+		{
+			case _unknown_t:
+				publish_sample = true;
+				break;
+			case _white_t:
+				if(req.white > 0.5 || req.silver > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _whiteBlueOrPurple_t:
+				if(req.white > 0.5 || req.silver > 0.5 || req.blueOrPurple > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _whitePink_t:
+				if(req.white > 0.5 || req.silver > 0.5 || req.pink > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _whiteRed_t:
+				if(req.white > 0.5 || req.silver > 0.5 || req.red > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _whiteOrange_t:
+				if(req.white > 0.5 || req.silver > 0.5 || req.orange > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _whiteYellow_t:
+				if(req.white > 0.5 || req.silver > 0.5 || req.yellow > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _silver_t:
+				if(req.white > 0.5 || req.silver > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _blueOrPurple_t:
+				if(req.blueOrPurple > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _pink_t:
+				if(req.pink > 0.5 || req.white > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _red_t:
+				if(req.red > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _orange_t:
+				if(req.orange > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			case _yellow_t:
+				if(req.yellow > 0.5) publish_sample = true;
+				else publish_sample = false;
+				break;
+			default:
+				publish_sample = true;
+				break;
+		}
+
+		//publish the detectable sample
+		if(publish_sample == true)
+		{
+			std::vector<double> position;
+			position.clear();
+			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
+			sampleProps.type = extractColorSrv.response.types[i];
+			sampleProps.distance = position[0];
+			sampleProps.bearing = position[1];
+			sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i];
+			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
+		}
 	}
 
 	gettimeofday(&this->localTimer, NULL);  
@@ -411,14 +467,14 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	/*
 		Publish results of search
 	*/
-    searchForSamplesMsgOut.procType = req.procType;
-    searchForSamplesMsgOut.serialNum = req.serialNum;
+    searchForSamplesMsgOut.procType = req.procType; //must return req.procType
+    searchForSamplesMsgOut.serialNum = req.serialNum; //must return req.serialNum
     searchForSamplesPub.publish(searchForSamplesMsgOut);
+    ros::spinOnce(); //publish results before completing request (important!)
 
 	gettimeofday(&this->localTimer, NULL);
 	double endSearchTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 	ROS_INFO("Total time for search: %f", endSearchTime - startSearchTime);
 
-    ros::spinOnce(); //publish results before completing request (important!)
 	return true;
 }

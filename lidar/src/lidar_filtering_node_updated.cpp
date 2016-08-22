@@ -19,6 +19,7 @@ int main(int argc, char **argv)
 		lidar_filter._homing_y=0;
 		lidar_filter._homing_heading=0;
 		lidar_filter._homing_found=false;
+
 		if(lidar_filter.newPointCloudAvailable())
 		{
 			//ROS_INFO_STREAM("New cloud is available");
@@ -35,11 +36,20 @@ int main(int argc, char **argv)
 			}
 			else if(low_sampling_freq == false)
 			{
+				lidar_filter.stitchClouds();
 				lidar_filter.doMathMapping();
 				//lidar_filter.doMathHoming();
-				lidar_filter.doLongDistanceHoming();
+				if(lidar_filter._do_homing)
+				{
+					lidar_filter.doLongDistanceHoming();
+				}
+				else
+				{
+					lidar_filter._stitch_counter = 0;
+				}
 			}
 		}
+
 		lidar_filter.packLocalMapMessage(msg_LocalMap);
 		lidar_filter.packHomingMessage(msg_LidarFilterOut);
 		lidar_filter.setPreviousCounters();

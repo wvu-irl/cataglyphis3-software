@@ -10,6 +10,9 @@ RobotPoseMonitor::RobotPoseMonitor()
 	navFilterConf = 1.0;
 	slamConf = 0.9;
     navMsg.north_angle = 90.0;
+    divergenceDetected = false;
+    navSolutionsDiverged = false;
+    divergenceState = __notDiverged__;
 }
 
 void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
@@ -37,6 +40,27 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
         bestPoseMsg.northAngle = navMsg.north_angle;
 		bestPoseMsg.homingUpdated = navMsg.homing_updated;
 	}
+
+    navSolutionError = hypot(slamMsg.globalX - navMsg.x_position, slamMsg.globalY - navMsg.y_position);
+    switch(divergenceState)
+    {
+    case __notDiverged__:
+        if(navSolutionError > divergenceTriggerDistance && !divergenceDetected)
+        {
+            divergenceDetected = true;
+            divergenceStartTime = ros::Time::now().toSec();
+        }
+        else if(navSolutionError <= divergenceTriggerDistance && divergenceDetected) divergenceDetected = false;
+        if((ros::Time::now().toSec() - divergenceStartTime) > divergenceTriggerTime && divergenceDetected) divergenceState = __diverged__;
+        else divergenceState = __notDiverged__;
+        navSolutionsDiverged = false;
+        break;
+    case __diverged__:
+        if(navSolutionError <= divergenceTriggerDistance) divergenceState = __notDiverged__;
+        else divergenceState = __diverged__;
+        navSolutionsDiverged = true;
+        break;
+    }
 	bestPosePub.publish(bestPoseMsg);
 }
 

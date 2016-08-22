@@ -22,14 +22,14 @@ public:
     void clearAndResizeWTT();
     void callIntermediateWaypoints();
 	void sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float endHeading);
-	void sendDriveAndSearch(uint8_t typeMux);
+	void sendDriveAndSearch();
 	void sendDriveAndWait(float waitTime, bool endHeadingFlag, float endHeading); // sec
 	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool closedLoop);
-	void sendSearch(uint8_t typeMux);
+	void sendSearch();
 	void sendGrab();
 	void sendDrop();
 	void sendOpen();
-	void sendWait(float waitTime); // sec
+	void sendWait(float waitTime, bool pushToFront); // sec
 	void sendDequeClearFront();
 	void sendDequeClearAll();
 	void sendPause();
@@ -124,6 +124,8 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float end
 		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
         execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.float6 = 1.0;
+		execActionSrv.request.float7 = 1.0;
 		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
@@ -141,7 +143,7 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float end
     }
 }
 
-void Procedure::sendDriveAndSearch(uint8_t typeMux)
+void Procedure::sendDriveAndSearch()
 {
 	for(int i=0; i<numWaypointsToTravel; i++)
 	{
@@ -158,6 +160,8 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 		execActionSrv.request.float3 = 0.0;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.float6 = 1.0;
+		execActionSrv.request.float7 = 1.0;
 		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
@@ -181,20 +185,22 @@ void Procedure::sendDriveAndSearch(uint8_t typeMux)
 			execActionSrv.request.clearDequeFlag = false;
 			execActionSrv.request.clearFrontFlag = false;
 			execActionSrv.request.pause = false;
-			execActionSrv.request.float1 = 0.0;
-			execActionSrv.request.float2 = 0.0;
-			execActionSrv.request.float3 = 0.0;
-			execActionSrv.request.float4 = 0.0;
-			execActionSrv.request.float5 = 0.0;
+			execActionSrv.request.float1 = 1.0; // white
+			execActionSrv.request.float2 = 1.0; // silver
+			execActionSrv.request.float3 = 1.0; // blueOrPurple
+			execActionSrv.request.float4 = 1.0; // pink
+			execActionSrv.request.float5 = 1.0; // red
+			execActionSrv.request.float6 = 1.0; // orange
+			execActionSrv.request.float7 = 1.0; // yellow
 			execActionSrv.request.int1 = 0;
-			execActionSrv.request.bool1 = (typeMux & 1); // Cached
-			execActionSrv.request.bool2 = (((typeMux & 2) >> 1) & 255); // Purple
-			execActionSrv.request.bool3 = (((typeMux & 4) >> 2) & 255); // Red
-			execActionSrv.request.bool4 = (((typeMux & 8) >> 3) & 255); // Blue
-			execActionSrv.request.bool5 = (((typeMux & 16) >> 4) & 255); // Silver
-			execActionSrv.request.bool6 = (((typeMux & 32) >> 5) & 255); // Brass
-			execActionSrv.request.bool7 = (((typeMux & 64) >> 6) & 255); // Confirm
-			execActionSrv.request.bool8 = (((typeMux & 255) >> 7) & 255); // Save
+			execActionSrv.request.bool1 = false;
+			execActionSrv.request.bool2 = false;
+			execActionSrv.request.bool3 = false;
+			execActionSrv.request.bool4 = false;
+			execActionSrv.request.bool5 = false;
+			execActionSrv.request.bool6 = false;
+			execActionSrv.request.bool7 = false;
+			execActionSrv.request.bool8 = false;
 			execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 			execActionSrv.request.serialNum = this->serialNum;
 			if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -220,6 +226,8 @@ void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endH
 		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.float6 = 1.0;
+		execActionSrv.request.float7 = 1.0;
 		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
@@ -247,6 +255,8 @@ void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endH
 		execActionSrv.request.float3 = 0.0;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
+		execActionSrv.request.float6 = 1.0;
+		execActionSrv.request.float7 = 1.0;
 		execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
@@ -277,6 +287,8 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
 	execActionSrv.request.float3 = endHeading;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
     execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = endHeadingFlag;
 	execActionSrv.request.bool2 = frontOfDeque;
@@ -292,7 +304,7 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
     else ROS_ERROR("exec action service call unsuccessful");
 }
 
-void Procedure::sendSearch(uint8_t typeMux)
+void Procedure::sendSearch()
 {
 	this->serialNum++;
 	execActionSrv.request.nextActionType = _search;
@@ -301,20 +313,22 @@ void Procedure::sendSearch(uint8_t typeMux)
 	execActionSrv.request.clearDequeFlag = false;
 	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
-	execActionSrv.request.float1 = 0.0;
-	execActionSrv.request.float2 = 0.0;
-	execActionSrv.request.float3 = 0.0;
-	execActionSrv.request.float4 = 0.0;
-	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float1 = 1.0; // white
+	execActionSrv.request.float2 = 1.0; // silver
+	execActionSrv.request.float3 = 1.0; // blueOrPurple
+	execActionSrv.request.float4 = 1.0; // pink
+	execActionSrv.request.float5 = 1.0; // red
+	execActionSrv.request.float6 = 1.0; // orange
+	execActionSrv.request.float7 = 1.0; // yellow
 	execActionSrv.request.int1 = 0;
-	execActionSrv.request.bool1 = (typeMux & 1); // Cached
-	execActionSrv.request.bool2 = (((typeMux & 2) >> 1) & 255); // Purple
-	execActionSrv.request.bool3 = (((typeMux & 4) >> 2) & 255); // Red
-	execActionSrv.request.bool4 = (((typeMux & 8) >> 3) & 255); // Blue
-	execActionSrv.request.bool5 = (((typeMux & 16) >> 4) & 255); // Silver
-	execActionSrv.request.bool6 = (((typeMux & 32) >> 5) & 255); // Brass
-	execActionSrv.request.bool7 = (((typeMux & 64) >> 6) & 255); // Confirm
-	execActionSrv.request.bool8 = (((typeMux & 255) >> 7) & 255); // Save
+	execActionSrv.request.bool1 = false;
+	execActionSrv.request.bool2 = false;
+	execActionSrv.request.bool3 = false;
+	execActionSrv.request.bool4 = false;
+	execActionSrv.request.bool5 = false;
+	execActionSrv.request.bool6 = false;
+	execActionSrv.request.bool7 = false;
+	execActionSrv.request.bool8 = false;
 	execActionSrv.request.procType = static_cast<uint8_t>(this->procType);
 	execActionSrv.request.serialNum = this->serialNum;
 	if(execActionClient.call(execActionSrv)) ROS_DEBUG("exec action service call successful");
@@ -335,6 +349,8 @@ void Procedure::sendGrab()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -364,6 +380,8 @@ void Procedure::sendDrop()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -393,6 +411,8 @@ void Procedure::sendOpen()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -408,12 +428,12 @@ void Procedure::sendOpen()
 	else ROS_ERROR("exec action service call unsuccessful");
 }
 
-void Procedure::sendWait(float waitTime)
+void Procedure::sendWait(float waitTime, bool pushToFront)
 {
 	this->serialNum++;
 	execActionSrv.request.nextActionType = _wait;
 	execActionSrv.request.newActionFlag = 1;
-	execActionSrv.request.pushToFrontFlag = false;
+	execActionSrv.request.pushToFrontFlag = pushToFront;
 	execActionSrv.request.clearDequeFlag = false;
 	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
@@ -422,6 +442,8 @@ void Procedure::sendWait(float waitTime)
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -451,6 +473,8 @@ void Procedure::sendDequeClearFront()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -482,6 +506,8 @@ void Procedure::sendDequeClearAll()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -511,6 +537,8 @@ void Procedure::sendPause()
     execActionSrv.request.float3 = 0.0;
     execActionSrv.request.float4 = 0.0;
     execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
     execActionSrv.request.int1 = 0;
     execActionSrv.request.bool1 = false;
     execActionSrv.request.bool2 = false;
@@ -540,6 +568,8 @@ void Procedure::sendUnPause()
     execActionSrv.request.float3 = 0.0;
     execActionSrv.request.float4 = 0.0;
     execActionSrv.request.float5 = 0.0;
+	execActionSrv.request.float6 = 1.0;
+	execActionSrv.request.float7 = 1.0;
     execActionSrv.request.int1 = 0;
     execActionSrv.request.bool1 = false;
     execActionSrv.request.bool2 = false;

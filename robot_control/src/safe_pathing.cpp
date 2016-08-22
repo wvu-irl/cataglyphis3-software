@@ -632,27 +632,27 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             {
                 ROS_INFO("quad 1");
                 waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
-                numTransitionWaypointsInserted++;
+                //numTransitionWaypointsInserted++;
             }
             else if(lastWaypointBeforeHome.x<0.0 && lastWaypointBeforeHome.y>=0.0)
             {
                 ROS_INFO("quad 2");
                 waypointList.insert(waypointList.end()-1, quad2MagneticWaypoint);
                 waypointList.insert(waypointList.end()-1, quad1MagneticWaypoint);
-                numTransitionWaypointsInserted+=2;
+                //numTransitionWaypointsInserted+=2;
             }
             else if(lastWaypointBeforeHome.x<=0.0 && lastWaypointBeforeHome.y<0.0)
             {
                 ROS_INFO("quad 3");
                 waypointList.insert(waypointList.end()-1, quad3MagneticWaypoint);
                 waypointList.insert(waypointList.end()-1, quad4MagneticWaypoint);
-                numTransitionWaypointsInserted+=2;
+                //numTransitionWaypointsInserted+=2;
             }
             else
             {
                 ROS_INFO("quad 4");
                 waypointList.insert(waypointList.end()-1, quad4MagneticWaypoint);
-                numTransitionWaypointsInserted++;
+                //numTransitionWaypointsInserted++;
             }
         }
         else if(robotCurrentRadius <= atHomeRadius && hypot(waypointList.at(1).x, waypointList.at(1).y) > atHomeRadius)
@@ -664,27 +664,27 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
             {
                 ROS_INFO("quad 1");
                 waypointList.insert(waypointList.begin()+1, quad1MagneticWaypoint);
-                numTransitionWaypointsInserted++;
+                //numTransitionWaypointsInserted++;
             }
             else if(firstWaypointOutFromHome.x<0.0 && firstWaypointOutFromHome.y>=0.0)
             {
                 ROS_INFO("quad 2");
                 waypointList.insert(waypointList.begin()+1, quad2MagneticWaypoint);
                 waypointList.insert(waypointList.begin()+1, quad1MagneticWaypoint);
-                numTransitionWaypointsInserted+=2;
+                //numTransitionWaypointsInserted+=2;
             }
             else if(firstWaypointOutFromHome.x<=0.0 && firstWaypointOutFromHome.y<0.0)
             {
                 ROS_INFO("quad 3");
                 waypointList.insert(waypointList.begin()+1, quad3MagneticWaypoint);
                 waypointList.insert(waypointList.begin()+1, quad4MagneticWaypoint);
-                numTransitionWaypointsInserted+=2;
+                //numTransitionWaypointsInserted+=2;
             }
             else
             {
                 ROS_INFO("quad 4");
                 waypointList.insert(waypointList.begin()+1, quad4MagneticWaypoint);
-                numTransitionWaypointsInserted++;
+                //numTransitionWaypointsInserted++;
             }
         }
         // Homing waypoint check
@@ -692,8 +692,8 @@ void SafePathing::transitionWaypoints(std::vector<robot_control::Waypoint>& wayp
         waypointsOutInitSize = waypointList.size();
         for(int i=0; i<(waypointsOutInitSize-1); i++)
         {
-            waypoint1 = waypointList.at(i);
-            waypoint2 = waypointList.at(i+1);
+            waypoint1 = waypointList.at(i+numTransitionWaypointsInserted);
+            waypoint2 = waypointList.at(i+1+numTransitionWaypointsInserted);
             ROS_INFO("+++ i = %i",i);
             ROS_INFO("first waypoint = (%f,%f)",waypoint1.x,waypoint1.y);
             ROS_INFO("second waypoint = (%f,%f)",waypoint2.x,waypoint2.y);

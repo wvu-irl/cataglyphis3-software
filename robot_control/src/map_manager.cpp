@@ -513,7 +513,7 @@ bool MapManager::setStartingPlatformCallback(messages::SetStartingPlatform::Requ
 void MapManager::keyframesCallback(const messages::KeyframeList::ConstPtr &msg) // tested
 {
     keyframes = *msg;
-    writeSatMapIntoGlobalMap();
+    //writeSatMapIntoGlobalMap(); ?
     writeKeyframesIntoGlobalMap();
 }
 

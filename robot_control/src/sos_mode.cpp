@@ -18,7 +18,7 @@ bool SosMode::runProc()
 		avoidCount = 0;
 		turnAngle = maxTurnAngle*(static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
 		sendDriveRel(0.0, turnAngle, false, 0.0, false, false);
-		sendWait(lidarUpdateWaitTime);
+		sendWait(lidarUpdateWaitTime, false);
 		state = _exec_;
 		break;
 	case _exec_:

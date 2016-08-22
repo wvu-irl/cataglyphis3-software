@@ -69,6 +69,7 @@ public:
 	bool first_pass = true;
 	bool homing_updated = false;
 	bool stop_request = false;
+	bool do_homing = false;
 	double drop_off_dist = 10000;
 	int nav_status_output = 0;
 

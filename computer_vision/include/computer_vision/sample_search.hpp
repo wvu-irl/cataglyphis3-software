@@ -16,6 +16,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <computer_vision/sample_types.h>
 
 class SampleSearch
 {
@@ -28,7 +29,7 @@ public:
 	void createFolderForImageData();
 	void createFileForImageData();
 	void loadCalibrationData();
-	void drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &colors);
+	void drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types);
 	void saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, const std::vector<int> &coordinates);
 	std::vector<double> calculateFlatGroundPositionOfPixel(int u, int v);
 	// Members

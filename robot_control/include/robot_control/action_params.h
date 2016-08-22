@@ -11,6 +11,8 @@ struct ACTION_PARAMS_T
 	float float3;
 	float float4;
 	float float5;
+	float float6;
+	float float7;
 	int int1;
 	bool bool1;
 	bool bool2;

@@ -17,14 +17,22 @@ bool Examine::runProc()
 		expectedSampleDistance = highestConfSample.distance;
 		expectedSampleAngle = highestConfSample.bearing;
 		//distanceToDrive = sqrt(pow(offsetPositionDistance,2.0)+pow(expectedSampleDistance,2.0)-2.0*offsetPositionDistance*expectedSampleDistance*cos(DEG2RAD*offsetPositionAngle));
-		distanceToDrive = expectedSampleDistance;
+        if(expectedSampleDistance > maxDistanceToDrive) distanceToDrive = maxDistanceToDrive;
+        else distanceToDrive = expectedSampleDistance;
 		//angleToTurn = fabs(expectedSampleAngle)-RAD2DEG*asin(offsetPositionDistance/distanceToDrive*sin(DEG2RAD*offsetPositionAngle));
-		angleToTurn = examineAngleToTurn;
-		//if(expectedSampleAngle < 0.0) angleToTurn = -angleToTurn;
-        finalHeading = fmod(robotStatus.heading, 360.0) + expectedSampleAngle;
-        //sendDriveRel(distanceToDrive, angleToTurn, flase, 0.0, false, false);
-        sendDriveRel(distanceToDrive, angleToTurn, true, finalHeading, false, false);
-		sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+        if(expectedSampleAngle >= 0.0)
+        {
+            angleToTurn = expectedSampleAngle - examineOffsetAngle;
+            finalAngleToTurn = 90.0 - examineOffsetAngle/2.0;
+        }
+        else
+        {
+            angleToTurn = expectedSampleAngle + examineOffsetAngle;
+            finalAngleToTurn = -90.0 + examineOffsetAngle/2.0;
+        }
+        sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false, false);
+        sendDriveRel(0.0, finalAngleToTurn, false, 0.0, false, false);
+        sendSearch();
 		state = _exec_;
 		break;
 	case _exec_:

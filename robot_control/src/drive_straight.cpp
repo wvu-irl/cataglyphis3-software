@@ -17,6 +17,7 @@ void DriveStraight::init()
 
 int DriveStraight::run()
 {
+    ROS_INFO_THROTTLE(1, "drive straight running");
     robotOutputs.stopFlag = false;
     robotOutputs.turnFlag = false;
     vMax_ = robotStatus.vMax;
