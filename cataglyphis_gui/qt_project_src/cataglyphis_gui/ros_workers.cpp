@@ -3,33 +3,17 @@
 ros_workers::ros_workers()
 {
     nh.reset(new ros::NodeHandle());
-    qRegisterMetaType<messages::NavFilterControl>("messages::NavFilterControl");
-    //qRegisterMetaType<messages::HSMSetNorthAngle>("messages::HSMSetNorthAngle");
-    qRegisterMetaType<robot_control::RegionsOfInterest>("robot_control::RegionsOfInterest");
-    qRegisterMetaType<messages::GlobalMapFull>("messages::GlobalMapFull");
-    qRegisterMetaType<messages::NavFilterOut>("messages::NavFilterOut");
-    qRegisterMetaType<messages::RobotPose>("messages::RobotPose");
-    qRegisterMetaType<map_viewer_enums::mapViewerLayers_t>("map_viewer_enums::mapViewerLayers_t");
-    qRegisterMetaType<messages::SetStartingPlatform>("messages::SetStartingPlatform");
-
-    navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
-    //hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
-    mapManagerROIClient = nh->serviceClient<robot_control::RegionsOfInterest>("/control/mapmanager/regionsofinterest");
-    mapManagerGlobalMapClient = nh->serviceClient<messages::GlobalMapFull>("/control/mapmanager/globalmapfull");
-
-    navInfoTime = ros::Time::now();
-    navInfoSubStarted = false;
-    navInfoSub = ros::Subscriber();
-
-    hsmGlobalPoseTime = ros::Time::now();
-    hsmGlobalPoseSubStarted = false;
-    hsmGlobalPosSub = ros::Subscriber();
+    _implSetup();
 }
 
 ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
 {
     nh = nhArg;
+    _implSetup();
+}
 
+void ros_workers::_implSetup()
+{
     qRegisterMetaType<messages::NavFilterControl>("messages::NavFilterControl");
     //qRegisterMetaType<messages::HSMSetNorthAngle>("messages::HSMSetNorthAngle");
     qRegisterMetaType<robot_control::RegionsOfInterest>("robot_control::RegionsOfInterest");
@@ -38,6 +22,7 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
     qRegisterMetaType<messages::RobotPose>("messages::RobotPose");
     qRegisterMetaType<map_viewer_enums::mapViewerLayers_t>("map_viewer_enums::mapViewerLayers_t");
     qRegisterMetaType<messages::SetStartingPlatform>("messages::SetStartingPlatform");
+    qRegisterMetaType<messages::ExecInfo>("messages::ExecInfo");
 
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     //hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
@@ -51,7 +36,10 @@ ros_workers::ros_workers(boost::shared_ptr<ros::NodeHandle> nhArg)
     hsmGlobalPoseTime = ros::Time::now();
     hsmGlobalPoseSubStarted = false;
     hsmGlobalPosSub = ros::Subscriber();
-    //workerMutex = boost::shared_ptr<QMutex>(new QMutex);
+
+    execInfoTime = ros::Time::now();
+    execInfoSubStarted = false;
+    execInfoSub = ros::Subscriber();
 }
 
 void ros_workers::on_run_set_starting_platform_service(messages::SetStartingPlatform serviceRequest)
@@ -293,6 +281,39 @@ void ros_workers::getHSMGlobalPoseCallback(const messages::RobotPose::ConstPtr &
     {
         hsmGlobalPoseTime = ros::Time::now();
         emit hsm_global_pose_callback(this->lastHSMGlobalPoseMsg);
+    }
+}
+
+void ros_workers::getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg)
+{
+    this->lastExecInfoMsg = *msg;
+    if(ros::Time::now().toSec() - execInfoTime.toSec() > EXEC_INFO_MIN_PUB_TIME)
+    {
+        execInfoTime = ros::Time::now();
+        emit exec_info_callback(this->lastExecInfoMsg);
+    }
+}
+
+void ros_workers::on_run_exec_info_subscriber_start()
+{
+    ROS_DEBUG("ros_workers:: Entered exec info subscriber start");
+    if(!execInfoSubStarted)
+    {
+        execInfoSubStarted = true;
+        ROS_DEBUG("ros_workers::Starting New subscriber");
+        this->execInfoSub = nh->subscribe("control/exec/info", 1,
+                                                        &ros_workers::getExecInfoCallback, this);
+    }
+}
+
+void ros_workers::on_run_exec_info_subscriber_stop()
+{
+    ROS_DEBUG("ros_workers:: Entered exec info subscriber stop");
+    if(execInfoSubStarted)
+    {
+        ROS_DEBUG("ros_workers::Stopping exec Info subscriber");
+        execInfoSubStarted = false;
+        this->execInfoSub.shutdown();
     }
 }
 

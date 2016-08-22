@@ -41,10 +41,12 @@ core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
     cataglyphisStartupFormPtr.reset(new init_container(ui->guiTabber, nh));
     mapViewFormPtr.reset(new map_viewer(ui->guiTabber, 0, nh));
     manualControlFormPtr.reset(new manual_control(ui->guiTabber));
+    execInfoFormPtr.reset(new exec_info_queue(ui->guiTabber));
 
     ui->guiTabber->addTab(cataglyphisStartupFormPtr.get(), "Startup");
     ui->guiTabber->addTab(mapViewFormPtr.get(), "Map");
     ui->guiTabber->addTab(manualControlFormPtr.get(), "Manual Control");
+    ui->guiTabber->addTab(execInfoFormPtr.get(), "Exec Queue");
 }
 
 core_app::~core_app()

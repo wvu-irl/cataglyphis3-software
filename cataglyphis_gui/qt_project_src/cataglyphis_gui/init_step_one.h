@@ -56,6 +56,8 @@ private:
     boost::shared_ptr<ros_workers> worker;
 
     messages::NavFilterControl navInitService;
+
+    bool isThisStartup;
 };
 
 #endif // INIT_STEP_ONE_H

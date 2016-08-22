@@ -23,6 +23,7 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
     connect(this, &init_step_one::stop_hsm_pose_subscriber,
                 worker.get(), &ros_workers::on_run_hsm_global_pose_subscriber_stop);
 
+    isThisStartup = startup;
     if(!startup)
     {
         ROS_DEBUG("Not Startup");
@@ -51,9 +52,16 @@ void init_step_one::on_skip_init_button_clicked()
 
 void init_step_one::on_continue_button_clicked()
 {
-    ROS_DEBUG("init_step_one:: continue init clicked");
-    navInitService.request.northAngle = ui->input_NA_spinbox->value();
-    navInitService.request.setNorthAngle = true;
+    if(isThisStartup)
+    {
+        ROS_DEBUG("init_step_one:: continue init clicked");
+        navInitService.request.initNorthAngle = ui->input_NA_spinbox->value();
+    }
+    else
+    {
+        navInitService.request.northAngle = ui->input_NA_spinbox->value();
+        navInitService.request.setNorthAngle = true;
+    }
     //navInitService.request.sunnyDay = ui->sunny_day_checkbox->isChecked();
     //navInitService.request.setSunnyDay = true;
     emit init_nav_filter(navInitService);

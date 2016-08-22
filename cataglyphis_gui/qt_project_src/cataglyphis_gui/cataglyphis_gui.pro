@@ -63,10 +63,11 @@ HEADERS  += \
     roi_dialog.h \
     qgraphicsviewscrollscale.h \
     qgraphicsscenemapviewer.h \
-    generic_ack_dialog.h \
-    map_viewer_enums.h \
+    generic_ack_dialog.h \   
     ../../../robot_control/include/robot_control/map_layers.h \
     ../../../robot_control/include/robot_control/task_type_enum.h \
+    ../../../robot_control/include/robot_control/action_type_enum.h \
+    map_viewer_enums.h \
     map_viewer_rect.h \
     shift_map.h \
     node_status.h \
