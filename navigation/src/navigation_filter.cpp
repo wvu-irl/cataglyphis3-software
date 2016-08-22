@@ -291,6 +291,7 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 {
     filter.which_nb_to_keep(imu.nb1_drive_counter, imu.nb1_current, imu.nb2_drive_counter, imu.nb2_current, imu.nb1_good_prev, imu.nb2_good_prev);
+    do_homing = false;
 
 	// Predict Methods
 	if(pause_switch==false) 
@@ -399,6 +400,12 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		
 			if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.005) && encoders.delta_distance == 0)
 			{
+
+				if(sqrt(filter.x*filter.x+filter.y*filter.y)< 30.0)
+				{
+					do_homing = true;
+				}
+
 				if (collecting_accelerometer_data)
 				{
 					if (filter.ax_values.size() > 200)
@@ -754,15 +761,18 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 	if (stopFlag && homing_found)
 	{
-		filter.verify_homing(homing_heading, homing_x, homing_y);
-		if(filter.heading_verified)
+		if(do_homing)
 		{
-			filter.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-			filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-			filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-			homing_updated = true;
+			filter.verify_homing(homing_heading, homing_x, homing_y);
+			if(filter.heading_verified)
+			{
+				filter.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				homing_updated = true;
+			}
+			filter.heading_verified = false;
 		}
-		filter.heading_verified = false;
 	}
 	else if (!stopFlag)
 	{

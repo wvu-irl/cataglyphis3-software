@@ -10,7 +10,9 @@ LidarFilter::LidarFilter()
 	_navigation_filter_heading = 0;
 	_navigation_filter_counter = 0;
 	_navigation_filter_counter_prev = 0;
+	_do_homing = false;
 	_homing_updated_flag = false;
+
 	_sub_navigation = _nh.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &LidarFilter::navigationFilterCallback, this);
 
 	//ExecInfo callback initialization
@@ -48,8 +50,11 @@ LidarFilter::LidarFilter()
 	_homing_found = false;
 
 	//clouds stitch
-	pcl::PointCloud<pcl::PointXYZI> piece_one;
-	pcl::PointCloud<pcl::PointXYZI> piece_two;
+	pcl::PointCloud<pcl::PointXYZI> _piece_one;
+	pcl::PointCloud<pcl::PointXYZI> _piece_two;
+	pcl::PointCloud<pcl::PointXYZI> _piece_three;
+	pcl::PointCloud<pcl::PointXYZI> _piece_four;
+	pcl::PointCloud<pcl::PointXYZI> _piece_five;
 }
 
 void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPtr &msg)
@@ -59,6 +64,7 @@ void LidarFilter::navigationFilterCallback(const messages::NavFilterOut::ConstPt
 	_navigation_filter_roll = msg->roll*3.14159265/180.0; //radians
 	_navigation_filter_pitch = msg->pitch*3.14159265/180.0; //radians
 	_navigation_filter_heading = msg->heading*3.14159265/180.0; //radians
+	_do_homing = msg->do_homing;
 	_homing_updated_flag = msg->homing_updated;
 	_navigation_filter_counter = _navigation_filter_counter + 1;
 
@@ -128,6 +134,7 @@ void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &in
 {
 	pcl::PointCloud<pcl::PointXYZI> temp_cloud = input_cloud;
     _registration_counter = _registration_counter + 1;
+    _stitch_counter = _stitch_counter + 1;
 
     //calculate rotation from lidar to robot body then compensate for the robot tilt
     Eigen::Matrix3f R_temporary = _R_tilt_robot_to_beacon*_R_lidar_to_robot;
@@ -178,19 +185,37 @@ bool LidarFilter::newPointCloudAvailable()
 	}
 }
 
-void LidarFilter::stitchClouds()
+void LidarFilter::stitchClouds() //try to stitch 5 scans into 1
 {
-	if(_registration_counter % 2 == 1)
+	if(_stitch_counter % 5 == 1) // initialize single point cloud
 	{
 		_piece_one = _input_cloud;
+        _input_cloud = _piece_one;
 	}
-	else if(_registration_counter % 2 == 0 && _registration_counter != 0) //stitch two clouds together
+	else if(_stitch_counter % 5 == 2) // stitch second point cloud to the 
 	{
-		_piece_two = _input_cloud;
-		_input_cloud = _piece_one + _piece_two;
+		_piece_two = _input_cloud + _piece_one;
+        _input_cloud = _piece_two;
+	}
+	else if(_stitch_counter % 5 == 3)
+	{
+		_piece_three = _input_cloud + _piece_two;
+        _input_cloud = _piece_three;
+	}
+	else if(_stitch_counter % 5 == 4)
+	{
+		_piece_four = _input_cloud + _piece_three;
+        _input_cloud = _piece_four;
+	}
+	else if(_stitch_counter % 5 == 0 && _stitch_counter != 0)
+	{
+		_piece_five = _input_cloud + _piece_four;
+        _input_cloud = _piece_five;
+		// clean up one to five
+		
 	}
 }
-
+ 
 void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
 {	
 	//clear message
@@ -919,8 +944,9 @@ void LidarFilter::doLongDistanceHoming()
     	}
 
     	    	// a cluster needs to have at least 10 high intensity points
-    	if (high_intensity_counter > high_intensity_cluster_size_threshold && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) > 0.5 && fabs(max_z_pre - min_z_pre) < 3)
-    	{
+    	// if (high_intensity_counter > high_intensity_cluster_size_threshold && fabs(max_x_pre - min_x_pre) > 0.15 && fabs(max_x_pre - min_x_pre) < 0.6 && fabs(max_y_pre - min_y_pre) > 0.15 && fabs(max_y_pre - min_y_pre) <0.6 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3.0)
+	    if (high_intensity_counter > high_intensity_cluster_size_threshold && fabs(max_x_pre - min_x_pre) < 1.0 && fabs(max_y_pre - min_y_pre) <1.0 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3.0)
+	  	{
     		ROS_INFO_STREAM("The cluser is located at " << mean_x_cluster_pre << ", " << mean_y_cluster_pre);
     		high_intensity_cluster = true;
     		std::cout << "H" << std::endl;
@@ -930,25 +956,26 @@ void LidarFilter::doLongDistanceHoming()
     		current_potential_cylinder_intensity.points.zeros(4,points_cluster[i]->points.size());
 	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
 	        {
-				current_potential_cylinder_intensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
-	            current_potential_cylinder_intensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
-	            current_potential_cylinder_intensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
-	            current_potential_cylinder_intensity.points(3,jj)= points_cluster[i]->points[jj].intensity; //intensity
+				current_potential_cylinder_intensity.points(0,jj)= (double)(points_cluster[i]->points[jj].x); //x
+	            current_potential_cylinder_intensity.points(1,jj)= (double)(points_cluster[i]->points[jj].y); //y
+	            current_potential_cylinder_intensity.points(2,jj)= (double)(points_cluster[i]->points[jj].z); //z
+	            current_potential_cylinder_intensity.points(3,jj)= (double)(points_cluster[i]->points[jj].intensity); //intensity
 	        }	
 			_potential_cylinders_intensity.push_back(current_potential_cylinder_intensity);
 			//std::cout << "_potential_cylinders_intensity.size() = " << _potential_cylinders_intensity.size() << std::endl;
     	}
-    	else if(high_intensity_counter <= 1 /*&& points_cluster[i]->points.size() > 10*/ && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3)
+    	// else if(high_intensity_counter <= 1 && fabs(max_x_pre - min_x_pre) > 0.15 && fabs(max_x_pre - min_x_pre) < 0.6 && fabs(max_y_pre - min_y_pre) > 0.15 && fabs(max_y_pre - min_y_pre) <0.6 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3.0)
+    	else if(high_intensity_counter <= 1 && fabs(max_x_pre - min_x_pre) < 1.0 && fabs(max_y_pre - min_y_pre) <1.0 && fabs(max_z_pre - min_z_pre) >0.5 && fabs(max_z_pre - min_z_pre) < 3.0)
     	{
     		std::cout << "L" << std::endl;
 	 	    cylinder current_potential_cylinder_nonintensity;
 	 	    current_potential_cylinder_nonintensity.points.zeros(4,points_cluster[i]->points.size());
 	        for(int jj = 0; jj < points_cluster[i]->points.size();jj++) //each point in cluster
 	        {
-				current_potential_cylinder_nonintensity.points(0,jj)= points_cluster[i]->points[jj].x; //x
-				current_potential_cylinder_nonintensity.points(1,jj)= points_cluster[i]->points[jj].y; //y
-				current_potential_cylinder_nonintensity.points(2,jj)= points_cluster[i]->points[jj].z; //z
-				current_potential_cylinder_nonintensity.points(3,jj)= points_cluster[i]->points[jj].intensity; //intensity
+				current_potential_cylinder_nonintensity.points(0,jj)= (double)(points_cluster[i]->points[jj].x); //x
+				current_potential_cylinder_nonintensity.points(1,jj)= (double)(points_cluster[i]->points[jj].y); //y
+				current_potential_cylinder_nonintensity.points(2,jj)= (double)(points_cluster[i]->points[jj].z); //z
+				current_potential_cylinder_nonintensity.points(3,jj)= (double)(points_cluster[i]->points[jj].intensity); //intensity
 	        }
 			_potential_cylinders_nonintensity.push_back(current_potential_cylinder_nonintensity);  
 			//std::cout << "_potential_cylinders_nonintensity.size() = " << _potential_cylinders_nonintensity.size() << std::endl;
@@ -958,6 +985,10 @@ void LidarFilter::doLongDistanceHoming()
     if(_potential_cylinders_intensity.size() > 0 && _potential_cylinders_nonintensity.size() > 0)
     {
     	fitCylinderLong();
+    }
+    if(_stitch_counter >=5)
+    {
+    	_stitch_counter = 0;
     }
 }
 
@@ -971,7 +1002,7 @@ void LidarFilter::fitCylinderLong()
 	//double dist = 2.0-12.0*0.0254;
 	double r = 6.0*0.0254;
 	std::cout << "r = " << r << std::endl;
-	double dist = 1.82-2*r;
+	double dist = 1.8325-2*r;
 	double t, c1_x, c1_y, c2_x, c2_y, x, y, ax1, ay1, ax2, ay2, x_mean, y_mean, d, bearing, c1_mag, c2_mag;
 	double v1_x, v1_y, v2_x, v2_y, v1_mag, v2_mag, v_dot, X1s_x, X1s_y, X2s_x, X2s_y, X1s_mag, X2s_mag;
 	double cx1, cx2, cy1, cy2;
@@ -1185,6 +1216,7 @@ void LidarFilter::fitCylinderLong()
 		_homing_y=y_est_k;
 		_homing_heading=heading_est_k;
 		_homing_found=true;
+		_stitch_counter=0;
 		ROS_INFO("********************");
 		ROS_INFO("x_est = %f",x_est);
 		ROS_INFO("y_est = %f",y_est);
@@ -1205,7 +1237,7 @@ void LidarFilter::fitCylinderLong()
 	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
 	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
 	
-	if(_homing_found==true /*&& (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14)*/)
+	if(_homing_found==true && (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14))
 	{
 		std::ofstream outputFile;
 		static bool openFileForFirstTime = false;
@@ -1218,23 +1250,50 @@ void LidarFilter::fitCylinderLong()
 		{
 			outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::app);
 		}
-		for (int i=0; i<_cylinders.size(); i++)
+		for (int i=0; i<_potential_cylinders_nonintensity.size(); i++)
 		{
-			for (int jj=0; jj<_cylinders[i].points.n_cols; jj++)
+			for (int jj=0; jj<_potential_cylinders_nonintensity[i].points.n_cols; jj++)
 			{
 
-				outputFile << _cylinders[i].points(0,jj) << ",";
-				outputFile << _cylinders[i].points(1,jj) << ",";
-				outputFile << _cylinders[i].points(2,jj) << ",";
-				outputFile << _cylinders[i].points(3,jj) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].points(0,jj) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].points(1,jj) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].points(2,jj) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].points(3,jj) << ",";
 				outputFile << i << ","; //cylinder number
-				outputFile << _cylinders[i].point_in_space(0,0) << ",";
-				outputFile << _cylinders[i].point_in_space(1,0) << ",";
-				outputFile << _cylinders[i].point_in_space(2,0) << ",";
-				outputFile << _cylinders[i].axis_direction(0,0) << ",";
-				outputFile << _cylinders[i].axis_direction(1,0) << ",";
-				outputFile << _cylinders[i].axis_direction(2,0) << ",";
-				outputFile << _cylinders[i].raius_estimate(0,0) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].point_in_space(0,0) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].point_in_space(1,0) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].point_in_space(2,0) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].axis_direction(0,0) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].axis_direction(1,0) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].axis_direction(2,0) << ",";
+				outputFile << _potential_cylinders_nonintensity[i].raius_estimate(0,0) << ",";
+				outputFile << X(0) << ",";
+				outputFile << X(1) << ",";
+				outputFile << X(2) << ",";
+				outputFile << X(3) << ",";
+				outputFile << diff1+diff2 << ","; 
+				outputFile << explode; 
+				outputFile << std::endl; 	
+			}
+		}
+
+		for (int i=0; i<_potential_cylinders_intensity.size(); i++)
+		{
+			for (int jj=0; jj<_potential_cylinders_intensity[i].points.n_cols; jj++)
+			{
+
+				outputFile << _potential_cylinders_intensity[i].points(0,jj) << ",";
+				outputFile << _potential_cylinders_intensity[i].points(1,jj) << ",";
+				outputFile << _potential_cylinders_intensity[i].points(2,jj) << ",";
+				outputFile << _potential_cylinders_intensity[i].points(3,jj) << ",";
+				outputFile << i << ","; //cylinder number
+				outputFile << _potential_cylinders_intensity[i].point_in_space(0,0) << ",";
+				outputFile << _potential_cylinders_intensity[i].point_in_space(1,0) << ",";
+				outputFile << _potential_cylinders_intensity[i].point_in_space(2,0) << ",";
+				outputFile << _potential_cylinders_intensity[i].axis_direction(0,0) << ",";
+				outputFile << _potential_cylinders_intensity[i].axis_direction(1,0) << ",";
+				outputFile << _potential_cylinders_intensity[i].axis_direction(2,0) << ",";
+				outputFile << _potential_cylinders_intensity[i].raius_estimate(0,0) << ",";
 				outputFile << X(0) << ",";
 				outputFile << X(1) << ",";
 				outputFile << X(2) << ",";
