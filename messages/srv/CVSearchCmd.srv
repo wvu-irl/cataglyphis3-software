@@ -5,7 +5,6 @@ float32 pink
 float32 red
 float32 orange
 float32 yellow
-bool confirm
 bool save
 bool live
 string path

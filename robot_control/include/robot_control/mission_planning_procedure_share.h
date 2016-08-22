@@ -127,6 +127,7 @@ public:
 	static bool roiKeyframed;
 	static bool startSLAM;
 	static bool giveUpROI;
+	static bool newSearchActionOnExec;
 	static bool searchTimedOut;
 	static bool tiltTooExtremeForBiasRemoval;
 	static bool biasRemovalTimedOut;
@@ -173,6 +174,7 @@ public:
 	const float giveUpROIFromAvoidNewSampleProbMultiplier = 0.01;
 	const float biasRemovalTiltLimit = 5.0; // deg
 	const float biasRemovalActionTimeoutTime = 20.0; // sec
+	const float shortRecomputeActionWaitTime = 0.1; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -254,6 +256,7 @@ bool MissionPlanningProcedureShare::startSLAM;
 bool MissionPlanningProcedureShare::giveUpROI;
 bool MissionPlanningProcedureShare::tiltTooExtremeForBiasRemoval;
 bool MissionPlanningProcedureShare::searchTimedOut;
+bool MissionPlanningProcedureShare::newSearchActionOnExec;
 bool MissionPlanningProcedureShare::biasRemovalTimedOut;
 bool MissionPlanningProcedureShare::navStopRequest;
 unsigned int MissionPlanningProcedureShare::avoidCount;

@@ -32,7 +32,7 @@ bool Examine::runProc()
         }
         sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false, false);
         sendDriveRel(0.0, finalAngleToTurn, false, 0.0, false, false);
-		sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+        sendSearch();
 		state = _exec_;
 		break;
 	case _exec_:

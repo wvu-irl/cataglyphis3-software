@@ -82,7 +82,7 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).searchable = false; // !!!!! NEEDS TO BE TRUE to search
             callIntermediateWaypoints();
             sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            sendWait(10.0);*/
+            sendWait(10.0, false);*/
 
             ROS_INFO("NEXT BEST REGION: bestROINum = %i",bestROINum);
             numWaypointsToTravel = 2;
@@ -101,8 +101,8 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(1).roiWaypoint = true;
             waypointsToTravel.at(1).maxAvoids = maxROIWaypointAvoidCount;
             callIntermediateWaypoints();
-            sendDriveAndSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
-            //sendWait(10.0);
+            sendDriveAndSearch();
+            //sendWait(10.0, false);
 
             currentROIIndex = bestROINum;
             allocatedROITime = regionsOfInterestSrv.response.ROIList.at(bestROINum).allocatedTime;

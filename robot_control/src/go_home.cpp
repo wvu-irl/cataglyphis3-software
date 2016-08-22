@@ -47,8 +47,8 @@ bool GoHome::runProc()
 		atHome = true;
         if(robotStatus.homingUpdated)
         {
-            timers[_homingTimer_]->stop();
-            timers[_homingTimer_]->start();
+            //timers[_homingTimer_]->stop();
+            //timers[_homingTimer_]->start();
             homingUpdatedFailedCount = 0;
             performHoming = false;
             homingUpdateFailed = false;

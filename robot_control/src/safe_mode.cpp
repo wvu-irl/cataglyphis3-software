@@ -20,7 +20,7 @@ bool SafeMode::runProc()
 		if(driveDistance < minDriveDistance) driveDistance = minDriveDistance;
 		turnAngle = maxTurnAngle*(static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
         sendDriveRel(driveDistance, turnAngle, false, 0.0, false, false);
-		sendWait(lidarUpdateWaitTime);
+        sendWait(lidarUpdateWaitTime, false);
 		state = _exec_;
 		break;
 	case _exec_:

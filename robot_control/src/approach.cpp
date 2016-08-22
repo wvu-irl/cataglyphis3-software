@@ -61,7 +61,7 @@ bool Approach::runProc()
                     computeManeuver_();
 					computeExpectedSampleLocation();
                     sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false, false);
-                    sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+                    sendSearch();
 					commandedSearch = true;
 					step = _performManeuver;
 					state = _exec_;
@@ -85,7 +85,7 @@ bool Approach::runProc()
 					angleToTurn = 0.0;
 					computeExpectedSampleLocation();
                     sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
-                    sendSearch(252); // 252 = b11111100 -> cached = 1; purple = 1; red = 1; blue = 1; silver = 1; brass = 1; confirm = 0; save = 0;
+                    sendSearch();
 					commandedSearch = true;
 					step = _performManeuver;
 					state = _exec_;

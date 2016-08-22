@@ -58,7 +58,8 @@ MissionPlanning::MissionPlanning()
     startSLAM = false;
     giveUpROI = false;
     searchTimedOut = false;
-    tiltTooExtremeForBiasRemoval = true;
+    newSearchActionOnExec = false;
+    tiltTooExtremeForBiasRemoval = false;
     navStopRequest = false;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
@@ -95,6 +96,7 @@ MissionPlanning::MissionPlanning()
     timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
     timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalActionTimerCallback_, this);
     timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
+    timers[_searchTimer_]->setPeriod(searchTimeoutPeriod);
     timers[_searchTimer_]->stop();
     timers[_biasRemovalActionTimeoutTimer_]->stop();
     timers[_biasRemovalTimer_]->setPeriod(biasRemovalTimeoutPeriod);
@@ -272,7 +274,7 @@ void MissionPlanning::evalConditions_()
                 }
             }
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Next Best Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !sampleInCollectPosition && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
@@ -285,7 +287,7 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !sampleInCollectPosition && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
@@ -327,13 +329,13 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute confirmCollect");
             voiceSay->call("confirm collect");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed && !sampleInCollectPosition && !possessingSample)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
             voiceSay->call("go home");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && performHoming && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
@@ -414,7 +416,8 @@ void MissionPlanning::resumeTimers_()
 
 void MissionPlanning::serviceSearchTimer_()
 {
-    if(execInfoMsg.actionDeque[0] == _search && !timers[_searchTimer_]->running && !searchTimedOut) {timers[_searchTimer_]->start(); ROS_INFO("start searchTimer");}
+    if(execInfoMsg.actionDeque[0] == _search && !timers[_searchTimer_]->running && !searchTimedOut && !newSearchActionOnExec) {timers[_searchTimer_]->start(); newSearchActionOnExec = true; ROS_INFO("start searchTimer");}
+    else if(execInfoMsg.actionDeque[0] != _search) newSearchActionOnExec = false;
 }
 
 void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
@@ -485,12 +488,14 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
     robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
+    if(msg->homingUpdated && !robotStatus.homingUpdated) avoid.sendWait(shortRecomputeActionWaitTime, true);
     robotStatus.homingUpdated = msg->homingUpdated;
-    /*if(robotStatus.homingUpdated)
+    if(robotStatus.homingUpdated)
     {
         timers[_homingTimer_]->stop();
         timers[_homingTimer_]->start();
-    }*/
+        performHoming = false;
+    }
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)
@@ -533,9 +538,10 @@ void MissionPlanning::lidarFilterCallback_(const messages::LidarFilterOut::Const
 
 void MissionPlanning::hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr &msg)
 {
-    hsmMasterStatusMsg = *msg;
     if(msg->navSolutionsDiverged) performSafeMode = true;
     else performSafeMode = false;
+    if(!msg->navSolutionsDiverged && hsmMasterStatusMsg.navSolutionsDiverged) avoid.sendWait(shortRecomputeActionWaitTime, true);
+    hsmMasterStatusMsg = *msg;
 }
 
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)

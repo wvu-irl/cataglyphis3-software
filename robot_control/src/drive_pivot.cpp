@@ -28,6 +28,7 @@ void DrivePivot::init()
 
 int DrivePivot::run()
 {
+    ROS_INFO_THROTTLE(1,"drive pivot running");
     robotOutputs.stopFlag = false;
     robotOutputs.turnFlag = true;
     rMax_ = robotStatus.rMax;
