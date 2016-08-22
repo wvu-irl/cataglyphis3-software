@@ -534,6 +534,8 @@ void MissionPlanning::lidarFilterCallback_(const messages::LidarFilterOut::Const
 void MissionPlanning::hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr &msg)
 {
     hsmMasterStatusMsg = *msg;
+    if(msg->navSolutionsDiverged) performSafeMode = true;
+    else performSafeMode = false;
 }
 
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)

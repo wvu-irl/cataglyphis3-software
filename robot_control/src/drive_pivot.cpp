@@ -60,11 +60,11 @@ int DrivePivot::run()
     rSpeedT_ = round(rSpeedP_ + rSpeedI_);
 	if(rSpeedT_>rSpeedMax_) rSpeedT_ = rSpeedMax_;
 	else if(rSpeedT_<(-rSpeedMax_)) rSpeedT_ = -rSpeedMax_;
-	ROS_DEBUG("rSpeedT: %i",rSpeedT_);
-	ROS_DEBUG("rDes: %f",rDes_);
-    ROS_DEBUG("desiredDeltaHeading = %f", desiredDeltaHeading_);
-    ROS_DEBUG("deltaHeading = %f", deltaHeading_);
-	ROS_DEBUG("desiredDeltaHeading_-deltaHeading_: %f", desiredDeltaHeading_-deltaHeading_);
+    ROS_INFO("rSpeedT: %i",rSpeedT_);
+    ROS_INFO("rDes: %f",rDes_);
+    ROS_INFO("desiredDeltaHeading = %f", desiredDeltaHeading_);
+    ROS_INFO("deltaHeading = %f", deltaHeading_);
+    ROS_INFO("desiredDeltaHeading_-deltaHeading_: %f", desiredDeltaHeading_-deltaHeading_);
 	leftSpeed_ = rSpeedT_;
 	rightSpeed_ = -rSpeedT_;
 	timeoutCounter_++;
@@ -79,7 +79,7 @@ int DrivePivot::run()
 		robotOutputs.frMotorSpeed = 0;
 		robotOutputs.mrMotorSpeed = 0;
 		robotOutputs.brMotorSpeed = 0;
-		ROS_DEBUG("end pivot");
+        ROS_INFO("end pivot");
 		taskEnded_ = 1;
 	}
 	else
@@ -182,6 +182,7 @@ void DrivePivot::dogLeg_()
         }
         break;
     case _stoppingSecond:
+        ROS_INFO("dog leg, second stopping");
     	if((ros::Time::now().toSec() - dogLegStopTime_) > dogLegStopDuration_)
     	{
     		rSpeedI_ = 0.0;
