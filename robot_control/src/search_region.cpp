@@ -45,7 +45,7 @@ bool SearchRegion::runProc()
             modROISrv.request.hardLockoutROIState = false;
             modROISrv.request.modROIIndex = currentROIIndex;
             modROISrv.request.setSampleProps = true;
-            modROISrv.request.sampleProb = roiTimeExpiredNewSampleProb;
+            modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
             modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
 			modROISrv.request.addNewROI = false;
             modROISrv.request.editGroup = false;

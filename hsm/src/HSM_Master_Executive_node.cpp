@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 		escape_monitor.service_monitor();
 		//vision_monitor.service_monitor();
 		// robotPoseMonitor serviced by internal timer at 20 Hz
-		
+        master_status_msg.navSolutionsDiverged = robotPoseMonitor.navSolutionsDiverged;
 		master_status_msg.lidar_go = true; // Need to implement monitor to evaluate this
 		master_status_msg.zed_go = false; // ^^^
 		master_status_pub.publish(master_status_msg);

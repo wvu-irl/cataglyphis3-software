@@ -36,6 +36,8 @@ bool ConfirmCollect::runProc()
                 ROS_INFO("confirmCollect success, no sample on ground");
 				confirmedPossession = true;
                 inSearchableRegion = false;
+                possibleSample = false;
+                definiteSample = false;
                 // Delete searchLocalMap
                 searchMapSrv.request.createMap = false;
                 searchMapSrv.request.deleteMap = true;
@@ -48,7 +50,8 @@ bool ConfirmCollect::runProc()
                 modROISrv.request.addNewROI = false;
                 modROISrv.request.deleteROI = false;
                 modROISrv.request.setSampleProps = true;
-                modROISrv.request.sampleProb = sampleFoundNewROIProb;
+                if(currentROIIndex==0) modROISrv.request.sampleProb = 0.0;
+                else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*sampleFoundNewROIProbMultiplier;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
                 modROISrv.request.editGroup = true;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
