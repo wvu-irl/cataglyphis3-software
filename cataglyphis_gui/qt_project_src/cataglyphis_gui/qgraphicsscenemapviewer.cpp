@@ -17,6 +17,7 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
         QGraphicsView drawingView;// = this->views().front();
         drawingView.setStyleSheet("background: transparent;");
         drawingView.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        drawingView.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         drawingView.setScene(this);
         drawingView.setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
         drawingView.setTransform(this->views().front()->transform());
@@ -33,8 +34,8 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                 grid_map::Position cellPosition;
                 gridMapContainer.getPosition(*it, cellPosition);
                 /*cellPosition[0] = x*/
-                if((mapValue != MAP_CELL_MAX_VALUE)
-                        && (mapValue != MAP_CELL_NOOP_VALUE))
+//                if((mapValue != MAP_CELL_MAX_VALUE)
+//                        && (mapValue != MAP_CELL_NOOP_VALUE))
                 {
                     map_viewer_rect *gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE);
                     //ROS_DEBUG("Position %2.3f %2.3f %2.3f %2.3f %2.3f %2.3f",cellPosition[0], cellPosition[1], cellPosition[0]*pixelsPerDistance, cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
@@ -66,7 +67,7 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
             QPixmap temp = drawingView.grab();
             layer->gridPixmap->swap(temp);
             QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(*layer->gridPixmap);
-            pixmapItem->setFlag(QGraphicsItem::ItemIsMovable);
+            //pixmapItem->setFlag(QGraphicsItem::ItemIsMovable);
             ROS_DEBUG("SCENE:: Rendering texture of field display");
             layer->items->hide();
             areaImagePixmap->show();

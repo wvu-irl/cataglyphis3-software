@@ -8,6 +8,10 @@
 #include <QGraphicsRectItem>
 #include <ros/ros.h>
 
+#define MAP_CELL_MAX_VALUE 100.0
+#define MAP_CELL_MIN_VALUE 0.0
+#define MAP_CELL_NOOP_VALUE -5.0
+
 class map_viewer_rect : public QGraphicsRectItem
 {
 public:
@@ -30,6 +34,11 @@ public:
     {
         this->setCacheMode(QGraphicsItem::ItemCoordinateCache);
 
+        if(mapValue >= MAP_CELL_MAX_VALUE)
+        {
+            fillColor.setRgb(0,0,0);
+            fillBrush.setColor(fillColor);
+        }
         this->setBrush(fillBrush);
         this->setPen(borderPen);
     }

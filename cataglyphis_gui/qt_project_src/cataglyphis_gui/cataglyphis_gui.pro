@@ -46,7 +46,10 @@ SOURCES +=\
     shift_map.cpp \
     node_status.cpp \
     manual_control.cpp \
-    teleport.cpp
+    teleport.cpp \
+    exec_info_queue.cpp \
+    exec_action_model.cpp \
+    exec_action_item.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -68,7 +71,11 @@ HEADERS  += \
     shift_map.h \
     node_status.h \
     manual_control.h \
-    teleport.h
+    teleport.h \
+    exec_info_queue.h \
+    exec_action_model.h \
+    exec_action_item.h \
+    exec_action_enums.h
 
 FORMS    += \
     generic_error_dialog_form.ui \
@@ -82,7 +89,8 @@ FORMS    += \
     shift_map_form.ui \
     node_status_form.ui \
     manual_control_form.ui \
-    teleport_form.ui
+    teleport_form.ui \
+    exec_info_queue_form.ui
 
 RESOURCES += \
     resources.qrc
