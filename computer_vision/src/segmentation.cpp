@@ -448,7 +448,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         cv::Mat thresh;
         int maxPixels = 0;
         int bestColor = 0;
-        for(int j=(int)SAMPLE_TYPE::_unknown; j<(int)SAMPLE_TYPE::_N_SAMPLE_TYPE-1; j++) 
+        for(int j=(int)SAMPLE_TYPE_T::_unknown_t; j<(int)SAMPLE_TYPE_T::_N_SAMPLE_TYPE_T-1; j++) 
         {
             inRange(channels[0], j+1, j+1, thresh); //use CAUTION when looping through enums, these are defined in sample_types.h
             int pixels = countNonZero(thresh);
@@ -459,7 +459,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
             }
         }
 
-        std::string temp = map_enum_to_string((SAMPLE_TYPE)bestColor);
+        std::string temp = map_enum_to_string((SAMPLE_TYPE_T)bestColor);
         ROS_INFO("color, pixels, index = %s, %i, %i", temp.c_str(), maxPixels, req.blobsOfInterest[i]);
         types.push_back(bestColor);
     }
