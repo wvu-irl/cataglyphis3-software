@@ -420,8 +420,8 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
     //ROS_INFO("number of blobs of interest = %i",req.blobsOfInterest.size());
 
     //vector of colors for samples
-    std::vector<int> colors;
-    colors.clear();
+    std::vector<int> types;
+    types.clear();
 
     //loop over all blobs
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
@@ -438,36 +438,32 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         std::vector<cv::Mat> channels(3);
         split(blob, channels);
 
-        //morph image
+        //erode image
         cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(12, 12)); 
 
         erode(channels[0], channels[0], erodeElement);
         erode(channels[0], channels[0], erodeElement);
-        
+
         //extract histogram of colors
         cv::Mat thresh;
         int maxPixels = 0;
-        int medPixels = 0;
         int bestColor = 0;
-        int okayColor = 0;
-        for(int j=0; j<12; j++)
+        for(int j=(int)SAMPLE_TYPE::_unknown; j<(int)SAMPLE_TYPE::_N_SAMPLE_TYPE-1; j++) 
         {
-            inRange(channels[0], j+1, j+1, thresh);
+            inRange(channels[0], j+1, j+1, thresh); //use CAUTION when looping through enums, these are defined in sample_types.h
             int pixels = countNonZero(thresh);
-            //ROS_INFO("pixels = %i", pixels);
             if(pixels > maxPixels)
             {
-                medPixels = maxPixels;
                 maxPixels = pixels;
-                okayColor = bestColor;
-                bestColor = j+1; //0 nothing, 1 white, 2 silver, 3 blue/purple, 4 pink, 5 red, 6 orange, 7 yellow
+                bestColor = j+1;
             }
         }
 
-        ROS_INFO("med c-#, max c-#, idx = %i-%i, %i-%i, %i", okayColor, medPixels, bestColor, maxPixels, req.blobsOfInterest[i]);
-        colors.push_back(bestColor);
+        std::string temp = map_enum_to_string((SAMPLE_TYPE)bestColor);
+        ROS_INFO("color, pixels, index = %s, %i, %i", temp.c_str(), maxPixels, req.blobsOfInterest[i]);
+        types.push_back(bestColor);
     }
 
-    res.colors = colors;
+    res.types = types;
     return true;
 }

@@ -165,24 +165,8 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	return relative_position;
 }
 
-void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &colors)
+void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types)
 {
-	//setup colors
-	std::vector<cv::Scalar> colorScalars; //0 nothing, 1 white, 2 silver, 3 blue/purple, 4 pink, 5 red, 6 orange, 7 yellow
-	colorScalars.push_back(cv::Scalar(0,0,0)); //nothinig
-	colorScalars.push_back(cv::Scalar(255,255,255)); //white
-	colorScalars.push_back(cv::Scalar(255,200,200)); //silver
-	colorScalars.push_back(cv::Scalar(255,0,0)); //blue/purple
-	colorScalars.push_back(cv::Scalar(147,20,255)); //pink
-	colorScalars.push_back(cv::Scalar(0,0,255)); //red
-	colorScalars.push_back(cv::Scalar(0,69,255)); //orange
-	colorScalars.push_back(cv::Scalar(0,215,255)); //yellow
-	colorScalars.push_back(cv::Scalar(255,0,0)); //white blue/purple
-	colorScalars.push_back(cv::Scalar(147,20,255)); //white pink
-	colorScalars.push_back(cv::Scalar(0,0,255)); //white red
-	colorScalars.push_back(cv::Scalar(0,69,255)); //white orange
-	colorScalars.push_back(cv::Scalar(0,215,255)); //white yellow
-
 	//load image
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	cv::Mat src = cv::imread(P.string()+"/data/images/input_image.jpg");
@@ -190,7 +174,8 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, c
 	//draw circle for detected samples
 	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
-		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 100, colorScalars[colors[i]], 3, 8);
+		std::vector<int> color = map_enum_to_color(static_cast<SAMPLE_TYPE>(types[i]));
+		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 100, cv::Scalar(color[0], color[1], color[2]), 3, 8);
 	}
 
 	//draw circles for detected nonsample
@@ -377,7 +362,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.colors);
+	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -394,6 +379,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	searchForSamplesMsgOut.sampleList.clear();
 	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
+		//check color
 		position.clear();
 		position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
 		//ROS_INFO("sample(%i) relative polar position = %f, %f", i, position[0], position[1]);

@@ -11,6 +11,7 @@
 #include <ros/package.h>
 #include <boost/filesystem.hpp>
 #include <computer_vision/patch.hpp>
+#include <computer_vision/sample_types.h>
 
 class Segmentation
 {

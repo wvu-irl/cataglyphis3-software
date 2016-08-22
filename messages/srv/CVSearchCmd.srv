@@ -1,9 +1,10 @@
-bool cached
-bool purple
-bool red
-bool blue
-bool silver
-bool brass
+float32 white
+float32 purpleOrBlue
+float32 pink
+float32 red
+float32 orange
+float32 yellow
+float32 silver
 bool confirm
 bool save
 bool live
