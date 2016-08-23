@@ -100,7 +100,7 @@ public:
 	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
 	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
 	const float possibleSampleConfThresh = 0.5;
-	const float definiteSampleConfThresh = 0.7;
+	const float definiteSampleConfThresh = 0.6;
 	static int currentROIIndex;
 	static bool initialized;
 	static bool escapeCondition;
@@ -138,6 +138,7 @@ public:
 	const unsigned int maxCornerWaypointAvoidCount = 12;
 	const unsigned int maxHomeWaypointAvoidCount = 20;
 	const unsigned int fullyBlockedAvoidCountIncrement = 5;
+	const float minAvoidRemainingWaypointDistance = 4.0; // m
 	const float metersPerAvoidCountDecrement = 3.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;

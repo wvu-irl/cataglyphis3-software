@@ -3,6 +3,7 @@ bool runBiasRemoval
 bool setNorthAngle
 float32 northAngle
 
+bool setInitNorthAngle
 float32 initNorthAngle
 
 bool setSunnyDay

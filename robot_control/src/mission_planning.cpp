@@ -547,6 +547,8 @@ void MissionPlanning::hsmMasterStatusCallback_(const messages::MasterStatus::Con
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)
 {
     cvSamplesFoundMsg = *msg;
+    ROS_INFO("+++cvSamplesCallback_+++");
+    ROS_INFO("sampleList size = %u",cvSamplesFoundMsg.sampleList.size());
     if(cvSamplesFoundMsg.sampleList.size()>0)
     {
         for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)

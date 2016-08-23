@@ -74,7 +74,6 @@ public:
 	const float homeX = 5.0; // m
 	const float homeY = 0.0; // m
 	float avoidRemainingWaypointDistance;
-	const float minAvoidRemainingWaypointDistance = 2.0; // m
 	bool shouldExecuteAvoidManeuver;
 private:
 	void evalConditions_();

@@ -29,7 +29,7 @@ public:
 	void createFolderForImageData();
 	void createFileForImageData();
 	void loadCalibrationData();
-	void drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types);
+	void drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types, const std::vector<float> &probabilities);
 	void saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, const std::vector<int> &coordinates);
 	std::vector<double> calculateFlatGroundPositionOfPixel(int u, int v);
 	// Members

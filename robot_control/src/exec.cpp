@@ -143,6 +143,8 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     params_.float3 = req.float3;
     params_.float4 = req.float4;
     params_.float5 = req.float5;
+    params_.float6 = req.float6;
+    params_.float7 = req.float7;
     params_.int1 = req.int1;
     params_.bool1 = req.bool1;
     params_.bool2 = req.bool2;
