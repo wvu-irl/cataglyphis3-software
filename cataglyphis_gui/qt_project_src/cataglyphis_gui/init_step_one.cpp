@@ -54,17 +54,21 @@ void init_step_one::on_continue_button_clicked()
 {
     if(isThisStartup)
     {
+        navInitService.request.setInitNorthAngle = true;
         ROS_DEBUG("init_step_one:: continue init clicked");
         navInitService.request.initNorthAngle = ui->input_NA_spinbox->value();
     }
     else
     {
         navInitService.request.northAngle = ui->input_NA_spinbox->value();
-        navInitService.request.setNorthAngle = true;
+
     }
     //navInitService.request.sunnyDay = ui->sunny_day_checkbox->isChecked();
     //navInitService.request.setSunnyDay = true;
     emit init_nav_filter(navInitService);
+    navInitService.request.setInitNorthAngle = false;
+    navInitService.request.setNorthAngle = false;
+
 }
 
 void init_step_one::on_nav_init_return(const messages::NavFilterControl navResponse,
