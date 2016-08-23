@@ -86,7 +86,7 @@ private:
 	const float _SAFE_ENVELOPE_ANGLE = 15.0*3.14159265/180.0; //safe envelope angle (radians)
 	const short int _TRIGGER_POINT_THRESHOLD = 10; //number of points in safe envelope that will trigger the avoidance
 
-	const double PI = 3.1415926;
+	const double PI = 3.14159265;
 
 	//parameters
 	double short_distance;

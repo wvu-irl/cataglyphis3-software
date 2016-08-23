@@ -36,8 +36,6 @@ void CollisionDetection::Initializations()
 	threshold_obstacle_distance = 0.5;
 	threshold_obstacle_number = 0;
 	threshold_min_angle = 45; //degree, min angle to turn
-
-	error_angle = 11 * PI / 180;	//turn more 10 degree, one more for floor
 }
 
 void CollisionDetection::waypointsCallback(messages::NextWaypointOut const &waypoint_msg)
@@ -139,8 +137,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 				{
 					//increment collision counter
 					collision_point_counter++;
-					//check how many degree the robot should turn
-					// angle.push_back((double)atan2(cloud->points[i].x,cloud->points[i].y));	//radian
+
 					if(cloud->points[i].y>0)
 					{
 						collision_right_counter++; //right point counter
@@ -151,8 +148,6 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 					}
 				}
 				
-
-
 			}
 		}
 	}
@@ -164,8 +159,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	{	
 		_collision_status = 1;	//detected a obstacle
 
-		int choice;	//0: big long; 1: big short; 2: small long; 3: small short; 4: no option; x0: normal; x1: one side
-		int choice_angle; //00: normal big; 10: normalsmall; 01: one side big; 11: one side small
+		int choice = -1;	//0: big long; 1: big short; 2: small long; 3: small short; 4: no option; x0: normal; x1: one side
+		int choice_angle = -1; //00: normal big; 10: normalsmall; 01: one side big; 11: one side small
 		int choice_big_long = 0;
 		int choice_big_short = 0;
 		int choice_small_long = 0;
@@ -180,80 +175,60 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		//get local coordinate
 		xg_local = _xg * cos(_headingposition) + _yg * sin(_headingposition) + _xposition;
 		yg_local = -1 * _xg * sin(_headingposition) + _yg * sin(_headingposition) + _yposition;
-
-		// xg_local = 5 + _xposition;
-		// yg_local = 5 + _yposition;
-
 		
-		//use hazard map to detect angle
+		//use avoidance map to detect angle
 		generateAvoidancemap();
 
-		//test
-		// generateHazardmap();
-
+		//check 5*2 area in front of the robot
 		for(int i = 0; i < _hazard_x.size(); i++)
 		{
 			if(_hazard_x[i] < 5 && _hazard_x[i] > 0 && _hazard_y[i] < 1 && _hazard_y[i] > -1)
 			{
 				angle.push_back((double)atan2(_hazard_x[i],_hazard_y[i]));	//radian
-
 			}
 		}
 		
-		//sort angles
+		//if there are obstacles shown on avoidance map, check angle and distance
 		if(angle.size() > 1)
 		{
+			//sort angles
 			std::sort(angle.begin(), angle.end());	//increase
-		
-			// std::sort(angle.begin(), angle.end());	//decrise
 
 			big_angle = angle[angle.size() - 1];
 			small_angle = angle[0];
 
-			ROS_INFO_STREAM("big_angle: " << big_angle * 180 / PI << " small_angle: " << small_angle * 180 / PI);
+			// ROS_INFO_STREAM("big_angle: " << big_angle * 180 / PI << " small_angle: " << small_angle * 180 / PI);
 
 			//check turn angle
-			if(90 - (big_angle * 180 / PI) > 45)
+
+			if(90 - (big_angle * 180 / PI) > threshold_min_angle)	//if big angle on the right side and smaller than 45 degree, keep going straight
 			{
-				big_angle = 91 * PI / 180;
+				big_angle = 91 * PI / 180;	//one more degree is for tan
 			}
-			else if(90 - (big_angle * 180 / PI) <= 45 && 90 - (big_angle * 180 / PI) > 0)
+			else if(90 - (big_angle * 180 / PI) <= threshold_min_angle && 90 - (big_angle * 180 / PI) > 0)	//if big angle on the right side and bigger than 45 degree, turn left 45 degree
 			{
-				big_angle = (90 + 45) * PI / 180;
+				big_angle = (90 + threshold_min_angle) * PI / 180;
 			}
-			else if(90 - (big_angle * 180 / PI) <= 0)
+			else if(90 - (big_angle * 180 / PI) <= 0)	//if big angle on the left side, turn left more 45 degree
 			{
-				big_angle = big_angle + 45 * PI / 180;
+				big_angle = big_angle + threshold_min_angle * PI / 180;
 			}
 
-			if(90 - (small_angle * 180 / PI) < -45)
+			if(90 - (small_angle * 180 / PI) < -threshold_min_angle)	//if small angle on the left side and bigger than 135 degree, keep going straight
 			{
-				small_angle = 89 * PI / 180;
+				small_angle = 89 * PI / 180;	//one more degree if for tan
 			}
-			else if(90 - (small_angle * 180 / PI) >= -45 && 90 - (small_angle * 180 / PI) < 0)
+			else if(90 - (small_angle * 180 / PI) >= -threshold_min_angle && 90 - (small_angle * 180 / PI) < 0)	//if small angle on the left side and smaller than 135 degree, turn right 45 degree
 			{
-				small_angle = 45 * PI / 180;
+				small_angle = threshold_min_angle * PI / 180;
 			}
-			else if(90 - (small_angle * 180 / PI) >= 0)
+			else if(90 - (small_angle * 180 / PI) >= 0)	//if small angle on the right side, turn right more 45 degree
 			{
-				small_angle = small_angle - 45 * PI / 180;
+				small_angle = small_angle - threshold_min_angle * PI / 180;
 			}
-			ROS_INFO_STREAM("after big_angle: " << big_angle * 180 / PI << " after small_angle: " << small_angle * 180 / PI);
-			// big_angle = big_angle + error_angle;
-			// small_angle = small_angle - error_angle;
+			// ROS_INFO_STREAM("after big_angle: " << big_angle * 180 / PI << " after small_angle: " << small_angle * 180 / PI);
 
-			// if(big_angle * 180 / PI == 90)
-			// {
-			// 	big_angle = big_angle + 0.017;
-			// } 
-
-			// if(small_angle * 180 / PI == 90)
-			// {
-			// 	small_angle = small_angle - 0.017;
-			// } 
-
-			// generateAvoidancemap();
-
+			//count the number of point near to the path
 			int count_big_long_first = -1;
 			int count_big_short_first = -1;
 			int count_small_long_first = -1;
@@ -264,64 +239,74 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			int count_small_short_second = -1;
 
 			count_big_long_first = firstChoice(big_angle, long_distance);
-			ROS_INFO_STREAM("count_big_long_first: " << count_big_long_first);
+			// ROS_INFO_STREAM("count_big_long_first: " << count_big_long_first);
 			// count_big_short_first = firstChoice(big_angle, short_distance);
 			count_small_long_first = firstChoice(small_angle, long_distance);
-			ROS_INFO_STREAM("count_small_long_first: " << count_small_long_first);
+			// ROS_INFO_STREAM("count_small_long_first: " << count_small_long_first);
 			// count_small_short_first = firstChoice(small_angle, short_distance);
 
-			if(count_big_long_first == threshold_obstacle_number)
+			//detect big angle path
+			if(count_big_long_first <= threshold_obstacle_number && count_big_long_first >= 0)	//seq: long_first -> long_second -> short_second
 			{
 				count_big_long_second = secondChoice(big_angle, long_distance, xg_local, yg_local);
-				count_big_short_second = secondChoice(big_angle, short_distance, xg_local, yg_local);
 
-				if(count_big_long_second == threshold_obstacle_number)
+				if(count_big_long_second <= threshold_obstacle_number && count_big_long_second >= 0)
 				{
 					choice_big_long = 1;
 				}
-
-				if(count_big_short_second == threshold_obstacle_number)
+				else
 				{
-					choice_big_short = 1;
+					count_big_short_second = secondChoice(big_angle, short_distance, xg_local, yg_local);
+					if(count_big_short_second <= threshold_obstacle_number && count_big_short_second >= 0)
+					{
+						choice_big_short = 1;
+					}
 				}
+
+				
 			}
-			else if(count_big_long_first > threshold_obstacle_number)
+			else if(count_big_long_first > threshold_obstacle_number)	//seq: short_first -> short_second
 			{
 				count_big_short_first = firstChoice(big_angle, short_distance);
 
-				if(count_big_short_first == threshold_obstacle_number)
+				if(count_big_short_first <= threshold_obstacle_number && count_big_short_first >= 0)
 				{
 					count_big_short_second = secondChoice(big_angle, short_distance, xg_local, yg_local);
-					if(count_big_short_second == threshold_obstacle_number)
+					if(count_big_short_second <= threshold_obstacle_number && count_big_short_second >= 0)
 					{
 						choice_big_short = 1;
 					}
 				}
 			}
 
-			if(count_small_long_first == threshold_obstacle_number)
+			//detect small angle path
+			if(count_small_long_first <= threshold_obstacle_number && count_small_long_first >= 0)	//seq: long_first -> long_second -> short_second
 			{
 				count_small_long_second = secondChoice(small_angle, long_distance, xg_local, yg_local);
-				count_small_short_second = secondChoice(small_angle, short_distance, xg_local, yg_local);
+				
 
-				if(count_small_long_second == threshold_obstacle_number)
+				if(count_small_long_second <= threshold_obstacle_number && count_small_long_second >= 0)
 				{
 					choice_small_long = 1;
 				}
-
-				if(count_small_short_second == threshold_obstacle_number)
+				else
 				{
-					choice_small_short = 1;
-				}
+					count_small_short_second = secondChoice(small_angle, short_distance, xg_local, yg_local);
+
+					if(count_small_short_second <= threshold_obstacle_number && count_small_short_second >= 0)
+					{
+						choice_small_short = 1;
+					}
+				}				
 			}
-			else if(count_small_long_first > threshold_obstacle_number)
+			else if(count_small_long_first > threshold_obstacle_number)	//seq: short_first -> short_second
 			{
 				count_small_short_first = firstChoice(small_angle, short_distance);
 
-				if(count_small_short_first == threshold_obstacle_number)
+				if(count_small_short_first <= threshold_obstacle_number && count_small_short_first >= 0)
 				{
 					count_small_short_second = secondChoice(small_angle, short_distance, xg_local, yg_local);
-					if(count_small_short_second == threshold_obstacle_number)
+					if(count_small_short_second <= threshold_obstacle_number && count_small_short_second >= 0)
 					{
 						choice_small_short = 1;
 					}
@@ -335,206 +320,76 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			ROS_INFO_STREAM("xg_local: " << xg_local);
 			ROS_INFO_STREAM("yg_local: " << yg_local);
 
-			//calculate angle the robot should turn
-			// if(big_angle * 180 / PI > 90 && small_angle * 180 / PI < 90)
-			// {
-				if(fabs(big_angle * 180 / PI - 90) > fabs(90 - small_angle * 180 / PI))
-				{
-					choice_angle = 10;
-				}
-				else
-				{
-					choice_angle = 00;
-				}
-			// }
-			// else if(big_angle * 180 / PI < 90)
-			// {
-			// 	choice_angle = 01;
-			// }
-			// else if(small_angle * 180 / PI > 90)
-			// {
-			// 	choice_angle = 11;
-			// }
+			//calculate angle the robot should turn, choose the smaller one
+			if(fabs(big_angle * 180 / PI - 90) > fabs(90 - small_angle * 180 / PI))
+			{
+				choice_angle = 10;	//small angle
+			}
+			else
+			{
+				choice_angle = 00;	//big angle
+			}
 
-			//make a decision
-			// if(choice_angle == 00 && choice_big_short == 1)
-			// {
-			// 	choice = 10;	//big short normal
-			// }
-			// else if(choice_angle == 10 && choice_small_short == 1)
-			// {
-			// 	choice = 30;	//small short normal
-			// }
-			// else if(choice_angle == 00 && choice_big_long == 1)
-			// {
-			// 	choice = 00;	//big long normal
-			// }
-			// else if(choice_angle == 10 && choice_small_long == 1)
-			// {
-			// 	choice = 20;	//small long normal
-			// }
-			// else if(choice_angle == 01 && choice_big_short == 1)
-			// {
-			// 	choice = 11;	//big short one side
-			// }
-			// else if(choice_angle == 11 && choice_small_short == 1)
-			// {
-			// 	choice = 31;	//small short one side
-			// }
-			// else if(choice_angle == 01 && choice_big_long == 1)
-			// {
-			// 	choice = 01;	//big long one side
-			// }
-			// else if(choice_angle == 11 && choice_small_long == 1)
-			// {
-			// 	choice = 21;	//small long one side
-			// }
-			// else
-			// {
-			// 	choice = 4; //no option
-			// }
-
+			//choose which option should be picked up
+			//seq: short -> small angle -> long -> small angle
 			if(choice_big_short == 1 && choice_small_short == 1)
 			{
 				if(choice_angle == 00)
 				{
-					choice = 10; //big short normal
+					choice = 10;	//big short
 				}
 				else if(choice_angle == 10)
 				{
-					choice = 30; //small short normal
+					choice = 30;	//small short
 				}
 			}
 			else if(choice_big_short == 1)
 			{
-				choice = 10; //big short normal
+				choice = 10;	//big short
 			}
 			else if(choice_small_short == 1)
 			{
-				choice = 30;
+				choice = 30;	//small short
 			}
 			else if(choice_big_long == 1 && choice_small_long == 1)
 			{
 				if(choice_angle == 00)
 				{
-					choice = 00; //big long normal
+					choice = 00;	//big long
 				}
 				else if(choice_angle == 10)
 				{
-					choice = 20; //small long normal
+					choice = 20;	//small long
 				}
 			}
 			else if(choice_big_long == 1)
 			{
-				choice = 00; //big long normal
+				choice = 00;	//big long
 			}
 			else if(choice_small_long == 1)
 			{
-				choice = 20; //small long normal
+				choice = 20;	//small long
 			}
 			else
 			{
 				choice = 4;	//no options
 			}
 
-			// ROS_INFO_STREAM("choice_angle: " << choice_angle);
-			//save angle and distance for publishing
-			// if(choice == 10)
-			// {
-			// 	_angle_to_drive = floor(90 - big_angle * 180 / PI);
-				
-			// 	if(fabs(_angle_to_drive) < threshold_min_angle)
-			// 	{
-			// 		_angle_to_drive = _angle_to_drive / fabs(_angle_to_drive) * threshold_min_angle;
-			// 	}
-
-			// 	_distance_to_drive = short_distance;			
-			// }
-			// else if(choice == 30)
-			// {
-			// 	_angle_to_drive = floor(90 - small_angle * 180 / PI);
-
-			// 	if(fabs(_angle_to_drive) < threshold_min_angle)
-			// 	{
-			// 		_angle_to_drive = _angle_to_drive / fabs(_angle_to_drive) * threshold_min_angle;
-			// 	}
-
-			// 	_distance_to_drive = short_distance;
-			// }
-			// else if(choice == 00)
-			// {
-			// 	_angle_to_drive = floor(90 - big_angle * 180 / PI);
-
-			// 	if(fabs(_angle_to_drive) < threshold_min_angle)
-			// 	{
-			// 		_angle_to_drive = _angle_to_drive / fabs(_angle_to_drive) * threshold_min_angle;
-			// 	}
-
-			// 	_distance_to_drive = long_distance;
-			// }
-			// else if(choice == 20)
-			// {
-			// 	_angle_to_drive = floor(90 - small_angle * 180 / PI);
-
-			// 	if(fabs(_angle_to_drive) < threshold_min_angle)
-			// 	{
-			// 		_angle_to_drive = _angle_to_drive / fabs(_angle_to_drive) * threshold_min_angle;
-			// 	}
-
-			// 	_distance_to_drive = long_distance;
-			// }
-			// else if(choice == 11)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = short_distance;			
-			// }
-			// else if(choice == 31)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = short_distance;
-			// }
-			// else if(choice == 01)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = long_distance;
-			// }
-			// else if(choice == 21)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = long_distance;
-			// }
-			// else if(choice == 4)
-			// {
-			// 	_collision_status = 1;	//no option
-
-			// 	if(yg_local > 0)
-			// 	{
-			// 		_angle_to_drive = 100;
-			// 	}
-			// 	else
-			// 	{
-			// 		_angle_to_drive = -100;
-			// 	}
-			// 	_distance_to_drive = 5; //no option, turn 100 degree near to the waypoint and drive 5 m
-
-			// 	ROS_INFO_STREAM("No good options");
-				
-			// }
-
-			if(choice == 10)
+			//assign value to angle and distance
+			if(choice == 10)	//big short
 			{
-				_angle_to_drive = floor(90 - big_angle * 180 / PI);
+				_angle_to_drive = 90 - big_angle * 180 / PI;
 				
-				if(fabs(_angle_to_drive) < 2)
+				if(fabs(_angle_to_drive) < 2)	//for one more degree, correct it
 				{
 					_angle_to_drive = 0;
 				}
 
 				_distance_to_drive = short_distance;			
 			}
-			else if(choice == 30)
+			else if(choice == 30)	//small short
 			{
-				_angle_to_drive = floor(90 - small_angle * 180 / PI);
+				_angle_to_drive = 90 - small_angle * 180 / PI;
 
 				if(fabs(_angle_to_drive) < 2)
 				{
@@ -543,9 +398,9 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 				_distance_to_drive = short_distance;
 			}
-			else if(choice == 00)
+			else if(choice == 00)	//big long
 			{
-				_angle_to_drive = floor(90 - big_angle * 180 / PI);
+				_angle_to_drive = 90 - big_angle * 180 / PI;
 
 				if(fabs(_angle_to_drive) < 2)
 				{
@@ -554,9 +409,9 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 				_distance_to_drive = long_distance;
 			}
-			else if(choice == 20)
+			else if(choice == 20)	//small long
 			{
-				_angle_to_drive = floor(90 - small_angle * 180 / PI);
+				_angle_to_drive = 90 - small_angle * 180 / PI;
 
 				if(fabs(_angle_to_drive) < 2)
 				{
@@ -565,30 +420,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 				_distance_to_drive = long_distance;
 			}
-			// else if(choice == 11)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = short_distance;			
-			// }
-			// else if(choice == 31)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = short_distance;
-			// }
-			// else if(choice == 01)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = long_distance;
-			// }
-			// else if(choice == 21)
-			// {
-			// 	_angle_to_drive = 0;
-			// 	_distance_to_drive = long_distance;
-			// }
-			else if(choice == 4)
+			else if(choice == 4)	//no option
 			{
-				_collision_status = 1;	//no option
-
 				if(yg_local > 0)
 				{
 					_angle_to_drive = 100;
@@ -604,75 +437,16 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			}
 
 			ROS_INFO_STREAM("Turn " << _angle_to_drive << " degree and drive " << _distance_to_drive << " m");
-
-			// //write to a function
-			// //detect if there are any points near the path
-			// double angle;
-			// double distance;
-
-			// int count = 0;
-			// for(int i = 0; i < _hazard_x.size(); i++)
-			// {
-			// 	if(_hazard_x[i] > - 1 / tan(angle) * _hazard_y[i] && _hazard_x[i] < - 1 / tan(angle) * _hazard_y[i] + distance / sin(angle))
-			// 	{
-			// 		if(fabs(cos(angle) * (_hazard_x[i] - _hazard_y[i] * tan(angle))) < threshold_obstacle_distance)
-			// 		{
-			// 			count++;
-			// 		}
-			// 	}			
-			// }
-
-			// double xg, yg; // waypoint goal
-			// if(xg > distance * cos(angle))	//waypoint on top of temp point
-			// {
-			// 	if(_hazerd_x[i] > distance * cos(angle))
-			// 	{
-			// 		if(fabs(_hazerd_x[i] - ((distance * sin(angle) - xg) / (distance * cos(angle) - yg)) * _hazard_y[i] - (xg * distance * cos(angle) - yg * distance * sin(angle)) / (distance * cos(angle) - yg)) /
-			// 		sqrt(1 + pow((distance * sin(angle) - xg) / (distance * cos(angle) - yg),2)) < threshold_obstacle_distance)
-			// 		{
-			// 			count++;
-			// 		}
-			// 	}
-			// }
-			// else
-			// {
-			// 	if(_hazerd_x[i] < distance * cos(angle))
-			// 	{
-			// 		if(fabs(_hazerd_x[i] - ((distance * sin(angle) - xg) / (distance * cos(angle) - yg)) * _hazard_y[i] - (xg * distance * cos(angle) - yg * distance * sin(angle)) / (distance * cos(angle) - yg)) /
-			// 		sqrt(1 + pow((distance * sin(angle) - xg) / (distance * cos(angle) - yg),2)) < threshold_obstacle_distance)
-			// 		{
-			// 			count++;
-			// 		}
-			// 	}
-			// }
-
-			//detect if the left angle bigger than 90 degree
-
-			//detect if the right angle bigger than 90 degree
-
-			// //determine side of collision
-			// if(collision_left_counter > collision_right_counter)
-			// {
-			// 	_collision_status = 1;
-			// 	ROS_INFO("COLLISION ON LEFT");
-			// 	return 1;
-			// }
-			// else
-			// {
-			// 	_collision_status = 2;
-			// 	ROS_INFO("COLLISION ON RIGHT");		
-			// 	return 2;		
-			// }
 		}
-		else
+		else	//no obstacle on avoidance map
 		{
 			if(collision_left_counter > collision_right_counter)
 			{
-				_angle_to_drive = 45;
+				_angle_to_drive = threshold_min_angle;
 			}
 			else
 			{
-				_angle_to_drive = -45;
+				_angle_to_drive = -threshold_min_angle;
 			}
 			
 			_distance_to_drive = short_distance;
@@ -689,11 +463,6 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		return 0;
 	}
 }
-
-// int CollisionDetection::doMathRANSAC() // SECOND LAYER: RANSAC FIT A PLANE
-// {
-
-// }
 
 // 20 * 10 avoidance map
 void CollisionDetection::generateAvoidancemap()
@@ -720,22 +489,11 @@ void CollisionDetection::generateAvoidancemap()
 	pass.setFilterLimits(-5,5); //positive z is down, negative z is up
 	pass.filter(*hazard_cloud);
 
-
-	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
-	//pcl::SACSegmentation<pcl::PointXYZI> plane;
-	//plane.setOptimizeCoefficients (true); //optional (why is this optional??)
-	//plane.setModelType (pcl::SACMODEL_PLANE);
-	//plane.setMethodType (pcl::SAC_RANSAC);
-	//plane.setMaxIterations (1000); //max iterations for RANSAC
-
 	//******************************
 	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put 
 	//more points to the ground, therefore the object cluster (hazard cluster) only has real hazarad, therefore, the false alarm rate will reduce
 	//In other words, hazard map and path planning only consider real big hazard while small obstacle should be leave to the pure reactive layer
 	//******************************
-
-	//plane.setDistanceThreshold (0.75); //ground detection threshold parameter
-	//plane.setInputCloud (hazard_cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
 	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
@@ -765,8 +523,6 @@ void CollisionDetection::generateAvoidancemap()
 	std::vector<std::vector<std::vector<float> > > hazard_map_cells((hazard_map_size_x_pos + hazard_map_size_x_neg)*(hazard_map_size_y*2));
 	int index = 0;
 
-	
-
 	//hazard_map_cells is a vector of vectors, each element of it is a grid in the hazard map that includes 0-N points
 	for (int i = 0; i< hazard_filtered->points.size(); i++)
 	{
@@ -775,10 +531,6 @@ void CollisionDetection::generateAvoidancemap()
 	    point.push_back(hazard_filtered->points[i].z);
 
 	    //the index checks which gird a point belongs to 
-
-	    //**********************************
-	    //maybe this is right, need to check
-	    //**********************************
 
 	    index = floor(hazard_filtered->points[i].x + hazard_map_size_x_neg) * (2 * hazard_map_size_y) + floor(hazard_filtered->points[i].y + hazard_map_size_y);
 
@@ -822,8 +574,8 @@ void CollisionDetection::generateAvoidancemap()
 	    //the threshold of variance_z can be adjusted as well
 	    //**********************************
 
-	    // if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
-	    if (total_x || total_y || total_z)
+	    if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
+	    // if (total_x || total_y || total_z)
 	    {
 	 
 	        _hazard_x.push_back(average_x);
@@ -832,14 +584,14 @@ void CollisionDetection::generateAvoidancemap()
 	    }
 	}
 
-	ROS_INFO_STREAM("save PCD.........");
-	pcl::PointCloud<pcl::PointXYZ>::Ptr testPCD (new pcl::PointCloud<pcl::PointXYZ>);
-	for(int i = 0; i < _hazard_x.size(); i++)
-	{
-		testPCD->push_back(pcl::PointXYZ(_hazard_x[i], _hazard_y[i], 0));
-	}
+	// ROS_INFO_STREAM("save PCD.........");
+	// pcl::PointCloud<pcl::PointXYZ>::Ptr testPCD (new pcl::PointCloud<pcl::PointXYZ>);
+	// for(int i = 0; i < _hazard_x.size(); i++)
+	// {
+	// 	testPCD->push_back(pcl::PointXYZ(_hazard_x[i], _hazard_y[i], 0));
+	// }
 
-	pcl::io::savePCDFileASCII ("testPCD.pcd", *testPCD);
+	// pcl::io::savePCDFileASCII ("testPCD.pcd", *testPCD);
 
 
 }
@@ -867,20 +619,12 @@ void CollisionDetection::generateHazardmap()
 	pass.filter(*hazard_cloud);
 
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
-	pcl::SACSegmentation<pcl::PointXYZI> plane;
-	plane.setOptimizeCoefficients (true); //optional (why is this optional??)
-	plane.setModelType (pcl::SACMODEL_PLANE);
-	plane.setMethodType (pcl::SAC_RANSAC);
-	plane.setMaxIterations (1000); //max iterations for RANSAC
 
 	//******************************
 	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put 
 	//more points to the ground, therefore the object cluster (hazard cluster) only has real hazarad, therefore, the false alarm rate will reduce
 	//In other words, hazard map and path planning only consider real big hazard while small obstacle should be leave to the pure reactive layer
 	//******************************
-
-	plane.setDistanceThreshold (0.75); //ground detection threshold parameter
-	plane.setInputCloud (hazard_cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
 	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
@@ -893,7 +637,7 @@ void CollisionDetection::generateHazardmap()
 	pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ()); 
 	pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ()); 
 	seg_plane.segment (*inliers_hazard, *coefficients_hazard);
-	ROS_INFO_STREAM("test0......................");
+
 	//seperate the ground points and the points above the ground (object points)
 	pcl::ExtractIndices<pcl::PointXYZI> extract;
 	extract.setInputCloud (hazard_cloud);
@@ -907,7 +651,7 @@ void CollisionDetection::generateHazardmap()
 	std::vector<float> point;
 	std::vector<std::vector<std::vector<float> > > hazard_map_cells((hazard_map_size*2)*(hazard_map_size*2));
 	int index = 0;
-	ROS_INFO_STREAM("test1.....................");
+
 	//hazard_map_cells is a vector of vectors, each element of it is a grid in the hazard map that includes 0-N points
 	for (int i = 0; i< hazard_filtered->points.size(); i++)
 	{
@@ -916,17 +660,11 @@ void CollisionDetection::generateHazardmap()
 	    point.push_back(hazard_filtered->points[i].z);
 
 	    //the index checks which gird a point belongs to 
-
-	    //**********************************
-	    //maybe this is right, need to check
-	    //**********************************
-
 	    index = floor(hazard_filtered->points[i].x + hazard_map_size)*(2*hazard_map_size) + floor(hazard_filtered->points[i].y + hazard_map_size);
 
 	    hazard_map_cells[index].push_back(point);
 	    point.clear();
 	}
-	ROS_INFO_STREAM("test2.....................");
 	//do the calculation
 	_hazard_map_x.clear();
 	_hazard_map_y.clear();
@@ -963,8 +701,8 @@ void CollisionDetection::generateHazardmap()
 	    //the threshold of variance_z can be adjusted as well
 	    //**********************************
 
-	    // if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
-	    if (total_x || total_y || total_z)
+	    if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
+	    // if (total_x || total_y || total_z)
 	    {
 	    	_hazard_map_x.push_back(average_x);
 			_hazard_map_y.push_back(average_y);
@@ -1046,7 +784,7 @@ int CollisionDetection::secondChoice(double angle, double distance, double xg, d
 		
 	}
 
-	ROS_INFO_STREAM("count: " <<count);
+	// ROS_INFO_STREAM("count: " <<count);
 
 	return count;
 }
