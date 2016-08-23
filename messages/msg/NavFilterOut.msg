@@ -86,6 +86,11 @@ float32 y_position2
 float32 roll2
 float32 pitch2
 float32 heading2
+float32 x_positionS
+float32 y_positionS
+float32 rollS
+float32 pitchS
+float32 headingS
 float32 roll_rate
 float32 pitch_rate
 float32 yaw_rate

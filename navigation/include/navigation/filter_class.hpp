@@ -58,7 +58,7 @@ public:
 	void clear_accelerometer_values();
 	void blind_dead_reckoning(double p, double q, double r, double delta_distance, double dt);
 	void blind_turning(double p, double q, double r, double dt);
-	void which_nb_to_keep(int nb1_drive_counter, bool nb1_current, int nb2_drive_counter, bool nb2_current, bool nb1_good_prev, bool nb2_good_prev);
+	void which_nb_to_keep(int nb1_drive_counter, bool nb1_current, bool nb1_good, bool nb1_good_prev, int nb2_drive_counter, bool nb2_current, bool nb2_good, bool nb2_good_prev, bool nbS_current, bool nbS_good, bool nbS_good_prev);
 	void verify_homing(double homing_heading, double homing_x, double homing_y);
 
 };

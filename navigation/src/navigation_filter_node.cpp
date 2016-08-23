@@ -122,6 +122,11 @@ int main(int argc, char **argv)
 		msg_NavFilterOut.nb2_diff_prev = navigationfilter.imu.nb2_diff_prev;
 		msg_NavFilterOut.nb2_good = navigationfilter.imu.nb2_good;
 		msg_NavFilterOut.nb2_good_prev = navigationfilter.imu.nb2_good_prev;
+		msg_NavFilterOut.x_positionS = navigationfilter.filterS.x;
+		msg_NavFilterOut.y_positionS = navigationfilter.filterS.y;
+		msg_NavFilterOut.rollS = navigationfilter.filterS.phi*180/3.1415927; 
+		msg_NavFilterOut.pitchS = navigationfilter.filterS.theta*180/3.1415927;
+		msg_NavFilterOut.headingS = navigationfilter.filterS.psi*180/3.1415927;
 		msg_NavFilterOut.x_position1 = navigationfilter.filter1.x;
 		msg_NavFilterOut.y_position1 = navigationfilter.filter1.y;
 		msg_NavFilterOut.roll1 = navigationfilter.filter1.phi*180/3.1415927; 

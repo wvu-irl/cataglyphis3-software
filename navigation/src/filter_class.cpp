@@ -58,50 +58,207 @@ void Filter::initialize_variance(int performed_bias_removal, double north_angle_
 		
 }
 
-void Filter::which_nb_to_keep(int nb1_drive_counter, bool nb1_current, int nb2_drive_counter, bool nb2_current, bool nb1_good_prev, bool nb2_good_prev)
+void Filter::which_nb_to_keep(int nb1_drive_counter, bool nb1_current, bool nb1_good, bool nb1_good_prev, int nb2_drive_counter, bool nb2_current, bool nb2_good, bool nb2_good_prev, bool nbS_current, bool nbS_good, bool nbS_good_prev)
 {
 	if (nb1_current && nb2_current)
 	{
-		keep_nb = 3;
-	}
-	else if (nb1_current && !nb2_current && nb1_good_prev)
-	{
-		keep_nb = 1;
-	}
-	else if (!nb1_current && nb2_current && nb2_good_prev)
-	{
-		keep_nb = 2;
-	}
-	else
-	{
-		if (nb1_drive_counter <= nb2_drive_counter)
+		if(nb1_good_prev && !nb2_good_prev)
 		{
-			if(nb1_good_prev)
+			if(nbS_current)
 			{
-				keep_nb = 1;
-			}
-			else if (nb2_good_prev)
-			{
-				keep_nb = 2;
+				keep_nb = 1; // keep_nb = 1;
 			}
 			else
 			{
-				keep_nb = 1;
+				keep_nb = 26; // keep_nb = 1;
+			}
+		
+		}
+		else if (!nb1_good_prev && nb2_good_prev)
+		{
+			if(nbS_current)
+			{
+				keep_nb = 2; // keep_nb = 2;
+			}
+			else
+			{
+				keep_nb = 27; // keep_nb = 2;
+			}
+		}
+		else if (nb1_good_prev && nb2_good_prev)
+		{
+			if(nbS_current)
+			{
+				keep_nb = 3; // keep_nb = 3;
+			}
+			else
+			{
+				keep_nb = 28; // keep_nb = 3;
 			}
 		}
 		else
 		{
-			if(nb2_good_prev)
+			if(nbS_current && nbS_good_prev)
 			{
-				keep_nb = 2;
+				keep_nb = 4; // keep_nb = 4;
 			}
-			else if (nb1_good_prev)
+			else if (nbS_current)
 			{
-				keep_nb = 1;
+				if (nb1_drive_counter <= nb2_drive_counter)
+				{
+					if(nb1_good_prev)
+					{
+						keep_nb = 5; // keep_nb = 1;
+					}
+					else if (nb2_good_prev)
+					{
+						keep_nb = 6; // keep_nb = 2;
+					}
+					else
+					{
+						keep_nb = 7; // keep_nb = 1;
+					}
+				}
+				else
+				{
+					if(nb2_good_prev)
+					{
+						keep_nb = 8; // keep_nb = 2;
+					}
+					else if (nb1_good_prev)
+					{
+						keep_nb = 9; // keep_nb = 1;
+					}
+					else
+					{
+						keep_nb = 10; // keep_nb = 2;
+					}
+				}
 			}
 			else
 			{
-				keep_nb = 2;
+				if (nb1_drive_counter <= nb2_drive_counter)
+				{
+					if(nb1_good_prev)
+					{
+						keep_nb = 29; // keep_nb = 1;
+					}
+					else if (nb2_good_prev)
+					{
+						keep_nb = 30; // keep_nb = 2;
+					}
+					else
+					{
+						keep_nb = 31; // keep_nb = 1;
+					}
+				}
+				else
+				{
+					if(nb2_good_prev)
+					{
+						keep_nb = 32; // keep_nb = 2;
+					}
+					else if (nb1_good_prev)
+					{
+						keep_nb = 33; // keep_nb = 1;
+					}
+					else
+					{
+						keep_nb = 34; // keep_nb = 2;
+					}
+				}
+			}
+		}
+	}
+	else if (nb1_current)
+	{
+		if (nb1_good_prev)
+		{
+			if (nbS_current)
+			{
+				keep_nb = 11; // keep_nb = 1;
+			}
+			else
+			{
+				keep_nb = 12; // keep_nb = 1;
+			}
+		}
+		else if(nbS_current && nbS_good_prev)
+		{
+			keep_nb = 13; // keep_nb = 4;
+		}
+		else if(nbS_current)
+		{
+			keep_nb = 14; // keep_nb = 1;
+		}
+		else
+		{
+			keep_nb = 35; // keep_nb = 1;
+		}
+	}
+	else if (nb2_current)
+	{
+		if (nb2_good_prev)
+		{
+			if (nbS_current)
+			{
+				keep_nb = 15; // keep_nb = 2;
+			}
+			else
+			{
+				keep_nb = 16; // keep_nb = 2;
+			}
+		}
+		else if(nbS_current && nbS_good_prev)
+		{
+			keep_nb = 17; // keep_nb = 4;
+		}
+		else if (nbS_current)
+		{
+			keep_nb = 18; // keep_nb = 2;
+		}
+		else
+		{
+			keep_nb = 36; // keep_nb = 2;
+		}
+	}
+	else
+	{
+		if(nbS_current && nbS_good_prev)
+		{
+			keep_nb = 19; // keep_nb = 4;
+		}
+		else
+		{
+			if (nb1_drive_counter <= nb2_drive_counter)
+			{
+				if(nb1_good_prev)
+				{
+					keep_nb = 20; // keep_nb = 1;
+				}
+				else if (nb2_good_prev)
+				{
+					keep_nb = 21; // keep_nb = 2;
+				}
+				else
+				{
+					keep_nb = 22; // keep_nb = 1;
+				}
+			}
+			else
+			{
+				if(nb2_good_prev)
+				{
+					keep_nb = 23; // keep_nb = 2;
+				}
+				else if (nb1_good_prev)
+				{
+					keep_nb = 24; // keep_nb = 1;
+				}
+				else
+				{
+					keep_nb = 25; // keep_nb = 2;
+				}
 			}
 		}
 	}
