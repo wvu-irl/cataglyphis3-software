@@ -10,3 +10,10 @@ float32 allocatedTime
 uint8 highRisk
 bool hardLockout
 uint8 roiGroup
+float32 whiteProb
+float32 silverProb
+float32 blueOrPurpleProb
+float32 pinkProb
+float32 redProb
+float32 orangeProb
+float32 yellowProb

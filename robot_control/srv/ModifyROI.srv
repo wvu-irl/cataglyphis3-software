@@ -13,6 +13,13 @@ float32 tangentialAxis
 bool setSampleProps
 float32 sampleProb
 float32 sampleSig
+float32 whiteProb
+float32 silverProb
+float32 blueOrPurpleProb
+float32 pinkProb
+float32 redProb
+float32 orangeProb
+float32 yellowProb
 bool addNewROI
 bool newROIInESNotXY
 ROI newROI

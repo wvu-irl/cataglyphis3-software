@@ -34,6 +34,8 @@ int DriveStraightCL::run()
 	rDes_ = kpR_*deltaHeading_;
 	if(rDes_>rMax_) rDes_ = rMax_;
 	else if(rDes_<(-rMax_)) rDes_ = -rMax_;
+    if(std::isnan(robotStatus.yawRate)) {ROS_ERROR("yaw rate is nan"); robotStatus.yawRate = yawRatePrev_;}
+    else yawRatePrev_ = robotStatus.yawRate;
 	errorR_ = rDes_ - robotStatus.yawRate;
 	headingErrorSpeedP_ = kpR_*rDes_;
     headingErrorSpeedI_ += kiR_*errorR_;

@@ -18,6 +18,9 @@
 #include <messages/RobotPose.h>
 #include <messages/GlobalMapFull.h>
 
+#include <messages/ExecInfo.h>
+#include <messages/ExecAction.h>
+
 #include <messages/SetStartingPlatform.h>
 
 #include <robot_control/RegionsOfInterest.h>
@@ -28,6 +31,7 @@
 #define ON_SERIVCE_FAILURE_RETURN_PAUSE 3
 #define NAV_INFO_MIN_PUB_TIME 1.00
 #define HSM_POSE_MIN_PUB_TIME 1.00
+#define EXEC_INFO_MIN_PUB_TIME 0.24
 
 class ros_workers : public QObject
 {
@@ -58,6 +62,8 @@ signals:
     void map_manager_set_starting_platform_service_returned(messages::SetStartingPlatform response,
                                                                 bool wasSucessful);
 
+    void exec_info_callback(const messages::ExecInfo execQueue);
+
 public slots:
     void on_run_nav_service(messages::NavFilterControl serviceRequest);
 
@@ -75,6 +81,9 @@ public slots:
 
     void on_run_hsm_global_pose_subscriber_start();
     void on_run_hsm_global_pose_subscriber_stop();
+
+    void on_run_exec_info_subscriber_start();
+    void on_run_exec_info_subscriber_stop();
 
 private:
     boost::shared_ptr<ros::NodeHandle> nh;
@@ -100,6 +109,14 @@ private:
     ros::Subscriber hsmGlobalPosSub;
     messages::RobotPose lastHSMGlobalPoseMsg;
     void getHSMGlobalPoseCallback(const messages::RobotPose::ConstPtr &msg);
+
+    ros::Time execInfoTime;
+    bool execInfoSubStarted;
+    ros::Subscriber execInfoSub;
+    messages::ExecInfo lastExecInfoMsg;
+    void getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg);
+
+    void _implSetup();
 
 public:
     ros_workers();

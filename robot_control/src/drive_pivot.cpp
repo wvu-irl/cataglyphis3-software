@@ -21,6 +21,7 @@ void DrivePivot::init()
     encPrev_[3] = robotStatus.frEncoder;
     encPrev_[4] = robotStatus.mrEncoder;
     encPrev_[5] = robotStatus.brEncoder;
+    yawRatePrev_ = 0.0;
     dogLegState = _monitoring;
     dogLegDetectTimeStarted_ = false;
     ROS_DEBUG("drivePivot init");
@@ -57,9 +58,10 @@ int DrivePivot::run()
 		rightMiddleWheelMultiplier_ = 1.0;
 		leftMiddleWheelMultiplier_ = reverseMiddleGain_;
 	}
-	errorR_ = rDes_ - robotStatus.yawRate;
+    if(std::isnan(robotStatus.yawRate)) {ROS_ERROR("yaw rate is nan"); robotStatus.yawRate = yawRatePrev_;}
+    else yawRatePrev_ = robotStatus.yawRate;
     //ROS_INFO("yawRate = %f",robotStatus.yawRate);
-    //if(std::isnan(robotStatus.yawRate)) {ROS_ERROR("yaw rate is nan"); std::cin >> temp;}
+	errorR_ = rDes_ - robotStatus.yawRate;
     //ROS_INFO("errorR_ = %f",errorR_);
 	rSpeedP_ = kROutput_*rDes_;
     //ROS_INFO("rSpeedP_ = %f",rSpeedP_);

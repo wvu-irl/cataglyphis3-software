@@ -61,7 +61,13 @@ bool Approach::runProc()
                     computeManeuver_();
 					computeExpectedSampleLocation();
                     sendDriveRel(distanceToDrive, angleToTurn, false, 0.0, false, false);
-                    sendSearch();
+                    sendSearch(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).blueOrPurpleProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).pinkProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).redProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb);
 					commandedSearch = true;
 					step = _performManeuver;
 					state = _exec_;
@@ -85,7 +91,13 @@ bool Approach::runProc()
 					angleToTurn = 0.0;
 					computeExpectedSampleLocation();
                     sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
-                    sendSearch();
+                    sendSearch(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).blueOrPurpleProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).pinkProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).redProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb,
+                               regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb);
 					commandedSearch = true;
 					step = _performManeuver;
 					state = _exec_;

@@ -10,6 +10,7 @@
 #include "manual_control.h"
 #include "init_container.h"
 #include "map_viewer.h"
+#include "exec_info_queue.h"
 
 #define NUM_MSG_CALLBACK_THREADS 2
 #define CATAGLYPHIS_GUI_ID 3
@@ -36,6 +37,7 @@ private:
     boost::shared_ptr<manual_control> manualControlFormPtr;
     boost::shared_ptr<init_container> cataglyphisStartupFormPtr;
     boost::shared_ptr<map_viewer> mapViewFormPtr;
+    boost::shared_ptr<exec_info_queue> execInfoFormPtr;
 
     boost::shared_ptr<ros::NodeHandle> guiNhPtr;
     boost::shared_ptr<ros::AsyncSpinner> asyncSpinnerPtr;
