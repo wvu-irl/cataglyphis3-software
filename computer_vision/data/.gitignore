@@ -1,3 +1,4 @@
 *.[jJ][pP][gG]
 *.[t][x][t]
 !.gitignore
+!calibration_mask.jpg
