@@ -2,9 +2,9 @@
 
 void VisionSearch::init()
 {
-    ROS_INFO("init vision_search");
+    //ROS_INFO("init vision_search");
     cvSearchCmdSrv.request.white = params.float1;
-    ROS_INFO("white = %f",cvSearchCmdSrv.request.white);
+    //ROS_INFO("white = %f",cvSearchCmdSrv.request.white);
     cvSearchCmdSrv.request.silver = params.float2;
     cvSearchCmdSrv.request.blueOrPurple = params.float3;
     cvSearchCmdSrv.request.pink = params.float4;
