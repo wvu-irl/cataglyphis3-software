@@ -47,7 +47,7 @@ private:
 	const double dogLegDetectThreshold_ = 2.0; // sec
 	const double dogLegStopDuration_ = 0.5; // sec
 	const double dogLegRecoverDuration_ = 0.75; // sec
-	const long int encoderDogLegTriggerValue_ = 80;
+	const long int encoderDogLegTriggerValue_ = 100;
 	long int encPrev_[6];
 	long int encDelta_[6];
 	std::vector<long int> leftDeltaVector_;

@@ -42,11 +42,11 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
     if (user_input_nav_act.bias_removal_forklift!=1 && !(latest_nav_control_request.runBiasRemoval))
 	{
 		first_pass = true;
-		ROS_INFO("user_input_nav_act.bias_removal_forklift!=1");
+		//ROS_INFO("user_input_nav_act.bias_removal_forklift!=1");
 	}
 	else
 	{
-		ROS_INFO("user_input_nav_act.bias_removal_forklift==1");
+		//ROS_INFO("user_input_nav_act.bias_removal_forklift==1");
 	}
 	if (first_pass == true)
 	{
@@ -196,12 +196,13 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 	{
 		nav_status_output = 0;
 	}
-    ROS_INFO("collected_gyro_data = %d \n", collected_gyro_data);
+    //ROS_INFO("collected_gyro_data = %d \n", collected_gyro_data);
 
     if(user_input_nav_act.begin_dead_reckoning==1 || latest_nav_control_request.beginForkliftDeadReckoning)
 	{
 		state = _forklift_drive;
-		init_filter.initialize_states(filter.phi,filter.theta,latest_nav_control_request.initNorthAngle,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		ROS_INFO("init north angle = %f",init_north_angle*RAD_2_DEG);
+		init_filter.initialize_states(filter.phi,filter.theta,init_north_angle,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		filter1.initialize_states(filter.phi,filter.theta,latest_nav_control_request.initNorthAngle,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		filter2.initialize_states(filter.phi,filter.theta,latest_nav_control_request.initNorthAngle,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		init_filter.initialize_variance(collected_gyro_data,2.0*PI/180.0); //performed bias removal, north_angle_unc
@@ -884,6 +885,8 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
     response.q3Offset = imu.q3_offset;
     response.r3Offset = imu.r3_offset;
     
+    if(request.setInitNorthAngle) init_north_angle = request.initNorthAngle;
+
     if(request.setGlobalPose)
     {
         ROS_INFO("Teleporting to new Location");
