@@ -14,6 +14,7 @@ private:
 	float initHeading_;
 	float rDes_;
 	float errorR_;
+	float yawRatePrev_;
 	int pivotSign_;
 	float leftSpeed_;
 	float rightSpeed_;

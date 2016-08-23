@@ -25,7 +25,7 @@ public:
 	void sendDriveAndSearch();
 	void sendDriveAndWait(float waitTime, bool endHeadingFlag, float endHeading); // sec
 	void sendDriveRel(float deltaDistance, float deltaHeading, bool endHeadingFlag, float endHeading, bool frontOfDeque, bool closedLoop);
-	void sendSearch();
+	void sendSearch(float whiteProb, float silverProb, float blueOrPurpleProb, float pinkProb, float redProb, float orangeProb, float yellowProb);
 	void sendGrab();
 	void sendDrop();
 	void sendOpen();
@@ -124,8 +124,8 @@ void Procedure::sendDriveGlobal(bool pushToFront, bool endHeadingFlag, float end
 		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
         execActionSrv.request.float5 = 0.0;
-		execActionSrv.request.float6 = 1.0;
-		execActionSrv.request.float7 = 1.0;
+		execActionSrv.request.float6 = 0.0;
+		execActionSrv.request.float7 = 0.0;
 		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
@@ -160,8 +160,8 @@ void Procedure::sendDriveAndSearch()
 		execActionSrv.request.float3 = 0.0;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
-		execActionSrv.request.float6 = 1.0;
-		execActionSrv.request.float7 = 1.0;
+		execActionSrv.request.float6 = 0.0;
+		execActionSrv.request.float7 = 0.0;
 		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
@@ -185,13 +185,13 @@ void Procedure::sendDriveAndSearch()
 			execActionSrv.request.clearDequeFlag = false;
 			execActionSrv.request.clearFrontFlag = false;
 			execActionSrv.request.pause = false;
-			execActionSrv.request.float1 = 1.0; // white
-			execActionSrv.request.float2 = 1.0; // silver
-			execActionSrv.request.float3 = 1.0; // blueOrPurple
-			execActionSrv.request.float4 = 1.0; // pink
-			execActionSrv.request.float5 = 1.0; // red
-			execActionSrv.request.float6 = 1.0; // orange
-			execActionSrv.request.float7 = 1.0; // yellow
+			execActionSrv.request.float1 = waypointsToTravel.at(i).whiteProb; // white
+			execActionSrv.request.float2 = waypointsToTravel.at(i).silverProb; // silver
+			execActionSrv.request.float3 = waypointsToTravel.at(i).blueOrPurpleProb; // blueOrPurple
+			execActionSrv.request.float4 = waypointsToTravel.at(i).pinkProb; // pink
+			execActionSrv.request.float5 = waypointsToTravel.at(i).redProb; // red
+			execActionSrv.request.float6 = waypointsToTravel.at(i).orangeProb; // orange
+			execActionSrv.request.float7 = waypointsToTravel.at(i).yellowProb; // yellow
 			execActionSrv.request.int1 = 0;
 			execActionSrv.request.bool1 = false;
 			execActionSrv.request.bool2 = false;
@@ -226,8 +226,8 @@ void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endH
 		execActionSrv.request.float3 = endHeading;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
-		execActionSrv.request.float6 = 1.0;
-		execActionSrv.request.float7 = 1.0;
+		execActionSrv.request.float6 = 0.0;
+		execActionSrv.request.float7 = 0.0;
 		execActionSrv.request.int1 = waypointsToTravel.at(i).maxAvoids;
 		if(i==(numWaypointsToTravel-1)) execActionSrv.request.bool1 = endHeadingFlag;
 		else execActionSrv.request.bool1 = false;
@@ -255,8 +255,8 @@ void Procedure::sendDriveAndWait(float waitTime, bool endHeadingFlag, float endH
 		execActionSrv.request.float3 = 0.0;
 		execActionSrv.request.float4 = 0.0;
 		execActionSrv.request.float5 = 0.0;
-		execActionSrv.request.float6 = 1.0;
-		execActionSrv.request.float7 = 1.0;
+		execActionSrv.request.float6 = 0.0;
+		execActionSrv.request.float7 = 0.0;
 		execActionSrv.request.int1 = 0;
 		execActionSrv.request.bool1 = false;
 		execActionSrv.request.bool2 = false;
@@ -287,8 +287,8 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
 	execActionSrv.request.float3 = endHeading;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
     execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = endHeadingFlag;
 	execActionSrv.request.bool2 = frontOfDeque;
@@ -304,7 +304,7 @@ void Procedure::sendDriveRel(float deltaDistance, float deltaHeading, bool endHe
     else ROS_ERROR("exec action service call unsuccessful");
 }
 
-void Procedure::sendSearch()
+void Procedure::sendSearch(float whiteProb, float silverProb, float blueOrPurpleProb, float pinkProb, float redProb, float orangeProb, float yellowProb)
 {
 	this->serialNum++;
 	execActionSrv.request.nextActionType = _search;
@@ -313,13 +313,13 @@ void Procedure::sendSearch()
 	execActionSrv.request.clearDequeFlag = false;
 	execActionSrv.request.clearFrontFlag = false;
 	execActionSrv.request.pause = false;
-	execActionSrv.request.float1 = 1.0; // white
-	execActionSrv.request.float2 = 1.0; // silver
-	execActionSrv.request.float3 = 1.0; // blueOrPurple
-	execActionSrv.request.float4 = 1.0; // pink
-	execActionSrv.request.float5 = 1.0; // red
-	execActionSrv.request.float6 = 1.0; // orange
-	execActionSrv.request.float7 = 1.0; // yellow
+	execActionSrv.request.float1 = whiteProb; // white
+	execActionSrv.request.float2 = silverProb; // silver
+	execActionSrv.request.float3 = blueOrPurpleProb; // blueOrPurple
+	execActionSrv.request.float4 = pinkProb; // pink
+	execActionSrv.request.float5 = redProb; // red
+	execActionSrv.request.float6 = orangeProb; // orange
+	execActionSrv.request.float7 = yellowProb; // yellow
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -349,8 +349,8 @@ void Procedure::sendGrab()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -380,8 +380,8 @@ void Procedure::sendDrop()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -411,8 +411,8 @@ void Procedure::sendOpen()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -442,8 +442,8 @@ void Procedure::sendWait(float waitTime, bool pushToFront)
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -473,8 +473,8 @@ void Procedure::sendDequeClearFront()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -506,8 +506,8 @@ void Procedure::sendDequeClearAll()
 	execActionSrv.request.float3 = 0.0;
 	execActionSrv.request.float4 = 0.0;
 	execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
 	execActionSrv.request.int1 = 0;
 	execActionSrv.request.bool1 = false;
 	execActionSrv.request.bool2 = false;
@@ -537,8 +537,8 @@ void Procedure::sendPause()
     execActionSrv.request.float3 = 0.0;
     execActionSrv.request.float4 = 0.0;
     execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
     execActionSrv.request.int1 = 0;
     execActionSrv.request.bool1 = false;
     execActionSrv.request.bool2 = false;
@@ -568,8 +568,8 @@ void Procedure::sendUnPause()
     execActionSrv.request.float3 = 0.0;
     execActionSrv.request.float4 = 0.0;
     execActionSrv.request.float5 = 0.0;
-	execActionSrv.request.float6 = 1.0;
-	execActionSrv.request.float7 = 1.0;
+	execActionSrv.request.float6 = 0.0;
+	execActionSrv.request.float7 = 0.0;
     execActionSrv.request.int1 = 0;
     execActionSrv.request.bool1 = false;
     execActionSrv.request.bool2 = false;

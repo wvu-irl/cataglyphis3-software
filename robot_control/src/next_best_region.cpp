@@ -94,12 +94,26 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(0).unskippable = false;
             waypointsToTravel.at(0).roiWaypoint = true;
             waypointsToTravel.at(0).maxAvoids = maxROIWaypointAvoidCount;
+            waypointsToTravel.at(0).whiteProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).whiteProb;
+            waypointsToTravel.at(0).silverProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).silverProb;
+            waypointsToTravel.at(0).blueOrPurpleProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).blueOrPurpleProb;
+            waypointsToTravel.at(0).pinkProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).pinkProb;
+            waypointsToTravel.at(0).redProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).redProb;
+            waypointsToTravel.at(0).orangeProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).orangeProb;
+            waypointsToTravel.at(0).yellowProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).yellowProb;
             waypointsToTravel.at(1).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
             waypointsToTravel.at(1).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
             waypointsToTravel.at(1).searchable = true; // !!!!! NEEDS TO BE TRUE to search
             waypointsToTravel.at(1).unskippable = false;
             waypointsToTravel.at(1).roiWaypoint = true;
             waypointsToTravel.at(1).maxAvoids = maxROIWaypointAvoidCount;
+            waypointsToTravel.at(1).whiteProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).whiteProb;
+            waypointsToTravel.at(1).silverProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).silverProb;
+            waypointsToTravel.at(1).blueOrPurpleProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).blueOrPurpleProb;
+            waypointsToTravel.at(1).pinkProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).pinkProb;
+            waypointsToTravel.at(1).redProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).redProb;
+            waypointsToTravel.at(1).orangeProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).orangeProb;
+            waypointsToTravel.at(1).yellowProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).yellowProb;
             callIntermediateWaypoints();
             sendDriveAndSearch();
             //sendWait(10.0, false);

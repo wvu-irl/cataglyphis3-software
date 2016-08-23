@@ -22,6 +22,7 @@ private:
 	float vDesCoerc_;
 	float rDes_;
 	float errorR_;
+	float yawRatePrev_;
 	int leftSpeed_;
 	int rightSpeed_;
 	float headingErrorSpeedT_;

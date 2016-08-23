@@ -43,6 +43,8 @@ int DriveStraight::run()
 	if(rDes_>rMax_) rDes_ = rMax_;
 	else if(rDes_<(-rMax_)) rDes_ = -rMax_;
     //ROS_INFO("rDes_ = %f",rDes_);
+    if(std::isnan(robotStatus.yawRate)) {ROS_ERROR("yaw rate is nan"); robotStatus.yawRate = yawRatePrev_;}
+    else yawRatePrev_ = robotStatus.yawRate;
 	errorR_ = rDes_ - robotStatus.yawRate;
     //ROS_INFO("yawRate = %f",robotStatus.yawRate);
     //if(std::isnan(robotStatus.yawRate)) {ROS_ERROR("yaw rate is nan"); std::cin >> temp;}

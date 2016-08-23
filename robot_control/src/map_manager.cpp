@@ -170,6 +170,13 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
     {
         regionsOfInterest.at(req.modROIIndex).sampleProb = req.sampleProb;
         regionsOfInterest.at(req.modROIIndex).sampleSig = req.sampleSig;
+        regionsOfInterest.at(req.modROIIndex).whiteProb = req.whiteProb;
+        regionsOfInterest.at(req.modROIIndex).silverProb = req.silverProb;
+        regionsOfInterest.at(req.modROIIndex).blueOrPurpleProb = req.blueOrPurpleProb;
+        regionsOfInterest.at(req.modROIIndex).pinkProb = req.pinkProb;
+        regionsOfInterest.at(req.modROIIndex).redProb = req.redProb;
+        regionsOfInterest.at(req.modROIIndex).orangeProb = req.orangeProb;
+        regionsOfInterest.at(req.modROIIndex).yellowProb = req.yellowProb;
         if(req.editGroup && regionsOfInterest.at(req.modROIIndex).roiGroup != 0)
         {
             for(int i=0; i<regionsOfInterest.size(); i++)
@@ -201,6 +208,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
         if(searchLocalMapExists) ROS_WARN("MAP MANAGER: tried to create searchLocalMap when it already exists");
         else
         {
+            searchLocalMapROINum = req.roiIndex;
             if(createROIHazardMapClient.call(createROIHazardMapSrv)) ROS_DEBUG("MAP MANAGER: createROIHazardMap service call successful"); // call createROIHazardMap service
             else {ROS_ERROR("MAP MANAGER: createROIHazardMap service call unsuccessful"); return false;}
             searchLocalMapXPos = globalPose.x;
@@ -416,6 +424,13 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 res.waypointList.at(numRandomWaypointsSelected-1).searchable = true;
                 res.waypointList.at(numRandomWaypointsSelected-1).unskippable = false;
                 res.waypointList.at(numRandomWaypointsSelected-1).maxAvoids = maxNormalWaypointAvoidCount;
+                res.waypointList.at(numRandomWaypointsSelected-1).whiteProb = regionsOfInterest.at(searchLocalMapROINum).whiteProb;
+                res.waypointList.at(numRandomWaypointsSelected-1).silverProb = regionsOfInterest.at(searchLocalMapROINum).silverProb;
+                res.waypointList.at(numRandomWaypointsSelected-1).blueOrPurpleProb = regionsOfInterest.at(searchLocalMapROINum).blueOrPurpleProb;
+                res.waypointList.at(numRandomWaypointsSelected-1).pinkProb = regionsOfInterest.at(searchLocalMapROINum).pinkProb;
+                res.waypointList.at(numRandomWaypointsSelected-1).redProb = regionsOfInterest.at(searchLocalMapROINum).redProb;
+                res.waypointList.at(numRandomWaypointsSelected-1).orangeProb = regionsOfInterest.at(searchLocalMapROINum).orangeProb;
+                res.waypointList.at(numRandomWaypointsSelected-1).yellowProb = regionsOfInterest.at(searchLocalMapROINum).yellowProb;
             }
             if(numRandomWaypointSearchDistanceCriteriaFailed > randomWaypointDistanceCriteriaFailedLimit)
             {
