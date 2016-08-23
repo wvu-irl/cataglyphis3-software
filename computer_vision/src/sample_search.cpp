@@ -152,6 +152,9 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	if(angle_between_optical_and_sample > 3.1415926/2)
 	{
 		ROS_ERROR("Error! Object detectable outside of visible region of image...");
+		ROS_ERROR("flat_ground_distance_distance_t = %f", flat_ground_distance_distance_t);
+		ROS_ERROR("delta_angle_t*180/3.14159265 = %f", delta_angle_t*180/3.14159265);
+		ROS_ERROR("angle_between_optical_and_sample*180/3.14159265 = %f", angle_between_optical_and_sample*180/3.14159265);
 		relative_position.push_back(0);
 		relative_position.push_back(0);
 	}
@@ -302,9 +305,9 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-    //ALL SAMPLE CLASSIFIER
+    //ALL SAMPLE CLASSIFIER (THIS WILL BE REMOVED ONCE THE OTHER CLASSIFIERS ARE TRAINED)
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (150x150 no longer exists)
+	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
@@ -333,7 +336,6 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	/*
 		Call color extract color service
 	*/
-
 	gettimeofday(&this->localTimer, NULL);
     double startColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0); 
 
@@ -418,11 +420,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 				else publish_sample = false;
 				break;
 			case _whitePink_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.pink > 0.5) {publish_sample = true; ROS_INFO("_whitePink_t");}
+				if(req.white > 0.5 || req.silver > 0.5 || req.pink > 0.5 || req.red > 0.5) {publish_sample = true; ROS_INFO("_whitePink_t");}
 				else publish_sample = false;
 				break;
 			case _whiteRed_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.red > 0.5) {publish_sample = true; ROS_INFO("_whiteRed_t");}
+				if(req.white > 0.5 || req.silver > 0.5 || req.red > 0.5 || req.pink > 0.5) {publish_sample = true; ROS_INFO("_whiteRed_t");}
 				else publish_sample = false;
 				break;
 			case _whiteOrange_t:
@@ -442,11 +444,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 				else publish_sample = false;
 				break;
 			case _pink_t:
-				if(req.pink > 0.5 || req.white > 0.5) {publish_sample = true; ROS_INFO("_pink_t");}
+				if(req.pink > 0.5 || req.white > 0.5 || req.red > 0.5) {publish_sample = true; ROS_INFO("_pink_t");}
 				else publish_sample = false;
 				break;
 			case _red_t:
-				if(req.red > 0.5) {publish_sample = true; ROS_INFO("_red_t");}
+				if(req.red > 0.5 || req.pink > 0.5) {publish_sample = true; ROS_INFO("_red_t");}
 				else publish_sample = false;
 				break;
 			case _orange_t:
@@ -465,14 +467,18 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		//publish the detectable sample
 		if(publish_sample == true)
 		{
+			ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-");
 			position.clear();
 			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
 			sampleProps.type = extractColorSrv.response.types[i];
 			sampleProps.distance = position[0];
 			sampleProps.bearing = position[1];
-			sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[i];
+			sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+			ROS_INFO("Sample detected at:");
+			ROS_INFO("d = %f meters", sampleProps.distance);
+			ROS_INFO("bearing = %f degrees", sampleProps.bearing);
+			ROS_INFO("confidence = %f", sampleProps.confidence);
 			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
-			ROS_INFO("Adding result to vector for publishing sample information...");
 		}
 	}
 

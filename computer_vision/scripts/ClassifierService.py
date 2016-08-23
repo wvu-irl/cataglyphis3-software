@@ -89,7 +89,7 @@ class ClassifierService:
 			predictedProbabilities = predictedProbabilities[:,1]
 			# convert to list and for returning it to the client
 			positiveConfidenceList = predictedProbabilities.tolist()
-			print positiveConfidenceList
+			# print positiveConfidenceList
 			pass
 		except:
 			print 'obtaining probabilities from extracted probabilities'
@@ -154,7 +154,7 @@ if __name__ == "__main__":
 	imgSize = 50
 	
 	# classifier version
-	classifierVersion = '7-7-16'
+	classifierVersion = '8-20-16'
 
 	# read the mean data
 	# meanData50Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
