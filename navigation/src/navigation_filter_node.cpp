@@ -20,8 +20,8 @@ int main(int argc, char **argv)
 
 	while(ros::ok())
 	{
-		ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*");
-		ROS_INFO("State = %i",navigationfilter.state);
+		//ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*");
+		//ROS_INFO("State = %i",navigationfilter.state);
 		navigationfilter.filter.counter++; //this should be changed to function .increment_counter();
 		navigationfilter.update_time(); //updates dt and current_time
 		navigationfilter.imu.determine_new_data();

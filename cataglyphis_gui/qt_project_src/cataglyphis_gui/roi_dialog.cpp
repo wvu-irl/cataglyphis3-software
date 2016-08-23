@@ -19,3 +19,8 @@ ROI_dialog::~ROI_dialog()
 {
     delete ui;
 }
+
+void ROI_dialog::on_edit_roi_button_clicked(bool checked)
+{
+
+}

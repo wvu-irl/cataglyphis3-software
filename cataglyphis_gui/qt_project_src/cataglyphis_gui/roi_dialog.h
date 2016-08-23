@@ -19,6 +19,9 @@ public:
     explicit ROI_dialog(QWidget *parent = 0);
     ~ROI_dialog();
 
+private slots:
+    void on_edit_roi_button_clicked(bool checked);
+
 private:
     Ui::ROI_dialog *ui;
 

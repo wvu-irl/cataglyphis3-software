@@ -72,6 +72,7 @@ public:
 	bool do_homing = false;
 	double drop_off_dist = 10000;
 	int nav_status_output = 0;
+	double init_north_angle = 111.0*DEG_2_RAD;
 
 	//this will not be the way to communicate the states, this is temporary
 	enum state_t {_waiting, _forklift_drive, _run};
