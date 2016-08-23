@@ -722,11 +722,11 @@ void CollisionDetection::generateAvoidancemap()
 
 
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
-	pcl::SACSegmentation<pcl::PointXYZI> plane;
-	plane.setOptimizeCoefficients (true); //optional (why is this optional??)
-	plane.setModelType (pcl::SACMODEL_PLANE);
-	plane.setMethodType (pcl::SAC_RANSAC);
-	plane.setMaxIterations (1000); //max iterations for RANSAC
+	//pcl::SACSegmentation<pcl::PointXYZI> plane;
+	//plane.setOptimizeCoefficients (true); //optional (why is this optional??)
+	//plane.setModelType (pcl::SACMODEL_PLANE);
+	//plane.setMethodType (pcl::SAC_RANSAC);
+	//plane.setMaxIterations (1000); //max iterations for RANSAC
 
 	//******************************
 	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put 
@@ -734,8 +734,8 @@ void CollisionDetection::generateAvoidancemap()
 	//In other words, hazard map and path planning only consider real big hazard while small obstacle should be leave to the pure reactive layer
 	//******************************
 
-	plane.setDistanceThreshold (0.75); //ground detection threshold parameter
-	plane.setInputCloud (hazard_cloud); //was raw_cloud
+	//plane.setDistanceThreshold (0.75); //ground detection threshold parameter
+	//plane.setInputCloud (hazard_cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
 	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
