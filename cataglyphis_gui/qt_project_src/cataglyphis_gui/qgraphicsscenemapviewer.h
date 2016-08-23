@@ -96,7 +96,7 @@ public:
 
     struct layerProperties_t { bool isLayerSetup = false, isLayerVisible = false; };
     struct mapLayer_t { layerProperties_t properties; boost::scoped_ptr<QGraphicsItemGroup> items; boost::scoped_ptr<QList<QGraphicsItem*> > itemList;
-                            boost::scoped_ptr<QPixmap> gridPixmap;};
+                            boost::scoped_ptr<QPixmap> gridPixmap; boost::scoped_ptr<QGraphicsPixmapItem> pixmapItem;};
 
     bool setupMap(QPointF scenePos);
     bool isMapSetup(){ return mapSetup; }

@@ -43,6 +43,13 @@ public:
         this->setPen(borderPen);
     }
 
+    void setFillColor(QColor fill)
+    {
+        fillColor.setRgb(fill.rgba());
+        fillBrush.setColor(fillColor);
+        this->setBrush(fillBrush);
+    }
+
     ~map_viewer_rect(){ /*ROS_DEBUG("Rectangle Desctructor"); */}
 
     QColor fillColor;
