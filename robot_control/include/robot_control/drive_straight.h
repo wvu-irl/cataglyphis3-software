@@ -35,11 +35,11 @@ private:
 	const float kpV_ = 1.2; // m/(s*m)
 	const float kVOutput_ = 900/1.2; // 90% of max speed at 1.2 m/s
 	const float kpR_ = 1.5; // deg/(s*deg)
-	const float kiR_ = 0.25;
+	const float kiR_ = 0.1;
 	const float kROutput_ = 450/45.0; // 45% of max speed at 45 deg/s
 	const float rMax_ = 30.0; // deg/s
-	const float maxHeadingErrorSpeed_ = 150.0;
-	const float maxHeadingErrorSpeedI_ = 50.0;
+	const float maxHeadingErrorSpeed_ = 50.0;
+	const float maxHeadingErrorSpeedI_ = 30.0;
 };
 
 #endif // DRIVE_STRAIGHT_H

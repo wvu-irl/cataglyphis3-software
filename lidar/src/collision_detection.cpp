@@ -33,7 +33,7 @@ void CollisionDetection::Initializations()
 	//parameters
 	short_distance = 3;
 	long_distance = 5;
-	threshold_obstacle_distance = 0.5;
+	threshold_obstacle_distance = 1;
 	threshold_obstacle_number = 0;
 	threshold_min_angle = 45; //degree, min angle to turn
 }
@@ -62,7 +62,7 @@ void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> co
     T_temporary(0,0) = _R_lidar_to_robot(0,0);
     T_temporary(0,1) = _R_lidar_to_robot(0,1);
     T_temporary(0,2) = _R_lidar_to_robot(0,2);
-    T_temporary(0,3) = -0.45;	//translate from lidar to robot center
+    T_temporary(0,3) = 0;	//translate from lidar to robot center
 
     T_temporary(1,0) = _R_lidar_to_robot(1,0);
     T_temporary(1,1) = _R_lidar_to_robot(1,1);
@@ -72,7 +72,7 @@ void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> co
     T_temporary(2,0) = _R_lidar_to_robot(2,0);
     T_temporary(2,1) = _R_lidar_to_robot(2,1);
     T_temporary(2,2) = _R_lidar_to_robot(2,2);
-    T_temporary(2,3) = 0;
+    T_temporary(2,3) = 0;	//translate from lidar to ground
 
     T_temporary(3,0) = 0;
     T_temporary(3,1) = 0;
@@ -126,33 +126,36 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	
 	for(int i=0; i<cloud->points.size(); i++)
 	{
-		//check if point in corridor (width check)
-		if(cloud->points[i].y < 0.5*_CORRIDOR_WIDTH && cloud->points[i].y > -0.5*_CORRIDOR_WIDTH)
+		if(cloud->points[i].z < 1.5 && cloud->points[i].z > -2)
 		{
-			//check if point in corridor (length check)
-			if(cloud->points[i].x > 0 && cloud->points[i].x < _CORRIDOR_LENGTH)
+			//check if point in corridor (width check)
+			if(cloud->points[i].y < 0.5*_CORRIDOR_WIDTH && cloud->points[i].y > -0.5*_CORRIDOR_WIDTH)
 			{
-				//check if point is outside of safe envelope
-				if(fabs(atan2( (_LIDAR_HEIGHT - cloud->points[i].z),cloud->points[i].x )) > _SAFE_ENVELOPE_ANGLE )
+				//check if point in corridor (length check)
+				if(cloud->points[i].x > 0 && cloud->points[i].x < _CORRIDOR_LENGTH)
 				{
-					//increment collision counter
-					collision_point_counter++;
+					//check if point is outside of safe envelope
+					if(fabs(atan2( (_LIDAR_HEIGHT - cloud->points[i].z),cloud->points[i].x )) > _SAFE_ENVELOPE_ANGLE )
+					{
+						//increment collision counter
+						collision_point_counter++;
 
-					if(cloud->points[i].y>0)
-					{
-						collision_right_counter++; //right point counter
+						if(cloud->points[i].y>0)
+						{
+							collision_right_counter++; //right point counter
+						}
+						else
+						{
+							collision_left_counter++; //left point counter
+						}
 					}
-					else
-					{
-						collision_left_counter++; //left point counter
-					}
+					
 				}
-				
 			}
 		}
 	}
 
-	ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
+	// ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
 
 	//check if points exceed threshold
 	if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
@@ -172,6 +175,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		double xg_local;
 		double yg_local;
 
+		int collision_point_avoidance_counter = 0;
+
 		//get local coordinate
 		xg_local = _xg * cos(_headingposition) + _yg * sin(_headingposition) + _xposition;
 		yg_local = -1 * _xg * sin(_headingposition) + _yg * sin(_headingposition) + _yposition;
@@ -185,11 +190,15 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			if(_hazard_x[i] < 5 && _hazard_x[i] > 0 && _hazard_y[i] < 1 && _hazard_y[i] > -1)
 			{
 				angle.push_back((double)atan2(_hazard_x[i],_hazard_y[i]));	//radian
+				collision_point_avoidance_counter++;
 			}
 		}
+
+		ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
+		ROS_INFO_STREAM("collision_point_avoidance_counter: " << collision_point_avoidance_counter);
 		
 		//if there are obstacles shown on avoidance map, check angle and distance
-		if(angle.size() > 1)
+		if(collision_point_avoidance_counter >= 1)
 		{
 			//sort angles
 			std::sort(angle.begin(), angle.end());	//increase
@@ -459,7 +468,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		_collision_status = 0;
 		_distance_to_drive = 0;
 		_angle_to_drive = 0;
-		ROS_INFO("No Collision...");
+		// ROS_INFO("No Collision...");
 		return 0;
 	}
 }
@@ -486,7 +495,7 @@ void CollisionDetection::generateAvoidancemap()
 	pass.setFilterLimits(-hazard_map_size_y,hazard_map_size_y);
 	pass.filter(*hazard_cloud);
 	pass.setFilterFieldName("z");
-	pass.setFilterLimits(-5,5); //positive z is down, negative z is up
+	pass.setFilterLimits(-2,1.5); //positive z is down, negative z is up
 	pass.filter(*hazard_cloud);
 
 	//******************************
@@ -574,8 +583,8 @@ void CollisionDetection::generateAvoidancemap()
 	    //the threshold of variance_z can be adjusted as well
 	    //**********************************
 
-	    if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
-	    // if (total_x || total_y || total_z)
+	    // if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
+	    if (total_x || total_y || total_z)
 	    {
 	 
 	        _hazard_x.push_back(average_x);
@@ -584,14 +593,14 @@ void CollisionDetection::generateAvoidancemap()
 	    }
 	}
 
-	// ROS_INFO_STREAM("save PCD.........");
-	// pcl::PointCloud<pcl::PointXYZ>::Ptr testPCD (new pcl::PointCloud<pcl::PointXYZ>);
-	// for(int i = 0; i < _hazard_x.size(); i++)
-	// {
-	// 	testPCD->push_back(pcl::PointXYZ(_hazard_x[i], _hazard_y[i], 0));
-	// }
+	ROS_INFO_STREAM("save PCD.........");
+	pcl::PointCloud<pcl::PointXYZ>::Ptr testPCD (new pcl::PointCloud<pcl::PointXYZ>);
+	for(int i = 0; i < _hazard_x.size(); i++)
+	{
+		testPCD->push_back(pcl::PointXYZ(_hazard_x[i], _hazard_y[i], 0));
+	}
 
-	// pcl::io::savePCDFileASCII ("testPCD.pcd", *testPCD);
+	pcl::io::savePCDFileASCII ("testPCD.pcd", *testPCD);
 
 
 }
@@ -615,7 +624,7 @@ void CollisionDetection::generateHazardmap()
 	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
 	pass.filter(*hazard_cloud);
 	pass.setFilterFieldName("z");
-	pass.setFilterLimits(-5,5); //positive z is down, negative z is up
+	pass.setFilterLimits(-2,1.5); //positive z is down, negative z is up
 	pass.filter(*hazard_cloud);
 
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)

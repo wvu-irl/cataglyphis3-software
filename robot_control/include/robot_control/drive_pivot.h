@@ -27,9 +27,9 @@ private:
 	double thresholdTime_;
 	bool inThreshold_;
 	int taskEnded_;
-	const float kpR_ = 0.85; // deg/(s*deg)
-	const float kiR_ = 0.15;
-	const float rSpeedIMax_ = 100.0;
+	const float kpR_ = 0.45; // deg/(s*deg)
+	const float kiR_ = 0.1;
+	const float rSpeedIMax_ = 50.0;
 	const float kROutput_ = 450/45.0; // 45% of max speed at 45 deg/s
 	const int rSpeedMax_ = 500;
 	const float deltaHeadingThreshold_ = 2.0; // deg
@@ -48,7 +48,7 @@ private:
 	const double dogLegDetectThreshold_ = 2.0; // sec
 	const double dogLegStopDuration_ = 0.5; // sec
 	const double dogLegRecoverDuration_ = 0.75; // sec
-	const long int encoderDogLegTriggerValue_ = 100;
+	const long int encoderDogLegTriggerValue_ = 110;
 	long int encPrev_[6];
 	long int encDelta_[6];
 	std::vector<long int> leftDeltaVector_;

@@ -13,6 +13,7 @@
 
 #define DEG_2_RAD (PI/180.0)
 #define RAD_2_DEG (180.0/PI)
+enum state_t {_waiting, _forklift_drive, _run};
 
 class NavigationFilter
 {
@@ -77,7 +78,7 @@ class NavigationFilter
 		double init_north_angle = 111.0*DEG_2_RAD;
 
 		//this will not be the way to communicate the states, this is temporary
-		enum state_t {_waiting, _forklift_drive, _run};
+		
 		const state_t state_waiting = _waiting;
 		const state_t state_forklift_drive = _forklift_drive;
 		const state_t state_run = _run;

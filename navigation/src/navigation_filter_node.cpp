@@ -32,13 +32,13 @@ int main(int argc, char **argv)
 		navigationfilter.encoders.calculateDeltaDistance6Wheels(0, 0); //turnFlag, stopFlag
 		switch(navigationfilter.state)
 		{
-			case 0: //_waiting
+			case _waiting: //_waiting
 				navigationfilter.waiting(user_input_nav_act);
 				break;
-			case 1: //_forklift_drive
+			case _forklift_drive: //_forklift_drive
 				navigationfilter.forklift_drive(user_input_nav_act);
 				break;
-			case 2: //_run
+			case _run: //_run
 				navigationfilter.run(user_input_nav_act);
 				break;
 		}

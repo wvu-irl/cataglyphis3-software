@@ -448,6 +448,7 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
         }*/
 
         filter.north_angle = init_filter.psi;
+        ROS_INFO("init_filter.psi (north angle = %f)",init_filter.psi);
 		filter.P_north_angle = init_filter.P_psi;
 
 		state = _run; 
@@ -1147,7 +1148,7 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
     response.q3Offset = imu.q3_offset;
     response.r3Offset = imu.r3_offset;
     
-    if(request.setInitNorthAngle) init_north_angle = request.initNorthAngle;
+    if(request.setInitNorthAngle) init_north_angle = request.initNorthAngle*DEG_2_RAD;
 
     if(request.setGlobalPose)
     {
