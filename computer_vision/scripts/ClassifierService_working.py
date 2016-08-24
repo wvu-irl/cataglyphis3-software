@@ -1,7 +1,6 @@
 #!/usr/bin/python
 '''
 AUTHOR: Rahul Kavi
-EDITED BY: Jared Strader
 Feature Vector generator/classifier for FishEye images for CATAGLYPHIS
 '''
 from __future__ import division
@@ -18,6 +17,8 @@ import rospkg
 
 from computer_vision.srv import *
 from std_msgs.msg import String
+# from DeepFishNet import DeepFishNet
+# from DeepFishNet150 import DeepFishNet150
 from DeepFishNet50 import DeepFishNet50
 
 class ClassifierService:
@@ -32,8 +33,7 @@ class ClassifierService:
 		self.classifierDict = classifierDict
 		time.sleep(1)
 		imgSize = 50
-		classifierType = 0 #initialize to precached (0 = precached, 1 = rock, 2 = hard)
-		self.cvModulePath = self.classifierDict[classifierType]['modulePath']
+		self.cvModulePath = self.classifierDict[imgSize]['modulePath']
 		print 'successfully loaded the classifier'
 		time.sleep(1)
 
@@ -47,7 +47,7 @@ class ClassifierService:
 		tensorImg[0, 1, :, :] = imgG
 		tensorImg[0, 2, :, :] = imgR
 
-		tensorImg = tensorImg.astype('float64') - classifierDict[classifierType]['mean']
+		tensorImg = tensorImg.astype('float64') - classifierDict[imgSize]['mean']
 		tensorImg = tensorImg/float(255.0)
 		# print 'returning shape', tensorImg.shape
 		return tensorImg
@@ -72,7 +72,6 @@ class ClassifierService:
 		startTime = time.clock()
 		numBlobs = int(incomingMessage.numBlobs)
 		imgSize = int(incomingMessage.imgSize)
-		classifierType = int(incomingMessage.classifierType)
 		positiveConfidenceList = []
 		try:
 			# load images, subtract mean and normalize
@@ -85,7 +84,7 @@ class ClassifierService:
 		try:
 			print tensorBlobImgs.shape
 			# classify
-			predictedProbabilities = self.classifierDict[classifierType]['classifier'].predictProb(tensorBlobImgs)
+			predictedProbabilities = self.classifierDict[imgSize]['classifier'].predictProb(tensorBlobImgs)
 			# retreive only object probabilities
 			predictedProbabilities = predictedProbabilities[:,1]
 			# convert to list and for returning it to the client
@@ -120,101 +119,66 @@ if __name__ == "__main__":
 	# get CV module path
 	cvModulePath = rospack.get_path('computer_vision')
 
+	# # imgSize
+	# imgSize = 150
+	
 	# dictionary to store classifier parameters
 	classifierDict = {}
 
-	# classifier version
-	classifierVersion = '7-7-16'
+	# # read the mean data
+	# meanData150Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	# # meanData150Path = cvModulePath+ "/data/mean_file/50_x_50_mean/allData_150_lmdb.npy"
+	# meanData150 = np.load(meanData150Path)
+	# meanData150 = np.reshape(meanData150, (1, 3, imgSize, imgSize))
+	
+	# # read the classifier
+	# # classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	# classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/best_9epoch_'+str(imgSize)+'.npz'
 
-	#classifier type
-	classifierType = 0
-
+	# # set dropout parameters for better performance
+	# dropoutParams150 = {}
+	# dropoutParams150['conv'] = 0.5
+	# dropoutParams150['fc'] = 0.5
+	
+	# # initialize DeepFishNet150
+	# # myClassifier = DeepFishNet(mode='Test', modelToLoad = classifier150Path, dropout_params = dropoutParams150)
+	# myClassifier150 = DeepFishNet150(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams150, mode='Test', modelToLoad = classifier150Path)
+	
+	# # store 150 x 150 classifier details
+	# classifierDict[imgSize] = {}
+	# classifierDict[imgSize]['classifier'] = myClassifier150
+	# classifierDict[imgSize]['mean'] = meanData150
+	# classifierDict[imgSize]['modulePath'] = cvModulePath
+	
 	# imgSize
 	imgSize = 50
 	
-	# read the mean data
-	meanData50PathCach = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
-	meanData50Cach = np.load(meanData50PathCach)
-	meanData50Cach = np.reshape(meanData50Cach, (1, 3, imgSize, imgSize))
-	
-	# read the classifier
-	classifier50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
-
-	# set dropout parameters for better performance
-	dropoutParams50Cach = {}
-	dropoutParams50Cach['conv'] = 0.5
-	dropoutParams50Cach['fc'] = 0.5
-	
-	# initialize DeepFishNet50Cach
-	myClassifier50Cach = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Cach, mode='Test', modelToLoad = classifier50PathCach)
-	
-	# store 150 x 150 classifier details
-	classifierDict[classifierType] = {}
-	classifierDict[classifierType]['classifier'] = myClassifier50Cach
-	classifierDict[classifierType]['mean'] = meanData50Cach
-	classifierDict[classifierType]['modulePath'] = cvModulePath
-
 	# classifier version
 	classifierVersion = '8-20-16'
 
-	#classifier type
-	classifierType = 1
-
-	# imgSize
-	imgSize = 50
-	
 	# read the mean data
-	meanData50PathRock = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
-	meanData50Rock = np.load(meanData50PathRock)
-	meanData50Rock = np.reshape(meanData50Rock, (1, 3, imgSize, imgSize))
+	# meanData50Path = cvModulePath+"/data/mean_file/"+str(imgSize)+'_x_'+str(imgSize)+'_mean/'+'data_lmdb.npy'
+	meanData50Path = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
+	meanData50 = np.load(meanData50Path)
+	meanData50 = np.reshape(meanData50, (1, 3, imgSize, imgSize))
 	
 	# read the classifier
-	classifier50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
-
+	# classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
+	classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
+	
 	# set dropout parameters for better performance
-	dropoutParams50Rock = {}
-	dropoutParams50Rock['conv'] = 0.5
-	dropoutParams50Rock['fc'] = 0.5
+	dropoutParams50 = {}
+	dropoutParams50['conv'] = 0.5
+	dropoutParams50['fc'] = 0.5
 	
-	# initialize DeepFishNet50Cach
-	myClassifier50Rock = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Rock, mode='Test', modelToLoad = classifier50PathRock)
-	
-	# store 150 x 150 classifier details
-	classifierDict[classifierType] = {}
-	classifierDict[classifierType]['classifier'] = myClassifier50Rock
-	classifierDict[classifierType]['mean'] = meanData50Rock
-	classifierDict[classifierType]['modulePath'] = cvModulePath
+	# initialize DeepFishNet50
+	myClassifier50 = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50, mode='Test', modelToLoad = classifier50Path)
 
-	# classifier version
-	classifierVersion = '8-20-16'
-
-	#classifier type
-	classifierType = 2
-
-	# imgSize
-	imgSize = 50
-	
-	# read the mean data
-	meanData50PathHard = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
-	meanData50Hard = np.load(meanData50PathHard)
-	meanData50Hard = np.reshape(meanData50Hard, (1, 3, imgSize, imgSize))
-	
-	# read the classifier
-	classifier50PathHard = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
-
-	# set dropout parameters for better performance
-	dropoutParams50Hard = {}
-	dropoutParams50Hard['conv'] = 0.5
-	dropoutParams50Hard['fc'] = 0.5
-	
-	# initialize DeepFishNet50Cach
-	myClassifier50Hard = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Hard, mode='Test', modelToLoad = classifier50PathHard)
-	
-	# store 150 x 150 classifier details
-	classifierDict[classifierType] = {}
-	classifierDict[classifierType]['classifier'] = myClassifier50Hard
-	classifierDict[classifierType]['mean'] = meanData50Hard
-	classifierDict[classifierType]['modulePath'] = cvModulePath
+	# store 50 x 50 classifier details
+	classifierDict[imgSize] = {}
+	classifierDict[imgSize]['classifier'] = myClassifier50
+	classifierDict[imgSize]['mean'] = meanData50
+	classifierDict[imgSize]['modulePath'] = cvModulePath
 
 	# initialize classifier service
 	cService = ClassifierService(classifierDict)

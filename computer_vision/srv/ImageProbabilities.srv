@@ -1,4 +1,5 @@
 uint32 numBlobs
 uint32 imgSize
+uint32 classifierType
 ---
 float32[] responseProbabilities

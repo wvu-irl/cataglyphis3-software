@@ -422,6 +422,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     //ALL SAMPLE CLASSIFIER (THIS WILL BE REMOVED ONCE THE OTHER CLASSIFIERS ARE TRAINED)
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
+	imageProbabilitiesSrv.request.classifierType = 1;
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
@@ -438,10 +439,61 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	}
 
 	//ADD PRECACHED SAMPLE CLASSIFIER
+	// imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+	// imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
+	// imageProbabilitiesSrv.request.classifierType = 0;
+	// if(classifierClient.call(imageProbabilitiesSrv))
+	// {
+	// 	ROS_INFO("imageProbabilitiesSrv call successful!");
+	// }
+	// else
+	// {
+	// 	ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+	// 	searchForSamplesMsgOut.sampleList.clear();
+	// 	searchForSamplesMsgOut.procType = req.procType;
+	// 	searchForSamplesMsgOut.serialNum = req.serialNum;
+	// 	searchForSamplesPub.publish(searchForSamplesMsgOut);
+	// 	ros::spinOnce();
+	// 	return true;
+	// }
 
-	//ADD COLOR SAMPLE CLASSIFIER
+	// //ADD COLOR SAMPLE CLASSIFIER
+	// imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+	// imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
+	// imageProbabilitiesSrv.request.classifierType = 0;
+	// if(classifierClient.call(imageProbabilitiesSrv))
+	// {
+	// 	ROS_INFO("imageProbabilitiesSrv call successful!");
+	// }
+	// else
+	// {
+	// 	ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+	// 	searchForSamplesMsgOut.sampleList.clear();
+	// 	searchForSamplesMsgOut.procType = req.procType;
+	// 	searchForSamplesMsgOut.serialNum = req.serialNum;
+	// 	searchForSamplesPub.publish(searchForSamplesMsgOut);
+	// 	ros::spinOnce();
+	// 	return true;
+	// }
 
 	//ADD HARD SAMPLE CLASSIFIER
+	// imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+	// imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
+	// imageProbabilitiesSrv.request.classifierType = 0;
+	// if(classifierClient.call(imageProbabilitiesSrv))
+	// {
+	// 	ROS_INFO("imageProbabilitiesSrv call successful!");
+	// }
+	// else
+	// {
+	// 	ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+	// 	searchForSamplesMsgOut.sampleList.clear();
+	// 	searchForSamplesMsgOut.procType = req.procType;
+	// 	searchForSamplesMsgOut.serialNum = req.serialNum;
+	// 	searchForSamplesPub.publish(searchForSamplesMsgOut);
+	// 	ros::spinOnce();
+	// 	return true;
+	// }
 
 	gettimeofday(&this->localTimer, NULL);  
     double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
