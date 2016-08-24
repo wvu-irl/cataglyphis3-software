@@ -80,6 +80,7 @@ find_package(catkin REQUIRED COMPONENTS
    SunSensorOut.msg
    VoiceSayPhrase.msg
    NextWaypointOut.msg
+   ZedCollisionOut.msg
  )
 
 ## Generate services in the 'srv' folder

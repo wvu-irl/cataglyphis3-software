@@ -45,7 +45,7 @@
 #include <messages/CreateROIHazardMap.h>
 #include <messages/NextWaypointOut.h>
 #include <messages/RobotPose.h>
-#include <lidar/ZedCollisionOut.h>
+#include <messages/ZedCollisionOut.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <pcl/common/transforms.h>
@@ -129,7 +129,7 @@ private:
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 	void waypointsCallback(messages::NextWaypointOut const &waypoint_msg);
 	void positionCallback(messages::RobotPose const &position_msg);
-	void zedcollisionCallback(lidar::ZedCollisionOut const &zedcollisionout_msg);
+	void zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg);
 
 	int firstChoice(double angle, double distance);
 	int secondChoice(double angle, double distance, double xg, double yg);
