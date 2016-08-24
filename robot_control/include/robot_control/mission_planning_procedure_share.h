@@ -156,6 +156,9 @@ public:
 	static unsigned int confirmCollectFailedCount;
 	static unsigned int homingUpdatedFailedCount;
 	static unsigned int navStatus;
+	static double missionTime;
+	static double prevTime;
+	static bool missionStarted;
 	const unsigned int maxHomingUpdatedFailedCount = 3;
 	const unsigned int homingFailedSwitchToDeadReckoningCount = 2;
 	const float sampleConfidenceGain = 1.0;
@@ -277,5 +280,8 @@ unsigned int MissionPlanningProcedureShare::backUpCount;
 unsigned int MissionPlanningProcedureShare::confirmCollectFailedCount;
 unsigned int MissionPlanningProcedureShare::homingUpdatedFailedCount;
 unsigned int MissionPlanningProcedureShare::navStatus;
+double MissionPlanningProcedureShare::missionTime;
+double MissionPlanningProcedureShare::prevTime;
+bool MissionPlanningProcedureShare::missionStarted;
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

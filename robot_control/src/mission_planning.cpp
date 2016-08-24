@@ -91,6 +91,9 @@ MissionPlanning::MissionPlanning()
     backUpCount = 0;
     confirmCollectFailedCount = 0;
     homingUpdatedFailedCount = 0;
+    missionTime = 0.0;
+    prevTime = ros::Time::now().toSec();
+    missionStarted = false;
     timers[_biasRemovalTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalTimerCallback_, this);
     timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
     timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
@@ -111,6 +114,8 @@ MissionPlanning::MissionPlanning()
     infoMsg.procsToExecute.resize(NUM_PROC_TYPES,0);
     infoMsg.procsToInterrupt.resize(NUM_PROC_TYPES,0);
     infoMsg.procsBeingExecuted.resize(NUM_PROC_TYPES,0);
+    infoMsg.procsToResume.resize(NUM_PROC_TYPES,0);
+    infoMsg.procStates.resize(NUM_PROC_TYPES,_init_);
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -129,36 +134,14 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
-    int temp;
-    //ROS_INFO("BEGIN >>>>>>>>>>>");
-    //ROS_DEBUG("before evalConditions");
-
-   /* ROS_INFO("\n");
-    bestSample.distance = 1.934814;
-    bestSample.bearing = 3.434462;
-    bestSample.confidence = 1000;
-    distanceToDrive = bestSample.distance - distanceToGrabber - blindDriveDistance;
-    if(distanceToDrive > 4.0) distanceToDrive = 4.0;
-    angleToTurn = bestSample.bearing;
-    approach.computeExpectedSampleLocation();
-    ROS_INFO("expectedSampleDistance = %f",expectedSampleDistance);
-    ROS_INFO("expectedSampleAngle = %f",expectedSampleAngle);*/
-
     ROS_INFO_THROTTLE(3,"Mission Planning running...");
     evalConditions_();
-    //ROS_DEBUG("after evalConditions");
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch || navStopRequest) runPause_();
     else runProcedures_();
-    //serviceSearchTimer_();
     packAndPubInfoMsg_();
-    //std::printf("\n");
-    //ROS_INFO("END <<<<<<<<<<<<<\n");
-    /*if(searchRegion.state==_exec_ && procsToExecute[__examine__])
-    {
-        std::cout << "enter character to continue" << std::endl;
-        std::cin >> temp;
-    }*/
+    if(missionStarted && !robotStatus.pauseSwitch) missionTime += ros::Time::now().toSec() - prevTime;
+    prevTime = ros::Time::now().toSec();
 }
 
 void MissionPlanning::evalConditions_()
@@ -378,7 +361,13 @@ void MissionPlanning::evalConditions_()
 
 void MissionPlanning::runProcedures_()
 {
-    if(pauseStarted == true) {pause.sendUnPause(); resumeTimers_(); voiceSay->call("un pause");}
+    if(pauseStarted == true)
+    {
+        pause.sendUnPause();
+        resumeTimers_();
+        voiceSay->call("un pause");
+        if(missionStarted==false) missionStarted = true;
+    }
     pauseStarted = false;
     initialize.run();
     emergencyEscape.run();
@@ -400,7 +389,12 @@ void MissionPlanning::runProcedures_()
 
 void MissionPlanning::runPause_()
 {
-    if(pauseStarted == false) {pause.sendPause(); pauseAllTimers_(); voiceSay->call("pause");}
+    if(pauseStarted == false)
+    {
+        pause.sendPause();
+        pauseAllTimers_();
+        voiceSay->call("pause");
+    }
     pauseStarted = true;
 }
 
@@ -444,11 +438,10 @@ void MissionPlanning::updateSampleFlags_()
 
 void MissionPlanning::packAndPubInfoMsg_()
 {
-    infoMsg.pause = robotStatus.pauseSwitch;
     infoMsg.escapeCondition = escapeCondition;
     infoMsg.escapeLockout = escapeLockout;
-    infoMsg.collisionCondition = collisionMsg.collision;
     infoMsg.avoidLockout = avoidLockout;
+    infoMsg.shouldExecuteAvoidManeuver = shouldExecuteAvoidManeuver;
     infoMsg.performBiasRemoval = performBiasRemoval;
     infoMsg.performHoming = performHoming;
     infoMsg.inSearchableRegion = inSearchableRegion;
@@ -457,28 +450,84 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.possibleSample = possibleSample;
     infoMsg.definiteSample = definiteSample;
     infoMsg.sampleInCollectPosition = sampleInCollectPosition;
+    infoMsg.sideOffsetGrab = sideOffsetGrab;
     infoMsg.confirmedPossession = confirmedPossession;
     infoMsg.atHome = atHome;
     infoMsg.homingUpdateFailed = homingUpdateFailed;
     infoMsg.performSafeMode = performSafeMode;
     infoMsg.inDepositPosition = inDepositPosition;
+    infoMsg.missionEnded = missionEnded;
+    infoMsg.useDeadReckoning = useDeadReckoning;
+    infoMsg.roiKeyframed = roiKeyframed;
+    infoMsg.startSLAM = startSLAM;
+    infoMsg.giveUpROI = giveUpROI;
+    infoMsg.pause = robotStatus.pauseSwitch;
+    infoMsg.numProcs = NUM_PROC_TYPES;
     infoMsg.samplesCollected = samplesCollected;
     infoMsg.avoidCount = avoidCount;
     infoMsg.examineCount = examineCount;
     infoMsg.backupCount = backUpCount;
     infoMsg.confirmCollectFailedCount = confirmCollectFailedCount;
-    infoMsg.roiKeyframed = roiKeyframed;
-    infoMsg.startSLAM = startSLAM;
-    infoMsg.stopFlag = execInfoMsg.stopFlag;
-    infoMsg.turnFlag = execInfoMsg.turnFlag;
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
         infoMsg.procsToExecute.at(i) = procsToExecute[i];
         infoMsg.procsToInterrupt.at(i) = procsToInterrupt[i];
         infoMsg.procsBeingExecuted.at(i) = procsBeingExecuted[i];
+        infoMsg.procsToResume.at(i) = procsToResume[i];
+        switch(static_cast<PROC_TYPES_T>(i))
+        {
+        case __initialize__:
+            infoMsg.procStates.at(i) = initialize.state;
+            break;
+        case __emergencyEscape__:
+            infoMsg.procStates.at(i) = emergencyEscape.state;
+            break;
+        case __avoid__:
+            infoMsg.procStates.at(i) = avoid.state;
+            break;
+        case __biasRemoval__:
+            infoMsg.procStates.at(i) = biasRemoval.state;
+            break;
+        case __nextBestRegion__:
+            infoMsg.procStates.at(i) = nextBestRegion.state;
+            break;
+        case __searchRegion__:
+            infoMsg.procStates.at(i) = searchRegion.state;
+            break;
+        case __examine__:
+            infoMsg.procStates.at(i) = examine.state;
+            break;
+        case __approach__:
+            infoMsg.procStates.at(i) = approach.state;
+            break;
+        case __collect__:
+            infoMsg.procStates.at(i) = collect.state;
+            break;
+        case __confirmCollect__:
+            infoMsg.procStates.at(i) = confirmCollect.state;
+            break;
+        case __goHome__:
+            infoMsg.procStates.at(i) = goHome.state;
+            break;
+        case __squareUpdate__:
+            infoMsg.procStates.at(i) = squareUpdate.state;
+            break;
+        case __depositApproach__:
+            infoMsg.procStates.at(i) = depositApproach.state;
+            break;
+        case __depositSample__:
+            infoMsg.procStates.at(i) = depositSample.state;
+            break;
+        case __safeMode__:
+            infoMsg.procStates.at(i) = safeMode.state;
+            break;
+        case __sosMode__:
+            infoMsg.procStates.at(i) = sosMode.state;
+            break;
+        }
     }
-    infoMsg.missionEnded = missionEnded;
-    infoMsg.useDeadReckoning = useDeadReckoning;
+    infoMsg.collisionCondition = collisionMsg.collision;
+    infoMsg.missionTime = missionTime;
     infoPub.publish(infoMsg);
 }
 
@@ -577,84 +626,97 @@ bool MissionPlanning::emergencyEscapeCallback_(messages::EmergencyEscapeTrigger:
 
 bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res)
 {
+    initialized = req.initialized;
     escapeCondition = req.escapeCondition;
     escapeLockout = req.escapeLockout;
+    avoidLockout = req.avoidLockout;
+    shouldExecuteAvoidManeuver = req.shouldExecuteAvoidManeuver;
+    performBiasRemoval = req.performBiasRemoval;
+    performHoming = req.performHoming;
     inSearchableRegion = req.inSearchableRegion;
     roiTimeExpired = req.roiTimeExpired;
     possessingSample = req.possessingSample;
     possibleSample = req.possibleSample;
     definiteSample = req.definiteSample;
     sampleInCollectPosition = req.sampleInCollectPosition;
+    sideOffsetGrab = req.sideOffsetGrab;
     confirmedPossession = req.confirmedPossession;
     atHome = req.atHome;
+    homingUpdateFailed = req.homingUpdateFailed;
+    performSafeMode = req.performSafeMode;
     inDepositPosition = req.inDepositPosition;
+    missionEnded = req.missionEnded;
+    useDeadReckoning = req.useDeadReckoning;
+    roiKeyframed = req.roiKeyframed;
+    startSLAM = req.startSLAM;
+    giveUpROI = req.giveUpROI;
+    pause = req.pause;
     samplesCollected = req.samplesCollected;
     avoidCount = req.avoidCount;
     examineCount = req.examineCount;
     backUpCount = req.backupCount;
     confirmCollectFailedCount = req.confirmCollectFailedCount;
-    roiKeyframed = req.roiKeyframed;
+    homingUpdatedFailedCount = req.homingUpdateFailedCount;
     for(int i=0; i<req.numProcs; i++)
     {
         procsToExecute[i] = req.procsToExecute.at(i);
         procsToInterrupt[i] = req.procsToInterrupt.at(i);
         procsBeingExecuted[i] = req.procsBeingExecuted.at(i);
-    }
-    missionEnded = req.missionEnded;
-    if(req.setProcState)
-    {
-        switch(static_cast<PROC_TYPES_T>(req.setProcStateIndex)) // If PROC_TYPES_T enum is ever edited, edit this as well
+        procsToResume[i] = req.procsToResume.at(i);
+        switch(static_cast<PROC_TYPES_T>(i)) // If PROC_TYPES_T enum is ever edited, edit this as well
         {
         case __initialize__:
-            initialize.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            initialize.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __emergencyEscape__:
-            emergencyEscape.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            emergencyEscape.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __avoid__:
-            avoid.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            avoid.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __biasRemoval__:
-            biasRemoval.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            biasRemoval.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __nextBestRegion__:
-            nextBestRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            nextBestRegion.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __searchRegion__:
-            searchRegion.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            searchRegion.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __examine__:
-            examine.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            examine.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __approach__:
-            approach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            approach.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __collect__:
-            collect.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            collect.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __confirmCollect__:
-            confirmCollect.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            confirmCollect.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __goHome__:
-            goHome.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            goHome.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __squareUpdate__:
-            squareUpdate.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            squareUpdate.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __depositApproach__:
-            depositApproach.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            depositApproach.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __depositSample__:
-            depositSample.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            depositSample.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __safeMode__:
-            safeMode.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            safeMode.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __sosMode__:
-            sosMode.state = static_cast<PROC_STATE_T>(req.setProcStateValue);
+            sosMode.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         }
     }
+    collisionMsg.collision = req.collisionCondition;
+    missionTime = req.missionTime;
     return true;
 }
 
