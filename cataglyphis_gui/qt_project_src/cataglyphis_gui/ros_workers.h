@@ -23,6 +23,7 @@
 
 #include <messages/SetStartingPlatform.h>
 
+#include <robot_control/ModifyROI.h>
 #include <robot_control/RegionsOfInterest.h>
 #include <robot_control/ROI.h>
 
@@ -40,6 +41,9 @@ class ros_workers : public QObject
 signals:
     void nav_service_returned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful);
+
+    void modify_roi_service_returned(const robot_control::ModifyROI,
+                                        bool wasSuccessful);
 
     void nav_init_returned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful);
@@ -66,10 +70,12 @@ signals:
 
 public slots:
     void on_run_nav_service(messages::NavFilterControl serviceRequest);
+    void on_run_modify_roi(robot_control::ModifyROI serviceRequest);
+
 
     void on_run_bias_removal_service();
     void on_run_start_dead_reckoning_service();
-    void on_run_nav_init_service(messages::NavFilterControl serviceRequest);
+    //void on_run_nav_init_service(messages::NavFilterControl serviceRequest);
 
     void on_run_set_starting_platform_service(messages::SetStartingPlatform serviceRequest);
 

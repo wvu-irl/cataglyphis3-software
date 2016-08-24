@@ -9,8 +9,8 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
     ui->setupUi(this);
     worker = workerArg;
     connect(this, &init_step_one::init_nav_filter,
-                worker.get(), &ros_workers::on_run_nav_init_service);
-    connect(worker.get(), &ros_workers::nav_init_returned,
+                worker.get(), &ros_workers::on_run_nav_service);
+    connect(worker.get(), &ros_workers::nav_service_returned,
                 this, &init_step_one::on_nav_init_return);
 
     connect(this, &init_step_one::start_nav_info_subscriber,
@@ -60,6 +60,7 @@ void init_step_one::on_continue_button_clicked()
     }
     else
     {
+        navInitService.request.setNorthAngle = true;
         navInitService.request.northAngle = ui->input_NA_spinbox->value();
 
     }

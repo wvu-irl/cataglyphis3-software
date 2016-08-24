@@ -24,10 +24,18 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
             drawingView.setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
             drawingView.setTransform(this->views().front()->transform());
 
-            bool satVisible = getLayerFromEnum(map_viewer_enums::SatDriveability)->pixmapItem->isVisible();
-            getLayerFromEnum(map_viewer_enums::SatDriveability)->pixmapItem->hide();
-            bool slamVisible = getLayerFromEnum(map_viewer_enums::keyframeDrive)->pixmapItem->isVisible();
-            getLayerFromEnum(map_viewer_enums::keyframeDrive)->pixmapItem->hide();
+            bool satVisible = false;
+            if(getLayerFromEnum(map_viewer_enums::SatDriveability)->properties.isLayerSetup)
+            {
+                satVisible = getLayerFromEnum(map_viewer_enums::SatDriveability)->pixmapItem->isVisible();
+                getLayerFromEnum(map_viewer_enums::SatDriveability)->pixmapItem->hide();
+            }
+            bool slamVisible = false;
+            if(getLayerFromEnum(map_viewer_enums::keyframeDrive)->properties.isLayerSetup)
+            {
+                slamVisible = getLayerFromEnum(map_viewer_enums::keyframeDrive)->pixmapItem->isVisible();
+                getLayerFromEnum(map_viewer_enums::keyframeDrive)->pixmapItem->hide();
+            }
 
             for(grid_map::GridMapIterator it(gridMapContainer); !it.isPastEnd(); it= (++it))
             {
@@ -42,10 +50,10 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                 {
                     if(mapValue != 0.0)
                     {
-                        ROS_DEBUG("Obstacle Located at x: %d, y: %d", cellPosition[0], cellPosition[1]);
+                        ROS_DEBUG("Obstacle Located at x: %2.1f, y: %2.1f", cellPosition[0], cellPosition[1]);
                         gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE);
                         gridRectangle->setFillColor(QColor::fromRgb(255,0,0));
-                        gridRectangle->setRect((float)cellPosition[0]*pixelsPerDistance, (float)cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
+                        gridRectangle->setRect((float)cellPosition[0], (float)cellPosition[1], 1, 1);
                         gridRectangle->setTransformOriginPoint(startPlatformCenter);
                         gridRectangle->setTransform(robotToObjTransform);
                         gridRectangle->setGroup(layer->items.get());
@@ -55,8 +63,8 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                 else
                 {
                     gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE);
-                    //ROS_DEBUG("Position %2.3f %2.3f %2.3f %2.3f %2.3f %2.3f",cellPosition[0], cellPosition[1], cellPosition[0]*pixelsPerDistance, cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
-                    gridRectangle->setRect((float)cellPosition[0]*pixelsPerDistance, (float)cellPosition[1]*pixelsPerDistance, pixelsPerDistance, pixelsPerDistance);
+                    //ROS_DEBUG("Position %2.3f %2.3f %2.3f %2.3f %2.3f %2.3f",cellPosition[0], cellPosition[1], cellPosition[0], cellPosition[1], pixelsPerDistance, pixelsPerDistance);
+                    gridRectangle->setRect((float)cellPosition[0], (float)cellPosition[1], 1, 1);
                     gridRectangle->setTransformOriginPoint(startPlatformCenter);
                     gridRectangle->setTransform(robotToObjTransform);
                     gridRectangle->setGroup(layer->items.get());
@@ -90,8 +98,8 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
             ROS_DEBUG("SCENE:: Rendering texture of field display");
             layer->items->hide();
             areaImagePixmap->show();
-            getLayerFromEnum(map_viewer_enums::SatDriveability)->pixmapItem->setVisible(satVisible);
-            getLayerFromEnum(map_viewer_enums::keyframeDrive)->pixmapItem->setVisible(slamVisible);
+            if(satVisible){getLayerFromEnum(map_viewer_enums::SatDriveability)->pixmapItem->setVisible(satVisible);}
+            if(slamVisible){getLayerFromEnum(map_viewer_enums::keyframeDrive)->pixmapItem->setVisible(slamVisible);}
             this->addItem(layer->pixmapItem.get());
             //fix scrollbar on virtual scene
             layer->properties.isLayerSetup = true;
@@ -103,6 +111,53 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
     else
     {
         ROS_WARN("SCENE:: Service returned was not sucessful");
+    }
+}
+
+
+void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_control::RegionsOfInterest mapManagerResponse, bool wasSucessful)
+{
+    ROS_DEBUG("SCENE:: ROI service returned");
+
+    if(wasSucessful)
+    {
+        ROS_DEBUG("SCENE:: service successful");
+        for(int i = 0; i < roiLayer.itemList->size(); i++)
+        {
+            this->removeItem(roiLayer.itemList->at(i));
+            ROS_DEBUG("Deleting Item");
+            delete roiLayer.itemList->at(i);
+        }
+        roiLayer.itemList->clear();
+        auto listPtr = &mapManagerResponse.response.ROIList;
+        for(unsigned int i = 0; i < listPtr->size(); i++)
+        {
+            ROS_DEBUG("SCENE:: ROI at x:%2.3f, y:%2.3f", listPtr->at(i).x, listPtr->at(i).y);
+            map_view_roi_ellipse *roiEllipse = new map_view_roi_ellipse(listPtr->at(i), i, pixelsPerDistance, robotToObjTransform,
+                                                                            startPlatformCenter, worker);
+            //roiEllipse->setGroup(roiLayer.items.get());
+            roiLayer.itemList->append(roiEllipse);
+        }
+        for(int i = 0; i < roiLayer.itemList->size(); i++)
+        {
+            this->addItem(roiLayer.itemList->at(i));
+            roiLayer.itemList->at(i)->show();
+        }
+
+    ROS_DEBUG("After Adding ROIs");
+        /*
+        MUST CHANGE BACK TO TRUE
+        */
+roiLayer.properties.isLayerSetup = true;
+        /*
+        MUST CHANGE BACK TO TRUE
+        */
+
+        roiLayer.properties.isLayerVisible = true;
+    }
+    else
+    {
+        ROS_WARN("SCENE:: Serivce was not successful!");
     }
 }
 
@@ -131,14 +186,12 @@ void QGraphicsSceneMapViewer::mousePressEvent(QGraphicsSceneMouseEvent *mouseEve
             mouseEvent->accept();
             setupMap(mouseEvent->buttonDownScenePos(Qt::LeftButton));
             ignoreSetup = true;
+            ROS_DEBUG("SCENE:: Setting New Cursor");
+            //((map_viewer*)parent())->ui->fieldDisplay->setCursor(Qt::OpenHandCursor);
             return;
         }
     }
-    else
-    {
-        QGraphicsScene::mousePressEvent(mouseEvent);
-        return;
-    }
+    mouseEvent->ignore();
 }
 
 bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
@@ -152,6 +205,7 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         robotToObjTransform.reset();
         robotToObjTransform.translate(startPlatformCenter.x(), startPlatformCenter.y());
         robotToObjTransform.rotate(lastRobotPose.northAngle-90);
+        robotToObjTransform.scale(pixelsPerDistance,pixelsPerDistance);
         this->setItemIndexMethod(QGraphicsScene::NoIndex);
     }
    // else
@@ -190,6 +244,10 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
                 emit request_global_map(mapLayer);
             }
             break;
+        case map_viewer_enums::ROI:
+            ROS_DEBUG("SCENE::Requesting ROIs");
+            emit request_roi();
+            break;
         default:
             ROS_WARN("Layer drawing not implemented yet");
         }
@@ -198,9 +256,26 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
     {
         if(layer->properties.isLayerSetup)
         {
-            layer->properties.isLayerVisible = visibility;
-            //layer->items->setVisible(visibility);
-            layer->pixmapItem->setVisible(visibility);
+            switch(mapLayer)
+            {
+            case map_viewer_enums::keyframeDrive:
+            case map_viewer_enums::SatDriveability:
+                layer->properties.isLayerVisible = visibility;
+                //layer->items->setVisible(visibility);
+                layer->pixmapItem->setVisible(visibility);
+                break;
+            case map_viewer_enums::ROI:
+                for(int i = 0; i < roiLayer.itemList->size(); i++)
+                {
+                    roiLayer.itemList->at(i)->setVisible(visibility);
+                }
+                roiLayer.properties.isLayerSetup = false;
+                break;
+            default:
+                layer->properties.isLayerVisible = visibility;
+                layer->items->setVisible(visibility);
+                //layer->pixmapItem->setVisible(visibility);
+            }
         }
     }
 }
@@ -248,6 +323,11 @@ QGraphicsSceneMapViewer::mapLayer_t * QGraphicsSceneMapViewer::getLayerFromEnum(
     }
 }
 
+void QGraphicsSceneMapViewer::redrawLayers()
+{
+
+}
+
 void QGraphicsSceneMapViewer::_implInitLayer(mapLayer_t *layer, bool reInit)
 {
     layer->properties.isLayerSetup = false;
@@ -278,12 +358,20 @@ void QGraphicsSceneMapViewer::_implConnectSignals()
     connect(worker.get(), &ros_workers::hsm_global_pose_callback,
                 this, &QGraphicsSceneMapViewer::on_hsm_global_pose_callback);
 
+    connect(this, &QGraphicsSceneMapViewer::request_roi,
+                worker.get(), &ros_workers::on_run_map_manager_ROI_service);
+
+    connect(worker.get(), &ros_workers::map_manager_ROI_service_returned,
+                this, &QGraphicsSceneMapViewer::on_map_manager_roi_service_returned);
+
     worker->on_run_hsm_global_pose_subscriber_start();
 }
 
 void QGraphicsSceneMapViewer::_implDisconnectSignals()
 {
     disconnect(this, &QGraphicsSceneMapViewer::request_global_map,
+                0,0);
+    disconnect(this, &QGraphicsSceneMapViewer::request_roi,
                 0,0);
 
     worker->disconnect(this);

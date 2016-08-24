@@ -18,10 +18,10 @@ map_viewer::map_viewer(QWidget *parent, int startIndex, boost::shared_ptr<ros::N
 
     ui->fieldDisplay->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
-    scene[0].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/pattern_test.jpg", 0, true, this, rosWorker));
-    scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 3.584058, true, this, rosWorker));
-    scene[2].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/esb.jpg", 4.42580645, true, this, rosWorker));
-    scene[3].reset(new QGraphicsSceneMapViewer(this));
+    scene[0].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/pattern_test.jpg",   0,          true, this, rosWorker));
+    scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 3.584058,   true, this, rosWorker));
+    scene[2].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/esb.jpg",            4.52580645, true, this, rosWorker));
+    scene[3].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/chestnut_ridge.jpg", 5.096154,   true, this, rosWorker));
 
     on_fieldSelector_currentIndexChanged(startIndex);
 }
@@ -65,24 +65,20 @@ void map_viewer::on_fieldSelector_currentIndexChanged(int index)
     ROS_DEBUG("MAP:: Is current map active %d", scene[index]->isActive());
 }
 
-void map_viewer::on_drawTestShapesButton_clicked()
-{
-    QPen transparentPen(fullTransparentColor);
-    map_view_roi_ellipse *roiEllipse = new map_view_roi_ellipse(0,0,100,100,transparentPen,defaultCircleFill);
-    map_view_roi_ellipse *roiEllipse2 = new map_view_roi_ellipse(50,50,100,100,roiEllipse,transparentPen,defaultCircleFill);
-    QGraphicsTextItem *roi2text = new QGraphicsTextItem("2", roiEllipse);
-    roi2text->setPos(roi2text->parentItem()->boundingRect().width()/2-roi2text->boundingRect().width()/2,
-                        roi2text->parentItem()->boundingRect().height()/2-roi2text->boundingRect().height()/2);//this centers the text in the center of the parent
-    roiEllipse->setFlag(QGraphicsItem::ItemIsMovable);
-    roiEllipse2->setFlag(QGraphicsItem::ItemIsMovable);
+//void map_viewer::on_drawTestShapesButton_clicked()
+//{
+//    ROS_WARN("MAP:: Test shape drawing removed");
+////    QPen transparentPen(fullTransparentColor);
+////    map_view_roi_ellipse *roiEllipse = new map_view_roi_ellipse(0,0,100,100,transparentPen,defaultCircleFill);
+////    map_view_roi_ellipse *roiEllipse2 = new map_view_roi_ellipse(50,50,100,100,roiEllipse,transparentPen,defaultCircleFill);
+////    QGraphicsTextItem *roi2text = new QGraphicsTextItem("2", roiEllipse);
+////    roi2text->setPos(roi2text->parentItem()->boundingRect().width()/2-roi2text->boundingRect().width()/2,
+////                        roi2text->parentItem()->boundingRect().height()/2-roi2text->boundingRect().height()/2);//this centers the text in the center of the parent
+////    roiEllipse->setFlag(QGraphicsItem::ItemIsMovable);
+////    roiEllipse2->setFlag(QGraphicsItem::ItemIsMovable);
 
-    scene[ui->fieldSelector->currentIndex()]->addItem(roiEllipse);
-}
-
-void map_viewer::draw_new_roi(/*put roi object info here*/)
-{
-
-}
+////    scene[ui->fieldSelector->currentIndex()]->addItem(roiEllipse);
+//}
 
 void map_viewer::on_gridMapLayerButton_clicked(bool checked)
 {
@@ -118,6 +114,7 @@ void map_viewer::on_initMapButton_clicked()
     if(returnVal == QDialog::Accepted)
     {
         ROS_DEBUG("MAP:: Dialog accepted, sending scene setup alert");
+        ui->fieldDisplay->setCursor(Qt::CrossCursor);
         emit set_scene_setup_alert(false);
     }
 }
@@ -126,4 +123,9 @@ void map_viewer::on_satDriveMapLayerButton_clicked(bool checked)
 {
     ROS_DEBUG("MAP::satDrive Layer Button Clicked %d", (int)checked);
     emit set_map_layer_visibility(map_viewer_enums::SatDriveability, checked);
+}
+
+void map_viewer::on_refresh_layers_button_clicked()
+{
+    ROS_WARN("MAP:: Refreshing Not Implemented Yet");
 }

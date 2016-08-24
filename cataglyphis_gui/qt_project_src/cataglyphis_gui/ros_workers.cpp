@@ -23,6 +23,8 @@ void ros_workers::_implSetup()
     qRegisterMetaType<map_viewer_enums::mapViewerLayers_t>("map_viewer_enums::mapViewerLayers_t");
     qRegisterMetaType<messages::SetStartingPlatform>("messages::SetStartingPlatform");
     qRegisterMetaType<messages::ExecInfo>("messages::ExecInfo");
+    qRegisterMetaType<robot_control::ModifyROI>("robot_control::ModifyROI");
+    qRegisterMetaType<robot_control::ROI>("robot_control::ROI");
 
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     //hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
@@ -52,6 +54,12 @@ void ros_workers::on_run_nav_service(messages::NavFilterControl serviceRequest)
 {
     bool successful = serviceCall<messages::NavFilterControl>("/navigation/navigationfilter/control", &serviceRequest);
     emit nav_service_returned(serviceRequest, successful);
+}
+
+void ros_workers::on_run_modify_roi(robot_control::ModifyROI serviceRequest)
+{
+    bool successful = serviceCall<robot_control::ModifyROI>("/control/mapmanager/modifyroi", &serviceRequest);
+    emit modify_roi_service_returned(serviceRequest, successful);
 }
 
 template<typename T>
@@ -136,51 +144,51 @@ void ros_workers::on_run_map_manager_ROI_service()
     emit map_manager_ROI_service_returned(lastROIMsg, wasSucessful);
 }
 
-void ros_workers::on_run_nav_init_service(messages::NavFilterControl serviceRequest)
-{
-    bool wasSucessful = false;
-    messages::NavFilterControl navControl = serviceRequest;
+//void ros_workers::on_run_nav_init_service(messages::NavFilterControl serviceRequest)
+//{
+//    bool wasSucessful = false;
+//    messages::NavFilterControl navControl = serviceRequest;
 
-    if(navControlClient.exists())
-    {
-        ROS_DEBUG("ros_workers::nav_init_service:: Nav Service Exists!");
-        navControl.request.runBiasRemoval = false;
-        if(navControlClient.call(navControl.request, navControl.response))
-        {
-            ROS_DEBUG("ros_workers::nav_init_service:: Nav Service Call Sucess");
-            wasSucessful = true;
-        }
-        else
-        {
-            ROS_WARN("ros_workers::nav_init_service:: Nav Service Call Failure!");
-        }
-    }
-    else
-    {
-        ROS_WARN("ros_workers::nav_init_service:: Nav Service Does not Exist!");
-        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
-        ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
-        pause.sleep();
-    }
-    if(hsmNAControlClient.exists())
-    {
-        lastHSMNAMsg.request.northAngle = navControl.request.northAngle;
-        if(hsmNAControlClient.call(lastHSMNAMsg.request, lastHSMNAMsg.response))
-        {
-            ROS_DEBUG("ros_workers::nav_init_service:: HSM Service Call Sucess");
-            wasSucessful = true;
-        }
-        else
-        {
-            ROS_WARN("ros_workers::nav_init_service:: HSM Service Call Failure!");
-        }
-    }
-    else
-    {
-        ROS_WARN("ros_workers::nav_init_service:: HSM Service Does not Exist!");
-    }
-    emit nav_init_returned(navControl, wasSucessful);
-}
+//    if(navControlClient.exists())
+//    {
+//        ROS_DEBUG("ros_workers::nav_init_service:: Nav Service Exists!");
+//        navControl.request.runBiasRemoval = false;
+//        if(navControlClient.call(navControl.request, navControl.response))
+//        {
+//            ROS_DEBUG("ros_workers::nav_init_service:: Nav Service Call Sucess");
+//            wasSucessful = true;
+//        }
+//        else
+//        {
+//            ROS_WARN("ros_workers::nav_init_service:: Nav Service Call Failure!");
+//        }
+//    }
+//    else
+//    {
+//        ROS_WARN("ros_workers::nav_init_service:: Nav Service Does not Exist!");
+//        ROS_WARN("ros_worker:: sleeping %d seconds", ON_SERIVCE_FAILURE_RETURN_PAUSE);
+//        ros::Duration pause(ON_SERIVCE_FAILURE_RETURN_PAUSE);
+//        pause.sleep();
+//    }
+//    if(hsmNAControlClient.exists())
+//    {
+//        lastHSMNAMsg.request.northAngle = navControl.request.northAngle;
+//        if(hsmNAControlClient.call(lastHSMNAMsg.request, lastHSMNAMsg.response))
+//        {
+//            ROS_DEBUG("ros_workers::nav_init_service:: HSM Service Call Sucess");
+//            wasSucessful = true;
+//        }
+//        else
+//        {
+//            ROS_WARN("ros_workers::nav_init_service:: HSM Service Call Failure!");
+//        }
+//    }
+//    else
+//    {
+//        ROS_WARN("ros_workers::nav_init_service:: HSM Service Does not Exist!");
+//    }
+//    emit nav_init_returned(navControl, wasSucessful);
+//}
 
 void ros_workers::on_run_bias_removal_service()
 {

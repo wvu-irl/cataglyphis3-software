@@ -28,8 +28,6 @@ class map_viewer : public QWidget
 {
     Q_OBJECT
 
-
-
 signals:
     void request_map_manager_ROI();
     void set_map_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
@@ -43,13 +41,10 @@ public:
     //boost::shared_ptr<Ui::map_viewer> ui;
     Ui::map_viewer_form* ui;
 
-public slots:
-    void draw_new_roi(/*put roi object here*/);
-
 private slots:
     void on_fieldSelector_currentIndexChanged(int index);
 
-    void on_drawTestShapesButton_clicked();
+//    void on_drawTestShapesButton_clicked();
 
     void on_keyframeMapLayerButton_clicked(bool checked);
 
@@ -62,6 +57,8 @@ private slots:
     void on_initMapButton_clicked();
 
     void on_satDriveMapLayerButton_clicked(bool checked);
+
+    void on_refresh_layers_button_clicked();
 
 private:
     QThread rosWorkerThread;

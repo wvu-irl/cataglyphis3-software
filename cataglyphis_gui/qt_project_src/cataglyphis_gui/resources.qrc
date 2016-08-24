@@ -3,6 +3,7 @@
         <file>resources/pattern_test.jpg</file>
         <file>resources/esb.jpg</file>
         <file>resources/institute_park.jpg</file>
+        <file>resources/chestnut_ridge.jpg</file>
     </qresource>
     <qresource prefix="/objects">
         <file>resources/arrowheart2.png</file>

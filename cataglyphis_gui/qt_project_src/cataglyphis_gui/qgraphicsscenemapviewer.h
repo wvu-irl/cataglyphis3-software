@@ -26,6 +26,8 @@
 
 #include <map_viewer_enums.h>
 
+#include <map_view_roi_ellipse.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
@@ -35,6 +37,9 @@
 
 #include <messages/RobotPose.h>
 #include <messages/GlobalMapFull.h>
+
+#include <robot_control/RegionsOfInterest.h>
+#include <robot_control/ROI.h>
 
 #include <ros/ros.h>
 #include <ros_workers.h>
@@ -50,12 +55,14 @@ class QGraphicsSceneMapViewer : public QGraphicsScene
 signals:
     void request_global_map(map_viewer_enums::mapViewerLayers_t requestedLayer);
     void map_viewer_scene_init(bool reInit);
+    void request_roi();
 
 public slots:
     void on_set_ignore_setup_flag(bool status);
     void on_map_manager_gridmap_service_returned(messages::GlobalMapFull gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer, bool wasSucessful);
     void on_set_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
     void on_hsm_global_pose_callback(const messages::RobotPose navInfo);
+    void on_map_manager_roi_service_returned(const robot_control::RegionsOfInterest mapManagerResponse, bool wasSucessful);
 
 public:
     QGraphicsSceneMapViewer(QObject * parent = 0,
@@ -103,6 +110,8 @@ public:
     const layerProperties_t & getLayerProperties(map_viewer_enums::mapViewerLayers_t mapLayer);
     mapLayer_t * getLayerFromEnum(const map_viewer_enums::mapViewerLayers_t &mapLayer);
     void setupLayer(map_viewer_enums::mapViewerLayers_t mapLayer);
+
+    void redrawLayers();
 
     QPointF startPlatformCenter;
 

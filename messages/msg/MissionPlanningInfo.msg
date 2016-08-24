@@ -23,6 +23,7 @@ bool roiKeyframed
 bool startSLAM
 bool giveUpROI
 bool pause
+uint32 numProcs
 uint32 samplesCollected
 uint32 avoidCount
 uint32 examineCount

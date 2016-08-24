@@ -19,8 +19,6 @@ public:
     void wheelEvent(QWheelEvent *event)
     {
         QPoint numDegrees = event->angleDelta();
-        //event->angleDelta().setY(0);
-        //QGraphicsView::wheelEvent(event);
         if (!numDegrees.isNull()) {
             QPointF numSteps = (QPointF)numDegrees / 1200.0;
             scale((numSteps.y()<1)?numSteps.y()+1:numSteps.y(), (numSteps.y()<1)?numSteps.y()+1:numSteps.y());

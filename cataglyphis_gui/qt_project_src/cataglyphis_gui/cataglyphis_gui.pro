@@ -49,7 +49,8 @@ SOURCES +=\
     teleport.cpp \
     exec_info_queue.cpp \
     exec_action_model.cpp \
-    exec_action_item.cpp
+    exec_action_item.cpp \
+    qledindicator.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -76,7 +77,8 @@ HEADERS  += \
     exec_info_queue.h \
     exec_action_model.h \
     exec_action_item.h \
-    exec_action_enums.h
+    exec_action_enums.h \
+    qledindicator.h
 
 FORMS    += \
     generic_error_dialog_form.ui \

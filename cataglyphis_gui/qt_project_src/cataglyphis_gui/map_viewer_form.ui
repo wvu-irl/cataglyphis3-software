@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>646</width>
+    <width>666</width>
     <height>424</height>
    </rect>
   </property>
@@ -19,63 +19,61 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QGraphicsViewScrollScale" name="fieldDisplay">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="cursor" stdset="0">
-        <cursorShape>CrossCursor</cursorShape>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustToContents</enum>
-       </property>
-       <property name="renderHints">
-        <set>QPainter::Antialiasing</set>
-       </property>
-       <property name="dragMode">
-        <enum>QGraphicsView::ScrollHandDrag</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QDockWidget" name="dockWidget">
-       <property name="minimumSize">
-        <size>
-         <width>143</width>
-         <height>251</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>143</width>
-         <height>358</height>
-        </size>
-       </property>
-       <property name="features">
-        <set>QDockWidget::AllDockWidgetFeatures</set>
-       </property>
-       <property name="allowedAreas">
-        <set>Qt::BottomDockWidgetArea|Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
-       </property>
-       <widget class="QWidget" name="dockWidgetContents_2">
+    <widget class="QGraphicsViewScrollScale" name="fieldDisplay">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="cursor" stdset="0">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::AdjustToContents</enum>
+     </property>
+     <property name="renderHints">
+      <set>QPainter::Antialiasing</set>
+     </property>
+     <property name="dragMode">
+      <enum>QGraphicsView::ScrollHandDrag</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDockWidget" name="dockWidget">
+     <property name="minimumSize">
+      <size>
+       <width>191</width>
+       <height>406</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>191</width>
+       <height>524287</height>
+      </size>
+     </property>
+     <property name="features">
+      <set>QDockWidget::AllDockWidgetFeatures</set>
+     </property>
+     <property name="allowedAreas">
+      <set>Qt::BottomDockWidgetArea|Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+     </property>
+     <widget class="QWidget" name="dockWidgetContents_2">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
         <widget class="QToolBox" name="toolBox">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>131</width>
-           <height>331</height>
-          </rect>
+         <property name="minimumSize">
+          <size>
+           <width>173</width>
+           <height>369</height>
+          </size>
          </property>
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click through the different pages of tools&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -88,8 +86,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>131</width>
-            <height>199</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -119,6 +117,11 @@
                <string>MRB-Library Field</string>
               </property>
              </item>
+             <item>
+              <property name="text">
+               <string>Chestnut Ridge</string>
+              </property>
+             </item>
             </widget>
            </item>
            <item>
@@ -138,7 +141,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="drawTestShapesButton">
+            <widget class="QPushButton" name="commit_changes_button">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -146,14 +149,17 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Draw Test Shapes</string>
+              <string>Commit Changes</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_8">
+            <widget class="QPushButton" name="refresh_layers_button">
              <property name="text">
-              <string>PushButton</string>
+              <string>Refresh Active Layers</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -164,8 +170,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>131</width>
-            <height>199</height>
+            <width>165</width>
+            <height>167</height>
            </rect>
           </property>
           <attribute name="label">
@@ -181,7 +187,7 @@
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click to toggle this layer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
-              <string>Keyframe Drive</string>
+              <string>SLAM</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -250,8 +256,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>83</height>
+            <width>107</width>
+            <height>136</height>
            </rect>
           </property>
           <attribute name="label">
@@ -293,8 +299,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>83</height>
+            <width>107</width>
+            <height>136</height>
            </rect>
           </property>
           <attribute name="label">
@@ -336,8 +342,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>83</height>
+            <width>107</width>
+            <height>136</height>
            </rect>
           </property>
           <attribute name="label">
@@ -379,8 +385,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>83</height>
+            <width>107</width>
+            <height>136</height>
            </rect>
           </property>
           <attribute name="label">
@@ -418,10 +424,10 @@
           </layout>
          </widget>
         </widget>
-       </widget>
-      </widget>
-     </item>
-    </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>

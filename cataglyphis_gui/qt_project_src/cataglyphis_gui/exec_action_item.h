@@ -16,7 +16,7 @@
 class exec_action_item : public QStandardItem
 {
 public:
-    exec_action_item(const messages::ExecInfo &currentInfo, int actionNumber)
+    exec_action_item(/*const messages::ExecInfo &currentInfo, int actionNumber*/)
     {
 
 

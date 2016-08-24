@@ -2,7 +2,7 @@
 
 void exec_action_model::addExecActionToList(int actionNumber)
 {
-    actionList.append(new exec_action_item(lastExecInfoMsg, actionNumber));
+    actionList.append(new exec_action_item(/*lastExecInfoMsg, actionNumber*/));
 }
 
 QList<QStandardItem*> exec_action_model::createActionColumn(const messages::ExecInfo &currentInfo, int actionNumber)
