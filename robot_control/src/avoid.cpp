@@ -35,7 +35,8 @@ bool Avoid::runProc()
                 modROISrv.request.hardLockoutROIState = false;
                 modROISrv.request.modROIIndex = currentROIIndex;
                 modROISrv.request.setSampleProps = true;
-                modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*giveUpROIFromAvoidNewSampleProbMultiplier;
+                if(currentROIIndex==0) modROISrv.request.sampleProb = 0.0;
+                else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*giveUpROIFromAvoidNewSampleProbMultiplier;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
                 modROISrv.request.addNewROI = false;
                 modROISrv.request.editGroup = false;

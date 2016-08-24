@@ -170,7 +170,7 @@ public:
 	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
 	const float searchTimeoutPeriod = 15.0; // sec
-	const float sampleFoundNewROIProbMultiplier = 0.01;
+	const float sampleFoundNewROIProbMultiplier = 0.0;
 	const float roiTimeExpiredNewSampleProbMultiplier = 0.05;
 	const float giveUpROIFromAvoidNewSampleProbMultiplier = 0.01;
 	const float biasRemovalTiltLimit = 5.0; // deg
