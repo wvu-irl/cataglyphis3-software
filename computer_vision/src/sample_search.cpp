@@ -3,10 +3,32 @@
 SampleSearch::SampleSearch()
 {
 	searchForSamplesServ = nh.advertiseService("/vision/samplesearch/searchforsamples", &SampleSearch::searchForSamples, this);
+	setSetSampleParamsServ = nh.advertiseService("/vision/samplesearch/setsampleparams", &SampleSearch::setSampleParams, this);
 	segmentImageClient = nh.serviceClient<computer_vision::SegmentImage>("/vision/segmentation/segmentimage");
 	classifierClient = nh.serviceClient<computer_vision::ImageProbabilities>("/classify_feature_vector_service");
 	extractColorClient = nh.serviceClient<computer_vision::ExtractColor>("/vision/segmentation/extractcolor");
 	searchForSamplesPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout",1);
+	
+	// //initialize roi information
+	boost::filesystem::path P( ros::package::getPath("computer_vision") );
+	std::string roi_path = P.string() + "/data/roi_images/";
+	for(int i=0; i<MAX_NUMBER_OF_ROIS; i++)
+	{
+		roi_t roi;
+		roi.probabilities.clear();
+		roi.probabilities.push_back(0);
+		roi.probabilities.push_back(0);
+		roi.probabilities.push_back(0);
+		roi.types.clear();
+		roi.types.push_back(_unknown_t);
+		roi.types.push_back(_unknown_t);
+		roi.types.push_back(_unknown_t);
+		roi.paths.clear(); 
+		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob0.jpg");
+		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob1.jpg");
+		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob2.jpg");
+		_rois.push_back(roi);	
+	}
 }
 
 void SampleSearch::createFolderForImageData()
@@ -255,6 +277,98 @@ void SampleSearch::saveLowAndHighProbabilityBlobs(const std::vector<float> &prob
 	G_image_index++;
 }
 
+void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
+										const std::vector<int> &blobsOfNotInterest, 
+										const std::vector<int> &types, 
+										const std::vector<float> &probabilities, 
+										const int &roi)
+{
+	//filepath for computer vision package
+	boost::filesystem::path P( ros::package::getPath("computer_vision") );
+	// ROS_INFO("%i,%i,%i,%i,%i = ", blobsOfInterest.size(), blobsOfNotInterest.size(), types.size(), probabilities.size(), roi);
+
+	if(roi < MAX_NUMBER_OF_ROIS && roi >= 0)
+	{
+		for(int i=0; i<blobsOfInterest.size(); i++)
+		{
+			// ROS_INFO("PART1 probC, prob0, prob1, prob2 = %f, %f, %f, %f", imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]],_rois[roi].probabilities[0],_rois[roi].probabilities[1],_rois[roi].probabilities[2]);
+			if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]] > _rois[roi].probabilities[0])
+			{
+				// ROS_INFO(">0");
+				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
+				_rois[roi].probabilities[1] = _rois[roi].probabilities[0];
+				_rois[roi].probabilities[0] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+
+				_rois[roi].types[2] = _rois[roi].types[1];
+				_rois[roi].types[1] = _rois[roi].types[0];
+				_rois[roi].types[0] = static_cast<SAMPLE_TYPE_T>(types[i]);
+
+				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
+				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
+			}
+			else if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]] > _rois[roi].probabilities[1])
+			{
+				// ROS_INFO(">1");
+				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
+				_rois[roi].probabilities[1] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+
+				_rois[roi].types[2] = _rois[roi].types[1];
+				_rois[roi].types[1] = static_cast<SAMPLE_TYPE_T>(types[i]);
+
+				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
+			}
+			else if (imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]] > _rois[roi].probabilities[2])
+			{
+				// ROS_INFO(">2");
+				_rois[roi].probabilities[2] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+				_rois[roi].types[2] = static_cast<SAMPLE_TYPE_T>(types[i]);
+				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
+			}
+		}
+
+		for(int i=0; i<blobsOfNotInterest.size(); i++)
+		{
+			// ROS_INFO("PART2 probC, prob0, prob1, prob2 = %f, %f, %f, %f", imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]], _rois[roi].probabilities[0], _rois[roi].probabilities[1], _rois[roi].probabilities[2]);
+			if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[0])
+			{
+				// ROS_INFO(">0");
+				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
+				_rois[roi].probabilities[1] = _rois[roi].probabilities[0];
+				_rois[roi].probabilities[0] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]];
+
+				_rois[roi].types[2] = _rois[roi].types[1];
+				_rois[roi].types[1] = _rois[roi].types[0];
+				_rois[roi].types[0] = _unknown_t;
+
+				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
+				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
+			}
+			else if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[1])
+			{
+				// ROS_INFO(">1");
+				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
+				_rois[roi].probabilities[1] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]];
+
+				_rois[roi].types[2] = _rois[roi].types[1];
+				_rois[roi].types[1] = _unknown_t;
+
+				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
+			}
+			else if (imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[2])
+			{
+				// ROS_INFO(">2");
+				_rois[roi].probabilities[2] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]];
+				_rois[roi].types[2] = _unknown_t;
+				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
+			}
+		}
+	}
+}
+
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
 	gettimeofday(&this->localTimer, NULL);
@@ -467,6 +581,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		//publish the detectable sample
 		if(publish_sample == true)
 		{
+			//fill message for publishing results
 			ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-");
 			position.clear();
 			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
@@ -487,17 +602,58 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     ROS_INFO("Time taken in seconds for sample localization: %f", endSampleLocalizationTime - startSampleLocalizationTime);
 
 	/*
+		Save top samples in ROI and set parameters with ROI info
+	*/
+	gettimeofday(&this->localTimer, NULL);
+    double startROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+
+	saveTopROICandidates(blobsOfInterest, blobsOfNotInterest, extractColorSrv.response.types, imageProbabilitiesSrv.response.responseProbabilities, req.roi);
+
+	gettimeofday(&this->localTimer, NULL);  
+    double endROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    ROS_INFO("Time taken in seconds for adding information to ROIs: %f", endROICandidatesTime - startROICandidatesTime);
+
+	/*
 		Publish results of search
 	*/
     searchForSamplesMsgOut.procType = req.procType; //must return req.procType
     searchForSamplesMsgOut.serialNum = req.serialNum; //must return req.serialNum
     searchForSamplesPub.publish(searchForSamplesMsgOut);
-    ROS_INFO("searchForSamplesMsgOut.sampleList.size() = %i", searchForSamplesMsgOut.sampleList.size());
+    // ROS_INFO("searchForSamplesMsgOut.sampleList.size() = %i", searchForSamplesMsgOut.sampleList.size());
 
 	gettimeofday(&this->localTimer, NULL);
 	double endSearchTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 	ROS_INFO("Total time for search: %f", endSearchTime - startSearchTime);
 
     ros::spinOnce(); //publish results before completing request (important!)
+	return true;
+}
+
+bool SampleSearch::setSampleParams(messages::CVSetSampleParams::Request &req, messages::CVSetSampleParams::Response &res)
+{
+	if(req.roi < MAX_NUMBER_OF_ROIS)
+	{
+		std::string path1Param = "/vision/roi" + patch::to_string(req.roi) + "/path1";
+		std::string path2Param = "/vision/roi" + patch::to_string(req.roi) + "/path2";
+		std::string path3Param = "/vision/roi" + patch::to_string(req.roi) + "/path3";
+		std::string conf1Param = "/vision/roi" + patch::to_string(req.roi) + "/confidence1";
+		std::string conf2Param = "/vision/roi" + patch::to_string(req.roi) + "/confidence2";
+		std::string conf3Param = "/vision/roi" + patch::to_string(req.roi) + "/confidence3";
+		std::string type1Param = "/vision/roi" + patch::to_string(req.roi) + "/type1";
+		std::string type2Param = "/vision/roi" + patch::to_string(req.roi) + "/type2";
+		std::string type3Param = "/vision/roi" + patch::to_string(req.roi) + "/type3";
+
+		nh.setParam(path1Param.c_str(), _rois[req.roi].paths[0]);
+		nh.setParam(path2Param.c_str(), _rois[req.roi].paths[1]);
+		nh.setParam(path3Param.c_str(), _rois[req.roi].paths[2]);
+		nh.setParam(conf1Param.c_str(), _rois[req.roi].probabilities[0]);
+		nh.setParam(conf2Param.c_str(), _rois[req.roi].probabilities[1]);
+		nh.setParam(conf3Param.c_str(), _rois[req.roi].probabilities[2]);
+		nh.setParam(type1Param.c_str(), _rois[req.roi].types[0]);
+		nh.setParam(type2Param.c_str(), _rois[req.roi].types[1]);
+		nh.setParam(type3Param.c_str(), _rois[req.roi].types[2]);
+	}
+
+	res.namespace_str = nh.getNamespace();
 	return true;
 }

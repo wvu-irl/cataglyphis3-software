@@ -1,3 +1,4 @@
+int32 roi
 float32 white
 float32 silver
 float32 blueOrPurple

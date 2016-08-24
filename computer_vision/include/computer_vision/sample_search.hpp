@@ -17,6 +17,7 @@
 #include <vector>
 #include <iostream>
 #include <computer_vision/sample_types.h>
+#include <messages/CVSetSampleParams.h>
 
 class SampleSearch
 {
@@ -26,16 +27,28 @@ public:
 	// Methods
 	SampleSearch(); // Constructor
 	bool searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
+	bool setSampleParams(messages::CVSetSampleParams::Request &req, messages::CVSetSampleParams::Response &res);
 	void createFolderForImageData();
 	void createFileForImageData();
 	void loadCalibrationData();
-	void drawResultsOnImage(const std::vector<int> &blobsOfInterest, const std::vector<int> &blobsOfNotInterest, const std::vector<int> &coordinates, const std::vector<int> &types, const std::vector<float> &probabilities);
-	void saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, const std::vector<int> &coordinates);
+	void drawResultsOnImage(const std::vector<int> &blobsOfInterest, 
+							const std::vector<int> &blobsOfNotInterest, 
+							const std::vector<int> &coordinates, 
+							const std::vector<int> &types, 
+							const std::vector<float> &probabilities);
+	void saveLowAndHighProbabilityBlobs(const std::vector<float> &probabilities, 
+										const std::vector<int> &coordinates);
+	void saveTopROICandidates(const std::vector<int> &blobsOfInterest,
+                              const std::vector<int> &blobsOfNotInterest, 
+                              const std::vector<int> &types, 
+                              const std::vector<float> &probabilities, 
+                              const int &roi);
 	std::vector<double> calculateFlatGroundPositionOfPixel(int u, int v);
 	// Members
 	ros::NodeHandle nh;
 	ros::Publisher searchForSamplesPub;
 	ros::ServiceServer searchForSamplesServ;
+	ros::ServiceServer setSetSampleParamsServ;
 	ros::ServiceClient segmentImageClient;
 	ros::ServiceClient classifierClient;
 	ros::ServiceClient extractColorClient;
@@ -58,6 +71,14 @@ public:
 	int G_image_index;
 	std::ofstream G_outputInfoFile;
 	std::string G_info_filename;
+	struct roi_t
+	{
+		std::vector<float> probabilities;
+		std::vector<SAMPLE_TYPE_T> types;
+		std::vector<std::string> paths;
+	}; 
+	const int MAX_NUMBER_OF_ROIS = 16;
+	std::vector<roi_t> _rois;
 };
 
 #endif // SAMPLE_SEARCH_H

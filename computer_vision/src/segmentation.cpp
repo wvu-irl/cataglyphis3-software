@@ -10,10 +10,10 @@ int Segmentation::setCalibration()
 {
     //load mask from file
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
-    cv::Mat tempMask = cv::imread(P.string() + "/data/images/calibration_mask.jpg");
+    cv::Mat tempMask = cv::imread(P.string() + "/data/calibration/calibration_mask.jpg");
     if(!tempMask.data)
     {
-        tempMask = cv::imread(P.string() + "/data/images/calibration_mask_bak.jpg");
+        tempMask = cv::imread(P.string() + "/data/calibration/calibration_mask_bak.jpg");
         if(!tempMask.data)
         {
             ROS_INFO("Error! Could not load calibration mask... Generating alternative mask for image.");
@@ -439,7 +439,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         split(blob, channels);
 
         //erode image
-        cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(16, 16)); 
+        cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(8, 8)); 
 
         erode(channels[0], channels[0], erodeElement);
         erode(channels[0], channels[0], erodeElement);

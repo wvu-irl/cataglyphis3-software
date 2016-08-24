@@ -97,6 +97,7 @@ find_package(catkin REQUIRED COMPONENTS
    GlobalMapFull.srv
    SetStartingPlatform.srv
    ExecManualOverride.srv
+   CVSetSampleParams.srv
  )
 
 ## Generate actions in the 'action' folder
