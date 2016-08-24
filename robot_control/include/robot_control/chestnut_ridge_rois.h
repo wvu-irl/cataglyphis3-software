@@ -1,8 +1,8 @@
 #ifndef CHESTNUT_RIDGE_ROIS_H
 #define CHESTNUT_RIDGE_ROIS_H
 
-ROI.e = 123.0 - satMapStartE;
-ROI.s = 29.0 - satMapStartS;
+ROI.e = 114.8 - satMapStartE;
+ROI.s = 34.7 - satMapStartS;
 ROI.sampleProb = 1.0;
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 7.5;

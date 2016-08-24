@@ -6,7 +6,7 @@ bool Examine::runProc()
 	switch(state)
 	{
 	case _init_:
-		avoidLockout = true;
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
@@ -42,7 +42,7 @@ bool Examine::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
-		avoidLockout = true;
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

@@ -45,6 +45,7 @@
 #include <messages/CreateROIHazardMap.h>
 #include <messages/NextWaypointOut.h>
 #include <messages/RobotPose.h>
+#include <lidar/ZedCollisionOut.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <pcl/common/transforms.h>
@@ -60,6 +61,7 @@ public:
 	ros::Subscriber _sub_velodyne;
 	ros::Subscriber _sub_waypoint;
 	ros::Subscriber _sub_position;
+	ros::Subscriber _sub_zedcollision;
 	// ros::ServerService ;
 	void setPreviousCounters();
 	bool newPointCloudAvailable();
@@ -106,6 +108,9 @@ private:
 	double _yposition;
 	double _headingposition;
 
+	//zed data
+	int _zedcollision;
+
 	std::vector<float> _hazard_x;
 	std::vector<float> _hazard_y;
 
@@ -124,6 +129,7 @@ private:
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 	void waypointsCallback(messages::NextWaypointOut const &waypoint_msg);
 	void positionCallback(messages::RobotPose const &position_msg);
+	void zedcollisionCallback(lidar::ZedCollisionOut const &zedcollisionout_msg);
 
 	int firstChoice(double angle, double distance);
 	int secondChoice(double angle, double distance, double xg, double yg);

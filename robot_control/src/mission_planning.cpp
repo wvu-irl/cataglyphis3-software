@@ -57,6 +57,7 @@ MissionPlanning::MissionPlanning()
     roiKeyframed = false;
     startSLAM = false;
     giveUpROI = false;
+    possiblyLost = false;
     searchTimedOut = false;
     newSearchActionOnExec = false;
     tiltTooExtremeForBiasRemoval = false;
@@ -458,6 +459,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.inDepositPosition = inDepositPosition;
     infoMsg.missionEnded = missionEnded;
     infoMsg.useDeadReckoning = useDeadReckoning;
+    infoMsg.possiblyLost = possiblyLost;
     infoMsg.roiKeyframed = roiKeyframed;
     infoMsg.startSLAM = startSLAM;
     infoMsg.giveUpROI = giveUpROI;
@@ -545,6 +547,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
         timers[_homingTimer_]->stop();
         timers[_homingTimer_]->start();
         performHoming = false;
+        possiblyLost = false;
     }
 }
 
@@ -572,7 +575,7 @@ void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
     robotStatus.pitchAngle = msg->pitch;
     navStatus = msg->nav_status;
     navStopRequest = msg->stop_request;
-    if(hypot(msg->roll, msg->pitch) > biasRemovalTiltLimit) tiltTooExtremeForBiasRemoval = true;
+    if(msg->pitch > biasRemovalTiltLimit) tiltTooExtremeForBiasRemoval = true;
     else tiltTooExtremeForBiasRemoval = false;
 }
 
@@ -648,6 +651,7 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
     inDepositPosition = req.inDepositPosition;
     missionEnded = req.missionEnded;
     useDeadReckoning = req.useDeadReckoning;
+    possiblyLost = req.possiblyLost;
     roiKeyframed = req.roiKeyframed;
     startSLAM = req.startSLAM;
     giveUpROI = req.giveUpROI;

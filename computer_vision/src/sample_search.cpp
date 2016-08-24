@@ -401,8 +401,8 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     double endSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
 
-    //do not call classifier if no blobs were extracted from segmentation
-	if(segmentImageSrv.response.coordinates.size()/2 < 1)
+    //do not call classifier if no blobs or too many  blobs were extracted from segmentation
+	if(segmentImageSrv.response.coordinates.size()/2 < 1 && segmentImageSrv.response.coordinates.size()/2 > 1000)
 	{
 		ROS_WARN("No blobs detected in image. Not performing classification.");
 		searchForSamplesMsgOut.sampleList.clear();

@@ -372,8 +372,8 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 
 	slamposeout.globalX = TreadTomap(0,3);
 	slamposeout.globalY = TreadTomap(1,3);
-	slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI + addition;
-
+	// slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI + addition;
+	slamposeout.globalHeading = Navfilterout_All_s[read_index].heading_filter * 180 / PI;
 	PositionPub.publish(slamposeout);
 
 	//debug, for testing
@@ -392,33 +392,33 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	position_data_IMU.push_back(position_IMU);
 
 	//output position data to txt file
-	if(position_data.size() > 1300)
-	{
-		std::ofstream outFile;
+	// if(position_data.size() > 1300)
+	// {
+	// 	std::ofstream outFile;
 
-		outFile.open("test_SLAM.txt");
+	// 	outFile.open("test_SLAM.txt");
 
-		for(int i = 1; i < position_data.size(); i++)
-		{
-		// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-			outFile << position_data[i].x << "\t" << position_data[i].y << "\t" <<position_data[i].heading << "\n";
-		}
-		outFile.close();
-	}
+	// 	for(int i = 1; i < position_data.size(); i++)
+	// 	{
+	// 	// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
+	// 		outFile << position_data[i].x << "\t" << position_data[i].y << "\t" <<position_data[i].heading << "\n";
+	// 	}
+	// 	outFile.close();
+	// }
 
-	if(position_data_IMU.size() > 1300)
-	{
-		std::ofstream outFile;
+	// if(position_data_IMU.size() > 1300)
+	// {
+	// 	std::ofstream outFile;
 
-		outFile.open("test_IMU.txt");
+	// 	outFile.open("test_IMU.txt");
 
-		for(int j = 1; j < position_data_IMU.size(); j++)
-		{
-		// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-			outFile << position_data_IMU[j].x << "\t" << position_data_IMU[j].y << "\t" <<position_data_IMU[j].heading <<"\n";
-		}
-		outFile.close();
-	}
+	// 	for(int j = 1; j < position_data_IMU.size(); j++)
+	// 	{
+	// 	// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
+	// 		outFile << position_data_IMU[j].x << "\t" << position_data_IMU[j].y << "\t" <<position_data_IMU[j].heading <<"\n";
+	// 	}
+	// 	outFile.close();
+	// }
 
 }
 	

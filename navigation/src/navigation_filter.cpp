@@ -7,6 +7,8 @@ NavigationFilter::NavigationFilter()
 	stopFlag = false;
 	turnFlag = false;
 
+	sub_mission = nh.subscribe("/control/missionplanning/info", 1, &NavigationFilter::getMissionPlanningInfoCallback, this);
+
 	sub_lidar = nh.subscribe("lidar/lidarfilteringout/lidarfilteringout", 1, &NavigationFilter::getLidarFilterOutCallback, this);
     homing_x=0;
 	homing_y=0;
@@ -227,9 +229,9 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 		state = _forklift_drive;
 		ROS_INFO("init north angle = %f",init_north_angle*RAD_2_DEG);
 		init_filter.initialize_states(init_filter.phi,init_filter.theta,init_north_angle,1,0,init_filter.P_phi,init_filter.P_theta,init_filter.P_psi,init_filter.P_x,init_filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter1.initialize_states(init_filter.phi,init_filter.theta,latest_nav_control_request.initNorthAngle,1,0,init_filter.P_phi,init_filter.P_theta,init_filter.P_psi,init_filter.P_x,init_filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filter2.initialize_states(init_filter.phi,init_filter.theta,latest_nav_control_request.initNorthAngle,1,0,init_filter.P_phi,init_filter.P_theta,init_filter.P_psi,init_filter.P_x,init_filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-		filterS.initialize_states(init_filter.phi,init_filter.theta,latest_nav_control_request.initNorthAngle,1,0,init_filter.P_phi,init_filter.P_theta,init_filter.P_psi,init_filter.P_x,init_filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter1.initialize_states(init_filter.phi,init_filter.theta,init_north_angle,1,0,init_filter.P_phi,init_filter.P_theta,init_filter.P_psi,init_filter.P_x,init_filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filter2.initialize_states(init_filter.phi,init_filter.theta,init_north_angle,1,0,init_filter.P_phi,init_filter.P_theta,init_filter.P_psi,init_filter.P_x,init_filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		filterS.initialize_states(init_filter.phi,init_filter.theta,init_north_angle,1,0,init_filter.P_phi,init_filter.P_theta,init_filter.P_psi,init_filter.P_x,init_filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		init_filter.initialize_variance(collected_gyro_data,2.0*PI/180.0); //performed bias removal, north_angle_unc
 		first_pass = true;
 	}
@@ -601,7 +603,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 			if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.05) && encoders.delta_distance < 5)
 			{
-				if(sqrt(filter.x*filter.x+filter.y*filter.y)<30.0)
+				if(sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)
 				{
 					do_homing = true;
 				}
@@ -997,13 +999,13 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 	{
 		if(do_homing)
 		{
-			filter.verify_homing(homing_heading, homing_x, homing_y);
+			filter.verify_homing(homing_heading, homing_x, homing_y, possibly_lost);
 			if(filter.heading_verified)
 			{
-				filter.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filter1.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filter2.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filterS.initialize_states(filter.phi,filter.theta,homing_heading,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter.initialize_states(filter.phi,filter.theta,filter.heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter1.initialize_states(filter.phi,filter.theta,filter.heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter2.initialize_states(filter.phi,filter.theta,filter.heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filterS.initialize_states(filter.phi,filter.theta,filter.	heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 				homing_updated = true;
 			}
 			filter.heading_verified = false;
@@ -1121,6 +1123,11 @@ void NavigationFilter::getExecInfoCallback(const messages::ExecInfo::ConstPtr &m
 	this->pause_switch = msg->pause;
 	this->turnFlag = msg->turnFlag;
 	this->stopFlag = msg->stopFlag;
+}
+
+void NavigationFilter::getMissionPlanningInfoCallback(const messages::MissionPlanningInfo::ConstPtr &msg)
+{
+	this->possibly_lost = msg->possiblyLost;
 }
 
 void NavigationFilter::getLidarFilterOutCallback(const messages::LidarFilterOut::ConstPtr &msg)

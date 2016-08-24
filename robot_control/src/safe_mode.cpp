@@ -11,6 +11,7 @@ bool SafeMode::runProc()
 	{
 	case _init_:
 		avoidLockout = false;
+		possiblyLost = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
@@ -47,6 +48,7 @@ bool SafeMode::runProc()
 			homingUpdateFailed = false;
 			useDeadReckoning = false;
 			performSafeMode = false;
+			possiblyLost = false;
 		}
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

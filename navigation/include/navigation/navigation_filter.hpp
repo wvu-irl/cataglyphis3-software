@@ -5,6 +5,7 @@
 #include <navigation/imu_class.hpp>
 #include <navigation/filter_class.hpp>
 #include <messages/ExecInfo.h>
+#include <messages/MissionPlanningInfo.h>
 #include <messages/NavFilterOut.h>
 #include <messages/LidarFilterOut.h>
 #include <hsm/user_input_nav_act_class.h>
@@ -36,6 +37,9 @@ class NavigationFilter
 		bool pause_switch;
 		bool stopFlag;
 		bool turnFlag;
+
+		ros::Subscriber sub_mission;
+		bool possibly_lost = false;
 
 		ros::Subscriber sub_lidar;
 		double homing_x;
@@ -85,6 +89,7 @@ class NavigationFilter
 		state_t state = state_waiting;
 	private:
 		void getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg);
+		void getMissionPlanningInfoCallback(const messages::MissionPlanningInfo::ConstPtr &msg);
 		void getLidarFilterOutCallback(const messages::LidarFilterOut::ConstPtr &msg);
 
 	    //added for new User Interface -Matt G.

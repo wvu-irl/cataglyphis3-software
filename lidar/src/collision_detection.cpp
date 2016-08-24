@@ -20,6 +20,7 @@ CollisionDetection::CollisionDetection()
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &CollisionDetection::registrationCallback, this);
 	_sub_waypoint = _nh.subscribe("/control/exec/nextwaypoint", 1, &CollisionDetection::waypointsCallback, this);
 	_sub_position = _nh.subscribe("/hsm/masterexec/globalpose", 1, &CollisionDetection::positionCallback, this);
+	_sub_zedcollision = _nh.subscribe("/zedcollisiondetectionout", 1, &CollisionDetection::zedcollisionCallback, this);
 
 	//predictive avoidance service
 	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
@@ -36,6 +37,9 @@ void CollisionDetection::Initializations()
 	threshold_obstacle_distance = 1;
 	threshold_obstacle_number = 0;
 	threshold_min_angle = 45; //degree, min angle to turn
+
+	//zed data
+	_zedcollision = 0;
 }
 
 void CollisionDetection::waypointsCallback(messages::NextWaypointOut const &waypoint_msg)
@@ -51,6 +55,10 @@ void CollisionDetection::positionCallback(messages::RobotPose const &position_ms
 	_headingposition = position_msg.heading * PI / 180;	//should change to radian
 }
 
+void CollisionDetection::zedcollisionCallback(lidar::ZedCollisionOut const &zedcollisionout_msg)
+{
+	_zedcollision = zedcollisionout_msg.collision;
+}
 
 void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
@@ -156,9 +164,27 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	}
 
 	// ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
+	//check zed input
+	if(_zedcollision != 0)
+	{
+		if(_zedcollision == 1)	//collision on the right
+		{
+			_angle_to_drive = -threshold_min_angle;
+			ROS_INFO_STREAM("ZED, collision on the right");
+		}
 
+		if(_zedcollision == 2)	//collision on the left
+		{
+			_angle_to_drive = threshold_min_angle;
+			ROS_INFO_STREAM("ZED, collision on the left");
+		}
+
+		_distance_to_drive = short_distance;
+
+		_zedcollision = 0;
+	}
 	//check if points exceed threshold
-	if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
+	else if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
 	{	
 		_collision_status = 1;	//detected a obstacle
 
@@ -431,6 +457,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			}
 			else if(choice == 4)	//no option
 			{
+				_collision_status = 2;
 				if(yg_local > 0)
 				{
 					_angle_to_drive = 100;

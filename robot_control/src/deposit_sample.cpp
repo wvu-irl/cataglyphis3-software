@@ -56,6 +56,7 @@ bool DepositSample::runProc()
 		definiteSample = false;
 		sampleDataActedUpon = false;
 		sampleInCollectPosition = false;
+		startSLAM = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

@@ -19,6 +19,7 @@ bool performSafeMode
 bool inDepositPosition
 bool missionEnded
 bool useDeadReckoning
+bool possiblyLost
 bool roiKeyframed
 bool startSLAM
 bool giveUpROI

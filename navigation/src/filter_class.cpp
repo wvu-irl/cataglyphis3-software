@@ -30,6 +30,7 @@ Filter::Filter()
 	heading_verified = false;
 	E_north_angle = 111.0*PI/180.0;
 	north_angle_thresh = 75.0*PI/180.0;
+	heading_update = 0;
 }
 
 void Filter::initialize_states(double phi_init, double theta_init, double psi_init, double x_init, double y_init, double P_phi_init, double P_theta_init, double P_psi_init, double P_x_init, double P_y_init)
@@ -529,7 +530,7 @@ void Filter::blind_turning(double p, double q, double r, double dt)
 	P_psi = P_psi+r*r*dt*dt;
 }
 
-void Filter::verify_homing(double homing_heading, double homing_x, double homing_y)
+void Filter::verify_homing(double homing_heading, double homing_x, double homing_y, bool possibly_lost)
 {
 	if (homing_heading<psi)
 	{
@@ -565,5 +566,11 @@ void Filter::verify_homing(double homing_heading, double homing_x, double homing
 	{
 		heading_verified = false;
 	}
+	if(possibly_lost)
+	{
+		heading_verified = true;
+	}
+
+	heading_update = homing_heading;
 
 }

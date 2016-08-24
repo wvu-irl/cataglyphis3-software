@@ -124,7 +124,7 @@ if __name__ == "__main__":
 	classifierDict = {}
 
 	# classifier version
-	classifierVersion = '7-7-16'
+	classifierVersion = '8-20-16'
 
 	#classifier type
 	classifierType = 0

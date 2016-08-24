@@ -47,6 +47,14 @@ bool NextBestRegion::runProc()
         // Loop through list of ROIs and choose best region not yet searched
         bestROIValue = 0;
         bestROINum = 0;
+        for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
+        {
+            if(regionsOfInterestSrv.response.ROIList.at(i).sampleProb > 0.0)
+            {
+                bestROINum = i;
+                break;
+            }
+        }
         roiHardLockoutSum = 0;
 		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
         {

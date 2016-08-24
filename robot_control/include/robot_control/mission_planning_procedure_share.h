@@ -93,7 +93,7 @@ public:
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86; // m
 	const float distanceToBlindDriveLocation = 0.96; // m
-	const float blindDriveDistance = 0.36; // m
+	const float blindDriveDistance = 0.39; // m
 	const float sideGrabAngleOffset = 15.0; // deg
 	const float initGrabberDistanceTolerance = 0.17; // m
 	const float initGrabberAngleTolerance = 6.0; // deg
@@ -121,6 +121,7 @@ public:
 	static bool inDepositPosition;
 	static bool missionEnded;
 	static bool useDeadReckoning;
+	static bool possiblyLost;
 	static unsigned int samplesCollected;
 	static bool avoidLockout;
 	static bool escapeLockout;
@@ -133,13 +134,13 @@ public:
 	static bool biasRemovalTimedOut;
 	static bool navStopRequest;
 	static unsigned int avoidCount;
-	const unsigned int maxNormalWaypointAvoidCount = 5;
-	const unsigned int maxROIWaypointAvoidCount = 8;
+	const unsigned int maxNormalWaypointAvoidCount = 3;
+	const unsigned int maxROIWaypointAvoidCount = 6;
 	const unsigned int maxCornerWaypointAvoidCount = 12;
 	const unsigned int maxHomeWaypointAvoidCount = 20;
 	const unsigned int fullyBlockedAvoidCountIncrement = 5;
 	const float minAvoidRemainingWaypointDistance = 4.0; // m
-	const float metersPerAvoidCountDecrement = 3.0;
+	const float metersPerAvoidCountDecrement = 8.0;
 	static float prevAvoidCountDecXPos;
 	static float prevAvoidCountDecYPos;
 	static unsigned int numSampleCandidates;
@@ -170,7 +171,7 @@ public:
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m
 	const float lidarUpdateWaitTime = 2.0; // sec
-	const float biasRemovalTimeoutPeriod = 180.0; // sec = 3 minutes
+	const float biasRemovalTimeoutPeriod = 300.0; // sec = 5 minutes
 	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
 	const float searchTimeoutPeriod = 15.0; // sec
 	const float sampleFoundNewROIProbMultiplier = 0.0;
@@ -252,6 +253,7 @@ bool MissionPlanningProcedureShare::performSafeMode;
 bool MissionPlanningProcedureShare::inDepositPosition;
 bool MissionPlanningProcedureShare::missionEnded;
 bool MissionPlanningProcedureShare::useDeadReckoning;
+bool MissionPlanningProcedureShare::possiblyLost;
 unsigned int MissionPlanningProcedureShare::samplesCollected;
 bool MissionPlanningProcedureShare::avoidLockout;
 bool MissionPlanningProcedureShare::escapeLockout;

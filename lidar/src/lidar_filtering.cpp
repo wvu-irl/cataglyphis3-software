@@ -1259,18 +1259,16 @@ void LidarFilter::fitCylinderLong()
 				outputFile << _potential_cylinders_nonintensity[i].points(1,jj) << ",";
 				outputFile << _potential_cylinders_nonintensity[i].points(2,jj) << ",";
 				outputFile << _potential_cylinders_nonintensity[i].points(3,jj) << ",";
-				outputFile << i << ","; //cylinder number
 				outputFile << _potential_cylinders_nonintensity[i].point_in_space(0,0) << ",";
 				outputFile << _potential_cylinders_nonintensity[i].point_in_space(1,0) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].point_in_space(2,0) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].axis_direction(0,0) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].axis_direction(1,0) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].axis_direction(2,0) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].raius_estimate(0,0) << ",";
 				outputFile << X(0) << ",";
 				outputFile << X(1) << ",";
 				outputFile << X(2) << ",";
 				outputFile << X(3) << ",";
+				outputFile << i << ","; //cylinder number
+				outputFile << 1 << ","; //nonintensity = 1
+				outputFile << _stitch_counter << ",";
+				outputFile << keep_nonintensity << ","; 
 				outputFile << diff1+diff2 << ","; 
 				outputFile << explode; 
 				outputFile << std::endl; 	
@@ -1286,18 +1284,16 @@ void LidarFilter::fitCylinderLong()
 				outputFile << _potential_cylinders_intensity[i].points(1,jj) << ",";
 				outputFile << _potential_cylinders_intensity[i].points(2,jj) << ",";
 				outputFile << _potential_cylinders_intensity[i].points(3,jj) << ",";
-				outputFile << i << ","; //cylinder number
 				outputFile << _potential_cylinders_intensity[i].point_in_space(0,0) << ",";
 				outputFile << _potential_cylinders_intensity[i].point_in_space(1,0) << ",";
-				outputFile << _potential_cylinders_intensity[i].point_in_space(2,0) << ",";
-				outputFile << _potential_cylinders_intensity[i].axis_direction(0,0) << ",";
-				outputFile << _potential_cylinders_intensity[i].axis_direction(1,0) << ",";
-				outputFile << _potential_cylinders_intensity[i].axis_direction(2,0) << ",";
-				outputFile << _potential_cylinders_intensity[i].raius_estimate(0,0) << ",";
 				outputFile << X(0) << ",";
 				outputFile << X(1) << ",";
 				outputFile << X(2) << ",";
 				outputFile << X(3) << ",";
+				outputFile << i << ","; //cylinder number
+				outputFile << 2 << ","; //intensity = 2
+				outputFile << _stitch_counter << ","; 
+				outputFile << keep_intensity << ",";
 				outputFile << diff1+diff2 << ","; 
 				outputFile << explode; 
 				outputFile << std::endl; 	
