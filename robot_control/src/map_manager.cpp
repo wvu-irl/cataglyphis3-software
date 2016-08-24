@@ -62,7 +62,7 @@ MapManager::MapManager()
 
 #ifdef CHESTNUT_RIDGE
 // ROIs for Chestnut Ridge Park
-#include <robot_control/quad_rois.h>
+#include <robot_control/chestnut_ridge_rois.h>
 #endif // CHESTNUT_RIDGE
 
 	// ***********************************

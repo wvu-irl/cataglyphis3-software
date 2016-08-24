@@ -318,7 +318,7 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute goHome");
             voiceSay->call("go home");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && performHoming && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
@@ -468,6 +468,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.examineCount = examineCount;
     infoMsg.backupCount = backUpCount;
     infoMsg.confirmCollectFailedCount = confirmCollectFailedCount;
+    infoMsg.homingUpdatedFailedCount = homingUpdatedFailedCount;
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
         infoMsg.procsToExecute.at(i) = procsToExecute[i];
@@ -650,13 +651,13 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
     roiKeyframed = req.roiKeyframed;
     startSLAM = req.startSLAM;
     giveUpROI = req.giveUpROI;
-    pause = req.pause;
+    robotStatus.pauseSwitch = req.pause;
     samplesCollected = req.samplesCollected;
     avoidCount = req.avoidCount;
     examineCount = req.examineCount;
     backUpCount = req.backupCount;
     confirmCollectFailedCount = req.confirmCollectFailedCount;
-    homingUpdatedFailedCount = req.homingUpdateFailedCount;
+    homingUpdatedFailedCount = req.homingUpdatedFailedCount;
     for(int i=0; i<req.numProcs; i++)
     {
         procsToExecute[i] = req.procsToExecute.at(i);
