@@ -99,8 +99,8 @@ public:
 	const float initGrabberAngleTolerance = 6.0; // deg
 	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
 	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
-	const float possibleSampleConfThresh = 0.5;
-	const float definiteSampleConfThresh = 0.6;
+	const float possibleSampleConfThresh = 0.6;
+	const float definiteSampleConfThresh = 0.62;
 	static int currentROIIndex;
 	static bool initialized;
 	static bool escapeCondition;
@@ -159,7 +159,7 @@ public:
 	const unsigned int maxHomingUpdatedFailedCount = 3;
 	const unsigned int homingFailedSwitchToDeadReckoningCount = 2;
 	const float sampleConfidenceGain = 1.0;
-	const float sampleDistanceToExpectedGain = 1.0;
+	const float sampleDistanceToExpectedGain = 0.3;
 	const float defaultVMax = 1.2; // m/s
 	const float fastVMax = 1.4; // m/s
 	const float slowVMax = 0.6; // m/s
