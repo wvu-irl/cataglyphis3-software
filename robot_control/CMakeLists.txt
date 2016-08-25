@@ -152,6 +152,7 @@ include_directories(
  add_library(approach src/approach.cpp)
  add_library(collect src/collect.cpp)
  add_library(confirm_collect src/confirm_collect.cpp)
+ add_library(reorient src/reorient.cpp)
  add_library(go_home src/go_home.cpp)
  add_library(square_update src/square_update.cpp)
  add_library(deposit_approach src/deposit_approach.cpp)
@@ -229,6 +230,7 @@ include_directories(
    approach
    collect
    confirm_collect
+   reorient
    go_home
    square_update
    deposit_approach

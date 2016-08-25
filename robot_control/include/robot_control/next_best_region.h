@@ -12,6 +12,8 @@ public:
 	int roiHardLockoutSum;
 	bool tempGoHome;
 	const float distanceShortOfROI = 5.0; // m
+	const float maxDistanceToSearchRegion = 5.0; // m
+	float distanceToRegion;
 	float angleToROI;
 	std::vector<float> terrainHazard;
 	const float negValueIncrement = 0.2;

@@ -39,6 +39,7 @@ MissionPlanning::MissionPlanning()
     sampleDataActedUpon = false;
     sampleInCollectPosition = false;
     sideOffsetGrab = false;
+    performReorient = false;
     confirmedPossession = false;
     atHome = false;
     homingUpdateFailed = false;
@@ -79,6 +80,7 @@ MissionPlanning::MissionPlanning()
     approach.reg(__approach__);
     collect.reg(__collect__);
     confirmCollect.reg(__confirmCollect__);
+    reorient.reg(__reorient__);
     goHome.reg(__goHome__);
     squareUpdate.reg(__squareUpdate__);
     depositApproach.reg(__depositApproach__);
@@ -90,6 +92,7 @@ MissionPlanning::MissionPlanning()
     currentROIIndex = 99;
     examineCount = 0;
     backUpCount = 0;
+    reorientCount = 0;
     confirmCollectFailedCount = 0;
     homingUpdatedFailedCount = 0;
     missionTime = 0.0;
@@ -258,7 +261,7 @@ void MissionPlanning::evalConditions_()
                 }
             }
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !sampleInCollectPosition && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Next Best Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
@@ -271,7 +274,7 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !sampleInCollectPosition && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
@@ -283,55 +286,61 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && performBiasRemoval && /*!(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && */!escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Bias Removal
+        if(numProcsBeingOrToBeExecOrRes==0 && performBiasRemoval && /*!(!possessingSample != !confirmedPossession) && !(possibleSample || definiteSample) && !sampleInCollectPosition && !performReorient && !inDepositPosition && */!escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Bias Removal
         {
             procsToExecute[__biasRemoval__] = true;
             ROS_INFO("to execute bias removal");
             voiceSay->call("bias removal");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Examine
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && possibleSample && !definiteSample && !performReorient && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Examine
         {
             procsToExecute[__examine__] = true;
             ROS_INFO("to execute examine");
             voiceSay->call("examine");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && definiteSample && !sampleInCollectPosition && !performReorient && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Approach
         {
             procsToExecute[__approach__] = true;
             ROS_INFO("to execute approach");
             voiceSay->call("approach");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && sampleInCollectPosition && !possessingSample && !confirmedPossession && !performReorient && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Collect
         {
             procsToExecute[__collect__] = true;
             ROS_INFO("to execute collect");
             voiceSay->call("collect");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && !confirmedPossession && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Confirm Collect
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && !confirmedPossession && !performReorient && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Confirm Collect
         {
             procsToExecute[__confirmCollect__] = true;
             ROS_INFO("to execute confirmCollect");
             voiceSay->call("confirm collect");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed && !sampleInCollectPosition && !possessingSample)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && performReorient && !(possibleSample || definiteSample) && !sampleInCollectPosition && !possessingSample && !confirmedPossession && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Reorient
+        {
+            procsToExecute[__reorient__] = true;
+            ROS_INFO("to execute reorient");
+            voiceSay->call("reorient");
+        }
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed && !sampleInCollectPosition && !possessingSample && !performReorient)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
             voiceSay->call("go home");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !(possibleSample || definiteSample) && !sampleInCollectPosition && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !(possibleSample || definiteSample) && !sampleInCollectPosition && !performReorient && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
             voiceSay->call("square update");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Deposit Approach
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && !inDepositPosition && !homingUpdateFailed && !performReorient && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Deposit Approach
         {
             procsToExecute[__depositApproach__] = true;
             ROS_INFO("to execute depositApproach");
             voiceSay->call("deposit approach");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Deposit Sample
+        if(numProcsBeingOrToBeExecOrRes==0 && possessingSample && confirmedPossession && atHome && inDepositPosition && !homingUpdateFailed && !performReorient && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Deposit Sample
         {
             procsToExecute[__depositSample__] = true;
             ROS_INFO("to execute depositSample");
@@ -380,6 +389,7 @@ void MissionPlanning::runProcedures_()
     approach.run();
     collect.run();
     confirmCollect.run();
+    reorient.run();
     goHome.run();
     squareUpdate.run();
     depositApproach.run();
@@ -452,6 +462,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.definiteSample = definiteSample;
     infoMsg.sampleInCollectPosition = sampleInCollectPosition;
     infoMsg.sideOffsetGrab = sideOffsetGrab;
+    infoMsg.performReorient = performReorient;
     infoMsg.confirmedPossession = confirmedPossession;
     infoMsg.atHome = atHome;
     infoMsg.homingUpdateFailed = homingUpdateFailed;
@@ -470,6 +481,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     infoMsg.examineCount = examineCount;
     infoMsg.backupCount = backUpCount;
     infoMsg.confirmCollectFailedCount = confirmCollectFailedCount;
+    infoMsg.reorientCount = reorientCount;
     infoMsg.homingUpdatedFailedCount = homingUpdatedFailedCount;
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -508,6 +520,9 @@ void MissionPlanning::packAndPubInfoMsg_()
             break;
         case __confirmCollect__:
             infoMsg.procStates.at(i) = confirmCollect.state;
+            break;
+        case __reorient__:
+            infoMsg.procStates.at(i) = reorient.state;
             break;
         case __goHome__:
             infoMsg.procStates.at(i) = goHome.state;
@@ -644,6 +659,7 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
     definiteSample = req.definiteSample;
     sampleInCollectPosition = req.sampleInCollectPosition;
     sideOffsetGrab = req.sideOffsetGrab;
+    performReorient = req.performReorient;
     confirmedPossession = req.confirmedPossession;
     atHome = req.atHome;
     homingUpdateFailed = req.homingUpdateFailed;
@@ -661,6 +677,7 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
     examineCount = req.examineCount;
     backUpCount = req.backupCount;
     confirmCollectFailedCount = req.confirmCollectFailedCount;
+    reorientCount = req.reorientCount;
     homingUpdatedFailedCount = req.homingUpdatedFailedCount;
     for(int i=0; i<req.numProcs; i++)
     {
@@ -699,6 +716,9 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
             break;
         case __confirmCollect__:
             confirmCollect.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
+            break;
+        case __reorient__:
+            reorient.state = static_cast<PROC_STATE_T>(req.procStates.at(i));
             break;
         case __goHome__:
             goHome.state = static_cast<PROC_STATE_T>(req.procStates.at(i));

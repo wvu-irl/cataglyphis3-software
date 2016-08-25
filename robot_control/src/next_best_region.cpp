@@ -189,8 +189,11 @@ bool NextBestRegion::runProc()
         break;
     case _finish_:
         if(execLastProcType != procType || execLastSerialNum != serialNum) sendDequeClearAll();
-        if(giveUpROI) inSearchableRegion = false;
+        distanceToRegion = hypot(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).x - robotStatus.xPos,
+                                 regionsOfInterestSrv.response.ROIList.at(currentROIIndex).y - robotStatus.yPos);
+        if(giveUpROI || (distanceToRegion > maxDistanceToSearchRegion)) inSearchableRegion = false;
         else inSearchableRegion = true;
+        if(distanceToRegion > maxDistanceToSearchRegion) currentROIIndex = 99;
         giveUpROI = false;
         /*if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
         else
