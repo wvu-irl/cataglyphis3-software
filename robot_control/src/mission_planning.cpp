@@ -401,12 +401,12 @@ void MissionPlanning::runPause_()
 
 void MissionPlanning::pauseAllTimers_()
 {
-    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->pause();
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running && (static_cast<TIMER_NAMES_T>(i) != _biasRemovalTimer_)) timers[i]->pause();
 }
 
 void MissionPlanning::resumeTimers_()
 {
-    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running) timers[i]->resume();
+    for(int i=0; i<NUM_TIMERS; i++) if(timers[i]->running && (static_cast<TIMER_NAMES_T>(i) != _biasRemovalTimer_)) timers[i]->resume();
 }
 
 void MissionPlanning::serviceSearchTimer_()
