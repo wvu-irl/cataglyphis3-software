@@ -194,7 +194,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     {
         boundingBoxonBlob = boundingRect(cv::Mat(contourPoints[i]));
 
-        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 500 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 500 ) //used to be 350
+        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 300 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 300 ) //used to be 350
         {
         	//ignore blob
         	ROS_INFO("ignoring blob (size) %i",i);
@@ -231,15 +231,15 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         //         continue;
         //     }
         // }
-        // if(distanceFromCenterOfImageInPixels < 2000)
-        // {
-        //     if(segmentAreaInPixels < 1000)
-        //     {
-        //         //ignore blob
-        //         ROS_INFO("ignoring (far area thresh) %i",i);
-        //         continue;              
-        //     }
-        // }
+        if(distanceFromCenterOfImageInPixels < 5792/2)
+        {
+            if(segmentAreaInPixels < 30)
+            {
+                //ignore blob
+                ROS_INFO("ignoring (far area thresh) %i",i);
+                continue;              
+            }
+        }
 
         blob_list.push_back(boundingBoxonBlob);
     }
@@ -275,9 +275,53 @@ std::vector<int> Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectang
         if(br_y > origional.rows) br_y = origional.rows; 
         cv::Rect extended_rect = cv::Rect( cv::Point(tl_x,tl_y), cv::Point(br_x,br_y) );
 
+        //get centers of blob in image
+        int cx = rectangles[i].x+rectangles[i].width/2;
+        int cy = rectangles[i].y+rectangles[i].height/2;
+
+        //move the coordinate of the object to intersection point of the line passing through
+        //the center of the image and the center of the rectangle. we are assuming that
+        //the point cx,cy (as well as tx,ty) is inside the rectangle, and the center of the image 
+        //which is (0,0) in the t coordinate frame is outside of the rectangle
+        float tx = cx - 5792/2; //transform to standard coordinate system
+        float ty = -(cy - 5792/2); //transform to standard coordinate system
+        float h = rectangles[i].height;
+        float w = rectangles[i].width;
+        float m = ty/tx;
+        float txTemp = cx;
+        float tyTemp = cy;
+        if(-h/2 <= m*w/2 && m*w/2 <= h/2)
+        {
+            if(tx <= 0) //intersects right side of rectangle
+            {
+                txTemp = tx+w/2;
+                tyTemp = m*txTemp;
+            }
+            else //intersects left side of rectangle
+            {
+                txTemp = tx-w/2;
+                tyTemp = m*txTemp;
+            }
+        }
+        if(-w/2 <= (h/2)/m && (h/2)/m <= w/2)
+        {
+            if(ty <= 0) //intersects the top side of rectangle
+            {
+                tyTemp = ty+h/2;
+                txTemp = (ty+h/2)/m;
+            }
+            else //intersects the bottom side of rectangle
+            {
+                tyTemp = ty-h/2;
+                txTemp = (ty-h/2)/m;
+            }
+        }
+        cx = txTemp + 5792/2;
+        cy = -1*tyTemp + 5792/2;
+
         //coordinate of center of blob [u1,v1,u2,v2,...,un,vn]
-        coordinates.push_back(rectangles[i].x+rectangles[i].width/2);
-        coordinates.push_back(rectangles[i].y+rectangles[i].height/2);
+        coordinates.push_back(cx); //rectangles[i].x+rectangles[i].width/2
+        coordinates.push_back(cy); //rectangles[i].y+rectangles[i].height/2
 
         //write image of blob to file
         imwrite(folder.string() + "blob" + patch::to_string(i) + ".jpg", origional(extended_rect) );

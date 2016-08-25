@@ -1,5 +1,14 @@
 int32 type
-int32 color
+float32 confidenceCach
+float32 confidenceHard
+float32 confidenceRock
+bool white
+bool silver
+bool blueOrPurple
+bool pink
+bool red
+bool orange
+bool yellow
 float32 distance
 float32 bearing
 float32 confidence

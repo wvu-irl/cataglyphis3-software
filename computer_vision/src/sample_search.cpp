@@ -201,6 +201,7 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, c
 	{
 		std::vector<int> color = map_enum_to_color(static_cast<SAMPLE_TYPE_T>(types[i]));
 		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 100, cv::Scalar(color[0], color[1], color[2]), 3, 8);
+		circle(src, cv::Point(coordinates[blobsOfInterest[i]*2],coordinates[blobsOfInterest[i]*2+1]), 5, cv::Scalar(0,0,0), 3, 8);
 
 		float scale_img  = 600.f/(sqrt(5792*5792*2.5));
 		float scale_font = (float)(2-scale_img)/1.4f;
@@ -215,6 +216,7 @@ void SampleSearch::drawResultsOnImage(const std::vector<int> &blobsOfInterest, c
 	for(int i=0; i<blobsOfNotInterest.size(); i++)
 	{
 		circle(src, cv::Point(coordinates[blobsOfNotInterest[i]*2],coordinates[blobsOfNotInterest[i]*2+1]), 100, cv::Scalar(0,255,0), 3, 8);
+		circle(src, cv::Point(coordinates[blobsOfNotInterest[i]*2],coordinates[blobsOfNotInterest[i]*2+1]), 5, cv::Scalar(0,0,0), 3, 8);
 		float scale_img  = 600.f/(sqrt(5792*5792*2.5));
 		float scale_font = (float)(2-scale_img)/1.4f;
 		int tempProb = 100*probabilities[blobsOfNotInterest[i]];
@@ -438,7 +440,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return true;
 	}
 
-	
+	G_cach_probabilities.clear();
+	G_hard_probabilities.clear();
+	G_rock_probabilities.clear();
+	G_sample_probabilities.clear();
+	G_sample_ids.clear();
 	if(req.roi == 0)
 	{
 		//precached sample classifier
@@ -461,10 +467,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		}
 
 		//assign probabilties and sample ids
-		G_sample_probabilities.clear();
-		G_sample_ids.clear();
 		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs from segmentation
 		{
+			G_cach_probabilities.push_back(imageProbabilitiesSrv.response.responseProbabilities[i]);
+			G_hard_probabilities.push_back(0);
+			G_rock_probabilities.push_back(0);
 			G_sample_probabilities.push_back(imageProbabilitiesSrv.response.responseProbabilities[i]);
 			G_sample_ids.push_back(0);
 		}
@@ -472,14 +479,13 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	else
 	{
 		//hard sample classifier
-		std::vector<float> tempHardProbabilities;
 		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 		imageProbabilitiesSrv.request.imgSize = 50;
 		imageProbabilitiesSrv.request.classifierType = 1;
 		if(classifierClient.call(imageProbabilitiesSrv))
 		{
 			ROS_INFO("imageProbabilitiesSrv call successful with type 1 (hard)!");
-			tempHardProbabilities = imageProbabilitiesSrv.response.responseProbabilities;
+			G_hard_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
 		}
 		else
 		{
@@ -493,14 +499,13 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		}
 
 		//rock sample classifier
-		std::vector<float> tempRockProbabilities;
 		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 		imageProbabilitiesSrv.request.imgSize = 50;
 		imageProbabilitiesSrv.request.classifierType = 2;
 		if(classifierClient.call(imageProbabilitiesSrv))
 		{
 			ROS_INFO("imageProbabilitiesSrv call successful with type 2 (rock)!");
-			tempRockProbabilities = imageProbabilitiesSrv.response.responseProbabilities;
+			G_rock_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
 		}
 		else
 		{
@@ -514,10 +519,9 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		}
 
 		//make sure the number of blobs is correct
-		if(tempRockProbabilities.size() != tempHardProbabilities.size() || tempRockProbabilities.size() != segmentImageSrv.response.coordinates.size()/2)
+		if(G_rock_probabilities.size() != G_hard_probabilities.size() || G_rock_probabilities.size() != segmentImageSrv.response.coordinates.size()/2)
 		{
-			ROS_ERROR("Error! The size of tempRockProbabilities and tempHardProbabilities should be equal to the number of blobs from segmentation!");
-
+			ROS_ERROR("Error! The size of G_rock_probabilities and G_hard_probabilities should be equal to the number of blobs from segmentation!");
 		}
 
 		//assign probabilties and sample ids (use higher probability and the cooresponding id)
@@ -525,15 +529,16 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		G_sample_ids.clear();
 		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs in rock and hard probabilities
 		{
-			if(tempHardProbabilities[i] > tempRockProbabilities[i])
+			G_cach_probabilities.push_back(0);
+			if(G_hard_probabilities[i] >= G_rock_probabilities[i])
 			{
-				G_sample_probabilities.push_back(tempHardProbabilities[i]);
+				G_sample_probabilities.push_back(G_hard_probabilities[i]);
 				G_sample_ids.push_back(1);
 			}
 			else
 			{
-				G_sample_probabilities.push_back(tempRockProbabilities[i]);
-				G_sample_ids.push_back(2);
+				G_sample_probabilities.push_back(G_rock_probabilities[i]);
+				G_sample_ids.push_back(0);
 			}
 		}
 	}
@@ -612,85 +617,42 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	searchForSamplesMsgOut.sampleList.clear();
 	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
-		bool publish_sample = false;
-
-		//only publish detectable samples that are requested
-		switch(static_cast<SAMPLE_TYPE_T>(extractColorSrv.response.types[i]))
+		//position of sample
+		position.clear();
+		position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
+		sampleProps.distance = position[0];
+		sampleProps.bearing = position[1];
+		
+		//type of sample
+		sampleProps.white = false;
+		sampleProps.silver = false;
+		sampleProps.blueOrPurple = false;
+		sampleProps.pink = false;
+		sampleProps.red = false;
+		sampleProps.orange = false;
+		sampleProps.yellow = false;	
+		std::vector<SAMPLE_TYPE_T> possibleTypes = map_to_simple_color( static_cast<SAMPLE_TYPE_T>(extractColorSrv.response.types[i]) );
+		for(int j=0; j<possibleTypes.size(); j++) //change each type to true if possible
 		{
-			case _unknown_t:
-				publish_sample = true; ROS_INFO("_uknown_t");
-				break;
-			case _white_t:
-				if(req.white > 0.5 || req.silver > 0.5) {publish_sample = true; ROS_INFO("_white_t");}
-				else publish_sample = false;
-				break;
-			case _whiteBlueOrPurple_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.blueOrPurple > 0.5) {publish_sample = true; ROS_INFO("_whiteBlueOrPurple_t");}
-				else publish_sample = false;
-				break;
-			case _whitePink_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.pink > 0.5 || req.red > 0.5) {publish_sample = true; ROS_INFO("_whitePink_t");}
-				else publish_sample = false;
-				break;
-			case _whiteRed_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.red > 0.5 || req.pink > 0.5) {publish_sample = true; ROS_INFO("_whiteRed_t");}
-				else publish_sample = false;
-				break;
-			case _whiteOrange_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.orange > 0.5) {publish_sample = true; ROS_INFO("_whiteOrange_t");}
-				else publish_sample = false;
-				break;
-			case _whiteYellow_t:
-				if(req.white > 0.5 || req.silver > 0.5 || req.yellow > 0.5) {publish_sample = true; ROS_INFO("_whiteYellow_t");}
-				else publish_sample = false;
-				break;
-			case _silver_t:
-				if(req.white > 0.5 || req.silver > 0.5) {publish_sample = true; ROS_INFO("_silver_t");}
-				else publish_sample = false;
-				break;
-			case _blueOrPurple_t:
-				if(req.blueOrPurple > 0.5) {publish_sample = true; ROS_INFO("_blueOrPurple_t");}
-				else publish_sample = false;
-				break;
-			case _pink_t:
-				if(req.pink > 0.5 || req.white > 0.5 || req.red > 0.5) {publish_sample = true; ROS_INFO("_pink_t");}
-				else publish_sample = false;
-				break;
-			case _red_t:
-				if(req.red > 0.5 || req.pink > 0.5) {publish_sample = true; ROS_INFO("_red_t");}
-				else publish_sample = false;
-				break;
-			case _orange_t:
-				if(req.orange > 0.5) {publish_sample = true; ROS_INFO("_orange_t");}
-				else publish_sample = false;
-				break;
-			case _yellow_t:
-				if(req.yellow > 0.5) {publish_sample = true; ROS_INFO("_yellow_t");}
-				else publish_sample = false;
-				break;
-			default:
-				publish_sample = true; ROS_INFO("_default");
-				break;
+			if(possibleTypes[j] == _white_t) sampleProps.white = true;
+			if(possibleTypes[j] == _silver_t) sampleProps.silver = true;
+			if(possibleTypes[j] == _blueOrPurple_t) sampleProps.blueOrPurple = true;
+			if(possibleTypes[j] == _pink_t) sampleProps.pink = true;
+			if(possibleTypes[j] == _red_t) sampleProps.red = true;
+			if(possibleTypes[j] == _orange_t) sampleProps.orange = true;
+			if(possibleTypes[j] == _yellow_t) sampleProps.yellow = true;
 		}
 
-		//publish the detectable sample
-		if(publish_sample == true)
-		{
-			//fill message for publishing results
-			ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-");
-			position.clear();
-			position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
-			sampleProps.type = extractColorSrv.response.types[i];
-			sampleProps.distance = position[0];
-			sampleProps.bearing = position[1];
-			sampleProps.confidence = G_sample_probabilities[blobsOfInterest[i]];
-			ROS_INFO("Sample detected at:");
-			ROS_INFO("d = %f meters", sampleProps.distance);
-			ROS_INFO("bearing = %f degrees", sampleProps.bearing);
-			ROS_INFO("confidence = %f", sampleProps.confidence);
-			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
-		}
+		//confidence of sample
+		sampleProps.confidenceCach = G_cach_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceHard = G_hard_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceRock = G_rock_probabilities[blobsOfInterest[i]];
+		sampleProps.confidence = G_sample_probabilities[blobsOfInterest[i]];
+
+		//add sample information to message
+		searchForSamplesMsgOut.sampleList.push_back(sampleProps);
 	}
+
 
 	gettimeofday(&this->localTimer, NULL);  
     double endSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
