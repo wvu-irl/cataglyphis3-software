@@ -9,8 +9,7 @@ public:
 	int run();
 private:
 	int dropPos_;
-	const int dropTol_ = 10;
-	Leading_Edge_Latch dropStatusLEL_;
+	const int dropTol_ = 30;
 };
 
 #endif // GRABBER_SET_DROP_H

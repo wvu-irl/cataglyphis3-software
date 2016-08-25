@@ -58,6 +58,8 @@ Exec::Exec()
 void Exec::run()
 {
     ROS_INFO_THROTTLE(3,"Exec running...");
+    dropStatusLEL_.LE_Latch(robotStatus.grabberDropStatus);
+    slideStatusLEL_.LE_Latch(robotStatus.grabberSlideStatus);
     if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.clearDeques();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque

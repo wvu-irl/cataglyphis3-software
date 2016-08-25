@@ -4,6 +4,7 @@
 #include "robot_status.h"
 #include <messages/CVSearchCmd.h>
 #include <ros/ros.h>
+#include "bit_utils.h"
 
 class RobotControlInterface
 {
@@ -12,6 +13,8 @@ public:
     static RobotOutputs robotOutputs;
 	static ros::ServiceClient cvSearchCmdClient;
 	static messages::CVSearchCmd cvSearchCmdSrv;
+	Leading_Edge_Latch dropStatusLEL_;
+	Leading_Edge_Latch slideStatusLEL_;
 };
 
 RobotStatus RobotControlInterface::robotStatus;

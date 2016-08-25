@@ -3,7 +3,6 @@
 #include "action_params.h"
 #include "robot_control_interface.h"
 #include <math.h>
-#include "bit_utils.h"
 
 class Task : public RobotControlInterface
 {
