@@ -51,7 +51,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
             divergenceStartTime = ros::Time::now().toSec();
         }
         else if(navSolutionError <= divergenceTriggerDistance && divergenceDetected) divergenceDetected = false;
-        if((ros::Time::now().toSec() - divergenceStartTime) > divergenceTriggerTime && divergenceDetected) divergenceState = __diverged__;
+        if(((ros::Time::now().toSec() - divergenceStartTime) > divergenceTriggerTime) && divergenceDetected) divergenceState = __diverged__;
         else divergenceState = __notDiverged__;
         navSolutionsDiverged = false;
         break;

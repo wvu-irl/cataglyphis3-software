@@ -136,7 +136,7 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     pushToFrontFlag_ = req.pushToFrontFlag;
     clearDequeFlag_ = req.clearDequeFlag;
     clearFrontFlag_ = req.clearFrontFlag;
-    pause_ = req.pause;
+    if(!req.pauseUnchanged) pause_ = req.pause;
 	params_.actionType = nextActionType_;
     params_.float1 = req.float1;
     params_.float2 = req.float2;
