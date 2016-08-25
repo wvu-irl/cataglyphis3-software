@@ -58,6 +58,8 @@ Exec::Exec()
 void Exec::run()
 {
     ROS_INFO_THROTTLE(3,"Exec running...");
+    dropStatusLEL_.LE_Latch(robotStatus.grabberDropStatus);
+    slideStatusLEL_.LE_Latch(robotStatus.grabberSlideStatus);
     if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.clearDeques();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
@@ -76,9 +78,14 @@ void Exec::run()
         if(actionPoolIndex_[nextActionType_]>=ACTION_POOL_SIZE) actionPoolIndex_[nextActionType_] = 0; // If pool index has wrapped around, restart at 0
     }
     if(pause_==true && pausePrev_==false) pauseIdle_.driveHalt.init(); // Call init on driveHalt to begin possible drive hold
-	if(pause_) pauseIdle_.run(); // If pause switch is true, run pause action
+	if(pause_)
+	{
+		pauseIdle_.run(); // If pause switch is true, run pause action
+		if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) actionDeque_.front()->init();
+	}
     else // Else, run actions from deque
     {
+    	ROS_INFO("currentActionDone_ = %i",currentActionDone_);
         //if(actionDeque_.empty() && !actionDequeEmptyPrev_) pauseIdle_.init();
         if(actionDeque_.empty()) // Check if deque is empty
         {
@@ -136,7 +143,7 @@ bool Exec::actionCallback_(messages::ExecAction::Request &req, messages::ExecAct
     pushToFrontFlag_ = req.pushToFrontFlag;
     clearDequeFlag_ = req.clearDequeFlag;
     clearFrontFlag_ = req.clearFrontFlag;
-    pause_ = req.pause;
+    if(!req.pauseUnchanged) pause_ = req.pause;
 	params_.actionType = nextActionType_;
     params_.float1 = req.float1;
     params_.float2 = req.float2;

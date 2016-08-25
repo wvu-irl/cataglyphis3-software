@@ -9,8 +9,7 @@ public:
 	int run();
 private:
 	int slidePos_;
-	const int slideTol_ = 10;
-	Leading_Edge_Latch slideStatusLEL_;
+	const int slideTol_ = 30;
 };
 
 #endif // GRABBER_SET_SLIDES_H

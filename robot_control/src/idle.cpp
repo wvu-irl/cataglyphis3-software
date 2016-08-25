@@ -10,7 +10,7 @@ void Idle::init()
 int Idle::run()
 {
     driveHalt.run();
-	grabberIdle.run();
+    grabberHalt.run();
     visionHalt.run();
     if(driveDeque.empty()) driveDequeEmptyPrev = 1;
     if(grabberDeque.empty()) grabberDequeEmptyPrev = 1;

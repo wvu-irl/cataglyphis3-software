@@ -59,8 +59,8 @@ private:
 	bool pushToFrontFlag_ = false;
 	bool clearDequeFlag_ = false;
 	bool clearFrontFlag_ = false;
-	bool pause_ = false;
-	bool pausePrev_ = false;
+	bool pause_ = true;
+	bool pausePrev_ = true;
 	bool manualOverride_ = false;
 	bool actionDequeEmptyPrev_;
 	int currentActionDone_ = 0;

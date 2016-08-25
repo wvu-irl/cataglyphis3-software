@@ -4,6 +4,7 @@ bool pushToFrontFlag
 bool clearDequeFlag
 bool clearFrontFlag
 bool pause
+bool pauseUnchanged
 float32 float1
 float32 float2
 float32 float3
