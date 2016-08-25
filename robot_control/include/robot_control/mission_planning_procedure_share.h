@@ -28,11 +28,11 @@
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
-#define NUM_PROC_TYPES 16
+#define NUM_PROC_TYPES 17
 #define MAX_SAMPLES 10
 #define NUM_TIMERS 5
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__initialize__, __emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__, __sosMode__};
+enum PROC_TYPES_T {__initialize__, __emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __reorient__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__, __sosMode__};
 enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_, _searchTimer_};
 
 class MissionPlanningProcedureShare
@@ -91,9 +91,9 @@ public:
 	static ros::Subscriber cvSamplesSub;
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
-	const float distanceToGrabber = 0.86; // m
+	const float distanceToGrabber = 0.86;
 	const float distanceToBlindDriveLocation = 0.96; // m
-	const float blindDriveDistance = 0.39; // m
+	const float blindDriveDistance = 0.44; // m (0.39)
 	const float sideGrabAngleOffset = 15.0; // deg
 	const float initGrabberDistanceTolerance = 0.17; // m
 	const float initGrabberAngleTolerance = 6.0; // deg
@@ -114,6 +114,7 @@ public:
 	static bool sampleDataActedUpon;
 	static bool sampleInCollectPosition;
 	static bool sideOffsetGrab;
+	static bool performReorient;
 	static bool confirmedPossession;
 	static bool atHome;
 	static bool homingUpdateFailed;
@@ -154,6 +155,7 @@ public:
 	static float allocatedROITime; // sec
 	static unsigned int examineCount;
 	static unsigned int backUpCount;
+	static unsigned int reorientCount;
 	static unsigned int confirmCollectFailedCount;
 	static unsigned int homingUpdatedFailedCount;
 	static unsigned int navStatus;
@@ -246,6 +248,7 @@ bool MissionPlanningProcedureShare::definiteSample;
 bool MissionPlanningProcedureShare::sampleDataActedUpon;
 bool MissionPlanningProcedureShare::sampleInCollectPosition;
 bool MissionPlanningProcedureShare::sideOffsetGrab;
+bool MissionPlanningProcedureShare::performReorient;
 bool MissionPlanningProcedureShare::confirmedPossession;
 bool MissionPlanningProcedureShare::atHome;
 bool MissionPlanningProcedureShare::homingUpdateFailed;
@@ -279,6 +282,7 @@ messages::CVSampleProps MissionPlanningProcedureShare::highestConfSample;
 float MissionPlanningProcedureShare::allocatedROITime;
 unsigned int MissionPlanningProcedureShare::examineCount;
 unsigned int MissionPlanningProcedureShare::backUpCount;
+unsigned int MissionPlanningProcedureShare::reorientCount;
 unsigned int MissionPlanningProcedureShare::confirmCollectFailedCount;
 unsigned int MissionPlanningProcedureShare::homingUpdatedFailedCount;
 unsigned int MissionPlanningProcedureShare::navStatus;

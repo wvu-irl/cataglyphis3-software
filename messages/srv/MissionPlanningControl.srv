@@ -12,6 +12,7 @@ bool possibleSample
 bool definiteSample
 bool sampleInCollectPosition
 bool sideOffsetGrab
+bool performReorient
 bool confirmedPossession
 bool atHome
 bool homingUpdateFailed
@@ -30,6 +31,7 @@ uint32 avoidCount
 uint32 examineCount
 uint32 backupCount
 uint32 confirmCollectFailedCount
+uint32 reorientCount
 uint32 homingUpdatedFailedCount
 bool[] procsToExecute
 bool[] procsToInterrupt

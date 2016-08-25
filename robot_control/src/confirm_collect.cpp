@@ -44,6 +44,7 @@ bool ConfirmCollect::runProc()
                 inSearchableRegion = false;
                 possibleSample = false;
                 definiteSample = false;
+                reorientCount = 0;
                 // Delete searchLocalMap
                 searchMapSrv.request.createMap = false;
                 searchMapSrv.request.deleteMap = true;
@@ -69,11 +70,23 @@ bool ConfirmCollect::runProc()
 			{
                 ROS_INFO("confirmCollect failed, sample still on ground");
                 confirmCollectFailedCount++;
-                if(confirmCollectFailedCount>=confirmCollectFailedLimit)
+                if(reorientCount>=reorientLimit && confirmCollectFailedCount>=confirmCollectFailedLimit)
+                {
+                    ROS_INFO("confirmCollect over reorient limit");
+                    possibleSample = false;
+                    definiteSample = false;
+                    performReorient = false;
+                    confirmCollectFailedCount = 0;
+                    examineCount = 0;
+                    backUpCount = 0;
+                    reorientCount = 0;
+                }
+                else if(confirmCollectFailedCount>=confirmCollectFailedLimit)
                 {
                     ROS_INFO("confirmCollect over failed limit");
                     possibleSample = false;
                     definiteSample = false;
+                    performReorient = true;
                     confirmCollectFailedCount = 0;
                     examineCount = 0;
                     backUpCount = 0;

@@ -19,6 +19,7 @@
 #include "approach.h"
 #include "collect.h"
 #include "confirm_collect.h"
+#include "reorient.h"
 #include "go_home.h"
 #include "square_update.h"
 #include "deposit_approach.h"
@@ -57,6 +58,7 @@ public:
 	Approach approach;
 	Collect collect;
 	ConfirmCollect confirmCollect;
+	Reorient reorient;
 	GoHome goHome;
 	SquareUpdate squareUpdate;
 	DepositApproach depositApproach;
