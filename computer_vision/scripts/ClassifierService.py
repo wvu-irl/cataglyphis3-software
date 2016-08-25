@@ -124,7 +124,8 @@ if __name__ == "__main__":
 	classifierDict = {}
 
 	# classifier version
-	classifierVersion = '8-20-16'
+	classifierVersion = 'CACH_V1'
+	classifierSampleType = 'CACH'
 
 	#classifier type
 	classifierType = 0
@@ -133,12 +134,12 @@ if __name__ == "__main__":
 	imgSize = 50
 	
 	# read the mean data
-	meanData50PathCach = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
+	meanData50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb.npy"
 	meanData50Cach = np.load(meanData50PathCach)
 	meanData50Cach = np.reshape(meanData50Cach, (1, 3, imgSize, imgSize))
 	
-	# read the classifier
-	classifier50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
+	# read the classifier 
+	classifier50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
 	# set dropout parameters for better performance
 	dropoutParams50Cach = {}
@@ -155,7 +156,8 @@ if __name__ == "__main__":
 	classifierDict[classifierType]['modulePath'] = cvModulePath
 
 	# classifier version
-	classifierVersion = '8-20-16'
+	classifierVersion = 'HARD_V1'
+	classifierSampleType = 'HARD'
 
 	#classifier type
 	classifierType = 1
@@ -164,12 +166,12 @@ if __name__ == "__main__":
 	imgSize = 50
 	
 	# read the mean data
-	meanData50PathRock = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
+	meanData50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb.npy"
 	meanData50Rock = np.load(meanData50PathRock)
 	meanData50Rock = np.reshape(meanData50Rock, (1, 3, imgSize, imgSize))
 	
 	# read the classifier
-	classifier50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
+	classifier50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
 	# set dropout parameters for better performance
 	dropoutParams50Rock = {}

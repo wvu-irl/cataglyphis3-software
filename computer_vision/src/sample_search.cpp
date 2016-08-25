@@ -291,13 +291,13 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 	{
 		for(int i=0; i<blobsOfInterest.size(); i++)
 		{
-			// ROS_INFO("PART1 probC, prob0, prob1, prob2 = %f, %f, %f, %f", imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]],_rois[roi].probabilities[0],_rois[roi].probabilities[1],_rois[roi].probabilities[2]);
-			if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]] > _rois[roi].probabilities[0])
+			// ROS_INFO("PART1 probC, prob0, prob1, prob2 = %f, %f, %f, %f", probabilities[blobsOfInterest[i]],_rois[roi].probabilities[0],_rois[roi].probabilities[1],_rois[roi].probabilities[2]);
+			if(probabilities[blobsOfInterest[i]] > _rois[roi].probabilities[0])
 			{
 				// ROS_INFO(">0");
 				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
 				_rois[roi].probabilities[1] = _rois[roi].probabilities[0];
-				_rois[roi].probabilities[0] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+				_rois[roi].probabilities[0] = probabilities[blobsOfInterest[i]];
 
 				_rois[roi].types[2] = _rois[roi].types[1];
 				_rois[roi].types[1] = _rois[roi].types[0];
@@ -307,11 +307,11 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
 				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
 			}
-			else if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]] > _rois[roi].probabilities[1])
+			else if(probabilities[blobsOfInterest[i]] > _rois[roi].probabilities[1])
 			{
 				// ROS_INFO(">1");
 				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
-				_rois[roi].probabilities[1] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+				_rois[roi].probabilities[1] = probabilities[blobsOfInterest[i]];
 
 				_rois[roi].types[2] = _rois[roi].types[1];
 				_rois[roi].types[1] = static_cast<SAMPLE_TYPE_T>(types[i]);
@@ -319,10 +319,10 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
 				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
 			}
-			else if (imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]] > _rois[roi].probabilities[2])
+			else if (probabilities[blobsOfInterest[i]] > _rois[roi].probabilities[2])
 			{
 				// ROS_INFO(">2");
-				_rois[roi].probabilities[2] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+				_rois[roi].probabilities[2] = probabilities[blobsOfInterest[i]];
 				_rois[roi].types[2] = static_cast<SAMPLE_TYPE_T>(types[i]);
 				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
 			}
@@ -330,13 +330,13 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 
 		for(int i=0; i<blobsOfNotInterest.size(); i++)
 		{
-			// ROS_INFO("PART2 probC, prob0, prob1, prob2 = %f, %f, %f, %f", imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]], _rois[roi].probabilities[0], _rois[roi].probabilities[1], _rois[roi].probabilities[2]);
-			if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[0])
+			// ROS_INFO("PART2 probC, prob0, prob1, prob2 = %f, %f, %f, %f", probabilities[blobsOfInterest[i]], _rois[roi].probabilities[0], _rois[roi].probabilities[1], _rois[roi].probabilities[2]);
+			if(probabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[0])
 			{
 				// ROS_INFO(">0");
 				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
 				_rois[roi].probabilities[1] = _rois[roi].probabilities[0];
-				_rois[roi].probabilities[0] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]];
+				_rois[roi].probabilities[0] = probabilities[blobsOfNotInterest[i]];
 
 				_rois[roi].types[2] = _rois[roi].types[1];
 				_rois[roi].types[1] = _rois[roi].types[0];
@@ -346,11 +346,11 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
 				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
 			}
-			else if(imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[1])
+			else if(probabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[1])
 			{
 				// ROS_INFO(">1");
 				_rois[roi].probabilities[2] = _rois[roi].probabilities[1];
-				_rois[roi].probabilities[1] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]];
+				_rois[roi].probabilities[1] = probabilities[blobsOfNotInterest[i]];
 
 				_rois[roi].types[2] = _rois[roi].types[1];
 				_rois[roi].types[1] = _unknown_t;
@@ -358,10 +358,10 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
 				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
 			}
-			else if (imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[2])
+			else if (probabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[2])
 			{
 				// ROS_INFO(">2");
-				_rois[roi].probabilities[2] = imageProbabilitiesSrv.response.responseProbabilities[blobsOfNotInterest[i]];
+				_rois[roi].probabilities[2] = probabilities[blobsOfNotInterest[i]];
 				_rois[roi].types[2] = _unknown_t;
 				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
 			}
@@ -422,7 +422,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     //ALL SAMPLE CLASSIFIER (THIS WILL BE REMOVED ONCE THE OTHER CLASSIFIERS ARE TRAINED)
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
-	imageProbabilitiesSrv.request.classifierType = 1;
+	imageProbabilitiesSrv.request.classifierType = 2;
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
 		ROS_INFO("imageProbabilitiesSrv call successful!");
@@ -438,62 +438,105 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return true;
 	}
 
-	//ADD PRECACHED SAMPLE CLASSIFIER
-	// imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	// imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
-	// imageProbabilitiesSrv.request.classifierType = 0;
-	// if(classifierClient.call(imageProbabilitiesSrv))
-	// {
-	// 	ROS_INFO("imageProbabilitiesSrv call successful!");
-	// }
-	// else
-	// {
-	// 	ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-	// 	searchForSamplesMsgOut.sampleList.clear();
-	// 	searchForSamplesMsgOut.procType = req.procType;
-	// 	searchForSamplesMsgOut.serialNum = req.serialNum;
-	// 	searchForSamplesPub.publish(searchForSamplesMsgOut);
-	// 	ros::spinOnce();
-	// 	return true;
-	// }
+	
+	if(req.roi == 0)
+	{
+		//precached sample classifier
+		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+		imageProbabilitiesSrv.request.imgSize = 50;
+		imageProbabilitiesSrv.request.classifierType = 0;
+		if(classifierClient.call(imageProbabilitiesSrv))
+		{
+			ROS_INFO("imageProbabilitiesSrv call successful with type 0 (cach)!");
+		}
+		else
+		{
+			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+			searchForSamplesMsgOut.sampleList.clear();
+			searchForSamplesMsgOut.procType = req.procType;
+			searchForSamplesMsgOut.serialNum = req.serialNum;
+			searchForSamplesPub.publish(searchForSamplesMsgOut);
+			ros::spinOnce();
+			return true;
+		}
 
-	// //ADD COLOR SAMPLE CLASSIFIER
-	// imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	// imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
-	// imageProbabilitiesSrv.request.classifierType = 0;
-	// if(classifierClient.call(imageProbabilitiesSrv))
-	// {
-	// 	ROS_INFO("imageProbabilitiesSrv call successful!");
-	// }
-	// else
-	// {
-	// 	ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-	// 	searchForSamplesMsgOut.sampleList.clear();
-	// 	searchForSamplesMsgOut.procType = req.procType;
-	// 	searchForSamplesMsgOut.serialNum = req.serialNum;
-	// 	searchForSamplesPub.publish(searchForSamplesMsgOut);
-	// 	ros::spinOnce();
-	// 	return true;
-	// }
+		//assign probabilties and sample ids
+		G_sample_probabilities.clear();
+		G_sample_ids.clear();
+		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs from segmentation
+		{
+			G_sample_probabilities.push_back(imageProbabilitiesSrv.response.responseProbabilities[i]);
+			G_sample_ids.push_back(0);
+		}
+	}
+	else
+	{
+		//hard sample classifier
+		std::vector<float> tempHardProbabilities;
+		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+		imageProbabilitiesSrv.request.imgSize = 50;
+		imageProbabilitiesSrv.request.classifierType = 1;
+		if(classifierClient.call(imageProbabilitiesSrv))
+		{
+			ROS_INFO("imageProbabilitiesSrv call successful with type 1 (hard)!");
+			tempHardProbabilities = imageProbabilitiesSrv.response.responseProbabilities;
+		}
+		else
+		{
+			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+			searchForSamplesMsgOut.sampleList.clear();
+			searchForSamplesMsgOut.procType = req.procType;
+			searchForSamplesMsgOut.serialNum = req.serialNum;
+			searchForSamplesPub.publish(searchForSamplesMsgOut);
+			ros::spinOnce();
+			return true;
+		}
 
-	//ADD HARD SAMPLE CLASSIFIER
-	// imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	// imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
-	// imageProbabilitiesSrv.request.classifierType = 0;
-	// if(classifierClient.call(imageProbabilitiesSrv))
-	// {
-	// 	ROS_INFO("imageProbabilitiesSrv call successful!");
-	// }
-	// else
-	// {
-	// 	ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-	// 	searchForSamplesMsgOut.sampleList.clear();
-	// 	searchForSamplesMsgOut.procType = req.procType;
-	// 	searchForSamplesMsgOut.serialNum = req.serialNum;
-	// 	searchForSamplesPub.publish(searchForSamplesMsgOut);
-	// 	ros::spinOnce();
-	// 	return true;
-	// }
+		//rock sample classifier
+		std::vector<float> tempRockProbabilities;
+		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
+		imageProbabilitiesSrv.request.imgSize = 50;
+		imageProbabilitiesSrv.request.classifierType = 2;
+		if(classifierClient.call(imageProbabilitiesSrv))
+		{
+			ROS_INFO("imageProbabilitiesSrv call successful with type 2 (rock)!");
+			tempRockProbabilities = imageProbabilitiesSrv.response.responseProbabilities;
+		}
+		else
+		{
+			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
+			searchForSamplesMsgOut.sampleList.clear();
+			searchForSamplesMsgOut.procType = req.procType;
+			searchForSamplesMsgOut.serialNum = req.serialNum;
+			searchForSamplesPub.publish(searchForSamplesMsgOut);
+			ros::spinOnce();
+			return true;
+		}
+
+		//make sure the number of blobs is correct
+		if(tempRockProbabilities.size() != tempHardProbabilities.size() || tempRockProbabilities.size() != segmentImageSrv.response.coordinates.size()/2)
+		{
+			ROS_ERROR("Error! The size of tempRockProbabilities and tempHardProbabilities should be equal to the number of blobs from segmentation!");
+
+		}
+
+		//assign probabilties and sample ids (use higher probability and the cooresponding id)
+		G_sample_probabilities.clear();
+		G_sample_ids.clear();
+		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs in rock and hard probabilities
+		{
+			if(tempHardProbabilities[i] > tempRockProbabilities[i])
+			{
+				G_sample_probabilities.push_back(tempHardProbabilities[i]);
+				G_sample_ids.push_back(1);
+			}
+			else
+			{
+				G_sample_probabilities.push_back(tempRockProbabilities[i]);
+				G_sample_ids.push_back(2);
+			}
+		}
+	}
 
 	gettimeofday(&this->localTimer, NULL);  
     double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -507,9 +550,9 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
     //find samples of interest for extracting colors (sample must have at least 0.5 confidence)
 	std::vector<int> blobsOfInterest, blobsOfNotInterest;
-	for(int i=0; i<imageProbabilitiesSrv.response.responseProbabilities.size(); i++)
+	for(int i=0; i<G_sample_probabilities.size(); i++)
 	{
-		if(imageProbabilitiesSrv.response.responseProbabilities[i]>0.50)
+		if(G_sample_probabilities[i]>0.50)
 		{
 			blobsOfInterest.push_back(i);
 		}
@@ -540,7 +583,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	saveLowAndHighProbabilityBlobs(imageProbabilitiesSrv.response.responseProbabilities, segmentImageSrv.response.coordinates);
+	saveLowAndHighProbabilityBlobs(G_sample_probabilities, segmentImageSrv.response.coordinates);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -552,7 +595,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types, imageProbabilitiesSrv.response.responseProbabilities);
+	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types, G_sample_probabilities);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -640,7 +683,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			sampleProps.type = extractColorSrv.response.types[i];
 			sampleProps.distance = position[0];
 			sampleProps.bearing = position[1];
-			sampleProps.confidence = imageProbabilitiesSrv.response.responseProbabilities[blobsOfInterest[i]];
+			sampleProps.confidence = G_sample_probabilities[blobsOfInterest[i]];
 			ROS_INFO("Sample detected at:");
 			ROS_INFO("d = %f meters", sampleProps.distance);
 			ROS_INFO("bearing = %f degrees", sampleProps.bearing);
@@ -659,7 +702,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	saveTopROICandidates(blobsOfInterest, blobsOfNotInterest, extractColorSrv.response.types, imageProbabilitiesSrv.response.responseProbabilities, req.roi);
+	saveTopROICandidates(blobsOfInterest, blobsOfNotInterest, extractColorSrv.response.types, G_sample_probabilities, req.roi);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  

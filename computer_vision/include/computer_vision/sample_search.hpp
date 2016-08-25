@@ -79,6 +79,8 @@ public:
 	}; 
 	const int MAX_NUMBER_OF_ROIS = 16;
 	std::vector<roi_t> _rois;
+	std::vector<float> G_sample_probabilities;
+	std::vector<float> G_sample_ids;
 };
 
 #endif // SAMPLE_SEARCH_H
