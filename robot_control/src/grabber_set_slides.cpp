@@ -7,6 +7,7 @@ void GrabberSetSlides::init()
 
 int GrabberSetSlides::run()
 {
+    ROS_INFO("slidePos = %f",slidePos_);
 	robotOutputs.slidePosCmd = slidePos_;
 	robotOutputs.grabberStopCmd = 0;
 	slideStatusLEL_.LE_Latch(robotStatus.grabberSlideStatus);

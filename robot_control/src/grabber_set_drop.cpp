@@ -7,6 +7,7 @@ void GrabberSetDrop::init()
 
 int GrabberSetDrop::run()
 {
+    ROS_INFO("drop pos = %i",dropPos_);
 	robotOutputs.dropPosCmd = dropPos_;
 	robotOutputs.grabberStopCmd = 0;
 	dropStatusLEL_.LE_Latch(robotStatus.grabberDropStatus);
