@@ -76,9 +76,14 @@ void Exec::run()
         if(actionPoolIndex_[nextActionType_]>=ACTION_POOL_SIZE) actionPoolIndex_[nextActionType_] = 0; // If pool index has wrapped around, restart at 0
     }
     if(pause_==true && pausePrev_==false) pauseIdle_.driveHalt.init(); // Call init on driveHalt to begin possible drive hold
-	if(pause_) pauseIdle_.run(); // If pause switch is true, run pause action
+	if(pause_)
+	{
+		pauseIdle_.run(); // If pause switch is true, run pause action
+		if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) actionDeque_.front()->init();
+	}
     else // Else, run actions from deque
     {
+    	ROS_INFO("currentActionDone_ = %i",currentActionDone_);
         //if(actionDeque_.empty() && !actionDequeEmptyPrev_) pauseIdle_.init();
         if(actionDeque_.empty()) // Check if deque is empty
         {
