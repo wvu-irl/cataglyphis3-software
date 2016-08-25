@@ -166,330 +166,357 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 	// ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
 	//check zed input
-	ROS_INFO_STREAM("_zedcollision: " << _zedcollision);
-	if(_zedcollision != 0)
-	{
-		if(_zedcollision == 1)	//collision on the right
-		{
-			_angle_to_drive = -threshold_min_angle;
-			ROS_INFO_STREAM("ZED, collision on the right");
-		}
+	// ROS_INFO_STREAM("_zedcollision: " << _zedcollision);
+	// if(_zedcollision != 0)
+	// {
+	// 	if(_zedcollision == 1)	//collision on the left
+	// 	{
+	// 		_angle_to_drive = threshold_min_angle;
+	// 		ROS_INFO_STREAM("ZED, collision on the left");
+	// 	}
 
-		if(_zedcollision == 2)	//collision on the left
-		{
-			_angle_to_drive = threshold_min_angle;
-			ROS_INFO_STREAM("ZED, collision on the left");
-		}
+	// 	if(_zedcollision == 2)	//collision on the right
+	// 	{
+	// 		_angle_to_drive = -threshold_min_angle;
+	// 		ROS_INFO_STREAM("ZED, collision on the right");
+	// 	}
 
-		_distance_to_drive = short_distance;
+	// 	_distance_to_drive = short_distance;
 
-		_zedcollision = 0;
-	}
-	//check if points exceed threshold
-	else if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
+	// 	_zedcollision = 0;
+	// }
+	// //check if points exceed threshold
+	// else if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
+	if(collision_point_counter > _TRIGGER_POINT_THRESHOLD || _zedcollision != 0)
 	{	
 		_collision_status = 1;	//detected a obstacle
 
-		int choice = -1;	//0: big long; 1: big short; 2: small long; 3: small short; 4: no option; x0: normal; x1: one side
-		int choice_angle = -1; //00: normal big; 10: normalsmall; 01: one side big; 11: one side small
-		int choice_big_long = 0;
-		int choice_big_short = 0;
-		int choice_small_long = 0;
-		int choice_small_short = 0;
-
-		double big_angle;
-		double small_angle;
-
-		double xg_local;
-		double yg_local;
-
-		int collision_point_avoidance_counter = 0;
-
-		//get local coordinate
-		xg_local = _xg * cos(_headingposition) + _yg * sin(_headingposition) + _xposition;
-		yg_local = -1 * _xg * sin(_headingposition) + _yg * sin(_headingposition) + _yposition;
-		
-		//use avoidance map to detect angle
-		generateAvoidancemap();
-
-		//check 5*2 area in front of the robot
-		for(int i = 0; i < _hazard_x.size(); i++)
+		if(_input_cloud.size() > 0)	//check if there is point cloud input from lidar
 		{
-			if(_hazard_x[i] < 5 && _hazard_x[i] > 0 && _hazard_y[i] < 1 && _hazard_y[i] > -1)
+			int choice = -1;	//0: big long; 1: big short; 2: small long; 3: small short; 4: no option; x0: normal; x1: one side
+			int choice_angle = -1; //00: normal big; 10: normalsmall; 01: one side big; 11: one side small
+			int choice_big_long = 0;
+			int choice_big_short = 0;
+			int choice_small_long = 0;
+			int choice_small_short = 0;
+
+			double big_angle;
+			double small_angle;
+
+			double xg_local;
+			double yg_local;
+
+			int collision_point_avoidance_counter = 0;
+
+			//get local coordinate
+			xg_local = _xg * cos(_headingposition) + _yg * sin(_headingposition) + _xposition;
+			yg_local = -1 * _xg * sin(_headingposition) + _yg * sin(_headingposition) + _yposition;
+			
+			//use avoidance map to detect angle
+			generateAvoidancemap();
+
+			//check 5*2 area in front of the robot
+			for(int i = 0; i < _hazard_x.size(); i++)
 			{
-				angle.push_back((double)atan2(_hazard_x[i],_hazard_y[i]));	//radian
-				collision_point_avoidance_counter++;
-			}
-		}
-
-		ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
-		ROS_INFO_STREAM("collision_point_avoidance_counter: " << collision_point_avoidance_counter);
-		
-		//if there are obstacles shown on avoidance map, check angle and distance
-		if(collision_point_avoidance_counter >= 1)
-		{
-			//sort angles
-			std::sort(angle.begin(), angle.end());	//increase
-
-			big_angle = angle[angle.size() - 1];
-			small_angle = angle[0];
-
-			// ROS_INFO_STREAM("big_angle: " << big_angle * 180 / PI << " small_angle: " << small_angle * 180 / PI);
-
-			//check turn angle
-
-			if(90 - (big_angle * 180 / PI) > threshold_min_angle)	//if big angle on the right side and smaller than 45 degree, keep going straight
-			{
-				big_angle = 91 * PI / 180;	//one more degree is for tan
-			}
-			else if(90 - (big_angle * 180 / PI) <= threshold_min_angle && 90 - (big_angle * 180 / PI) > 0)	//if big angle on the right side and bigger than 45 degree, turn left 45 degree
-			{
-				big_angle = (90 + threshold_min_angle) * PI / 180;
-			}
-			else if(90 - (big_angle * 180 / PI) <= 0)	//if big angle on the left side, turn left more 45 degree
-			{
-				big_angle = big_angle + threshold_min_angle * PI / 180;
-			}
-
-			if(90 - (small_angle * 180 / PI) < -threshold_min_angle)	//if small angle on the left side and bigger than 135 degree, keep going straight
-			{
-				small_angle = 89 * PI / 180;	//one more degree if for tan
-			}
-			else if(90 - (small_angle * 180 / PI) >= -threshold_min_angle && 90 - (small_angle * 180 / PI) < 0)	//if small angle on the left side and smaller than 135 degree, turn right 45 degree
-			{
-				small_angle = threshold_min_angle * PI / 180;
-			}
-			else if(90 - (small_angle * 180 / PI) >= 0)	//if small angle on the right side, turn right more 45 degree
-			{
-				small_angle = small_angle - threshold_min_angle * PI / 180;
-			}
-			// ROS_INFO_STREAM("after big_angle: " << big_angle * 180 / PI << " after small_angle: " << small_angle * 180 / PI);
-
-			//count the number of point near to the path
-			int count_big_long_first = -1;
-			int count_big_short_first = -1;
-			int count_small_long_first = -1;
-			int count_small_short_first = -1;
-			int count_big_long_second = -1;
-			int count_big_short_second = -1;
-			int count_small_long_second = -1;
-			int count_small_short_second = -1;
-
-			count_big_long_first = firstChoice(big_angle, long_distance);
-			// ROS_INFO_STREAM("count_big_long_first: " << count_big_long_first);
-			// count_big_short_first = firstChoice(big_angle, short_distance);
-			count_small_long_first = firstChoice(small_angle, long_distance);
-			// ROS_INFO_STREAM("count_small_long_first: " << count_small_long_first);
-			// count_small_short_first = firstChoice(small_angle, short_distance);
-
-			//detect big angle path
-			if(count_big_long_first <= threshold_obstacle_number && count_big_long_first >= 0)	//seq: long_first -> long_second -> short_second
-			{
-				count_big_long_second = secondChoice(big_angle, long_distance, xg_local, yg_local);
-
-				if(count_big_long_second <= threshold_obstacle_number && count_big_long_second >= 0)
+				if(_hazard_x[i] < 5 && _hazard_x[i] > 0 && _hazard_y[i] < 1 && _hazard_y[i] > -1)
 				{
-					choice_big_long = 1;
+					angle.push_back((double)atan2(_hazard_x[i],_hazard_y[i]));	//radian
+					collision_point_avoidance_counter++;
+				}
+			}
+
+			// ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
+			// ROS_INFO_STREAM("collision_point_avoidance_counter: " << collision_point_avoidance_counter);
+			
+			//if there are obstacles shown on avoidance map, check angle and distance
+			if(collision_point_avoidance_counter >= 1)
+			{
+				//sort angles
+				std::sort(angle.begin(), angle.end());	//increase
+
+				big_angle = angle[angle.size() - 1];
+				small_angle = angle[0];
+
+				// ROS_INFO_STREAM("big_angle: " << big_angle * 180 / PI << " small_angle: " << small_angle * 180 / PI);
+
+				//check turn angle
+
+				if(90 - (big_angle * 180 / PI) > threshold_min_angle)	//if big angle on the right side and smaller than 45 degree, keep going straight
+				{
+					big_angle = 91 * PI / 180;	//one more degree is for tan
+				}
+				else if(90 - (big_angle * 180 / PI) <= threshold_min_angle && 90 - (big_angle * 180 / PI) > 0)	//if big angle on the right side and bigger than 45 degree, turn left 45 degree
+				{
+					big_angle = (90 + threshold_min_angle) * PI / 180;
+				}
+				else if(90 - (big_angle * 180 / PI) <= 0)	//if big angle on the left side, turn left more 45 degree
+				{
+					big_angle = big_angle + threshold_min_angle * PI / 180;
+				}
+
+				if(90 - (small_angle * 180 / PI) < -threshold_min_angle)	//if small angle on the left side and bigger than 135 degree, keep going straight
+				{
+					small_angle = 89 * PI / 180;	//one more degree if for tan
+				}
+				else if(90 - (small_angle * 180 / PI) >= -threshold_min_angle && 90 - (small_angle * 180 / PI) < 0)	//if small angle on the left side and smaller than 135 degree, turn right 45 degree
+				{
+					small_angle = threshold_min_angle * PI / 180;
+				}
+				else if(90 - (small_angle * 180 / PI) >= 0)	//if small angle on the right side, turn right more 45 degree
+				{
+					small_angle = small_angle - threshold_min_angle * PI / 180;
+				}
+				// ROS_INFO_STREAM("after big_angle: " << big_angle * 180 / PI << " after small_angle: " << small_angle * 180 / PI);
+
+				//count the number of point near to the path
+				int count_big_long_first = -1;
+				int count_big_short_first = -1;
+				int count_small_long_first = -1;
+				int count_small_short_first = -1;
+				int count_big_long_second = -1;
+				int count_big_short_second = -1;
+				int count_small_long_second = -1;
+				int count_small_short_second = -1;
+
+				count_big_long_first = firstChoice(big_angle, long_distance);
+				// ROS_INFO_STREAM("count_big_long_first: " << count_big_long_first);
+				// count_big_short_first = firstChoice(big_angle, short_distance);
+				count_small_long_first = firstChoice(small_angle, long_distance);
+				// ROS_INFO_STREAM("count_small_long_first: " << count_small_long_first);
+				// count_small_short_first = firstChoice(small_angle, short_distance);
+
+				//detect big angle path
+				if(count_big_long_first <= threshold_obstacle_number && count_big_long_first >= 0)	//seq: long_first -> long_second -> short_second
+				{
+					count_big_long_second = secondChoice(big_angle, long_distance, xg_local, yg_local);
+
+					if(count_big_long_second <= threshold_obstacle_number && count_big_long_second >= 0)
+					{
+						choice_big_long = 1;
+					}
+					else
+					{
+						count_big_short_second = secondChoice(big_angle, short_distance, xg_local, yg_local);
+						if(count_big_short_second <= threshold_obstacle_number && count_big_short_second >= 0)
+						{
+							choice_big_short = 1;
+						}
+					}
+
+					
+				}
+				else if(count_big_long_first > threshold_obstacle_number)	//seq: short_first -> short_second
+				{
+					count_big_short_first = firstChoice(big_angle, short_distance);
+
+					if(count_big_short_first <= threshold_obstacle_number && count_big_short_first >= 0)
+					{
+						count_big_short_second = secondChoice(big_angle, short_distance, xg_local, yg_local);
+						if(count_big_short_second <= threshold_obstacle_number && count_big_short_second >= 0)
+						{
+							choice_big_short = 1;
+						}
+					}
+				}
+
+				//detect small angle path
+				if(count_small_long_first <= threshold_obstacle_number && count_small_long_first >= 0)	//seq: long_first -> long_second -> short_second
+				{
+					count_small_long_second = secondChoice(small_angle, long_distance, xg_local, yg_local);
+					
+
+					if(count_small_long_second <= threshold_obstacle_number && count_small_long_second >= 0)
+					{
+						choice_small_long = 1;
+					}
+					else
+					{
+						count_small_short_second = secondChoice(small_angle, short_distance, xg_local, yg_local);
+
+						if(count_small_short_second <= threshold_obstacle_number && count_small_short_second >= 0)
+						{
+							choice_small_short = 1;
+						}
+					}				
+				}
+				else if(count_small_long_first > threshold_obstacle_number)	//seq: short_first -> short_second
+				{
+					count_small_short_first = firstChoice(small_angle, short_distance);
+
+					if(count_small_short_first <= threshold_obstacle_number && count_small_short_first >= 0)
+					{
+						count_small_short_second = secondChoice(small_angle, short_distance, xg_local, yg_local);
+						if(count_small_short_second <= threshold_obstacle_number && count_small_short_second >= 0)
+						{
+							choice_small_short = 1;
+						}
+					}
+				}
+
+				// ROS_INFO_STREAM("count_big_long_second: " << count_big_long_second);
+				// ROS_INFO_STREAM("count_big_short_second: " << count_big_short_second);
+				// ROS_INFO_STREAM("count_small_long_second: " << count_small_long_second);
+				// ROS_INFO_STREAM("count_small_short_second: " << count_small_short_second);
+				// ROS_INFO_STREAM("xg_local: " << xg_local);
+				// ROS_INFO_STREAM("yg_local: " << yg_local);
+
+				//calculate angle the robot should turn, choose the smaller one
+				if(fabs(big_angle * 180 / PI - 90) > fabs(90 - small_angle * 180 / PI))
+				{
+					choice_angle = 10;	//small angle
 				}
 				else
 				{
-					count_big_short_second = secondChoice(big_angle, short_distance, xg_local, yg_local);
-					if(count_big_short_second <= threshold_obstacle_number && count_big_short_second >= 0)
-					{
-						choice_big_short = 1;
-					}
+					choice_angle = 00;	//big angle
 				}
 
-				
-			}
-			else if(count_big_long_first > threshold_obstacle_number)	//seq: short_first -> short_second
-			{
-				count_big_short_first = firstChoice(big_angle, short_distance);
-
-				if(count_big_short_first <= threshold_obstacle_number && count_big_short_first >= 0)
+				//choose which option should be picked up
+				//seq: short -> small angle -> long -> small angle
+				if(choice_big_short == 1 && choice_small_short == 1)
 				{
-					count_big_short_second = secondChoice(big_angle, short_distance, xg_local, yg_local);
-					if(count_big_short_second <= threshold_obstacle_number && count_big_short_second >= 0)
+					if(choice_angle == 00)
 					{
-						choice_big_short = 1;
+						choice = 10;	//big short
+					}
+					else if(choice_angle == 10)
+					{
+						choice = 30;	//small short
 					}
 				}
-			}
-
-			//detect small angle path
-			if(count_small_long_first <= threshold_obstacle_number && count_small_long_first >= 0)	//seq: long_first -> long_second -> short_second
-			{
-				count_small_long_second = secondChoice(small_angle, long_distance, xg_local, yg_local);
-				
-
-				if(count_small_long_second <= threshold_obstacle_number && count_small_long_second >= 0)
-				{
-					choice_small_long = 1;
-				}
-				else
-				{
-					count_small_short_second = secondChoice(small_angle, short_distance, xg_local, yg_local);
-
-					if(count_small_short_second <= threshold_obstacle_number && count_small_short_second >= 0)
-					{
-						choice_small_short = 1;
-					}
-				}				
-			}
-			else if(count_small_long_first > threshold_obstacle_number)	//seq: short_first -> short_second
-			{
-				count_small_short_first = firstChoice(small_angle, short_distance);
-
-				if(count_small_short_first <= threshold_obstacle_number && count_small_short_first >= 0)
-				{
-					count_small_short_second = secondChoice(small_angle, short_distance, xg_local, yg_local);
-					if(count_small_short_second <= threshold_obstacle_number && count_small_short_second >= 0)
-					{
-						choice_small_short = 1;
-					}
-				}
-			}
-
-			ROS_INFO_STREAM("count_big_long_second: " << count_big_long_second);
-			ROS_INFO_STREAM("count_big_short_second: " << count_big_short_second);
-			ROS_INFO_STREAM("count_small_long_second: " << count_small_long_second);
-			ROS_INFO_STREAM("count_small_short_second: " << count_small_short_second);
-			ROS_INFO_STREAM("xg_local: " << xg_local);
-			ROS_INFO_STREAM("yg_local: " << yg_local);
-
-			//calculate angle the robot should turn, choose the smaller one
-			if(fabs(big_angle * 180 / PI - 90) > fabs(90 - small_angle * 180 / PI))
-			{
-				choice_angle = 10;	//small angle
-			}
-			else
-			{
-				choice_angle = 00;	//big angle
-			}
-
-			//choose which option should be picked up
-			//seq: short -> small angle -> long -> small angle
-			if(choice_big_short == 1 && choice_small_short == 1)
-			{
-				if(choice_angle == 00)
+				else if(choice_big_short == 1)
 				{
 					choice = 10;	//big short
 				}
-				else if(choice_angle == 10)
+				else if(choice_small_short == 1)
 				{
 					choice = 30;	//small short
 				}
-			}
-			else if(choice_big_short == 1)
-			{
-				choice = 10;	//big short
-			}
-			else if(choice_small_short == 1)
-			{
-				choice = 30;	//small short
-			}
-			else if(choice_big_long == 1 && choice_small_long == 1)
-			{
-				if(choice_angle == 00)
+				else if(choice_big_long == 1 && choice_small_long == 1)
+				{
+					if(choice_angle == 00)
+					{
+						choice = 00;	//big long
+					}
+					else if(choice_angle == 10)
+					{
+						choice = 20;	//small long
+					}
+				}
+				else if(choice_big_long == 1)
 				{
 					choice = 00;	//big long
 				}
-				else if(choice_angle == 10)
+				else if(choice_small_long == 1)
 				{
 					choice = 20;	//small long
 				}
-			}
-			else if(choice_big_long == 1)
-			{
-				choice = 00;	//big long
-			}
-			else if(choice_small_long == 1)
-			{
-				choice = 20;	//small long
-			}
-			else
-			{
-				choice = 4;	//no options
-			}
-
-			//assign value to angle and distance
-			if(choice == 10)	//big short
-			{
-				_angle_to_drive = 90 - big_angle * 180 / PI;
-				
-				if(fabs(_angle_to_drive) < 2)	//for one more degree, correct it
+				else
 				{
-					_angle_to_drive = 0;
+					choice = 4;	//no options
 				}
 
-				_distance_to_drive = short_distance;			
-			}
-			else if(choice == 30)	//small short
-			{
-				_angle_to_drive = 90 - small_angle * 180 / PI;
-
-				if(fabs(_angle_to_drive) < 2)
+				//assign value to angle and distance
+				if(choice == 10)	//big short
 				{
-					_angle_to_drive = 0;
+					_angle_to_drive = 90 - big_angle * 180 / PI;
+					
+					if(fabs(_angle_to_drive) < 2)	//for one more degree, correct it
+					{
+						_angle_to_drive = 0;
+					}
+
+					_distance_to_drive = short_distance;			
+				}
+				else if(choice == 30)	//small short
+				{
+					_angle_to_drive = 90 - small_angle * 180 / PI;
+
+					if(fabs(_angle_to_drive) < 2)
+					{
+						_angle_to_drive = 0;
+					}
+
+					_distance_to_drive = short_distance;
+				}
+				else if(choice == 00)	//big long
+				{
+					_angle_to_drive = 90 - big_angle * 180 / PI;
+
+					if(fabs(_angle_to_drive) < 2)
+					{
+						_angle_to_drive = 0;
+					}
+
+					_distance_to_drive = long_distance;
+				}
+				else if(choice == 20)	//small long
+				{
+					_angle_to_drive = 90 - small_angle * 180 / PI;
+
+					if(fabs(_angle_to_drive) < 2)
+					{
+						_angle_to_drive = 0;
+					}
+
+					_distance_to_drive = long_distance;
+				}
+				else if(choice == 4)	//no option
+				{
+					_collision_status = 2;
+					if(yg_local > 0)
+					{
+						_angle_to_drive = 100;
+					}
+					else
+					{
+						_angle_to_drive = -100;
+					}
+					_distance_to_drive = 5; //no option, turn 100 degree near to the waypoint and drive 5 m
+
+					ROS_INFO_STREAM("No good options");
+					
+				}
+
+				ROS_INFO_STREAM("Turn " << _angle_to_drive << " degree and drive " << _distance_to_drive << " m");
+			}
+		}		
+		else	//no obstacle on avoidance map
+		{
+			if(_zedcollision != 0)
+			{
+				if(_zedcollision == 1)	//collision on the left
+				{
+					_angle_to_drive = threshold_min_angle;
+					ROS_INFO_STREAM("ZED, collision on the left");
+				}
+
+				if(_zedcollision == 2)	//collision on the right
+				{
+					_angle_to_drive = -threshold_min_angle;
+					ROS_INFO_STREAM("ZED, collision on the right");
 				}
 
 				_distance_to_drive = short_distance;
+
+				_zedcollision = 0;
 			}
-			else if(choice == 00)	//big long
+			else if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
 			{
-				_angle_to_drive = 90 - big_angle * 180 / PI;
-
-				if(fabs(_angle_to_drive) < 2)
+				if(collision_left_counter > collision_right_counter)
 				{
-					_angle_to_drive = 0;
-				}
-
-				_distance_to_drive = long_distance;
-			}
-			else if(choice == 20)	//small long
-			{
-				_angle_to_drive = 90 - small_angle * 180 / PI;
-
-				if(fabs(_angle_to_drive) < 2)
-				{
-					_angle_to_drive = 0;
-				}
-
-				_distance_to_drive = long_distance;
-			}
-			else if(choice == 4)	//no option
-			{
-				_collision_status = 2;
-				if(yg_local > 0)
-				{
-					_angle_to_drive = 100;
+					_angle_to_drive = threshold_min_angle;
 				}
 				else
 				{
-					_angle_to_drive = -100;
+					_angle_to_drive = -threshold_min_angle;
 				}
-				_distance_to_drive = 5; //no option, turn 100 degree near to the waypoint and drive 5 m
-
-				ROS_INFO_STREAM("No good options");
 				
+				_distance_to_drive = short_distance;
+
+				ROS_INFO_STREAM("there is no obstacle on hazard map, turn " << _angle_to_drive << " degree and 3 m");
 			}
 
-			ROS_INFO_STREAM("Turn " << _angle_to_drive << " degree and drive " << _distance_to_drive << " m");
-		}
-		else	//no obstacle on avoidance map
-		{
-			if(collision_left_counter > collision_right_counter)
-			{
-				_angle_to_drive = threshold_min_angle;
-			}
-			else
-			{
-				_angle_to_drive = -threshold_min_angle;
-			}
 			
-			_distance_to_drive = short_distance;
-
-			ROS_INFO_STREAM("there is no obstacle on hazard map, turn " << _angle_to_drive << " degree and 3 m");
 		}
 	}
 	else
@@ -622,14 +649,14 @@ void CollisionDetection::generateAvoidancemap()
 	    }
 	}
 
-	ROS_INFO_STREAM("save PCD.........");
-	pcl::PointCloud<pcl::PointXYZ>::Ptr testPCD (new pcl::PointCloud<pcl::PointXYZ>);
-	for(int i = 0; i < _hazard_x.size(); i++)
-	{
-		testPCD->push_back(pcl::PointXYZ(_hazard_x[i], _hazard_y[i], 0));
-	}
+	// ROS_INFO_STREAM("save PCD.........");
+	// pcl::PointCloud<pcl::PointXYZ>::Ptr testPCD (new pcl::PointCloud<pcl::PointXYZ>);
+	// for(int i = 0; i < _hazard_x.size(); i++)
+	// {
+	// 	testPCD->push_back(pcl::PointXYZ(_hazard_x[i], _hazard_y[i], 0));
+	// }
 
-	pcl::io::savePCDFileASCII ("testPCD.pcd", *testPCD);
+	// pcl::io::savePCDFileASCII ("testPCD.pcd", *testPCD);
 
 
 }
