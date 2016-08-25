@@ -71,7 +71,7 @@ protected:
 
 	//lists of all positon
 	std::vector<Navfilterout_All> Navfilterout_All_s;
-	std::vector<double> heading_record;
+	// std::vector<double> heading_record;
 
 
 	//transformation compute index
@@ -129,7 +129,7 @@ void Localization::Initialization()
 	Navfilterout_All_s.clear();
 	position_data.clear();
 	position_data_IMU.clear();
-	heading_record.clear();
+	// heading_record.clear();
 
 	addition = 0;
 
@@ -349,31 +349,33 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	TreadTomap = TkeyTomap * TreadTokey;
 
 	//keep the heading continuous
-	heading_record.push_back(TransformationMatrix_to_angle(TreadTomap) * 180 / PI);
+	// heading_record.push_back(TransformationMatrix_to_angle(TreadTomap) * 180 / PI);
 
-	if(heading_record.size() > 1)
-	{
-		if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 180)
-		{
-			if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
-			{
-				addition = addition - 360;
-			}
-			else
-			{
-				addition = addition + 360;
-			}
+	// if(heading_record.size() > 1)
+	// {
+	// 	if(abs(heading_record[heading_record.size() - 1] - heading_record[heading_record.size() - 2]) > 180)
+	// 	{
+	// 		if(heading_record[heading_record.size() - 1] > heading_record[heading_record.size() - 2])
+	// 		{
+	// 			addition = addition - 360;
+	// 		}
+	// 		else
+	// 		{
+	// 			addition = addition + 360;
+	// 		}
 
-			double heading_temp = heading_record[heading_record.size() - 1];
-			heading_record.clear();
-			heading_record.push_back(heading_temp);
-		}
-	}
+	// 		double heading_temp = heading_record[heading_record.size() - 1];
+	// 		heading_record.clear();
+	// 		heading_record.push_back(heading_temp);
+	// 	}
+	// }
+
+
 
 	slamposeout.globalX = TreadTomap(0,3);
 	slamposeout.globalY = TreadTomap(1,3);
 	// slamposeout.globalHeading = TransformationMatrix_to_angle(TreadTomap) * 180 / PI + addition;
-	slamposeout.globalHeading = Navfilterout_All_s[read_index].heading_filter * 180 / PI;
+	slamposeout.globalHeading = Navfilterout_All_s[read_index].heading_filter * 180 / PI;	//using nav filter heading, keep continue
 	PositionPub.publish(slamposeout);
 
 	//debug, for testing

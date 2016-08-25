@@ -197,6 +197,8 @@ protected:
 
 	const double PI = 3.1415926;
 
+	const float LIDAR_TO_ROBOT_X = 0.45;	//from lidar to center of robot
+
 	//angle of cone blocking points from robot body (this need to be determined)
 	float b_theta; //angle of blocked points (this is constant)
 
@@ -1741,10 +1743,10 @@ void Keyframe::Store_Information(const messages::LocalMap& LocalMapMsgIn)
 	//store all information into vector LocalMap_All_s
 	LocalMap_All localmap_all; //initialize struct
 
-	localmap_all.x_mean = LocalMapMsgIn.x_mean;
-	localmap_all.y_mean = LocalMapMsgIn.y_mean;
-	localmap_all.z_mean = LocalMapMsgIn.z_mean;
-	localmap_all.var_z = LocalMapMsgIn.var_z;
+	// localmap_all.x_mean = LocalMapMsgIn.x_mean + LIDAR_TO_ROBOT_X;	//transfer from lidar to robot center
+	// localmap_all.y_mean = LocalMapMsgIn.y_mean;
+	// localmap_all.z_mean = LocalMapMsgIn.z_mean;
+	// localmap_all.var_z = LocalMapMsgIn.var_z;
 	localmap_all.x_filter = LocalMapMsgIn.x_filter;
 	localmap_all.y_filter = LocalMapMsgIn.y_filter;
 	localmap_all.heading_filter = LocalMapMsgIn.heading_filter;
@@ -1770,17 +1772,17 @@ void Keyframe::Store_Information(const messages::LocalMap& LocalMapMsgIn)
 	for(int i = 0; i < LocalMapMsgIn.x_mean.size(); i++)
 	{	
 		//remove all points inside 5m round
-		if(outside_area(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i]))
+		if(outside_area(LocalMapMsgIn.x_mean[i] + LIDAR_TO_ROBOT_X, LocalMapMsgIn.y_mean[i]))
 		{
 			//if the cell is near to the ground, save that point for icp pointcloud
 			if (LocalMapMsgIn.ground_adjacent[i])
 			{
-				ICP_cloudMsgIn.push_back (pcl::PointXYZ(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i], 0));
+				ICP_cloudMsgIn.push_back (pcl::PointXYZ(LocalMapMsgIn.x_mean[i] + LIDAR_TO_ROBOT_X, LocalMapMsgIn.y_mean[i], 0));
 				localmap_icp.z_mean.push_back(LocalMapMsgIn.z_mean[i]);
 				localmap_icp.var_z.push_back(LocalMapMsgIn.var_z[i]);
 			}
 
-			information_cloudMsgIn.push_back(pcl::PointXYZ(LocalMapMsgIn.x_mean[i], LocalMapMsgIn.y_mean[i], 0)); // save all central points
+			information_cloudMsgIn.push_back(pcl::PointXYZ(LocalMapMsgIn.x_mean[i] + LIDAR_TO_ROBOT_X, LocalMapMsgIn.y_mean[i], 0)); // save all central points
 			localmap_information.z_mean.push_back(LocalMapMsgIn.z_mean[i]);
 			localmap_information.var_z.push_back(LocalMapMsgIn.var_z[i]);
 			localmap_information.ground_adjacent.push_back(LocalMapMsgIn.ground_adjacent[i]);
