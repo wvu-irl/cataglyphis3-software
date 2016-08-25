@@ -55,9 +55,10 @@ void CollisionDetection::positionCallback(messages::RobotPose const &position_ms
 	_headingposition = position_msg.heading * PI / 180;	//should change to radian
 }
 
-void CollisionDetection::zedcollisionCallback(lidar::ZedCollisionOut const &zedcollisionout_msg)
+void CollisionDetection::zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg)
 {
 	_zedcollision = zedcollisionout_msg.collision;
+	_registration_counter = _registration_counter + 1;
 }
 
 void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
@@ -165,6 +166,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 	// ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
 	//check zed input
+	ROS_INFO_STREAM("_zedcollision: " << _zedcollision);
 	if(_zedcollision != 0)
 	{
 		if(_zedcollision == 1)	//collision on the right
