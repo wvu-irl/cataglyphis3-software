@@ -231,9 +231,9 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         //         continue;
         //     }
         // }
-        if(distanceFromCenterOfImageInPixels < 5792/2)
+        if(distanceFromCenterOfImageInPixels < 5792/4)
         {
-            if(segmentAreaInPixels < 30)
+            if((boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) < 50 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) < 50)
             {
                 //ignore blob
                 ROS_INFO("ignoring (far area thresh) %i",i);
