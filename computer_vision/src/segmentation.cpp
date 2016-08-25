@@ -194,7 +194,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     {
         boundingBoxonBlob = boundingRect(cv::Mat(contourPoints[i]));
 
-        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 300 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 300 ) //used to be 350
+        if( (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) > 500 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) > 500 ) //used to be 350
         {
         	//ignore blob
         	ROS_INFO("ignoring blob (size) %i",i);
