@@ -23,8 +23,8 @@ SafePathing::SafePathing()
     quad1MagneticWaypoint.unskippable = false;
     quad1MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad1MagneticWaypoint.roiWaypoint = false;
-    quad2MagneticWaypoint.x = 7.0;
-    quad2MagneticWaypoint.y = -7.0;
+    quad2MagneticWaypoint.x = -7.0;
+    quad2MagneticWaypoint.y = 7.0;
     quad2MagneticWaypoint.unskippable = false;
     quad2MagneticWaypoint.maxAvoids = maxCornerWaypointAvoidCount;
     quad2MagneticWaypoint.roiWaypoint = false;
