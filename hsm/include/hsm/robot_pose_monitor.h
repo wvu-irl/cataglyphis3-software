@@ -4,7 +4,6 @@
 #include <messages/RobotPose.h>
 #include <messages/NavFilterOut.h>
 #include <messages/SLAMPoseOut.h>
-#include <messages/HSMSetNorthAngle.h>
 
 class RobotPoseMonitor
 {
