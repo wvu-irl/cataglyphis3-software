@@ -563,6 +563,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
         timers[_homingTimer_]->start();
         performHoming = false;
         possiblyLost = false;
+        homingUpdateFailed = false;
     }
 }
 
