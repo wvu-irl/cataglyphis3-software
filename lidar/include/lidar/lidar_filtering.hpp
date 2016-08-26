@@ -113,6 +113,7 @@ private:
 
 	//registration callback
 	pcl::PointCloud<pcl::PointXYZI> _input_cloud;
+	pcl::PointCloud<pcl::PointXYZI> _stacked_cloud;
 	//short int _registration_counter;
 	//short int _registration_counter_prev;
 	bool _registration_new;
@@ -130,7 +131,7 @@ private:
 	const float threshold_tree_height = 2.0; // above which the points will be disgarded
 	std::vector<std::vector<float> > _local_grid_map; // local grid map without grond adjacent infomation
 	std::vector<std::vector<float> > _local_grid_map_new; // local grid map with grond adjacent infomation
-	pcl::PointCloud<pcl::PointXYZI> _object_filtered;
+	// pcl::PointCloud<pcl::PointXYZI> _object_filtered;
 
 	//homing function
 	struct cylinder
