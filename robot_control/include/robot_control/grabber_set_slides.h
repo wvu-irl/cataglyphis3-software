@@ -9,7 +9,7 @@ public:
 	int run();
 private:
 	int slidePos_;
-	const int slideTol_ = 30;
+	const int slideTol_ = 80;
 };
 
 #endif // GRABBER_SET_SLIDES_H

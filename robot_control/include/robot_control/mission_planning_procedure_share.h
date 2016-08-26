@@ -25,15 +25,7 @@
 #include <armadillo>
 #include <math.h>
 #include <time.h>
-#define PI 3.14159265359
-#define DEG2RAD PI/180.0
-#define RAD2DEG 180.0/PI
-#define NUM_PROC_TYPES 17
-#define MAX_SAMPLES 10
-#define NUM_TIMERS 5
-// !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
-enum PROC_TYPES_T {__initialize__, __emergencyEscape__,__avoid__, __biasRemoval__, __nextBestRegion__, __searchRegion__, __examine__, __approach__, __collect__, __confirmCollect__, __reorient__, __goHome__, __squareUpdate__, __depositApproach__, __depositSample__, __safeMode__, __sosMode__};
-enum TIMER_NAMES_T {_roiTimer_, _biasRemovalTimer_, _homingTimer_, _biasRemovalActionTimeoutTimer_, _searchTimer_};
+#include "mission_planning_types_defines.h"
 
 class MissionPlanningProcedureShare
 {
@@ -162,13 +154,13 @@ public:
 	static double missionTime;
 	static double prevTime;
 	static bool missionStarted;
-	const unsigned int maxHomingUpdatedFailedCount = 3;
-	const unsigned int homingFailedSwitchToDeadReckoningCount = 2;
+	const unsigned int maxHomingUpdatedFailedCount = 1;
+	const unsigned int homingFailedSwitchToDeadReckoningCount = 1;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 0.3;
 	const float defaultVMax = 1.2; // m/s
 	const float fastVMax = 1.4; // m/s
-	const float slowVMax = 0.6; // m/s
+	const float slowVMax = 0.72; // m/s
 	const float defaultRMax = 45.0; // deg/s
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m

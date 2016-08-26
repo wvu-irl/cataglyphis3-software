@@ -65,10 +65,13 @@ int main(int argc, char **argv)
 
 //cartesian grid relative to map NA
 
-
 //local map to disply NA changes with a submit button to HSM and NAV
 
 //each sample candidate should display location, what CV thought type, and confidence
+
+//needto add option to push wait to front of exec queue.
+//need to add commit button to map display
+//
 
 
 //class bias

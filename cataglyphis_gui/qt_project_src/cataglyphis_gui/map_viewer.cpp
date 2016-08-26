@@ -52,6 +52,11 @@ void map_viewer::on_fieldSelector_currentIndexChanged(int index)
     connect(this, &map_viewer::set_scene_setup_alert,
                 scene[index].get(), &QGraphicsSceneMapViewer::on_set_ignore_setup_flag);
 
+    connect(this, &map_viewer::confirm_map_changes,
+                scene[index].get(), &QGraphicsSceneMapViewer::on_confirm_map_changes);
+    connect(this, &map_viewer::discard_map_changes,
+                scene[index].get(), &QGraphicsSceneMapViewer::on_discard_map_changes);
+
     scene[index]->connectSignals();
 
     ui->keyframeMapLayerButton->setChecked(scene[index]->keyframeLayer.properties.isLayerVisible);
@@ -128,4 +133,14 @@ void map_viewer::on_satDriveMapLayerButton_clicked(bool checked)
 void map_viewer::on_refresh_layers_button_clicked()
 {
     ROS_WARN("MAP:: Refreshing Not Implemented Yet");
+}
+
+void map_viewer::on_commit_changes_button_clicked()
+{
+    emit confirm_map_changes();
+}
+
+void map_viewer::on_discard_changes_button_clicked()
+{
+    emit discard_map_changes();
 }

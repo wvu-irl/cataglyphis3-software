@@ -93,7 +93,7 @@
           <attribute name="label">
            <string>Map Tools</string>
           </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_4">
+          <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <widget class="QComboBox" name="fieldSelector">
              <property name="sizePolicy">
@@ -154,6 +154,19 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="discard_changes_button">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Discard Changes</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="refresh_layers_button">
              <property name="text">
               <string>Refresh Active Layers</string>
@@ -170,8 +183,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>165</width>
-            <height>167</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -256,8 +269,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -299,8 +312,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -342,8 +355,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -385,8 +398,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">

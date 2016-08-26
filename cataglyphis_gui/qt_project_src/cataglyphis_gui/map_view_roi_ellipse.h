@@ -19,6 +19,11 @@
 class map_view_roi_ellipse : public QObject, public QGraphicsEllipseItem
 {
     Q_OBJECT
+
+signals:
+    void confirm_ROI_changes();
+    void discard_ROI_changes();
+
 public:
     map_view_roi_ellipse(QGraphicsItem *parent = 0) :
                 QGraphicsEllipseItem(parent) {roiDialog.reset(new ROI_dialog);}
@@ -41,8 +46,7 @@ public:
 public slots:
     void on_confirm_ROI_changes();
     void on_discard_ROI_changes();
-    void on_map_manager_service_return();
-    void on_update_roi(robot_control::ROI roiData);
+    void on_update_roi(robot_control::ROI roiData, bool modified);
 
 private:
     boost::scoped_ptr<ROI_dialog> roiDialog;

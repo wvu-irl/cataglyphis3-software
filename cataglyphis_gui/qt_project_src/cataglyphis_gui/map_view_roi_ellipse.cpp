@@ -20,7 +20,7 @@ map_view_roi_ellipse::map_view_roi_ellipse(robot_control::ROI roiData, int roiNu
 
    roiDialog.reset(new ROI_dialog(roiData, roiNum, worker));
    _implConnectSignals();
-   on_update_roi(roiData);
+   on_update_roi(roiData, false);
 
    this->setTransformOriginPoint(mapCenter);
    this->setTransform(mapTransform);
@@ -43,29 +43,29 @@ void map_view_roi_ellipse::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event
     event->ignore();
 }
 
-void map_view_roi_ellipse::on_update_roi(robot_control::ROI roiData)
+void map_view_roi_ellipse::on_update_roi(robot_control::ROI roiData, bool modified)
 {
     this->setRect(roiData.x,roiData.y,
                     roiData.radialAxis,roiData.tangentialAxis);
 }
 
-void map_view_roi_ellipse::on_map_manager_service_return()
-{
-
-}
-
 void map_view_roi_ellipse::on_confirm_ROI_changes()
 {
-
+    emit confirm_ROI_changes();
 }
 
 void map_view_roi_ellipse::on_discard_ROI_changes()
 {
-
+    emit discard_ROI_changes();
 }
 
 void map_view_roi_ellipse::_implConnectSignals()
 {
     connect(roiDialog.get(), &ROI_dialog::update_roi_ellipse,
                 this, &map_view_roi_ellipse::on_update_roi);
+
+    connect(this, &map_view_roi_ellipse::confirm_ROI_changes,
+                roiDialog.get(), &ROI_dialog::on_confirm_changes);
+    connect(this, &map_view_roi_ellipse::discard_ROI_changes,
+                roiDialog.get(), &ROI_dialog::on_discard_changes);
 }

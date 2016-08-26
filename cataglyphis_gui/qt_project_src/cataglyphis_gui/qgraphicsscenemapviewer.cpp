@@ -114,6 +114,15 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
     }
 }
 
+void QGraphicsSceneMapViewer::on_confirm_map_changes()
+{
+    emit confirm_roi_changes();
+}
+
+void QGraphicsSceneMapViewer::on_discard_map_changes()
+{
+    emit discard_roi_changes();
+}
 
 void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_control::RegionsOfInterest mapManagerResponse, bool wasSucessful)
 {
@@ -135,6 +144,10 @@ void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_co
             ROS_DEBUG("SCENE:: ROI at x:%2.3f, y:%2.3f", listPtr->at(i).x, listPtr->at(i).y);
             map_view_roi_ellipse *roiEllipse = new map_view_roi_ellipse(listPtr->at(i), i, pixelsPerDistance, robotToObjTransform,
                                                                             startPlatformCenter, worker);
+            connect(this, &QGraphicsSceneMapViewer::confirm_roi_changes,
+                        roiEllipse, &map_view_roi_ellipse::on_confirm_ROI_changes);
+            connect(this, &QGraphicsSceneMapViewer::discard_roi_changes,
+                        roiEllipse, &map_view_roi_ellipse::on_discard_ROI_changes);
             //roiEllipse->setGroup(roiLayer.items.get());
             roiLayer.itemList->append(roiEllipse);
         }
@@ -144,15 +157,7 @@ void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_co
             roiLayer.itemList->at(i)->show();
         }
 
-    ROS_DEBUG("After Adding ROIs");
-        /*
-        MUST CHANGE BACK TO TRUE
-        */
-roiLayer.properties.isLayerSetup = true;
-        /*
-        MUST CHANGE BACK TO TRUE
-        */
-
+        roiLayer.properties.isLayerSetup = true;
         roiLayer.properties.isLayerVisible = true;
     }
     else

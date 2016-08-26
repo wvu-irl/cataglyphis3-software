@@ -135,7 +135,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	
 	for(int i=0; i<cloud->points.size(); i++)
 	{
-		if(cloud->points[i].z < 1.5 && cloud->points[i].z > -2)
+		if(cloud->points[i].z < 1.5 && cloud->points[i].z > -(1.5 - _LIDAR_HEIGHT))
 		{
 			//check if point in corridor (width check)
 			if(cloud->points[i].y < 0.5*_CORRIDOR_WIDTH && cloud->points[i].y > -0.5*_CORRIDOR_WIDTH)
@@ -187,10 +187,14 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	// }
 	// //check if points exceed threshold
 	// else if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
-	if(collision_point_counter > _TRIGGER_POINT_THRESHOLD || _zedcollision != 0)
+	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD || _zedcollision != 0)
+	if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
 	{	
 		_collision_status = 1;	//detected a obstacle
 
+		//for test
+		_hazard_x.clear();
+		_hazard_y.clear();
 		if(_input_cloud.size() > 0)	//check if there is point cloud input from lidar
 		{
 			int choice = -1;	//0: big long; 1: big short; 2: small long; 3: small short; 4: no option; x0: normal; x1: one side

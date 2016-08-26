@@ -344,7 +344,7 @@ void Keyframe::Initialization()
 	threshold_mindistance = 5; //distance between current frame and previous keyframe less than the threshold, it will not generate a new keyframe
 
 	//parmeters for temp keyframe
-	threshold_permanent_keyframe_distance = 10; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
+	threshold_permanent_keyframe_distance = 20; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
 
 	//overlap
 	LocalMap_size = 120; // localmap size will be 120 + 120
@@ -705,14 +705,14 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			//for testing
 			std::ofstream outFile;
 
-			outFile.open("test_key.txt");
+			// outFile.open("test_key.txt");
 
-			for(int j = 0; j < Vertex.size(); j++)
-			{
-				// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
-				outFile << Vertex[j].x << "\t" << Vertex[j].y << "\n";
-			}
-			outFile.close();
+			// for(int j = 0; j < Vertex.size(); j++)
+			// {
+			// 	// outFile << position_data[position_data.size() - 1].x << "\t" << position_data[position_data.size() - 1].y << "\n";
+			// 	outFile << Vertex[j].x << "\t" << Vertex[j].y << "\n";
+			// }
+			// outFile.close();
 					
 			//***************************timer*************************//
 			finish = clock();
@@ -1640,10 +1640,14 @@ double Keyframe::Update_GlobalMap(LocalMap_Information localmap_information_upda
   	}
 
   	//for testing
-  	// std::stringstream globalMap_pcd;
-  	// globalMap_pcd << "/home/atlas/test_data/globalMap/globalMap" << pcd_counter_globalmap << ".pcd";
-  	// pcl::io::savePCDFileASCII (globalMap_pcd.str(), *globalMap);
-  	// pcd_counter_globalmap++;
+  	if(globalMap->size() > 1)
+  	{
+  		std::stringstream globalMap_pcd;
+  		globalMap_pcd << "/home/atlas/test_data/globalMap/globalMap" << pcd_counter_globalmap << ".pcd";
+  		pcl::io::savePCDFileASCII (globalMap_pcd.str(), *globalMap);
+  		pcd_counter_globalmap++;
+  	}
+  	
 
   	return update_rate;
 }

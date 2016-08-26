@@ -15,7 +15,7 @@ void DriveHalt::init()
     posError_ = 0.0;
     vPrev_ = robotStatus.velocity;
     prevTime_ = ros::Time::now().toSec();
-    if(hypot(robotStatus.rollAngle,robotStatus.pitchAngle)>minTiltForHold_) state_ = _waitingForStop;
+    if(fabs(robotStatus.pitchAngle)>minTiltForHold_) state_ = _waitingForStop;
     else state_ = _noHold;
 }
 

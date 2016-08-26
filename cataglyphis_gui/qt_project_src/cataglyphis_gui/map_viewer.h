@@ -33,6 +33,9 @@ signals:
     void set_map_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
     void set_scene_setup_alert(bool status);
 
+    void confirm_map_changes();
+    void discard_map_changes();
+
 public:
     explicit map_viewer(QWidget *parent = 0, int startIndex = 0, boost::shared_ptr<ros::NodeHandle> nhArg =
                                                                         boost::shared_ptr<ros::NodeHandle>());
@@ -59,6 +62,10 @@ private slots:
     void on_satDriveMapLayerButton_clicked(bool checked);
 
     void on_refresh_layers_button_clicked();
+
+    void on_commit_changes_button_clicked();
+
+    void on_discard_changes_button_clicked();
 
 private:
     QThread rosWorkerThread;

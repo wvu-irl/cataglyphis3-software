@@ -2,10 +2,16 @@
 #define EXEC_ACTION_ENUMS
 
 #include "../../../robot_control/include/robot_control/action_type_enum.h"
-//#include <map>
+#include <map>
 
 namespace exec_action_enums
 {
+
+
+    typedef ACTION_TYPE_T exec_action_t;
+
+
+
     static std::map<ACTION_TYPE_T, std::string> actionTypeToString {{_idle, "Idle"},
                                                                     {_halt, "Halt"},
                                                                     {_driveGlobal, "Drive Global"},
