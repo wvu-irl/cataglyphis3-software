@@ -84,14 +84,14 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86;
-	const float distanceToBlindDriveLocation = 0.96; // m
-	const float blindDriveDistance = 0.44; // m (0.39)
+	const float distanceToBlindDriveLocation = 0.88; // m
+	const float blindDriveDistance = 0.39; // m (0.39)
 	const float sideGrabAngleOffset = 15.0; // deg
 	const float initGrabberDistanceTolerance = 0.17; // m
 	const float initGrabberAngleTolerance = 6.0; // deg
 	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
 	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
-	const float possibleSampleConfThresh = 0.6;
+	const float possibleSampleConfThresh = 0.6; // Change corresponding value in map manager if ever changed
 	const float definiteSampleConfThresh = 0.62;
 	static int currentROIIndex;
 	static bool initialized;

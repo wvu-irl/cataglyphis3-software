@@ -551,8 +551,13 @@ void MapManager::keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr &
 
 void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr &msg) // need to figure out how the sample prob update works
 {
+    highestSampleValue = 0.0;
     cvSamplesFoundMsg = *msg;
-    if(searchLocalMapExists/* && (keyframeRelPose.keyframeIndex == currentROIMsg.currentROINum)*/) // Do we want this condition?
+    for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+    {
+        if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestSampleValue) highestSampleValue = cvSamplesFoundMsg.sampleList.at(i).confidence;
+    }
+    if(searchLocalMapExists && (highestSampleValue < possibleSampleConfThresh))
     {
         //donutSmash(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY));
         //addFoundSamples(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
@@ -580,6 +585,37 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
         else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialValue);
         else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialConf);
         else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
+    }
+}
+
+void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
+{
+    donutSmashVerticies.clear();
+    donutSmashVerticies.resize(4);
+    donutSmashVerticies.at(0)[0] = pos[0] + donutSmashSearchRadius;
+    donutSmashVerticies.at(0)[1] = pos[1] + donutSmashSearchRadius;
+    donutSmashVerticies.at(1)[0] = pos[0] - donutSmashSearchRadius;
+    donutSmashVerticies.at(1)[1] = pos[1] + donutSmashSearchRadius;
+    donutSmashVerticies.at(2)[0] = pos[0] - donutSmashSearchRadius;
+    donutSmashVerticies.at(2)[1] = pos[1] - donutSmashSearchRadius;
+    donutSmashVerticies.at(3)[0] = pos[0] + donutSmashSearchRadius;
+    donutSmashVerticies.at(3)[1] = pos[1] - donutSmashSearchRadius;
+    donutSmashPolygon.removeVertices();
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(0));
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(1));
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(2));
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(3));
+    searchLocalMap.getIndex(pos, donutSmashRobotPosIndex);
+    for(grid_map::PolygonIterator polyIt(searchLocalMap, donutSmashPolygon); !polyIt.isPastEnd(); ++polyIt)
+    {
+        if((*polyIt)[0] != donutSmashRobotPosIndex[0] && (*polyIt)[1] != donutSmashRobotPosIndex[1])
+        {
+            //searchLocalMap.at(layerToString(_sampleProb), *polyIt) -= push down
+            for(grid_map::GridMapIterator wholeIt(searchLocalMap); !wholeIt.isPastEnd(); ++wholeIt)
+            {
+                if((*wholeIt)[0] != (*polyIt)[0] && (*wholeIt)[1] != (*polyIt)[1]) ;//searchLocalMap.at(layerToString(_sampleProb), *wholeIt) -= push up
+            }
+        }
     }
 }
 
