@@ -168,7 +168,7 @@ public:
 	const float sampleDistanceToExpectedGain = 0.3;
 	const float defaultVMax = 1.2; // m/s
 	const float fastVMax = 1.4; // m/s
-	const float slowVMax = 0.6; // m/s
+	const float slowVMax = 0.72; // m/s
 	const float defaultRMax = 45.0; // deg/s
 	const float homeWaypointX = 5.0; // m
 	const float homeWaypointY = 0.0; // m

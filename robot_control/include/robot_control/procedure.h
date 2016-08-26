@@ -645,7 +645,7 @@ void Procedure::computeDriveSpeeds()
 		driveSpeedsMsg.vMax = fastVMax;
 		driveSpeedsMsg.rMax = defaultRMax;
 	}
-	else if(!hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0)
+	else if(!hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0) // collisionMsg.slow_down, get rid of rest
 	{
 		driveSpeedsMsg.vMax = defaultVMax;
 		driveSpeedsMsg.rMax = defaultRMax;
