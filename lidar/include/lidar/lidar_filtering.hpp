@@ -74,14 +74,14 @@ public:
 	bool newPointCloudAvailable();
 	void packLocalMapMessage(messages::LocalMap &msg);
 	void packHomingMessage(messages::LidarFilterOut &msg);
-	void stitchClouds();
+	void stackClouds();
 	void fitCylinderLong();
 	void fitCylinderShort();
 	short int _navigation_filter_counter;
 	short int _navigation_filter_counter_prev;
 	short int _registration_counter;
 	short int _registration_counter_prev;
-	short int _stitch_counter;
+	short int _stack_counter;
 
 	float _homing_x = 0;
 	float _homing_y = 0;
@@ -113,7 +113,6 @@ private:
 
 	//registration callback
 	pcl::PointCloud<pcl::PointXYZI> _input_cloud;
-	pcl::PointCloud<pcl::PointXYZI> _stacked_cloud;
 	//short int _registration_counter;
 	//short int _registration_counter_prev;
 	bool _registration_new;
@@ -131,7 +130,7 @@ private:
 	const float threshold_tree_height = 2.0; // above which the points will be disgarded
 	std::vector<std::vector<float> > _local_grid_map; // local grid map without grond adjacent infomation
 	std::vector<std::vector<float> > _local_grid_map_new; // local grid map with grond adjacent infomation
-	// pcl::PointCloud<pcl::PointXYZI> _object_filtered;
+	pcl::PointCloud<pcl::PointXYZI> _object_filtered;
 
 	//homing function
 	struct cylinder

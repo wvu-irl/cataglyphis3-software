@@ -135,16 +135,6 @@ void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &in
 	pcl::PointCloud<pcl::PointXYZI> temp_cloud = input_cloud;
     _registration_counter = _registration_counter + 1;
 
-    //only stack cloud if the robot is stopped
-    if(_execinfo_stopflag == true)
-    {
-    	_stitch_counter = _stitch_counter + 1;
-    }
-    else
-    {
-    	_stitch_counter = 0;
-    }
-
     //calculate rotation from lidar to robot body then compensate for the robot tilt
     Eigen::Matrix3f R_temporary = _R_tilt_robot_to_beacon*_R_lidar_to_robot;
 
@@ -194,49 +184,37 @@ bool LidarFilter::newPointCloudAvailable()
 	}
 }
 
-void LidarFilter::stitchClouds() //try to stitch 5 scans into 1
+void LidarFilter::stackClouds()
 {
-	if(_stitch_counter == 0) // initialize single point cloud
+	//stack clouds incrementally (only stack the filtered clouds)
+	if(_stack_counter == 0)
 	{
-		_piece_one = _input_cloud;
-        _stacked_cloud = _piece_one;
+		_piece_one = _object_filtered;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter == 2) // stitch second point cloud to the first
+	else if(_stack_counter == 1)
 	{
-		_piece_two = _piece_one;
-		_piece_one = _input_cloud;
-        _stacked_cloud = _piece_one + _piece_two;
+		_piece_two = _object_filtered + _piece_one;
+        _object_filtered = _piece_two;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter == 3)
+	else if(_stack_counter == 2)
 	{
-		_piece_three = _piece_two;
-		_piece_two = _piece_one;
-		_piece_one = _input_cloud;
-        _stacked_cloud = _piece_one + _piece_two;
-        _stacked_cloud = _stacked_cloud + _piece_three;
+		_piece_three = _object_filtered + _piece_two;
+        _object_filtered = _piece_three;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter == 4)
+	else if(_stack_counter == 3)
 	{
-		_piece_four = _piece_three;
-		_piece_three = _piece_two;
-		_piece_two = _piece_one;
-		_piece_one = _input_cloud;
-        _stacked_cloud = _piece_one + _piece_two;
-        _stacked_cloud = _stacked_cloud + _piece_three;
-        _stacked_cloud = _stacked_cloud + _piece_four;
-        _stacked_cloud = _stacked_cloud + _piece_five;
+		_piece_four = _object_filtered + _piece_three;
+        _object_filtered = _piece_four;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter >= 5)
+	else if(_stack_counter == 4)
 	{
-		_piece_five = _piece_four;
-		_piece_four = _piece_three;
-		_piece_three = _piece_two;
-		_piece_two = _piece_one;
-		_piece_one = _input_cloud;
-		_stacked_cloud = _piece_one + _piece_two;
-        _stacked_cloud = _stacked_cloud + _piece_three;
-        _stacked_cloud = _stacked_cloud + _piece_four;
-        _stacked_cloud = _stacked_cloud + _piece_five;
+		_piece_five = _object_filtered + _piece_four;
+        _object_filtered = _piece_five;
+        _stack_counter = 0;
 	}
 }
  
@@ -344,6 +322,38 @@ void LidarFilter::doMathMapping()
 	pass.setFilterLimits(-1*threshold_tree_height,1.5); //positive z is down, negative z is up
 	pass.filter(*cloud);
 
+	//save point cloud after hard thresholds
+	// std::stringstream ss1;
+	// ss1 << "ss1.pcd";pcl::visualization::PCLVisualizer viewer;
+	// pcl::io::savePCDFile( ss1.str(), *cloud);
+
+
+	/*  //this is another way of removing the ground
+	// Create the filtering object
+	pcl::PointIndicesPtr ground (new pcl::PointIndices);
+    pcl::ApproximateProgressiveMorphologicalFilter<pcl::PointXYZI> pmf;
+    pmf.setInputCloud (cloud);
+    pmf.setMaxWindowSize (33);
+    pmf.setSlope (1.0f);
+    pmf.setInitialDistance (0.15f);
+    pmf.setCellSize(2.0f);
+    pmf.setMaxDistance (2.0f);
+    //cout << "Cell size is " << pmf.getCellSize() << endl;
+    pmf.extract (ground->indices);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+    // Create the filtering object
+    pcl::ExtractIndices<pcl::PointXYZI> extract;
+    extract.setInputCloud (cloud);
+    extract.setIndices (ground);
+    extract.filter (*ground_filtered);
+    //std::cerr << "Ground cloud after filtering: " << std::endl;
+    //std::cerr << *ground_filtered << std::endl;
+    // Extract non-ground returns
+    extract.setNegative (true);
+    extract.filter (*object_filtered);
+	*/
+
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
 	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
 	seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
@@ -371,8 +381,8 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
-	// //copy filtered point cloud after hard thresholding and ground removal
-	// _object_filtered = *object_filtered; 
+	//copy filtered point cloud after hard thresholding and ground removal
+	_object_filtered = *object_filtered; 
 
 	//save point cloud after ground removal
 	// std::stringstream ss2;
@@ -473,85 +483,30 @@ void LidarFilter::doMathMapping()
 	    }
 	}
 
-	// //copy filtered point cloud after hard thresholding and ground removal
-	// _object_filtered = *object_filtered; 
+	//copy filtered point cloud after hard thresholding and ground removal
+	_object_filtered = *object_filtered; 
 }
 
 void LidarFilter::doMathHoming()
 {
-	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-	*cloud = _stacked_cloud;
-
-	//do ground removal
-	pcl::PointCloud<pcl::PointXYZI> new_point;
-	new_point.width  = (2*map_range)*(2*map_range);
-	new_point.height = 1;
-	new_point.points.resize (new_point.width * new_point.height);
-
-	//define a new point cloud with the size of grid map size (1x1 m grid) for ground points
-	pcl::PointCloud<pcl::PointXYZI> ground_point;
-	ground_point.width  = (2*map_range)*(2*map_range);
-	ground_point.height = 1;
-	ground_point.points.resize (ground_point.width * ground_point.height);
-	
-	//remove points based on hard thresholds (too far, too high, too low)
-	pcl::PassThrough<pcl::PointXYZI> pass1;
-	pass1.setInputCloud(cloud);
-	pass1.setFilterFieldName("x");
-	pass1.setFilterLimits(-map_range,map_range);
-	pass1.filter(*cloud);
-	pass1.setFilterFieldName("y");
-	pass1.setFilterLimits(-map_range,map_range);
-	pass1.filter(*cloud);
-	pass1.setFilterFieldName("z");
-	pass1.setFilterLimits(-1*threshold_tree_height,1.5); //positive z is down, negative z is up
-	pass1.filter(*cloud);
-
-	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
-	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
-	seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
-	seg_plane.setModelType (pcl::SACMODEL_PLANE);
-	seg_plane.setMethodType (pcl::SAC_RANSAC);
-	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
-	seg_plane.setInputCloud (cloud); //was raw_cloud
-
-	//segment the points fitted to the plane using ransac
-	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ()); //what is this? (coefficients for fitted plane?)
-	pcl::PointIndices::Ptr inliers (new pcl::PointIndices ()); //what is this? (inliers for points that fit the plane?)
-	seg_plane.segment (*inliers, *coefficients);
-
-	//seperate the ground points and the points above the ground (object points)
-	pcl::ExtractIndices<pcl::PointXYZI> extract1;
-	extract1.setInputCloud (cloud);
-	extract1.setIndices (inliers);
-
-	extract1.setNegative (false);
-	pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
-	extract1.filter (*ground_filtered);
-
-	extract1.setNegative (true);
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
-	extract1.filter (*object_filtered);
-
-	// //copy filtered point cloud after hard thresholding and ground removal
-	// _object_filtered = *object_filtered; 
+	*object_filtered= _object_filtered;
 
 	// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
 	// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
-	pcl::PassThrough<pcl::PointXYZI> pass2;
-	pass2.setInputCloud(object_filtered);
-    pass2.setFilterFieldName("z");
-    pass2.setFilterLimits(-5,5); 
-    pass2.filter(*object_filtered);
-    pass2.setInputCloud(object_filtered);
-    pass2.setFilterFieldName("x");
-    pass2.setFilterLimits(-home_detection_range,home_detection_range);
-    pass2.filter(*object_filtered);
-    pass2.setInputCloud(object_filtered);
-    pass2.setFilterFieldName("y");
-    pass2.setFilterLimits(-home_detection_range,home_detection_range); 
-    pass2.filter(*object_filtered);
+	pcl::PassThrough<pcl::PointXYZI> pass;
+	pass.setInputCloud(object_filtered);
+    pass.setFilterFieldName("z");
+    pass.setFilterLimits(-5,5); 
+    pass.filter(*object_filtered);
+    pass.setInputCloud(object_filtered);
+    pass.setFilterFieldName("x");
+    pass.setFilterLimits(-home_detection_range,home_detection_range);
+    pass.filter(*object_filtered);
+    pass.setInputCloud(object_filtered);
+    pass.setFilterFieldName("y");
+    pass.setFilterLimits(-home_detection_range,home_detection_range); 
+    pass.filter(*object_filtered);
     //ROS_INFO("PassThrough done.");
 	
 	// std::stringstream ss;
@@ -615,7 +570,7 @@ void LidarFilter::doMathHoming()
 	pcl::SACSegmentationFromNormals<pcl::PointXYZI, pcl::Normal> seg;
 	pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
 	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
-	pcl::ExtractIndices<pcl::PointXYZI> extract2;
+	pcl::ExtractIndices<pcl::PointXYZI> extract;
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZI> ());
 
 	//define variables for point intensity value checking
@@ -708,10 +663,10 @@ void LidarFilter::doMathHoming()
 
 	        // OBTAIN THE CYLINDER INLIERS AND COEFFICIENTS
 	        seg.segment (*inliers_cylinder, *coefficients_cylinder);
-	        extract2.setInputCloud (points_cluster[i]);
-	        extract2.setIndices (inliers_cylinder);
-	        extract2.setNegative (false);
-	        extract2.filter (*cloud_cylinder);
+	        extract.setInputCloud (points_cluster[i]);
+	        extract.setIndices (inliers_cylinder);
+	        extract.setNegative (false);
+	        extract.filter (*cloud_cylinder);
 	        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
 	        
 	        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
@@ -784,83 +739,78 @@ void LidarFilter::doMathHoming()
 //use this member function to detect homing cylinder from a long distance 10 m < distance < 20 m
 void LidarFilter::doLongDistanceHoming()
 {
-	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-	*cloud = _stacked_cloud;
-
-	//do ground removal
-	pcl::PointCloud<pcl::PointXYZI> new_point;
-	new_point.width  = (2*map_range)*(2*map_range);
-	new_point.height = 1;
-	new_point.points.resize (new_point.width * new_point.height);
-
-	//define a new point cloud with the size of grid map size (1x1 m grid) for ground points
-	pcl::PointCloud<pcl::PointXYZI> ground_point;
-	ground_point.width  = (2*map_range)*(2*map_range);
-	ground_point.height = 1;
-	ground_point.points.resize (ground_point.width * ground_point.height);
-	
-	//remove points based on hard thresholds (too far, too high, too low)
-	pcl::PassThrough<pcl::PointXYZI> pass1;
-	pass1.setInputCloud(cloud);
-	pass1.setFilterFieldName("x");
-	pass1.setFilterLimits(-map_range,map_range);
-	pass1.filter(*cloud);
-	pass1.setFilterFieldName("y");
-	pass1.setFilterLimits(-map_range,map_range);
-	pass1.filter(*cloud);
-	pass1.setFilterFieldName("z");
-	pass1.setFilterLimits(-1*threshold_tree_height,1.5); //positive z is down, negative z is up
-	pass1.filter(*cloud);
-
-	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
-	pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
-	seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
-	seg_plane.setModelType (pcl::SACMODEL_PLANE);
-	seg_plane.setMethodType (pcl::SAC_RANSAC);
-	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
-	seg_plane.setInputCloud (cloud); //was raw_cloud
-
-	//segment the points fitted to the plane using ransac
-	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ()); //what is this? (coefficients for fitted plane?)
-	pcl::PointIndices::Ptr inliers (new pcl::PointIndices ()); //what is this? (inliers for points that fit the plane?)
-	seg_plane.segment (*inliers, *coefficients);
-
-	//seperate the ground points and the points above the ground (object points)
-	pcl::ExtractIndices<pcl::PointXYZI> extract;
-	extract.setInputCloud (cloud);
-	extract.setIndices (inliers);
-
-	extract.setNegative (false);
-	pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
-	extract.filter (*ground_filtered);
-
-	extract.setNegative (true);
-	// pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	pcl::PointCloud<pcl::PointXYZI>::Ptr raw_cloud (new pcl::PointCloud<pcl::PointXYZI>);
-	extract.filter (*raw_cloud);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+	//*object_filtered= _object_filtered;
+	*raw_cloud = _object_filtered;
+
+	// // ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
+	// pcl::PassThrough<pcl::PointXYZI> pass;
+	// pass.setInputCloud(object_filtered);
+ //    pass.setFilterFieldName("z");
+ //    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
+ //    pass.filter(*object_filtered);
+ //    pass.setInputCloud(object_filtered);
+ //    pass.setFilterFieldName("x");
+ //    pass.setFilterLimits(-home_detection_range,home_detection_range);
+ //    pass.filter(*object_filtered);
+ //    pass.setInputCloud(object_filtered);
+ //    pass.setFilterFieldName("y");
+ //    pass.setFilterLimits(-home_detection_range,home_detection_range); 
+ //    pass.filter(*object_filtered);
+ //    //ROS_INFO("PassThrough done.");
 
 	//define variables for point intensity value checking
 	int high_intensity_counter = 0;
 	int high_intensity_threshold = 95;
 	bool high_intensity_cluster = false;
 
-    pcl::PassThrough<pcl::PointXYZI> pass2;
-	pass2.setInputCloud(raw_cloud);
-    pass2.setFilterFieldName("z");
-    pass2.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
-    pass2.filter(*raw_cloud);
-    pass2.setInputCloud(raw_cloud);
-    pass2.setFilterFieldName("x");
-    pass2.setFilterLimits(-home_detection_range,home_detection_range);
-    pass2.filter(*raw_cloud);
-    pass2.setInputCloud(raw_cloud);
-    pass2.setFilterFieldName("y");
-    pass2.setFilterLimits(-home_detection_range,home_detection_range); 
-    pass2.filter(*raw_cloud);
+    pcl::PassThrough<pcl::PointXYZI> pass;
+	pass.setInputCloud(raw_cloud);
+    pass.setFilterFieldName("z");
+    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
+    pass.filter(*raw_cloud);
+    pass.setInputCloud(raw_cloud);
+    pass.setFilterFieldName("x");
+    pass.setFilterLimits(-home_detection_range,home_detection_range);
+    pass.filter(*raw_cloud);
+    pass.setInputCloud(raw_cloud);
+    pass.setFilterFieldName("y");
+    pass.setFilterLimits(-home_detection_range,home_detection_range); 
+    pass.filter(*raw_cloud);
 
-    pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
     *object_filtered = *raw_cloud;
+
+ //    int counter = 0;
+ //    for (int i = 0; i < raw_cloud->points.size(); i++)
+ //    {
+ //    	if((raw_cloud->points[i].intensity) > high_intensity_threshold)
+ //    	{
+ //    		// object_filtered->points[counter].x = raw_cloud->points[i].x;
+ //    		// object_filtered->points[counter].y = raw_cloud->points[i].y;
+ //    		// object_filtered->points[counter].z = raw_cloud->points[i].z;
+ //    		// object_filtered->points[counter].intensity = raw_cloud->points[i].intensity;
+ //    		counter = counter + 1;
+ //    	}
+ //    }
+
+ //    object_filtered->width = counter;
+ //    object_filtered->height = 1;
+ //    object_filtered->points.resize (object_filtered->width * object_filtered->height);
+	
+	// counter = 0;
+	// for (int i = 0; i < raw_cloud->points.size(); i++)
+ //    {
+ //    	if((raw_cloud->points[i].intensity) > high_intensity_threshold)
+ //    	{
+ //    		object_filtered->points[counter].x = raw_cloud->points[i].x;
+ //    		object_filtered->points[counter].y = raw_cloud->points[i].y;
+ //    		object_filtered->points[counter].z = raw_cloud->points[i].z;
+ //    		object_filtered->points[counter].intensity = raw_cloud->points[i].intensity;
+ //    		counter = counter + 1;
+ //    	}
+ //    }
+ //    counter = 0;
 
 	// std::stringstream ss;
 	// ss << "file.pcd";
@@ -1037,10 +987,6 @@ void LidarFilter::doLongDistanceHoming()
     if(_potential_cylinders_intensity.size() > 0 && _potential_cylinders_nonintensity.size() > 0)
     {
     	fitCylinderLong();
-    }
-    if(_stitch_counter >=5)
-    {
-    	_stitch_counter = 0;
     }
 }
 
@@ -1268,7 +1214,7 @@ void LidarFilter::fitCylinderLong()
 		_homing_y=y_est_k;
 		_homing_heading=heading_est_k;
 		_homing_found=true;
-		_stitch_counter=0;
+
 		ROS_INFO("********************");
 		ROS_INFO("x_est = %f",x_est);
 		ROS_INFO("y_est = %f",y_est);
@@ -1319,7 +1265,7 @@ void LidarFilter::fitCylinderLong()
 				outputFile << X(3) << ",";
 				outputFile << i << ","; //cylinder number
 				outputFile << 1 << ","; //nonintensity = 1
-				outputFile << _stitch_counter << ",";
+				outputFile << _stack_counter << ",";
 				outputFile << keep_nonintensity << ","; 
 				outputFile << diff1+diff2 << ","; 
 				outputFile << explode; 
@@ -1344,7 +1290,7 @@ void LidarFilter::fitCylinderLong()
 				outputFile << X(3) << ",";
 				outputFile << i << ","; //cylinder number
 				outputFile << 2 << ","; //intensity = 2
-				outputFile << _stitch_counter << ","; 
+				outputFile << _stack_counter << ","; 
 				outputFile << keep_intensity << ",";
 				outputFile << diff1+diff2 << ","; 
 				outputFile << explode; 

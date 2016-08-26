@@ -11,7 +11,6 @@ int main(int argc, char **argv)
 	LidarFilter lidar_filter;
 	messages::LidarFilterOut msg_LidarFilterOut;
 	messages::LocalMap msg_LocalMap;
-	bool low_sampling_freq = false; //set to true if we are using 5 Hz sampling frequency
 
 	while(ros::ok())
 	{
@@ -22,32 +21,23 @@ int main(int argc, char **argv)
 
 		if(lidar_filter.newPointCloudAvailable())
 		{
-			//ROS_INFO_STREAM("New cloud is available");
+			lidar_filter.doMathMapping();
+			//lidar_filter.doMathHoming();
+			if(lidar_filter._do_homing)
+			{
+				lidar_filter.stackClouds(); //note this function needs to go after doMathMapping
+				lidar_filter.doLongDistanceHoming();
+			}
+			else
+			{
+				lidar_filter._stack_counter = 0;
+			}
+		}
 
-			if (low_sampling_freq == true)
-			{
-				lidar_filter.stitchClouds();
-				if(lidar_filter._registration_counter % 2 == 0 && lidar_filter._registration_counter != 0)
-				{
-					lidar_filter.doMathMapping();
-					//lidar_filter.doMathHoming();
-					lidar_filter.doLongDistanceHoming();
-				}
-			}
-			else if(low_sampling_freq == false)
-			{
-				lidar_filter.stitchClouds();
-				lidar_filter.doMathMapping();
-				//lidar_filter.doMathHoming();
-				if(lidar_filter._do_homing)
-				{
-					lidar_filter.doLongDistanceHoming();
-				}
-				else
-				{
-					lidar_filter._stitch_counter = 0;
-				}
-			}
+		//if homing beacon is found reset stacking
+		if(lidar_filter._homing_found == true)
+		{
+			lidar_filter._stack_counter = 0;
 		}
 
 		lidar_filter.packLocalMapMessage(msg_LocalMap);
