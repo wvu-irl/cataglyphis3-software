@@ -40,12 +40,20 @@ class NavigationFilter
 
 		ros::Subscriber sub_mission;
 		bool possibly_lost = false;
+		bool square_update = false;
 
 		ros::Subscriber sub_lidar;
 		double homing_x;
 		double homing_y;
 		double homing_heading;
 		bool homing_found;
+		double dull_x;
+		double dull_y;
+		double shiny_x;
+		double shiny_y;
+		double cylinder_std;
+		short int registration_counter;
+		short int registration_counter_prev;
 
 		Encoders encoders;
 		IMU imu;

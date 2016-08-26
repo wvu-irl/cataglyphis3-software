@@ -1,5 +1,11 @@
 float64 homing_x
 float64 homing_y
 float64 homing_heading
+float64 dull_x
+float64 dull_y
+float64 shiny_x
+float64 shiny_y
+float64 cylinder_std
 bool homing_found
 int32 terrain_type
+int8 registration_counter

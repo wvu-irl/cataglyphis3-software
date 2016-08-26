@@ -10,10 +10,17 @@ NavigationFilter::NavigationFilter()
 	sub_mission = nh.subscribe("/control/missionplanning/info", 1, &NavigationFilter::getMissionPlanningInfoCallback, this);
 
 	sub_lidar = nh.subscribe("lidar/lidarfilteringout/lidarfilteringout", 1, &NavigationFilter::getLidarFilterOutCallback, this);
-    homing_x=0;
-	homing_y=0;
-	homing_heading=0;
+    homing_x=0.0;
+	homing_y=0.0;
+	homing_heading=0.0;
     homing_found=false;
+    dull_x=0.0;
+	dull_y=0.0;
+	shiny_x=0.0;
+	shiny_y=0.0;
+	cylinder_std = 100.0;
+	registration_counter = 0;
+	registration_counter_prev = 0;
 
 	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 	init_filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
@@ -603,7 +610,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 			if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.05) && encoders.delta_distance < 5)
 			{
-				if(sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)
+				if((sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)&&!homing_updated)
 				{
 					do_homing = true;
 				}
@@ -995,24 +1002,21 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		}
 	}
 
-	if (stopFlag && homing_found)
+	if (stopFlag && homing_found && registration_counter!=registration_counter_prev && do_homing && !homing_updated)
 	{
-		if(do_homing)
+		filter.homing_update(homing_heading, homing_x, homing_y, dull_x, dull_y, shiny_x, shiny_y, cylinder_std, possibly_lost, square_update);
+		if(filter.homing_verified)
 		{
-			filter.verify_homing(homing_heading, homing_x, homing_y, possibly_lost);
-			if(filter.heading_verified)
-			{
-				filter.initialize_states(filter.phi,filter.theta,filter.heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filter1.initialize_states(filter.phi,filter.theta,filter.heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filter2.initialize_states(filter.phi,filter.theta,filter.heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				filterS.initialize_states(filter.phi,filter.theta,filter.	heading_update,homing_x,homing_y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				homing_updated = true;
-			}
-			filter.heading_verified = false;
+			filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			filterS.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+			homing_updated = true;
 		}
+		filter.homing_verified = false;
 	}
 	else if (!stopFlag)
 	{
+		filter.clear_cylinder_vec();
 		homing_updated = false;
 	}
 
@@ -1128,15 +1132,23 @@ void NavigationFilter::getExecInfoCallback(const messages::ExecInfo::ConstPtr &m
 void NavigationFilter::getMissionPlanningInfoCallback(const messages::MissionPlanningInfo::ConstPtr &msg)
 {
 	this->possibly_lost = msg->possiblyLost;
+	this->square_update = msg->homingUpdateFailed;
 }
 
 void NavigationFilter::getLidarFilterOutCallback(const messages::LidarFilterOut::ConstPtr &msg)
 {
+	this->registration_counter_prev = this->registration_counter;
 	double l_dist = 0.44;
 	this->homing_x = msg->homing_x-l_dist*cos(msg->homing_heading);
 	this->homing_y = msg->homing_y-l_dist*sin(msg->homing_heading);
 	this->homing_heading = msg->homing_heading;
 	this->homing_found = msg->homing_found;
+	this->dull_x = msg->dull_x;
+	this->dull_y = msg->dull_y;
+	this->shiny_x = msg->shiny_x;
+	this->shiny_y = msg->shiny_y;
+	this->cylinder_std = msg->cylinder_std;
+	this->registration_counter = msg->registration_counter;
 }
 
 //added for new User Interface -Matt G.
