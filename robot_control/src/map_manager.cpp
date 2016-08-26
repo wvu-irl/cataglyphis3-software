@@ -673,7 +673,8 @@ void MapManager::writeKeyframesIntoGlobalMap()
             rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], -keyframeHeading);
             if(currentKeyframe.isInside(keyframeCoord))
             {
-            	globalMap.at(layerToString(_keyframeDriveability), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord);
+                if(currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord)!=0.0)
+            	   globalMap.at(layerToString(_keyframeDriveability), *it) = currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord);
                 /*// Driveability, confidence, and height
                 if(currentKeyframe.atPosition(layerToString(_keyframeDriveabilityConf),keyframeCoord)>globalMap.at(layerToString(_keyframeDriveabilityConf),*it))
                 {

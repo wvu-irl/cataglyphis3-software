@@ -162,8 +162,8 @@ public:
 	static double missionTime;
 	static double prevTime;
 	static bool missionStarted;
-	const unsigned int maxHomingUpdatedFailedCount = 3;
-	const unsigned int homingFailedSwitchToDeadReckoningCount = 2;
+	const unsigned int maxHomingUpdatedFailedCount = 1;
+	const unsigned int homingFailedSwitchToDeadReckoningCount = 1;
 	const float sampleConfidenceGain = 1.0;
 	const float sampleDistanceToExpectedGain = 0.3;
 	const float defaultVMax = 1.2; // m/s

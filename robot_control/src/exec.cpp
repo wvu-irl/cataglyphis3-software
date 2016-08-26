@@ -80,6 +80,7 @@ void Exec::run()
     if(pause_==true && pausePrev_==false) pauseIdle_.driveHalt.init(); // Call init on driveHalt to begin possible drive hold
 	if(pause_)
 	{
+		ROS_INFO("exec pause");
 		pauseIdle_.run(); // If pause switch is true, run pause action
 		if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) actionDeque_.front()->init();
 	}

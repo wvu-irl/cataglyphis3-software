@@ -9,7 +9,7 @@ public:
 	int run();
 private:
 	int dropPos_;
-	const int dropTol_ = 30;
+	const int dropTol_ = 150;
 };
 
 #endif // GRABBER_SET_DROP_H
