@@ -28,7 +28,7 @@ core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
     //set title bar to a recongizable name
     //sharedMenuBar = boost::shared_ptr<QMenuBar>(new QMenuBar(0));
 #ifdef STATIC_BUILD
-    setWindowTitle(tr("Cataglyphis GUI - STATIC"));
+    setWindowTitle(tr("Cataglyphis GUI - STATIC RELEASE"));
 #elif TEST_RELEASE_BUILD
     setWindowTitle(tr("Cataglyphis GUI - TEST_RELEASE"));
 #elif DEBUG_BUILD
@@ -42,11 +42,13 @@ core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
     mapViewFormPtr.reset(new map_viewer(ui->guiTabber, 0, nh));
     manualControlFormPtr.reset(new manual_control(ui->guiTabber));
     execInfoFormPtr.reset(new exec_info_queue(ui->guiTabber));
+    missionPlanningInfoFormPtr.reset(new mission_planning(ui->guiTabber));
 
     ui->guiTabber->addTab(cataglyphisStartupFormPtr.get(), "Startup");
     ui->guiTabber->addTab(mapViewFormPtr.get(), "Map");
     ui->guiTabber->addTab(manualControlFormPtr.get(), "Manual Control");
     ui->guiTabber->addTab(execInfoFormPtr.get(), "Exec Queue");
+    ui->guiTabber->addTab(missionPlanningInfoFormPtr.get(), "Mission Planning");
 }
 
 core_app::~core_app()

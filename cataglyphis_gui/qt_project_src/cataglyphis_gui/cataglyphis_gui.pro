@@ -50,7 +50,8 @@ SOURCES +=\
     exec_info_queue.cpp \
     exec_action_model.cpp \
     exec_action_item.cpp \
-    qledindicator.cpp
+    qledindicator.cpp \
+    mission_planning.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -78,7 +79,8 @@ HEADERS  += \
     exec_action_model.h \
     exec_action_item.h \
     exec_action_enums.h \
-    qledindicator.h
+    qledindicator.h \
+    mission_planning.h
 
 FORMS    += \
     generic_error_dialog_form.ui \
@@ -93,7 +95,8 @@ FORMS    += \
     node_status_form.ui \
     manual_control_form.ui \
     teleport_form.ui \
-    exec_info_queue_form.ui
+    exec_info_queue_form.ui \
+    mission_planning_form.ui
 
 RESOURCES += \
     resources.qrc

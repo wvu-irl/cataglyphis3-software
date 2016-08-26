@@ -21,6 +21,9 @@
 #include <messages/ExecInfo.h>
 #include <messages/ExecAction.h>
 
+#include <messages/MissionPlanningControl.h>
+#include <messages/MissionPlanningInfo.h>
+
 #include <messages/SetStartingPlatform.h>
 
 #include <robot_control/ModifyROI.h>
@@ -29,10 +32,13 @@
 
 #include <map_viewer_enums.h>
 
+#include <exec_action_enums.h>
+
 #define ON_SERIVCE_FAILURE_RETURN_PAUSE 3
 #define NAV_INFO_MIN_PUB_TIME 1.00
 #define HSM_POSE_MIN_PUB_TIME 1.00
 #define EXEC_INFO_MIN_PUB_TIME 0.24
+#define DEFAULT_ACTION_WAIT_TIME 0.5 //seconds
 
 class ros_workers : public QObject
 {
@@ -44,6 +50,9 @@ signals:
 
     void modify_roi_service_returned(const robot_control::ModifyROI,
                                         bool wasSuccessful);
+
+    void add_exec_action_returned(const messages::ExecAction response,
+                                    bool wasSuccessful);
 
     void nav_init_returned(const messages::NavFilterControl navResponse,
                                   bool wasSucessful);
@@ -71,7 +80,9 @@ signals:
 public slots:
     void on_run_nav_service(messages::NavFilterControl serviceRequest);
     void on_run_modify_roi(robot_control::ModifyROI serviceRequest);
+    void on_run_add_exec_action(messages::ExecAction serviceRequest);
 
+    void on_add_pause_to_exec_queue(float seconds);
 
     void on_run_bias_removal_service();
     void on_run_start_dead_reckoning_service();

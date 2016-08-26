@@ -24,8 +24,9 @@ class ROI_dialog : public QDialog
     Q_OBJECT
 
 signals:
-    void update_roi_ellipse(robot_control::ROI roiData);
-    void modify_roi(robot_control::ModifyROI service);
+    void update_roi_ellipse(robot_control::ROI roiData, bool modified);
+    void modify_roi_request(robot_control::ModifyROI service);
+    void add_wait_to_exec(float seconds);
 
 public slots:
     void accept();

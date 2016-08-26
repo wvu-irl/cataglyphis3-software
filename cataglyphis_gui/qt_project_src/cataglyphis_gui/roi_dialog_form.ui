@@ -13,162 +13,142 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_9">
+  <layout class="QVBoxLayout" name="verticalLayout_7">
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_8">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetFixedSize</enum>
+     </property>
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_7">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetFixedSize</enum>
+      <layout class="QFormLayout" name="formLayout_4">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetFixedSize</enum>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>X</string>
          </property>
-         <item>
-          <layout class="QFormLayout" name="formLayout_4">
-           <property name="sizeConstraint">
-            <enum>QLayout::SetFixedSize</enum>
-           </property>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>X</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>Y</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QDoubleSpinBox" name="x_spinbox">
-             <property name="frame">
-              <bool>true</bool>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="correctionMode">
-              <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
-             </property>
-             <property name="minimum">
-              <double>-9999.000000000000000</double>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>0.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="y_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="correctionMode">
-              <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
-             </property>
-             <property name="minimum">
-              <double>-9999.000000000000000</double>
-             </property>
-             <property name="maximum">
-              <double>9999.989999999999782</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QPushButton" name="preview_changes_button">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Preview
-Changes</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="reset_roi_button">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>Reset ROI
-Params</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="edit_roi_button">
-           <property name="text">
-            <string>Edit ROI</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        </widget>
        </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Y</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QDoubleSpinBox" name="x_spinbox">
+         <property name="frame">
+          <bool>true</bool>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="buttonSymbols">
+          <enum>QAbstractSpinBox::PlusMinus</enum>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="correctionMode">
+          <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+         </property>
+         <property name="minimum">
+          <double>-9999.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>9999.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>0.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QDoubleSpinBox" name="y_spinbox">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="buttonSymbols">
+          <enum>QAbstractSpinBox::PlusMinus</enum>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="correctionMode">
+          <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+         </property>
+         <property name="minimum">
+          <double>-9999.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>9999.989999999999782</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="preview_changes_button">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Preview
+Changes</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="reset_roi_button">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Reset ROI
+Params</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="edit_roi_button">
+       <property name="text">
+        <string>Edit ROI</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_20">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_18">
          <item>
-          <layout class="QFormLayout" name="formLayout_2">
-           <property name="sizeConstraint">
-            <enum>QLayout::SetFixedSize</enum>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Size</string>
            </property>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_2">
-             <property name="text">
-              <string>Size</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QDoubleSpinBox" name="roi_radius">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          </widget>
          </item>
          <item>
           <spacer name="horizontalSpacer_9">
@@ -183,141 +163,34 @@ Params</string>
            </property>
           </spacer>
          </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="roi_radius">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout">
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_8">
-             <item>
-              <widget class="QLabel" name="label">
-               <property name="text">
-                <string>Allocated Time</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_2">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="allocated_time_spinbox">
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::PlusMinus</enum>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="maximum">
-                <double>9999.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_7">
-             <item>
-              <widget class="QLabel" name="label_6">
-               <property name="text">
-                <string>Sample Significance</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_3">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="sample_sig_spinbox">
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::PlusMinus</enum>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="maximum">
-                <double>9999.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
-             <item>
-              <widget class="QLabel" name="label_10">
-               <property name="text">
-                <string>Sample Probability</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_4">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="sample_prob_spinbox">
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::PlusMinus</enum>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="maximum">
-                <double>9999.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Allocated Time</string>
+           </property>
+          </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer_8">
+          <spacer name="horizontalSpacer_2">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Expanding</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -328,391 +201,534 @@ Params</string>
           </spacer>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_3">
-             <item>
-              <widget class="QLabel" name="label_7">
-               <property name="text">
-                <string>Lockout</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_7">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLedIndicator" name="lockout_indicator" native="true">
-               <property name="minimumSize">
-                <size>
-                 <width>14</width>
-                 <height>15</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <item>
-              <widget class="QLabel" name="label_9">
-               <property name="text">
-                <string>Edit ROI Group</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_6">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLedIndicator" name="edit_roi_group_indicator" native="true">
-               <property name="minimumSize">
-                <size>
-                 <width>14</width>
-                 <height>15</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
-             <item>
-              <widget class="QLabel" name="label_8">
-               <property name="text">
-                <string>High Risk</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_5">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLedIndicator" name="high_risk_indicator" native="true">
-               <property name="minimumSize">
-                <size>
-                 <width>14</width>
-                 <height>15</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
+          <widget class="QDoubleSpinBox" name="allocated_time_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_17">
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
          <item>
-          <widget class="QTabWidget" name="candidate_tabber">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Sample Significance</string>
            </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <widget class="QWidget" name="tab">
-            <attribute name="title">
-             <string>Candidate 1</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_3">
-             <item>
-              <widget class="QGraphicsView" name="candidate_view_1"/>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="tab_2">
-            <attribute name="title">
-             <string>2</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_4">
-             <item>
-              <widget class="QGraphicsView" name="candidate_view_2"/>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="tab_3">
-            <attribute name="title">
-             <string>3</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_5">
-             <item>
-              <widget class="QGraphicsView" name="candidate_view_3"/>
-             </item>
-            </layout>
-           </widget>
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableView"/>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="sample_sig_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_10">
-           <item>
-            <widget class="QLabel" name="label_11">
-             <property name="text">
-              <string>White</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="white_prob_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Sample Probability</string>
+           </property>
+          </widget>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_11">
-           <item>
-            <widget class="QLabel" name="label_12">
-             <property name="text">
-              <string>Silver</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="silver_prob_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_12">
-           <item>
-            <widget class="QLabel" name="label_13">
-             <property name="text">
-              <string>Blue/Pur</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="blue_purple_prob_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_13">
-           <item>
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>Pink</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="pink_prob_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_16">
-           <item>
-            <widget class="QLabel" name="label_17">
-             <property name="text">
-              <string>Red</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="red_prob_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_15">
-           <item>
-            <widget class="QLabel" name="label_16">
-             <property name="text">
-              <string>Orange</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="orange_prob_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_14">
-           <item>
-            <widget class="QLabel" name="label_15">
-             <property name="text">
-              <string>Yellow</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="yellow_prob_spinbox">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::PlusMinus</enum>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QDoubleSpinBox" name="sample_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_19">
+      <spacer name="horizontalSpacer_11">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <spacer name="horizontalSpacer_10">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <item>
+          <widget class="QLabel" name="label_18">
+           <property name="text">
+            <string>Add Pause to Exec</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_8">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLedIndicator" name="add_pause_action_indicator" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>14</width>
+             <height>15</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
-        <widget class="QDialogButtonBox" name="buttonBox">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="standardButtons">
-          <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-         </property>
-         <property name="centerButtons">
-          <bool>true</bool>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Lockout</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_7">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLedIndicator" name="lockout_indicator" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>14</width>
+             <height>15</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Edit ROI Group</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLedIndicator" name="edit_roi_group_indicator" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>14</width>
+             <height>15</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>High Risk</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLedIndicator" name="high_risk_indicator" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>14</width>
+             <height>15</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_17">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QTabWidget" name="candidate_tabber">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="QWidget" name="tab">
+          <attribute name="title">
+           <string>Candidate 1</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <widget class="QGraphicsView" name="candidate_view_1"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tab_2">
+          <attribute name="title">
+           <string>2</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QGraphicsView" name="candidate_view_2"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tab_3">
+          <attribute name="title">
+           <string>3</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QGraphicsView" name="candidate_view_3"/>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableView" name="tableView"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_10">
+         <item>
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>White</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="white_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <item>
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Silver</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="silver_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_12">
+         <item>
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>Blue/Pur</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="blue_purple_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_13">
+         <item>
+          <widget class="QLabel" name="label_14">
+           <property name="text">
+            <string>Pink</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="pink_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_16">
+         <item>
+          <widget class="QLabel" name="label_17">
+           <property name="text">
+            <string>Red</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="red_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_15">
+         <item>
+          <widget class="QLabel" name="label_16">
+           <property name="text">
+            <string>Orange</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="orange_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_14">
+         <item>
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Yellow</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="yellow_prob_spinbox">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_19">
+     <item>
+      <spacer name="horizontalSpacer_10">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+       <property name="centerButtons">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

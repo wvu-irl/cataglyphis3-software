@@ -25,6 +25,7 @@ void ros_workers::_implSetup()
     qRegisterMetaType<messages::ExecInfo>("messages::ExecInfo");
     qRegisterMetaType<robot_control::ModifyROI>("robot_control::ModifyROI");
     qRegisterMetaType<robot_control::ROI>("robot_control::ROI");
+    qRegisterMetaType<messages::ExecAction>("messages::ExecAction");
 
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     //hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
@@ -62,6 +63,12 @@ void ros_workers::on_run_modify_roi(robot_control::ModifyROI serviceRequest)
     emit modify_roi_service_returned(serviceRequest, successful);
 }
 
+void ros_workers::on_run_add_exec_action(messages::ExecAction serviceRequest)
+{
+    bool successful = serviceCall<messages::ExecAction>("/control/exec/actionin", &serviceRequest);
+    emit add_exec_action_returned(serviceRequest, successful);
+}
+
 template<typename T>
 bool ros_workers::serviceCall(const char *serviceName, T *serviceRequest)
 {
@@ -88,6 +95,18 @@ bool ros_workers::serviceCall(const char *serviceName, T *serviceRequest)
         pause.sleep();
     }
     return wasSuccessful;
+}
+
+void ros_workers::on_add_pause_to_exec_queue(float seconds)
+{
+    ROS_DEBUG("Ros_worker:: ADDING PAUSE TO EXEC");
+    messages::ExecAction newAction;
+    newAction.request.newActionFlag = true;
+    newAction.request.pushToFrontFlag = true;
+    newAction.request.nextActionType = exec_action_enums::exec_action_t::_wait;
+    newAction.request.float1 = seconds; //seconds
+    newAction.request.procType = 99;
+    //newAction.request.pauseUnchanged = true; //uncomment when implemented;
 }
 
 void ros_workers::on_run_map_manager_global_map_request(map_viewer_enums::mapViewerLayers_t requestedLayer)

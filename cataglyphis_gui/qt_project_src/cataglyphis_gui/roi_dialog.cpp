@@ -37,8 +37,10 @@ ROI_dialog::ROI_dialog(robot_control::ROI data, int roiNum,
 
     on_discard_changes();
 
-    connect(this, &ROI_dialog::modify_roi,
+    connect(this, &ROI_dialog::modify_roi_request,
                 worker.get(), &ros_workers::on_run_modify_roi);
+    connect(this, &ROI_dialog::add_wait_to_exec,
+                worker.get(), &ros_workers::on_add_pause_to_exec_queue);
 }
 
 ROI_dialog::~ROI_dialog()
@@ -60,8 +62,8 @@ void ROI_dialog::accept()
     ROS_DEBUG("ROI Dialog:: Accepted");
     ROS_DEBUG("ROI Edited? %d", (int)isModified());
     _implUiToMsg(_implCurrentROISet());
-    emit update_roi_ellipse(*_implCurrentROISet());
-    on_confirm_changes(); //remove later
+    emit update_roi_ellipse(*_implCurrentROISet(), isModified());
+    /*//on_confirm_changes(); //remove later*/
     QDialog::accept();
 }
 
@@ -71,7 +73,7 @@ void ROI_dialog::reject()
     {
         ROS_DEBUG("ROI Dialog:: Changes Rejected");
         on_discard_changes();
-        emit update_roi_ellipse(*_implCurrentROISet());
+        emit update_roi_ellipse(*_implCurrentROISet(), isModified());
         QDialog::reject();
         return;
     }
@@ -108,14 +110,20 @@ void ROI_dialog::on_confirm_changes()
     modRoiMsg.request.orangeProb = ROIData.orangeProb;
     modRoiMsg.request.yellowProb = ROIData.yellowProb;
     modRoiMsg.request.editGroup = ui->edit_roi_group_indicator->isChecked();
-    emit modify_roi(modRoiMsg);
+    emit modify_roi_request(modRoiMsg);
+
+    if(ui->add_pause_action_indicator->isChecked())
+    {
+        emit add_wait_to_exec(3); //add 3 second wait to exec
+    }
 }
 void ROI_dialog::on_discard_changes()
 {
     modified = false;
     ui->edit_roi_button->setChecked(false);
     ui->edit_roi_group_indicator->setChecked(true);
-    emit update_roi_ellipse(*_implCurrentROISet());
+    ui->add_pause_action_indicator->setChecked(true);
+    emit update_roi_ellipse(*_implCurrentROISet(), isModified());
     _implSetButtonReadOnly(true);
     _implMsgToUi(_implCurrentROISet());
 }
@@ -191,6 +199,7 @@ void ROI_dialog::_implSetButtonReadOnly(bool readOnly)
     ui->allocated_time_spinbox->setReadOnly(readOnly);//data->allocatedTime);
     ui->blue_purple_prob_spinbox->setReadOnly(readOnly);//data->blueOrPurpleProb);
     ui->edit_roi_group_indicator->setReadOnly(readOnly);
+    ui->add_pause_action_indicator->setReadOnly(readOnly);
     ui->high_risk_indicator->setReadOnly(readOnly);
     ui->lockout_indicator->setReadOnly(readOnly);
     ui->orange_prob_spinbox->setReadOnly(readOnly);//data->orangeProb);

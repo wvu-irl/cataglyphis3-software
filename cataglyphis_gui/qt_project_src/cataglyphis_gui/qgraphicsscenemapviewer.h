@@ -56,6 +56,8 @@ signals:
     void request_global_map(map_viewer_enums::mapViewerLayers_t requestedLayer);
     void map_viewer_scene_init(bool reInit);
     void request_roi();
+    void confirm_roi_changes();
+    void discard_roi_changes();
 
 public slots:
     void on_set_ignore_setup_flag(bool status);
@@ -63,6 +65,9 @@ public slots:
     void on_set_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
     void on_hsm_global_pose_callback(const messages::RobotPose navInfo);
     void on_map_manager_roi_service_returned(const robot_control::RegionsOfInterest mapManagerResponse, bool wasSucessful);
+
+    void on_confirm_map_changes();
+    void on_discard_map_changes();
 
 public:
     QGraphicsSceneMapViewer(QObject * parent = 0,
