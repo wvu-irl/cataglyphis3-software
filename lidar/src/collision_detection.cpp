@@ -256,8 +256,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		{
 			int choice = -1;
 
-			double right_angle = -threshold_min_angle * PI / 180;
-			double left_angle = threshold_min_angle * PI / 180;
+			double right_angle = threshold_min_angle * PI / 180;
+			double left_angle = -threshold_min_angle * PI / 180;
 
 			double right_angle_final = 0;
 			double left_angle_final = 0;
@@ -277,9 +277,9 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			{
 
 				right_angle_final = right_angle + i * (15 * PI / 180);
-				left_angle_final = left_angle + i * (15 * PI / 180);
+				left_angle_final = left_angle - i * (15 * PI / 180);
 
-				choice = finalChoice(left_angle_final + 0.5 * PI, 0.5 * PI - right_angle_final, collision_left_counter, collision_right_counter, xg_local, yg_local);
+				choice = finalChoice(-left_angle_final + 0.5 * PI, 0.5 * PI - right_angle_final, collision_left_counter, collision_right_counter, xg_local, yg_local);
 
 				if(choice != 4)
 				{
