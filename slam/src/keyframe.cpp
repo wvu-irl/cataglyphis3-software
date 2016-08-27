@@ -195,7 +195,7 @@ protected:
 	float heading_IMU;
 
 
-	const double PI = 3.1415926;
+	const double PI = 3.14159265358979323846264338327950288419716939937510582;
 
 	const float LIDAR_TO_ROBOT_X = 0.45;	//from lidar to center of robot
 
@@ -344,7 +344,7 @@ void Keyframe::Initialization()
 	threshold_mindistance = 5; //distance between current frame and previous keyframe less than the threshold, it will not generate a new keyframe
 
 	//parmeters for temp keyframe
-	threshold_permanent_keyframe_distance = 20; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
+	threshold_permanent_keyframe_distance = 10; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
 
 	//overlap
 	LocalMap_size = 120; // localmap size will be 120 + 120
@@ -435,7 +435,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	{
 		if(LocalMapMsgIn.new_data) //if the localmap data is new, update
 		{
-			ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
+			// ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
 			//get data
 			Store_Information(LocalMapMsgIn);
 
@@ -723,7 +723,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			// ROS_INFO_STREAM("guessT:  \n" << icp_result.transformation_matrix);
 			// ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
 			// ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
-			ROS_INFO_STREAM("time: " << totaltime << "s");
+			// ROS_INFO_STREAM("time: " << totaltime << "s");
 
 			// if(KeyframeMap_s.size() != 0)
 			// {
@@ -731,7 +731,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			// 	// ROS_INFO_STREAM("x_key of keyframe:  \n" << KeyframeMap_s[KeyframeMap_s.size()-1].x_key);
 			// }
 
-			ROS_INFO_STREAM("use_ICP_counter: " << use_ICP_counter << " use_IMU_counter: " << use_IMU_counter << " use_g2o_counter: " << use_g2o_counter);
+			// ROS_INFO_STREAM("use_ICP_counter: " << use_ICP_counter << " use_IMU_counter: " << use_IMU_counter << " use_g2o_counter: " << use_g2o_counter);
 
 
 		}
@@ -1389,7 +1389,7 @@ bool Keyframe::Do_g2o(std::vector<Position> &Vertex, std::vector<Transformation_
 
 	optimizer.setVerbose(true);
     optimizer.initializeOptimization();
-    ROS_INFO_STREAM("Optimizing ...");
+    // ROS_INFO_STREAM("Optimizing ...");
     optimizer.optimize(maxiteration);
     
 
@@ -1478,8 +1478,10 @@ messages::Keyframe Keyframe::Pcak_Keyframe_message(Keyframe_Information keyframe
 	keyframe_msg.map = KeyframeMapMsg;
 	keyframe_msg.x = keyframe_pointcloud_pub.x;
 	keyframe_msg.y = keyframe_pointcloud_pub.y;
-	keyframe_msg.heading = keyframe_pointcloud_pub.heading;
+	keyframe_msg.heading = keyframe_pointcloud_pub.heading * 180 / PI;	//send message as degree
 	keyframe_msg.associatedROI = -1;
+
+	ROS_INFO_STREAM("keyframe_globalmap(x,y,heading): " <<keyframe_msg.x << " " << keyframe_msg.y <<" " << keyframe_msg.heading);
 
 	return keyframe_msg;
 }
@@ -1584,6 +1586,10 @@ double Keyframe::Update_GlobalMap(LocalMap_Information localmap_information_upda
 	Cell_Global cell_global;
 	int update_check_counter = 0;
 	double update_rate;
+
+	//for test
+
+	ROS_INFO_STREAM("keyframe_updata(x, y, heading): " << transformation_matrix_update(0,3) << " " << transformation_matrix_update(1,3) << " " << TransformationMatrix_to_angle(transformation_matrix_update) * 180 / PI);
 
   	for(int i = 0; i < localmap_information_update.Information_cloudMsgIn.size(); i++)
   	{
@@ -1876,7 +1882,7 @@ void Keyframe::DetectNearestKeyframe()
 		// segmentation fault problem is here
 		for(int i = 0; i < pointIdxNKNSearch.size(); i++)
 		{
-			ROS_INFO_STREAM(sqrt(pointNKNSquaredDistance[i]));
+			// ROS_INFO_STREAM(sqrt(pointNKNSquaredDistance[i]));
 					
 			if(sqrt(pointNKNSquaredDistance[i]) < threshold_permanent_keyframe_distance)
 			{
@@ -1991,6 +1997,9 @@ void Keyframe::TkeyTomap_Pub(int option)
  	}
 
 	TkeyTomapPub.publish(tkeytomap_msg);
+
+	ROS_INFO_STREAM("keyframe(x, y, heading): " << tkeytomap_msg.x <<" " << tkeytomap_msg.y <<" " << tkeytomap_msg.heading * 180 / PI);
+	ROS_INFO_STREAM("keyframe_nav(x,y,heading): " << tkeytomap_msg.x_filter << " " << tkeytomap_msg.y_filter << " " << tkeytomap_msg.heading_filter * 180 / PI);
 
 
 }

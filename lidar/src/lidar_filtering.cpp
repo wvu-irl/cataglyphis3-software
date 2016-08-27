@@ -301,7 +301,7 @@ void LidarFilter::doMathMapping()
 	*cloud = _input_cloud;
 
 	ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
-	//ROS_INFO("Running callback function with %i points.",cloud->points.size());
+	// ROS_INFO("Running callback function with %i points.",cloud->points.size());
 
 	//test the intensity data
     //for (int jj=1; jj<cloud->points.size();jj++)
@@ -329,14 +329,15 @@ void LidarFilter::doMathMapping()
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-map_range,map_range);
+	pass.setFilterLimits(-map_range,map_range - 0.1);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-map_range,map_range);
+	pass.setFilterLimits(-map_range,map_range - 0.1);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("z");
 	pass.setFilterLimits(-1*threshold_tree_height,1.5); //positive z is down, negative z is up
 	pass.filter(*cloud);
+
 
 	//save point cloud after hard thresholds
 	// std::stringstream ss1;
@@ -397,6 +398,7 @@ void LidarFilter::doMathMapping()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
 
+
 	//copy filtered point cloud after hard thresholding and ground removal
 	_object_filtered = *object_filtered; 
 
@@ -454,7 +456,6 @@ void LidarFilter::doMathMapping()
 	    grid_map_cells[index].push_back(point);
 	    point.clear();
 	}
-
 	//clear it up before using it
 	// _local_grid_map.clear();
 

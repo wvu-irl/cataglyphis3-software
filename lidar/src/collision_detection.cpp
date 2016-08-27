@@ -417,10 +417,10 @@ void CollisionDetection::generateAvoidancemap()
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(hazard_cloud);
 	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-hazard_map_size_x_neg,hazard_map_size_x_pos);
+	pass.setFilterLimits(-hazard_map_size_x_neg,hazard_map_size_x_pos - 0.1);
 	pass.filter(*hazard_cloud);
 	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-hazard_map_size_y,hazard_map_size_y);
+	pass.setFilterLimits(-hazard_map_size_y,hazard_map_size_y - 0.1);
 	pass.filter(*hazard_cloud);
 	pass.setFilterFieldName("z");
 	pass.setFilterLimits(-2,1.5); //positive z is down, negative z is up
@@ -546,10 +546,10 @@ void CollisionDetection::generateHazardmap()
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(hazard_cloud);
 	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.setFilterLimits(-hazard_map_size,hazard_map_size - 0.1);
 	pass.filter(*hazard_cloud);
 	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-hazard_map_size,hazard_map_size);
+	pass.setFilterLimits(-hazard_map_size,hazard_map_size - 0.1);
 	pass.filter(*hazard_cloud);
 	pass.setFilterFieldName("z");
 	pass.setFilterLimits(-2,1.5); //positive z is down, negative z is up
