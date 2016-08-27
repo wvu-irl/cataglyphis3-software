@@ -16,6 +16,8 @@ bool Examine::runProc()
 		findHighestConfSample();
 		expectedSampleDistance = highestConfSample.distance;
 		expectedSampleAngle = highestConfSample.bearing;
+		if(expectedSampleDistance < (examineOffsetDistance/2.0)) expectedSampleDistance = (examineOffsetDistance/2.0); 
+		examineOffsetAngle = RAD2DEG*2.0*asin(examineOffsetDistance/(2.0*expectedSampleDistance));
 		//distanceToDrive = sqrt(pow(offsetPositionDistance,2.0)+pow(expectedSampleDistance,2.0)-2.0*offsetPositionDistance*expectedSampleDistance*cos(DEG2RAD*offsetPositionAngle));
         if(expectedSampleDistance > maxDistanceToDrive) distanceToDrive = maxDistanceToDrive;
         else distanceToDrive = expectedSampleDistance;

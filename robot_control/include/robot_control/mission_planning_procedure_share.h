@@ -94,6 +94,7 @@ public:
 	const float possibleSampleConfThresh = 0.6; // Change corresponding value in map manager if ever changed
 	const float definiteSampleConfThresh = 0.62;
 	static int currentROIIndex;
+	static int prevROIIndex;
 	static bool initialized;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
@@ -166,7 +167,7 @@ public:
 	const float homeWaypointY = 0.0; // m
 	const float lidarUpdateWaitTime = 2.0; // sec
 	const float biasRemovalTimeoutPeriod = 300.0; // sec = 5 minutes
-	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
+	const float homingTimeoutPeriod = 840.0; // sec = 16 minutes
 	const float searchTimeoutPeriod = 15.0; // sec
 	const float sampleFoundNewROIProbMultiplier = 0.0;
 	const float roiTimeExpiredNewSampleProbMultiplier = 0.05;
@@ -228,6 +229,7 @@ ros::Subscriber MissionPlanningProcedureShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcedureShare::cvSamplesFoundMsg;
 messages::CVSampleProps MissionPlanningProcedureShare::bestSample;
 int MissionPlanningProcedureShare::currentROIIndex;
+int MissionPlanningProcedureShare::prevROIIndex;
 bool MissionPlanningProcedureShare::initialized;
 bool MissionPlanningProcedureShare::escapeCondition;
 bool MissionPlanningProcedureShare::performBiasRemoval;

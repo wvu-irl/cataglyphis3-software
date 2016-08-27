@@ -9,6 +9,7 @@ bool Initialize::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		procsToResume[procType] = false;
+		sendWait(initWaitTime, false);
 		sendOpen(); // Make sure the grabber is open initially
 		sendDriveRel(driveOffPlatformDistance, 0.0, false, 0.0, false, false);
 		step = _drivingOffPlatform;

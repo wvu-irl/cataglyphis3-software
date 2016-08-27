@@ -67,13 +67,13 @@ bool NextBestRegion::runProc()
                         riskGain*regionsOfInterestSrv.response.ROIList.at(i).highRisk;
             ROS_INFO("!)!)!)!)!)!) roiValue before coersion = %f, roiNum = %i",roiValue, i);
             ROS_INFO("hardLockout = %i",regionsOfInterestSrv.response.ROIList.at(i).hardLockout);
-            ROS_INFO("currentROIIndex = %i",currentROIIndex);
-            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != currentROIIndex && regionsOfInterestSrv.response.ROIList.at(i).sampleProb!=0.0)
+            ROS_INFO("prevROIIndex = %i",prevROIIndex);
+            if(roiValue <= 0.0 && !regionsOfInterestSrv.response.ROIList.at(i).hardLockout && i != prevROIIndex && regionsOfInterestSrv.response.ROIList.at(i).sampleProb!=0.0)
             {
                 roiValue += negValueIncrement;
                 if(roiValue > maxCoercedNegValue) roiValue = maxCoercedNegValue;
             }
-            else if(regionsOfInterestSrv.response.ROIList.at(i).hardLockout || i == currentROIIndex || regionsOfInterestSrv.response.ROIList.at(i).sampleProb==0.0)
+            else if(regionsOfInterestSrv.response.ROIList.at(i).hardLockout || i == prevROIIndex || regionsOfInterestSrv.response.ROIList.at(i).sampleProb==0.0)
                 roiValue = 0.0;
             ROS_INFO("!(!(!(!(!(!( roiValue after coersion = %f, roiNum = %i",roiValue, i);
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
@@ -193,7 +193,8 @@ bool NextBestRegion::runProc()
                                  regionsOfInterestSrv.response.ROIList.at(currentROIIndex).y - robotStatus.yPos);
         if(giveUpROI || (distanceToRegion > maxDistanceToSearchRegion)) inSearchableRegion = false;
         else inSearchableRegion = true;
-        if(distanceToRegion > maxDistanceToSearchRegion) currentROIIndex = 99;
+        if(distanceToRegion > maxDistanceToSearchRegion) prevROIIndex = 99;
+        else prevROIIndex = currentROIIndex;
         giveUpROI = false;
         /*if(waypointsToTravel.at(0).searchable) inSearchableRegion = true;
         else

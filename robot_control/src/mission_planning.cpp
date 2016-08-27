@@ -89,7 +89,8 @@ MissionPlanning::MissionPlanning()
     sosMode.reg(__sosMode__);
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
-    currentROIIndex = 99;
+    currentROIIndex = 0;
+    prevROIIndex = 99;
     examineCount = 0;
     backUpCount = 0;
     reorientCount = 0;
@@ -274,7 +275,7 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performSafeMode && initialized && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
@@ -322,7 +323,7 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute reorient");
             voiceSay->call("reorient");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed && !sampleInCollectPosition && !possessingSample && !performReorient)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed && !sampleInCollectPosition && !possessingSample && !performReorient && !inSearchableRegion)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");

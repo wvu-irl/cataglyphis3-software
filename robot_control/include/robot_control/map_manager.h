@@ -26,8 +26,8 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#define EVANSDALE
-//#define WPI
+//#define EVANSDALE
+#define WPI
 //#define QUAD
 //#define CHESTNUT_RIDGE
 

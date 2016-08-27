@@ -83,7 +83,8 @@ private:
 
 	//safe envelope
 	const float _CORRIDOR_WIDTH = 2.0; //width of virtual corridor (meters)
-	const float _CORRIDOR_LENGTH = 5.0; //length of virtual corridor (meters)
+	const float _CORRIDOR_LENGTH_SLOWDOWN = 5.0; //length of virtual corridor (meters) slowdown the robot
+	const float _CORRIDOR_LENGTH_AVOID = 3.5;
 	const float _LIDAR_HEIGHT = 0.76; // height of lidar from ground (meters)
 	const float _SAFE_ENVELOPE_ANGLE = 15.0*3.14159265/180.0; //safe envelope angle (radians)
 	const short int _TRIGGER_POINT_THRESHOLD = 10; //number of points in safe envelope that will trigger the avoidance
@@ -93,9 +94,13 @@ private:
 	//parameters
 	double short_distance;
 	double long_distance;
+	double distance_second;
 	double threshold_obstacle_distance;
 	int threshold_obstacle_number;
 	double threshold_min_angle;
+
+	int threshold_counter_lidar;
+	int threshold_counter_zed;
 
 	double error_angle;
 
@@ -111,6 +116,11 @@ private:
 	//zed data
 	int _zedcollision;
 
+	//counters
+	int _collision_counter_lidar_slowdown;
+	int _collision_counter_lidar_avoid;
+	int _collision_counter_zed;
+
 	std::vector<float> _hazard_x;
 	std::vector<float> _hazard_y;
 
@@ -125,6 +135,7 @@ private:
 	short int _collision_status;
 	double _distance_to_drive;
 	double _angle_to_drive;
+	bool _slowdown;
 
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 	void waypointsCallback(messages::NextWaypointOut const &waypoint_msg);
@@ -133,6 +144,7 @@ private:
 
 	int firstChoice(double angle, double distance);
 	int secondChoice(double angle, double distance, double xg, double yg);
+	int finalChoice(double left_angle, double right_angle, int collision_left_counter, int collision_right_counter, double xg_local, double yg_local);
 	void generateAvoidancemap();
 	void generateHazardmap();
 	// void service(messages::::Request &req, messages::::Response &res);

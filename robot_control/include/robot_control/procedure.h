@@ -615,6 +615,7 @@ void Procedure::computeSampleValuesWithExpectedDistance()
 		ROS_INFO("^^^^^ sampleValues.at(%i) = %f",i,sampleValues.at(i));
 
 		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
+		//ROS_INFO("after assigning bestSampleValue");
 	}
 }
 
@@ -640,19 +641,14 @@ void Procedure::findHighestConfSample()
 
 void Procedure::computeDriveSpeeds()
 {
-	if(hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0/* && zedMsg.terrain_type==0*/)
+	if(collisionMsg.slowdown)
 	{
-		driveSpeedsMsg.vMax = fastVMax;
-		driveSpeedsMsg.rMax = defaultRMax;
-	}
-	else if(!hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0) // collisionMsg.slow_down, get rid of rest
-	{
-		driveSpeedsMsg.vMax = defaultVMax;
+		driveSpeedsMsg.vMax = slowVMax;
 		driveSpeedsMsg.rMax = defaultRMax;
 	}
 	else
 	{
-		driveSpeedsMsg.vMax = slowVMax;
+		driveSpeedsMsg.vMax = defaultVMax;
 		driveSpeedsMsg.rMax = defaultRMax;
 	}
 	if((driveSpeedsMsg.vMax != driveSpeedsMsgPrev.vMax) || (driveSpeedsMsg.rMax != driveSpeedsMsgPrev.rMax)) driveSpeedsPub.publish(driveSpeedsMsg);
