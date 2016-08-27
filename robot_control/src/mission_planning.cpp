@@ -450,6 +450,7 @@ void MissionPlanning::updateSampleFlags_()
 
 void MissionPlanning::packAndPubInfoMsg_()
 {
+    infoMsg.initialized = initialized;
     infoMsg.escapeCondition = escapeCondition;
     infoMsg.escapeLockout = escapeLockout;
     infoMsg.avoidLockout = avoidLockout;
