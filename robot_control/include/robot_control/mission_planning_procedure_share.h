@@ -82,7 +82,6 @@ public:
 	const float collisionMinDistance = 2.0; // m
 	static ros::Subscriber cvSamplesSub;
 	static messages::CVSamplesFound cvSamplesFoundMsg;
-	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86;
 	const float distanceToBlindDriveLocation = 0.88; // m
 	const float blindDriveDistance = 0.39; // m (0.39)
@@ -139,12 +138,21 @@ public:
 	static float prevAvoidCountDecYPos;
 	static unsigned int numSampleCandidates;
 	static std::vector<float> sampleValues;
-	static float bestSampleValue;
+	static float sampleDistanceAdjustedConf;
 	static float distanceToDrive; // m
 	static float angleToTurn; // deg
 	static float expectedSampleDistance;
 	static float expectedSampleAngle;
-	static messages::CVSampleProps highestConfSample;
+	//static messages::CVSampleProps highestConfSample;
+	static CV_SAMPLE_PROPS_T highestConfSample;
+	static bool sampleHistoryActive;
+	static float sampleHistoryBestSampleConf;
+	static float sampleHistoryModifiedConf;
+	static bool sampleHistoryTypes[NUM_SAMPLE_TYPES];
+	static int sampleHistoryGoodCount;
+	static int sampleHistoryBadCount;
+	const float sampleHistoryGoodGain = 0.05;
+	const float sampleHistoryBadGain = 0.1;
 	static float allocatedROITime; // sec
 	static unsigned int examineCount;
 	static unsigned int backUpCount;
@@ -227,7 +235,6 @@ messages::CollisionOut MissionPlanningProcedureShare::collisionMsg;
 float MissionPlanningProcedureShare::collisionInterruptThresh;
 ros::Subscriber MissionPlanningProcedureShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcedureShare::cvSamplesFoundMsg;
-messages::CVSampleProps MissionPlanningProcedureShare::bestSample;
 int MissionPlanningProcedureShare::currentROIIndex;
 int MissionPlanningProcedureShare::prevROIIndex;
 bool MissionPlanningProcedureShare::initialized;
@@ -267,12 +274,19 @@ float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;
 unsigned int MissionPlanningProcedureShare::numSampleCandidates;
 std::vector<float> MissionPlanningProcedureShare::sampleValues;
-float MissionPlanningProcedureShare::bestSampleValue;
+float MissionPlanningProcedureShare::sampleDistanceAdjustedConf;
 float MissionPlanningProcedureShare::distanceToDrive;
 float MissionPlanningProcedureShare::angleToTurn;
 float MissionPlanningProcedureShare::expectedSampleDistance;
 float MissionPlanningProcedureShare::expectedSampleAngle;
-messages::CVSampleProps MissionPlanningProcedureShare::highestConfSample;
+//messages::CVSampleProps MissionPlanningProcedureShare::highestConfSample;
+CV_SAMPLE_PROPS_T MissionPlanningProcedureShare::highestConfSample;
+bool MissionPlanningProcedureShare::sampleHistoryActive;
+float MissionPlanningProcedureShare::sampleHistoryBestSampleConf;
+float MissionPlanningProcedureShare::sampleHistoryModifiedConf;
+bool MissionPlanningProcedureShare::sampleHistoryTypes[NUM_SAMPLE_TYPES];
+int MissionPlanningProcedureShare::sampleHistoryGoodCount;
+int MissionPlanningProcedureShare::sampleHistoryBadCount;
 float MissionPlanningProcedureShare::allocatedROITime;
 unsigned int MissionPlanningProcedureShare::examineCount;
 unsigned int MissionPlanningProcedureShare::backUpCount;

@@ -74,6 +74,9 @@ int main(int argc, char** argv)
     actuatorCmd.slide_pos_cmd = 1000;
     actuatorCmd.drop_pos_cmd = -1000;
 
+    cvSampleProps.white = true;
+    cvSampleProps.blueOrPurple = true;
+
     keyframe.setFrameId("map");
     keyframe.setGeometry(grid_map::Length(150.0, 150.0), 1.0, grid_map::Position(0.0, 0.0));
     gridMapAddLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX, keyframe);
@@ -139,7 +142,6 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     collisionMsgOut.distance_to_drive = msg->avoidDriveDistance;
     collisionMsgOut.angle_to_drive = msg->avoidDriveAngle;
     cvFindSample = msg->cvFindSample;
-    cvSampleProps.type = msg->cvType;
     cvSampleProps.distance = msg->cvDistance;
     cvSampleProps.bearing = msg->cvBearing;
     cvSampleProps.confidence = msg->cvConfidence;

@@ -121,6 +121,7 @@ MissionPlanning::MissionPlanning()
     infoMsg.procsBeingExecuted.resize(NUM_PROC_TYPES,0);
     infoMsg.procsToResume.resize(NUM_PROC_TYPES,0);
     infoMsg.procStates.resize(NUM_PROC_TYPES,_init_);
+    initialize.clearSampleHistory();
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -437,7 +438,7 @@ void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
     }
 }
 
-void MissionPlanning::updateSampleFlags_()
+/*void MissionPlanning::updateSampleFlags_()
 {
     possibleSample = false;
     definiteSample = false;
@@ -446,7 +447,7 @@ void MissionPlanning::updateSampleFlags_()
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= possibleSampleConfThresh) possibleSample = true;
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= definiteSampleConfThresh) definiteSample = true;
     }
-}
+}*/
 
 void MissionPlanning::packAndPubInfoMsg_()
 {
@@ -628,10 +629,19 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
             ROS_INFO("conf = %f",cvSamplesFoundMsg.sampleList.at(i).confidence);
             ROS_INFO("distance = %f",cvSamplesFoundMsg.sampleList.at(i).distance);
             ROS_INFO("bearing = %f",cvSamplesFoundMsg.sampleList.at(i).bearing);
-            ROS_INFO("type = %i\n",cvSamplesFoundMsg.sampleList.at(i).type);
+            ROS_INFO("white = %i",cvSamplesFoundMsg.sampleList.at(i).white);
+            ROS_INFO("silver = %i",cvSamplesFoundMsg.sampleList.at(i).silver);
+            ROS_INFO("blueOrPurple = %i",cvSamplesFoundMsg.sampleList.at(i).blueOrPurple);
+            ROS_INFO("pink = %i",cvSamplesFoundMsg.sampleList.at(i).pink);
+            ROS_INFO("red = %i",cvSamplesFoundMsg.sampleList.at(i).red);
+            ROS_INFO("oragne = %i",cvSamplesFoundMsg.sampleList.at(i).orange);
+            ROS_INFO("yellow = %i",cvSamplesFoundMsg.sampleList.at(i).yellow);
         }
     }
-    updateSampleFlags_();
+    initialize.findHighestConfSample();
+    if(sampleHistoryActive) initialize.sampleHistoryNewData(highestConfSample.confidence, highestConfSample.types);
+    else initialize.startSampleHistory(highestConfSample.confidence, highestConfSample.types);
+    if(sampleHistoryActive) initialize.sampleHistoryComputeModifiedConf();
     sampleDataActedUpon = false;
 }
 

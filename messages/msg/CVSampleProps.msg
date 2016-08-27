@@ -1,4 +1,3 @@
-int32 type
 float32 confidenceCach
 float32 confidenceHard
 float32 confidenceRock
