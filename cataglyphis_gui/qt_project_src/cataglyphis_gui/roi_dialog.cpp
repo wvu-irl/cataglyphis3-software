@@ -114,7 +114,7 @@ void ROI_dialog::on_confirm_changes()
 
     if(ui->add_pause_action_indicator->isChecked())
     {
-        emit add_wait_to_exec(3); //add 3 second wait to exec
+        emit add_wait_to_exec(0.05); //add 3 second wait to exec
     }
 }
 void ROI_dialog::on_discard_changes()

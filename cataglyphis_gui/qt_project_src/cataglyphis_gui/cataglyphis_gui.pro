@@ -51,7 +51,8 @@ SOURCES +=\
     exec_action_model.cpp \
     exec_action_item.cpp \
     qledindicator.cpp \
-    mission_planning.cpp
+    mission_planning.cpp \
+    mission_planning_proc_model.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -69,6 +70,8 @@ HEADERS  += \
     ../../../robot_control/include/robot_control/map_layers.h \
     ../../../robot_control/include/robot_control/task_type_enum.h \
     ../../../robot_control/include/robot_control/action_type_enum.h \
+    ../../../robot_control/include/robot_control/mission_planning_types_defines.h \
+    mission_planning_proc_model.h \
     map_viewer_enums.h \
     map_viewer_rect.h \
     shift_map.h \

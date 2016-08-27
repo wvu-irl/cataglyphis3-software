@@ -1,14 +1,14 @@
 #include "map_viewer.h"
 #include "ui_map_viewer_form.h"
 
-map_viewer::map_viewer(QWidget *parent, int startIndex, boost::shared_ptr<ros::NodeHandle> nhArg) :
+map_viewer::map_viewer(QWidget *parent, int startIndex) :
     QWidget(parent),
     ui(new Ui::map_viewer_form),
     defaultCircleFill(255,0,255,100),
     fullTransparentColor(0,0,0,0),
     scene(boost::shared_array<boost::scoped_ptr<QGraphicsSceneMapViewer> >(new boost::scoped_ptr<QGraphicsSceneMapViewer>[4]))
 {
-    rosWorker = boost::shared_ptr<ros_workers>(new ros_workers(nhArg));
+    rosWorker = boost::shared_ptr<ros_workers>(new ros_workers());
     rosWorker->moveToThread(&rosWorkerThread);
     rosWorkerThread.start();
 

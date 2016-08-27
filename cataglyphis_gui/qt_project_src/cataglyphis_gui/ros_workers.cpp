@@ -26,6 +26,8 @@ void ros_workers::_implSetup()
     qRegisterMetaType<robot_control::ModifyROI>("robot_control::ModifyROI");
     qRegisterMetaType<robot_control::ROI>("robot_control::ROI");
     qRegisterMetaType<messages::ExecAction>("messages::ExecAction");
+    qRegisterMetaType<messages::MissionPlanningControl>("messages::MissionPlanningControl");
+    qRegisterMetaType<messages::MissionPlanningInfo>("messages::MissionPlanningInfo");
 
     navControlClient = nh->serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     //hsmNAControlClient = nh->serviceClient<messages::HSMSetNorthAngle>("/hsm/masterexec/setnorthangle");
@@ -43,6 +45,10 @@ void ros_workers::_implSetup()
     execInfoTime = ros::Time::now();
     execInfoSubStarted = false;
     execInfoSub = ros::Subscriber();
+
+    missionPlanningInfoTime = ros::Time::now();
+    missionPlanningInfoSubStarted = false;
+    missionPlanningInfoSub = ros::Subscriber();
 }
 
 void ros_workers::on_run_set_starting_platform_service(messages::SetStartingPlatform serviceRequest)
@@ -67,6 +73,12 @@ void ros_workers::on_run_add_exec_action(messages::ExecAction serviceRequest)
 {
     bool successful = serviceCall<messages::ExecAction>("/control/exec/actionin", &serviceRequest);
     emit add_exec_action_returned(serviceRequest, successful);
+}
+
+void ros_workers::on_run_mission_planning_service(messages::MissionPlanningControl serviceRequest)
+{
+    bool successful = serviceCall<messages::MissionPlanningControl>("/control/missionplanning/control", &serviceRequest);
+    emit mission_planning_service_returned(serviceRequest, successful);
 }
 
 template<typename T>
@@ -106,7 +118,8 @@ void ros_workers::on_add_pause_to_exec_queue(float seconds)
     newAction.request.nextActionType = exec_action_enums::exec_action_t::_wait;
     newAction.request.float1 = seconds; //seconds
     newAction.request.procType = 99;
-    //newAction.request.pauseUnchanged = true; //uncomment when implemented;
+    newAction.request.pauseUnchanged = true; //uncomment when implemented;
+    on_run_add_exec_action(newAction);
 }
 
 void ros_workers::on_run_map_manager_global_map_request(map_viewer_enums::mapViewerLayers_t requestedLayer)
@@ -321,6 +334,16 @@ void ros_workers::getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg)
     }
 }
 
+void ros_workers::getMissionPlanningInfoCallback(const messages::MissionPlanningInfo::ConstPtr &msg)
+{
+    this->lastMissionPlanningInfoMsg = *msg;
+    if(ros::Time::now().toSec() - missionPlanningInfoTime.toSec() > MISSION_PLANNING_INFO_MIN_PUB_TIME)
+    {
+        missionPlanningInfoTime = ros::Time::now();
+        emit mission_planning_info_callback(this->lastMissionPlanningInfoMsg);
+    }
+}
+
 void ros_workers::on_run_exec_info_subscriber_start()
 {
     ROS_DEBUG("ros_workers:: Entered exec info subscriber start");
@@ -341,6 +364,29 @@ void ros_workers::on_run_exec_info_subscriber_stop()
         ROS_DEBUG("ros_workers::Stopping exec Info subscriber");
         execInfoSubStarted = false;
         this->execInfoSub.shutdown();
+    }
+}
+
+void ros_workers::on_run_mission_planning_info_subscriber_start()
+{
+    ROS_DEBUG("ros_workers:: Entered mission_planning info subscriber start");
+    if(!missionPlanningInfoSubStarted)
+    {
+        missionPlanningInfoSubStarted = true;
+        ROS_DEBUG("ros_workers::Starting New subscriber");
+        this->missionPlanningInfoSub = nh->subscribe("control/missionplanning/info", 1,
+                                                        &ros_workers::getMissionPlanningInfoCallback, this);
+    }
+}
+
+void ros_workers::on_run_mission_planning_info_subscriber_stop()
+{
+    ROS_DEBUG("ros_workers:: Entered mission_planning info subscriber stop");
+    if(missionPlanningInfoSubStarted)
+    {
+        ROS_DEBUG("ros_workers::Stopping mission_planning Info subscriber");
+        missionPlanningInfoSubStarted = false;
+        this->missionPlanningInfoSub.shutdown();
     }
 }
 

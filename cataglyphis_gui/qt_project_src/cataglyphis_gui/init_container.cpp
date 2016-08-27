@@ -2,24 +2,13 @@
 #include "ui_init_container_form.h"
 #include <QLabel>
 
-init_container::init_container(QWidget *parent,
-                                    boost::shared_ptr<ros::NodeHandle> nhArg) :
+init_container::init_container(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::init_container_form)
 {
     ui->setupUi(this);
 
-    if(nhArg.get() != 0)
-    {
-        nh = nhArg;
-    }
-    else
-    {
-        ROS_WARN("Startup Form:: Input Nodehandle is Null!");
-
-    }
-
-    rosWorker = boost::shared_ptr<ros_workers>(new ros_workers(nhArg));
+    rosWorker = boost::shared_ptr<ros_workers>(new ros_workers());
     rosWorker->moveToThread(&rosWorkerThread);
 
     //no need to schedule deletion of rosWorker as the boost pointer automatically does
