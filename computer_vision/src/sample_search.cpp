@@ -29,6 +29,23 @@ SampleSearch::SampleSearch()
 		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob2.jpg");
 		_rois.push_back(roi);	
 	}
+
+	// //initialize coefficients for mapping deep fish net probabilities to actual probabilities based on statistics
+	// cachSigCoef.clear();
+	// cachSigCoef.push_back(0.014343043024976);
+	// cachSigCoef.push_back(0.996308298545352);
+	// cachSigCoef.push_back(0.556984792625824);
+	// cachSigCoef.push_back(12.655992533439981)
+	// hardSigCoef.clear();
+	// hardSigCoef.push_back(0.009590048374287);
+	// hardSigCoef.push_back(0.996948659156515);
+	// hardSigCoef.push_back(0.513078429713242);
+	// hardSigCoef.push_back(15.391445601972140);
+	// rockSigCoef.clear();
+	// rockSigCoef.push_back(0.046567867798548);
+	// rockSigCoef.push_back(0.996253031121210);
+	// rockSigCoef.push_back(0.472406154111716);
+	// rockSigCoef.push_back(21.523462524555410);
 }
 
 void SampleSearch::createFolderForImageData()
@@ -454,6 +471,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		if(classifierClient.call(imageProbabilitiesSrv))
 		{
 			ROS_INFO("imageProbabilitiesSrv call successful with type 0 (cach)!");
+			G_cach_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
 		}
 		else
 		{
@@ -467,12 +485,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		}
 
 		//assign probabilties and sample ids
-		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs from segmentation
+		for(int i=0; i<G_cach_probabilities.size(); i++) //this is the number of blobs from segmentation
 		{
-			G_cach_probabilities.push_back(imageProbabilitiesSrv.response.responseProbabilities[i]);
 			G_hard_probabilities.push_back(0);
 			G_rock_probabilities.push_back(0);
-			G_sample_probabilities.push_back(imageProbabilitiesSrv.response.responseProbabilities[i]);
+			float tempMappedProbabilityCach = cachSigCoef[0]+(cachSigCoef[1]-cachSigCoef[0])/(1+pow(10,( (cachSigCoef[2]-G_cach_probabilities[i])*cachSigCoef[3]) ) );
+			G_sample_probabilities.push_back(tempMappedProbabilityCach);
 			G_sample_ids.push_back(0);
 		}
 	}
@@ -522,22 +540,26 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		if(G_rock_probabilities.size() != G_hard_probabilities.size() || G_rock_probabilities.size() != segmentImageSrv.response.coordinates.size()/2)
 		{
 			ROS_ERROR("Error! The size of G_rock_probabilities and G_hard_probabilities should be equal to the number of blobs from segmentation!");
+			G_hard_probabilities.clear();
+			G_rock_probabilities.clear();
 		}
 
 		//assign probabilties and sample ids (use higher probability and the cooresponding id)
 		G_sample_probabilities.clear();
 		G_sample_ids.clear();
-		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs in rock and hard probabilities
+		for(int i=0; i<G_rock_probabilities.size(); i++) //this is the number of blobs in rock and hard probabilities
 		{
 			G_cach_probabilities.push_back(0);
-			if(G_hard_probabilities[i] >= G_rock_probabilities[i])
+			float tempMappedProbabilityHard = hardSigCoef[0]+(hardSigCoef[1]-hardSigCoef[0])/(1+pow(10,( (hardSigCoef[2]-G_hard_probabilities[i])*hardSigCoef[3]) ) );
+			float tempMappedProbabilityRock = rockSigCoef[0]+(rockSigCoef[1]-rockSigCoef[0])/(1+pow(10,( (rockSigCoef[2]-G_rock_probabilities[i])*rockSigCoef[3]) ) );
+			if(tempMappedProbabilityHard >= tempMappedProbabilityRock)
 			{
-				G_sample_probabilities.push_back(G_hard_probabilities[i]);
+				G_sample_probabilities.push_back(tempMappedProbabilityHard);
 				G_sample_ids.push_back(1);
 			}
 			else
 			{
-				G_sample_probabilities.push_back(G_rock_probabilities[i]);
+				G_sample_probabilities.push_back(tempMappedProbabilityRock);
 				G_sample_ids.push_back(0);
 			}
 		}
