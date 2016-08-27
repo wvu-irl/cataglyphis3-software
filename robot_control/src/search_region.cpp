@@ -16,6 +16,7 @@ bool SearchRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
+        clearSampleHistory();
 		avoidCount = 0;
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;

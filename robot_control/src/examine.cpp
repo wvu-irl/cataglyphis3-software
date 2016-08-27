@@ -13,7 +13,7 @@ bool Examine::runProc()
 		computeDriveSpeeds();
 		examineCount++;
 		if(examineCount>examineLimit) {possibleSample = false; definiteSample = false; examineCount = 0; state = _finish_; break;}
-		findHighestConfSample();
+        //findHighestConfSample();
 		expectedSampleDistance = highestConfSample.distance;
 		expectedSampleAngle = highestConfSample.bearing;
 		if(expectedSampleDistance < (examineOffsetDistance/2.0)) expectedSampleDistance = (examineOffsetDistance/2.0); 

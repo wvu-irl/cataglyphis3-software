@@ -9,6 +9,7 @@ bool Reorient::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		procsToResume[procType] = false;
+		clearSampleHistory();
 		sendDriveRel(reorientDriveDistance, reorientPivotAngle, false, 0.0, false, false);
 		sendDriveRel(0.0, -(90.0+reorientPivotAngle), false, 0.0, false, false);
 		sendSearch(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb,

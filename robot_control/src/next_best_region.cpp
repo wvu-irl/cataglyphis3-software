@@ -18,6 +18,7 @@ bool NextBestRegion::runProc()
         prevAvoidCountDecYPos = robotStatus.yPos;
         examineCount = 0;
         confirmCollectFailedCount = 0;
+        clearSampleHistory();
         // Delete search local map in case region was exited without a successful sample collection
         searchMapSrv.request.createMap = false;
         searchMapSrv.request.deleteMap = true;

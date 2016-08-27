@@ -85,7 +85,7 @@ private:
 	void resumeTimers_();
 	void serviceSearchTimer_();
 	void calcnumProcsBeingOrToBeExecOrRes_();
-	void updateSampleFlags_();
+	//void updateSampleFlags_();
 	void packAndPubInfoMsg_();
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);

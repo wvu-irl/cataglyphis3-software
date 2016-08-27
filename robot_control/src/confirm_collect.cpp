@@ -11,7 +11,7 @@ bool ConfirmCollect::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
 		sampleTypeMux = 0;
-		//sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
+        //sampleTypeMux = (1 << (static_cast<uint8_t>(highestConfSample.type) & 255)) & 255;
 		//ROS_INFO("confirmCollect sampleTypeMux = %u",sampleTypeMux);
 		//sendSearch(sampleTypeMux);
 		expectedSampleAngle = 0.0;
@@ -34,8 +34,8 @@ bool ConfirmCollect::runProc()
         if(searchEnded())
 		{
 			computeSampleValuesWithExpectedDistance();
-            ROS_INFO("confirmCollect bestSampleValue = %f",bestSampleValue);
-			if(bestSampleValue < confirmCollectValueThreshold) noSampleOnGround = true;
+            ROS_INFO("confirmCollect sampleDistanceAdjustedConf = %f",sampleDistanceAdjustedConf);
+            if(sampleDistanceAdjustedConf < confirmCollectValueThreshold) noSampleOnGround = true;
 			else noSampleOnGround = false;
 			if(noSampleOnGround)
 			{

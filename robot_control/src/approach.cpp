@@ -21,10 +21,10 @@ bool Approach::runProc()
         procsToResume[procType] = false;
         grabberDistanceTolerance = initGrabberDistanceTolerance;
         grabberAngleTolerance = initGrabberAngleTolerance;
-		findHighestConfSample();
+        //findHighestConfSample();
 		expectedSampleDistance = highestConfSample.distance;
 		expectedSampleAngle = highestConfSample.bearing;
-		//sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
+        //sampleTypeMux = (1 << (static_cast<uint8_t>(highestConfSample.type) & 255)) & 255;
 		//ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
 		//sendSearch(sampleTypeMux);
         computeDriveSpeeds();
@@ -42,7 +42,7 @@ bool Approach::runProc()
 		case _computeManeuver:
 			sampleTypeMux = 0;
 			computeSampleValuesWithExpectedDistance();
-			if(bestSampleValue >= approachValueThreshold) approachableSample = true;
+            if(sampleDistanceAdjustedConf >= approachValueThreshold && definiteSample) approachableSample = true;
 			else approachableSample = false;
 			if(approachableSample)
 			{
@@ -85,8 +85,8 @@ bool Approach::runProc()
 				}
 				else
 				{
-					bestSample.distance = expectedSampleDistance;
-					bestSample.bearing = expectedSampleAngle;
+                    highestConfSample.distance = expectedSampleDistance;
+                    highestConfSample.bearing = expectedSampleAngle;
 					distanceToDrive = backUpDistance;
 					angleToTurn = 0.0;
 					computeExpectedSampleLocation();
@@ -110,7 +110,7 @@ bool Approach::runProc()
 			{
                 if(searchEnded())
 				{
-					findHighestConfSample();
+                    //findHighestConfSample();
 					expectedSampleDistance = highestConfSample.distance;
 					expectedSampleAngle = highestConfSample.bearing;
 					step = _computeManeuver;
@@ -152,14 +152,14 @@ void Approach::computeManeuver_()
     float deltaAngle; // degrees
     if(confirmCollectFailedCount>=confirmCollectsFailedBeforeSideGrab)
     {
-        deltaAngle = RAD2DEG*asin(distanceToGrabber/bestSample.distance*sin(DEG2RAD*(180.0-sideGrabAngleOffset))); // degrees
+        deltaAngle = RAD2DEG*asin(distanceToGrabber/highestConfSample.distance*sin(DEG2RAD*(180.0-sideGrabAngleOffset))); // degrees
         distanceToDrive = distanceToGrabber*sin(DEG2RAD*(sideGrabAngleOffset-deltaAngle))/sin(DEG2RAD*deltaAngle) + pitchCorrectionGain*robotStatus.pitchAngle;
-        angleToTurn = bestSample.bearing - deltaAngle;
+        angleToTurn = highestConfSample.bearing - deltaAngle;
     }
     else
     {
-        distanceToDrive = bestSample.distance - distanceToBlindDriveLocation - blindDriveDistance + pitchCorrectionGain*robotStatus.pitchAngle;
-        angleToTurn = bestSample.bearing;
+        distanceToDrive = highestConfSample.distance - distanceToBlindDriveLocation - blindDriveDistance + pitchCorrectionGain*robotStatus.pitchAngle;
+        angleToTurn = highestConfSample.bearing;
     }
     if(distanceToDrive > maxDriveDistance) distanceToDrive = maxDriveDistance;
 }
@@ -168,12 +168,12 @@ bool Approach::sampleInPosition_()
 {
     if(confirmCollectFailedCount>=confirmCollectsFailedBeforeSideGrab)
     {
-        return (bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber) <= grabberDistanceTolerance) &&
-                (fabs(bestSample.bearing - sideGrabAngleOffset) <= grabberAngleTolerance);
+        return (sampleDistanceAdjustedConf >= definiteSampleConfThresh) && (fabs(highestConfSample.distance - distanceToGrabber) <= grabberDistanceTolerance) &&
+                (fabs(highestConfSample.bearing - sideGrabAngleOffset) <= grabberAngleTolerance);
     }
     else
     {
-        return (bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
-                (fabs(bestSample.bearing) <= grabberAngleTolerance);
+        return (sampleDistanceAdjustedConf >= definiteSampleConfThresh) && (fabs(highestConfSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
+                (fabs(highestConfSample.bearing) <= grabberAngleTolerance);
     }
 }
