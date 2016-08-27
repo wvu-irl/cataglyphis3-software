@@ -673,13 +673,40 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 		//only publish results depending on expected probabilities
 		bool publish_sample_info = false;
-		if(req.white > 0.03) if(sampleProps.white == true) publish_sample_info = true;
-		if(req.silver > 0.03) if(sampleProps.silver == true) publish_sample_info = true;
-		if(req.blueOrPurple > 0.03) if(sampleProps.blueOrPurple == true) publish_sample_info = true;
-		if(req.red > 0.03 || req.pink > 0.03) if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
-		if(req.orange > 0.03) if(sampleProps.orange == true) publish_sample_info = true;
-		if(req.yellow > 0.03) if(sampleProps.yellow == true) publish_sample_info = true;
-	
+		if(req.white > 0.6)
+		{
+			if(sampleProps.white == true) publish_sample_info = true;
+		}
+		else if(req.silver > 0.6)
+		{
+			if(sampleProps.silver == true) publish_sample_info = true;
+		}
+		else if(req.blueOrPurple > 0.6)
+		{
+			if(sampleProps.blueOrPurple == true) publish_sample_info = true;
+		}
+		else if(req.pink > 0.6 || req.red > 0.6)
+		{
+			if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
+		}
+		else if(req.orange > 0.6)
+		{
+			if(sampleProps.orange == true) publish_sample_info = true;
+		}
+		else if(req.yellow > 0.6)
+		{
+			if(sampleProps.yellow == true) publish_sample_info = true;	
+		}
+		else
+		{
+			if(req.white > 0.03) if(sampleProps.white == true) publish_sample_info = true;
+			if(req.silver > 0.03) if(sampleProps.silver == true) publish_sample_info = true;
+			if(req.blueOrPurple > 0.03) if(sampleProps.blueOrPurple == true) publish_sample_info = true;
+			if(req.red > 0.03 || req.pink > 0.03) if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
+			if(req.orange > 0.03) if(sampleProps.orange == true) publish_sample_info = true;
+			if(req.yellow > 0.03) if(sampleProps.yellow == true) publish_sample_info = true;	
+		}
+
 		//add sample information to message
 		if(publish_sample_info==true)
 		{
