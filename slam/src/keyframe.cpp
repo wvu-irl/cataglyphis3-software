@@ -1478,10 +1478,10 @@ messages::Keyframe Keyframe::Pcak_Keyframe_message(Keyframe_Information keyframe
 	keyframe_msg.map = KeyframeMapMsg;
 	keyframe_msg.x = keyframe_pointcloud_pub.x;
 	keyframe_msg.y = keyframe_pointcloud_pub.y;
-	keyframe_msg.heading = keyframe_pointcloud_pub.heading;
+	keyframe_msg.heading = keyframe_pointcloud_pub.heading * 180 / PI;	//send message as degree
 	keyframe_msg.associatedROI = -1;
 
-	ROS_INFO_STREAM("keyframe_globalmap(x,y,heading): " <<keyframe_msg.x << " " << keyframe_msg.y <<" " << keyframe_msg.heading * 180 / PI);
+	ROS_INFO_STREAM("keyframe_globalmap(x,y,heading): " <<keyframe_msg.x << " " << keyframe_msg.y <<" " << keyframe_msg.heading);
 
 	return keyframe_msg;
 }
