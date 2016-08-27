@@ -575,11 +575,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0); 
 
-    //find samples of interest for extracting colors (sample must have at least 0.5 confidence)
+    //find samples of interest for extracting colors (sample must have at least 0.1 confidence)
 	std::vector<int> blobsOfInterest, blobsOfNotInterest;
 	for(int i=0; i<G_sample_probabilities.size(); i++)
 	{
-		if(G_sample_probabilities[i]>0.50)
+		if(G_sample_probabilities[i]>0.1)
 		{
 			blobsOfInterest.push_back(i);
 		}
@@ -671,8 +671,20 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		sampleProps.confidenceRock = G_rock_probabilities[blobsOfInterest[i]];
 		sampleProps.confidence = G_sample_probabilities[blobsOfInterest[i]];
 
+		//only publish results depending on expected probabilities
+		bool publish_sample_info = false;
+		if(req.white > 0.03) if(sampleProps.white == true) publish_sample_info = true;
+		if(req.silver > 0.03) if(sampleProps.silver == true) publish_sample_info = true;
+		if(req.blueOrPurple > 0.03) if(sampleProps.blueOrPurple == true) publish_sample_info = true;
+		if(req.red > 0.03 || req.pink > 0.03) if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
+		if(req.orange > 0.03) if(sampleProps.orange == true) publish_sample_info = true;
+		if(req.yellow > 0.03) if(sampleProps.yellow == true) publish_sample_info = true;
+	
 		//add sample information to message
-		searchForSamplesMsgOut.sampleList.push_back(sampleProps);
+		if(publish_sample_info==true)
+		{
+			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
+		}
 	}
 
 
