@@ -475,424 +475,364 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
     do_homing = false;
 
 	// Predict Methods
-	if(pause_switch==false) 
+
+	if (turnFlag)
 	{
-		if (turnFlag)
+		prev_stopped = false;
+		collecting_accelerometer_data = false;
+		collected_gyro_data = false;
+		collected_gyro1_data = false;
+		collected_gyro2_data = false;
+		collected_gyro3_data = false;
+		collected_gyro4_data = false;
+		collected_gyro5_data = false;
+		collected_gyro6_data = false;
+		collected_gyroS_data = false;
+
+		if (imu.new_nb1!=0)
 		{
-			prev_stopped = false;
-			collecting_accelerometer_data = false;
-			collected_gyro_data = false;
-			collected_gyro1_data = false;
-			collected_gyro2_data = false;
-			collected_gyro3_data = false;
-			collected_gyro4_data = false;
-			collected_gyro5_data = false;
-			collected_gyro6_data = false;
-			collected_gyroS_data = false;
+			filter1.turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
+		}
+		else
+		{
+			filter1.blind_turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
+		}
 
-			if (imu.new_nb1!=0)
-			{
-				filter1.turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
-			}
-			else
-			{
-				filter1.blind_turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
-			}
+		if (imu.new_nb2!=0)
+		{
+			filter2.turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
+		}
+		else
+		{
+			filter2.blind_turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
+		}
 
-			if (imu.new_nb2!=0)
-			{
-				filter2.turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
-			}
-			else
-			{
-				filter2.blind_turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
-			}
-
-			if (imu.new_nbS!=0)
-			{
-				filterS.turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
-			}
-			else
-			{
-				filterS.blind_turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
-			}
+		if (imu.new_nbS!=0)
+		{
+			filterS.turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
+		}
+		else
+		{
+			filterS.blind_turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
+		}
 
 
-			if(filter.keep_nb == 3 || filter.keep_nb == 28 || filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
+		if(filter.keep_nb == 3 || filter.keep_nb == 28 || filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
+		{
+			filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		}
+		else if (filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 16 || filter.keep_nb == 18 || filter.keep_nb == 21 || filter.keep_nb == 23 || filter.keep_nb == 25 || filter.keep_nb == 27 || filter.keep_nb == 30 || filter.keep_nb == 32 || filter.keep_nb == 34 || filter.keep_nb == 36)
+		{
+
+			filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		}
+		else if (filter.keep_nb == 4 || filter.keep_nb == 13 || filter.keep_nb == 17 || filter.keep_nb == 19)
+		{
+			filter.initialize_states(filterS.phi,filterS.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		}
+
+
+		filter.clear_accelerometer_values();
+		imu.clear_gyro_values();
+	}
+	else if (stopFlag)
+	{
+		if (!prev_stopped && !stop_request)
+		{
+			if(imu.nb1_current)
+			{
+				imu.nb1_good_prev = true;
+			}
+			if(imu.nb2_current)
+			{
+				imu.nb2_good_prev = true;
+			}
+			if(imu.nbS_current)
+			{
+				imu.nbS_good_prev = true;
+			}
+
+			if(filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
 			{
 				filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				if(filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9)
+				{
+					filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				if(filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 14)
+				{
+					filterS.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
 			}
 			else if (filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 16 || filter.keep_nb == 18 || filter.keep_nb == 21 || filter.keep_nb == 23 || filter.keep_nb == 25 || filter.keep_nb == 27 || filter.keep_nb == 30 || filter.keep_nb == 32 || filter.keep_nb == 34 || filter.keep_nb == 36)
 			{
 
 				filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				if(filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10)
+				{
+					filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				if(filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 18)
+				{
+					filterS.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+			}
+			else if (filter.keep_nb == 3 || filter.keep_nb == 28)
+			{
+				filter.initialize_states((filter1.phi+filter2.phi)/2.0,(filter1.theta+filter2.theta)/2.0,(filter1.psi+filter2.psi)/2.0,(filter1.x+filter2.x)/2.0,(filter1.y+filter2.y)/2.0,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				if (filter.keep_nb == 3)
+				{
+					filterS.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
 			}
 			else if (filter.keep_nb == 4 || filter.keep_nb == 13 || filter.keep_nb == 17 || filter.keep_nb == 19)
 			{
 				filter.initialize_states(filterS.phi,filterS.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-			}
-
-
-			filter.clear_accelerometer_values();
-			imu.clear_gyro_values();
-		}
-		else if (stopFlag)
-		{
-			if (!prev_stopped && !stop_request)
-			{
-				if(imu.nb1_current)
+				if (filter.keep_nb == 4 || filter.keep_nb == 13)
 				{
-					imu.nb1_good_prev = true;
-				}
-				if(imu.nb2_current)
-				{
-					imu.nb2_good_prev = true;
-				}
-				if(imu.nbS_current)
-				{
-					imu.nbS_good_prev = true;
-				}
-
-				if(filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
-				{
-					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					if(filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9)
-					{
-						filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					if(filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 14)
-					{
-						filterS.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-				}
-				else if (filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 16 || filter.keep_nb == 18 || filter.keep_nb == 21 || filter.keep_nb == 23 || filter.keep_nb == 25 || filter.keep_nb == 27 || filter.keep_nb == 30 || filter.keep_nb == 32 || filter.keep_nb == 34 || filter.keep_nb == 36)
-				{
-
-					filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					if(filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10)
-					{
-						filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					if(filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 18)
-					{
-						filterS.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-				}
-				else if (filter.keep_nb == 3 || filter.keep_nb == 28)
-				{
-					filter.initialize_states((filter1.phi+filter2.phi)/2.0,(filter1.theta+filter2.theta)/2.0,(filter1.psi+filter2.psi)/2.0,(filter1.x+filter2.x)/2.0,(filter1.y+filter2.y)/2.0,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 					filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				if (filter.keep_nb == 4 || filter.keep_nb == 17)
+				{
 					filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					if (filter.keep_nb == 3)
-					{
-						filterS.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
 				}
-				else if (filter.keep_nb == 4 || filter.keep_nb == 13 || filter.keep_nb == 17 || filter.keep_nb == 19)
+			}
+		}
+
+
+		if (!prev_stopped&&!collecting_accelerometer_data)
+		{
+			collecting_accelerometer_data = true;
+		}
+
+		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.05) && encoders.delta_distance < 5)
+		{
+			if((sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)&&!homing_updated)
+			{
+				do_homing = true;
+			}
+		}
+	
+		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.005) && encoders.delta_distance == 0)
+		{
+			if (collecting_accelerometer_data)
+			{
+				if (filter.ax_values.size() > 50)
 				{
-					filter.initialize_states(filterS.phi,filterS.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					if (filter.keep_nb == 4 || filter.keep_nb == 13)
+					collecting_accelerometer_data = false;
+					filter.roll_pitch_G_update();
+					filter.clear_accelerometer_values();
+					filter1.initialize_states(filter.phi,filter.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					filter2.initialize_states(filter.phi,filter.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+					filterS.initialize_states(filter.phi,filter.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+				}
+				else
+				{
+					if(imu.new_nb1+imu.new_nb2!=0)
 					{
-						filter1.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					if (filter.keep_nb == 4 || filter.keep_nb == 17)
-					{
-						filter2.initialize_states(filter.phi,filter.theta,filter.psi,filter.x,filter.y,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+						filter.collect_accelerometer_data(imu.ax, imu.ay, imu.az);
 					}
 				}
 			}
-
-
-			if (!prev_stopped&&!collecting_accelerometer_data)
+			if (latest_nav_control_request.runBiasRemoval)
 			{
-				collecting_accelerometer_data = true;
-			}
-
-			if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.05) && encoders.delta_distance < 5)
-			{
-				if((sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)&&!homing_updated)
+				if (imu.p1_values.size() > 500 && collected_gyro1_data!=true)
 				{
-					do_homing = true;
-				}
-			}
-		
-			if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.005) && encoders.delta_distance == 0)
-			{
-				if (collecting_accelerometer_data)
-				{
-					if (filter.ax_values.size() > 200)
-					{
-						collecting_accelerometer_data = false;
-						filter.roll_pitch_G_update();
-						filter.clear_accelerometer_values();
-						filter1.initialize_states(filter.phi,filter.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-						filter2.initialize_states(filter.phi,filter.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-						filterS.initialize_states(filter.phi,filter.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-					}
-					else
-					{
-						if(imu.new_nb1+imu.new_nb2!=0)
-						{
-							filter.collect_accelerometer_data(imu.ax, imu.ay, imu.az);
-						}
-					}
-				}
-				if (latest_nav_control_request.runBiasRemoval)
-				{
-					if (imu.p1_values.size() > 500 && collected_gyro1_data!=true)
-					{
-						imu.calculate_gyro1_offset();
-						if(imu.good_bias1)
-						{
-							collected_gyro1_data = true;
-							imu.set_gyro1_offset();
-							filter1.Q_phi = 2.2847e-008;
-							filter1.Q_theta = 2.2847e-008;
-							filter1.Q_psi = 2.2847e-008;
-						}
-						else
-						{
-							imu.clear_gyro1_values();
-						}
-					}
-					else if (collected_gyro1_data==true)
+					imu.calculate_gyro1_offset();
+					if(imu.good_bias1)
 					{
 						collected_gyro1_data = true;
+						imu.set_gyro1_offset();
+						filter1.Q_phi = 2.2847e-008;
+						filter1.Q_theta = 2.2847e-008;
+						filter1.Q_psi = 2.2847e-008;
 					}
 					else
 					{
-						imu.collect_gyro1_data();
-						collected_gyro1_data = false;
+						imu.clear_gyro1_values();
 					}
+				}
+				else if (collected_gyro1_data==true)
+				{
+					collected_gyro1_data = true;
+				}
+				else
+				{
+					imu.collect_gyro1_data();
+					collected_gyro1_data = false;
+				}
 
-					if (imu.p2_values.size() > 500 && collected_gyro2_data!=true)
-					{
-						imu.calculate_gyro2_offset();
-						if(imu.good_bias2)
-						{
-							collected_gyro2_data = true;
-							imu.set_gyro2_offset();
-							filter1.Q_phi = 2.2847e-008;
-							filter1.Q_theta = 2.2847e-008;
-							filter1.Q_psi = 2.2847e-008;
-						}
-						else
-						{
-							imu.clear_gyro2_values();
-						}
-					}
-					else if (collected_gyro2_data==true)
+				if (imu.p2_values.size() > 500 && collected_gyro2_data!=true)
+				{
+					imu.calculate_gyro2_offset();
+					if(imu.good_bias2)
 					{
 						collected_gyro2_data = true;
+						imu.set_gyro2_offset();
+						filter1.Q_phi = 2.2847e-008;
+						filter1.Q_theta = 2.2847e-008;
+						filter1.Q_psi = 2.2847e-008;
 					}
 					else
 					{
-						imu.collect_gyro2_data();
-						collected_gyro2_data = false;
+						imu.clear_gyro2_values();
 					}
+				}
+				else if (collected_gyro2_data==true)
+				{
+					collected_gyro2_data = true;
+				}
+				else
+				{
+					imu.collect_gyro2_data();
+					collected_gyro2_data = false;
+				}
 
-					if (imu.p3_values.size() > 500 && collected_gyro3_data!=true)
-					{
-						imu.calculate_gyro3_offset();
-						if(imu.good_bias3)
-						{
-							collected_gyro3_data = true;
-							imu.set_gyro3_offset();
-							filter1.Q_phi = 2.2847e-008;
-							filter1.Q_theta = 2.2847e-008;
-							filter1.Q_psi = 2.2847e-008;
-						}
-						else
-						{
-							imu.clear_gyro3_values();
-						}
-					}
-					else if (collected_gyro3_data==true)
+				if (imu.p3_values.size() > 500 && collected_gyro3_data!=true)
+				{
+					imu.calculate_gyro3_offset();
+					if(imu.good_bias3)
 					{
 						collected_gyro3_data = true;
+						imu.set_gyro3_offset();
+						filter1.Q_phi = 2.2847e-008;
+						filter1.Q_theta = 2.2847e-008;
+						filter1.Q_psi = 2.2847e-008;
 					}
 					else
 					{
-						imu.collect_gyro3_data();
-						collected_gyro3_data = false;
+						imu.clear_gyro3_values();
 					}
+				}
+				else if (collected_gyro3_data==true)
+				{
+					collected_gyro3_data = true;
+				}
+				else
+				{
+					imu.collect_gyro3_data();
+					collected_gyro3_data = false;
+				}
 
-					if (imu.p4_values.size() > 500 && collected_gyro4_data!=true)
-					{
-						imu.calculate_gyro4_offset();
-						if(imu.good_bias4)
-						{
-							collected_gyro4_data = true;
-							imu.set_gyro4_offset();
-							filter2.Q_phi = 2.2847e-008;
-							filter2.Q_theta = 2.2847e-008;
-							filter2.Q_psi = 2.2847e-008;
-						}
-						else
-						{
-							imu.clear_gyro4_values();
-						}
-					}
-					else if (collected_gyro4_data==true)
+				if (imu.p4_values.size() > 500 && collected_gyro4_data!=true)
+				{
+					imu.calculate_gyro4_offset();
+					if(imu.good_bias4)
 					{
 						collected_gyro4_data = true;
+						imu.set_gyro4_offset();
+						filter2.Q_phi = 2.2847e-008;
+						filter2.Q_theta = 2.2847e-008;
+						filter2.Q_psi = 2.2847e-008;
 					}
 					else
 					{
-						imu.collect_gyro4_data();
-						collected_gyro4_data = false;
+						imu.clear_gyro4_values();
 					}
+				}
+				else if (collected_gyro4_data==true)
+				{
+					collected_gyro4_data = true;
+				}
+				else
+				{
+					imu.collect_gyro4_data();
+					collected_gyro4_data = false;
+				}
 
-					if (imu.p5_values.size() > 500 && collected_gyro5_data!=true)
-					{
-						imu.calculate_gyro5_offset();
-						if(imu.good_bias5)
-						{
-							collected_gyro5_data = true;
-							imu.set_gyro5_offset();
-							filter2.Q_phi = 2.2847e-008;
-							filter2.Q_theta = 2.2847e-008;
-							filter2.Q_psi = 2.2847e-008;
-						}
-						else
-						{
-							imu.clear_gyro5_values();
-						}
-					}
-					else if (collected_gyro5_data==true)
+				if (imu.p5_values.size() > 500 && collected_gyro5_data!=true)
+				{
+					imu.calculate_gyro5_offset();
+					if(imu.good_bias5)
 					{
 						collected_gyro5_data = true;
+						imu.set_gyro5_offset();
+						filter2.Q_phi = 2.2847e-008;
+						filter2.Q_theta = 2.2847e-008;
+						filter2.Q_psi = 2.2847e-008;
 					}
 					else
 					{
-						imu.collect_gyro5_data();
-						collected_gyro5_data = false;
+						imu.clear_gyro5_values();
 					}
+				}
+				else if (collected_gyro5_data==true)
+				{
+					collected_gyro5_data = true;
+				}
+				else
+				{
+					imu.collect_gyro5_data();
+					collected_gyro5_data = false;
+				}
 
-					if (imu.p6_values.size() > 500 && collected_gyro6_data!=true)
-					{
-						imu.calculate_gyro6_offset();
-						if(imu.good_bias6)
-						{
-							collected_gyro6_data = true;
-							imu.set_gyro6_offset();
-							filter2.Q_phi = 2.2847e-008;
-							filter2.Q_theta = 2.2847e-008;
-							filter2.Q_psi = 2.2847e-008;
-						}
-						else
-						{
-							imu.clear_gyro6_values();
-						}
-					}
-					else if (collected_gyro6_data==true)
+				if (imu.p6_values.size() > 500 && collected_gyro6_data!=true)
+				{
+					imu.calculate_gyro6_offset();
+					if(imu.good_bias6)
 					{
 						collected_gyro6_data = true;
+						imu.set_gyro6_offset();
+						filter2.Q_phi = 2.2847e-008;
+						filter2.Q_theta = 2.2847e-008;
+						filter2.Q_psi = 2.2847e-008;
 					}
 					else
 					{
-						imu.collect_gyro6_data();
-						collected_gyro6_data = false;
+						imu.clear_gyro6_values();
 					}
+				}
+				else if (collected_gyro6_data==true)
+				{
+					collected_gyro6_data = true;
+				}
+				else
+				{
+					imu.collect_gyro6_data();
+					collected_gyro6_data = false;
+				}
 
-					if (imu.pS_values.size() > 500 && collected_gyroS_data!=true)
-					{
-						imu.calculate_gyroS_offset();
-						if(imu.good_biasS)
-						{
-							collected_gyroS_data = true;
-							imu.set_gyroS_offset();
-							filterS.Q_phi = 2.2847e-008;
-							filterS.Q_theta = 2.2847e-008;
-							filterS.Q_psi = 2.2847e-008;
-						}
-						else
-						{
-							imu.clear_gyroS_values();
-						}
-					}
-					else if (collected_gyroS_data==true)
+				if (imu.pS_values.size() > 500 && collected_gyroS_data!=true)
+				{
+					imu.calculate_gyroS_offset();
+					if(imu.good_biasS)
 					{
 						collected_gyroS_data = true;
+						imu.set_gyroS_offset();
+						filterS.Q_phi = 2.2847e-008;
+						filterS.Q_theta = 2.2847e-008;
+						filterS.Q_psi = 2.2847e-008;
 					}
 					else
 					{
-						imu.collect_gyroS_data();
-						collected_gyroS_data = false;
+						imu.clear_gyroS_values();
 					}
+				}
+				else if (collected_gyroS_data==true)
+				{
+					collected_gyroS_data = true;
+				}
+				else
+				{
+					imu.collect_gyroS_data();
+					collected_gyroS_data = false;
+				}
 
 
-					if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data && collected_gyroS_data)
-					{
-						collected_gyro_data = true;
-					}
-					else
-					{
-						collected_gyro_data = false;
-					}
+				if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data && collected_gyroS_data)
+				{
+					collected_gyro_data = true;
+				}
+				else
+				{
+					collected_gyro_data = false;
 				}
 			}
-			else
-			{
-				if (imu.new_nb1!=0)
-				{
-					filter1.dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
-				}
-				else
-				{
-					filter1.blind_dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
-				}
-
-				if (imu.new_nb2!=0)
-				{
-					filter2.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
-				}
-				else
-				{
-					filter2.blind_dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
-				}
-
-				if (imu.new_nbS!=0)
-				{
-					filterS.dead_reckoning(imu.nbS_p,imu.nbS_q,imu.nbS_r,encoders.delta_distance,imu.dtS);
-				}
-				else
-				{
-					filterS.blind_dead_reckoning(imu.nbS_p,imu.nbS_q,imu.nbS_r,encoders.delta_distance,imu.dtS);
-				}
-
-
-
-				if(filter.keep_nb == 3 || filter.keep_nb == 28 || filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
-				{
-					filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				}
-				else if (filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 16 || filter.keep_nb == 18 || filter.keep_nb == 21 || filter.keep_nb == 23 || filter.keep_nb == 25 || filter.keep_nb == 27 || filter.keep_nb == 30 || filter.keep_nb == 32 || filter.keep_nb == 34 || filter.keep_nb == 36)
-				{
-
-					filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				}
-				else if (filter.keep_nb == 4 || filter.keep_nb == 13 || filter.keep_nb == 17 || filter.keep_nb == 19)
-				{
-					filter.initialize_states(filterS.phi,filterS.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-				}
-			}
-			prev_stopped = true;
 		}
 		else
 		{
-			prev_stopped = false;
-			collecting_accelerometer_data = false;
-			collected_gyro_data = false;
-			collected_gyro1_data = false;
-			collected_gyro2_data = false;
-			collected_gyro3_data = false;
-			collected_gyro4_data = false;
-			collected_gyro5_data = false;
-			collected_gyro6_data = false;
-			collected_gyroS_data = false;
-			filter.clear_accelerometer_values();
-			imu.clear_gyro_values();
 			if (imu.new_nb1!=0)
 			{
 				filter1.dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
@@ -901,6 +841,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			{
 				filter1.blind_dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 			}
+
 			if (imu.new_nb2!=0)
 			{
 				filter2.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
@@ -921,8 +862,6 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 
 
-		
-
 			if(filter.keep_nb == 3 || filter.keep_nb == 28 || filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
 			{
 				filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
@@ -937,9 +876,9 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 				filter.initialize_states(filterS.phi,filterS.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 			}
 		}
-
+		prev_stopped = true;
 	}
-	else 
+	else
 	{
 		prev_stopped = false;
 		collecting_accelerometer_data = false;
@@ -953,54 +892,52 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		collected_gyroS_data = false;
 		filter.clear_accelerometer_values();
 		imu.clear_gyro_values();
-		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.01) && encoders.delta_distance == 0)
+		if (imu.new_nb1!=0)
 		{
+			filter1.dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
 		}
 		else
 		{
-			if (imu.new_nb1!=0)
-			{
-				filter1.dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
-			}
-			else
-			{
-				filter1.blind_dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
-			}
+			filter1.blind_dead_reckoning(imu.nb1_p,imu.nb1_q,imu.nb1_r,encoders.delta_distance,imu.dt1);
+		}
+		if (imu.new_nb2!=0)
+		{
+			filter2.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
+		}
+		else
+		{
+			filter2.blind_dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
+		}
 
-			if (imu.new_nb2!=0)
-			{
-				filter2.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
-			}
-			else
-			{
-				filter2.blind_dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
-			}
+		if (imu.new_nbS!=0)
+		{
+			filterS.dead_reckoning(imu.nbS_p,imu.nbS_q,imu.nbS_r,encoders.delta_distance,imu.dtS);
+		}
+		else
+		{
+			filterS.blind_dead_reckoning(imu.nbS_p,imu.nbS_q,imu.nbS_r,encoders.delta_distance,imu.dtS);
+		}
 
-			if (imu.new_nbS!=0)
-			{
-				filterS.dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
-			}
-			else
-			{
-				filterS.blind_dead_reckoning(imu.nb2_p,imu.nb2_q,imu.nb2_r,encoders.delta_distance,imu.dt2);
-			}
 
-			
-			if(filter.keep_nb == 3 || filter.keep_nb == 28 || filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
-			{
-				filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-			}
-			else if (filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 16 || filter.keep_nb == 18 || filter.keep_nb == 21 || filter.keep_nb == 23 || filter.keep_nb == 25 || filter.keep_nb == 27 || filter.keep_nb == 30 || filter.keep_nb == 32 || filter.keep_nb == 34 || filter.keep_nb == 36)
-			{
 
-				filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-			}
-			else if (filter.keep_nb == 4 || filter.keep_nb == 13 || filter.keep_nb == 17 || filter.keep_nb == 19)
-			{
-				filter.initialize_states(filterS.phi,filterS.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-			}
+	
+
+		if(filter.keep_nb == 3 || filter.keep_nb == 28 || filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
+		{
+			filter.initialize_states(filter1.phi,filter1.theta,filter1.psi,filter1.x,filter1.y,filter1.P_phi,filter1.P_theta,filter1.P_psi,filter1.P_x,filter1.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		}
+		else if (filter.keep_nb == 2 || filter.keep_nb == 6 || filter.keep_nb == 8 || filter.keep_nb == 10 || filter.keep_nb == 15 || filter.keep_nb == 16 || filter.keep_nb == 18 || filter.keep_nb == 21 || filter.keep_nb == 23 || filter.keep_nb == 25 || filter.keep_nb == 27 || filter.keep_nb == 30 || filter.keep_nb == 32 || filter.keep_nb == 34 || filter.keep_nb == 36)
+		{
+
+			filter.initialize_states(filter2.phi,filter2.theta,filter2.psi,filter2.x,filter2.y,filter2.P_phi,filter2.P_theta,filter2.P_psi,filter2.P_x,filter2.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
+		}
+		else if (filter.keep_nb == 4 || filter.keep_nb == 13 || filter.keep_nb == 17 || filter.keep_nb == 19)
+		{
+			filter.initialize_states(filterS.phi,filterS.theta,filterS.psi,filterS.x,filterS.y,filterS.P_phi,filterS.P_theta,filterS.P_psi,filterS.P_x,filterS.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
 		}
 	}
+
+
 
 	if (stopFlag && homing_found && registration_counter!=registration_counter_prev && do_homing && !homing_updated)
 	{

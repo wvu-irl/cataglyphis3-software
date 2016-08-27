@@ -152,8 +152,8 @@ void CalibrateCamera::updateImage()
     int x = -(v-5792/2);
     int y = u - 5792/2;
     _rollAngle = rollCompensation;
-    _pitchAngle = -y*IMAGE_SENSOR_PIXEL_SIZE/G_FOCAL_LENGTH;//atan2(y*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
-    _yawAngle = -x*IMAGE_SENSOR_PIXEL_SIZE/G_FOCAL_LENGTH;//atan2(x*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
+    _pitchAngle = -x*IMAGE_SENSOR_PIXEL_SIZE/G_FOCAL_LENGTH;//atan2(y*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
+    _yawAngle = y*IMAGE_SENSOR_PIXEL_SIZE/G_FOCAL_LENGTH;//atan2(x*IMAGE_SENSOR_PIXEL_SIZE,10e-3);
 
     if(_showLines)
     {
