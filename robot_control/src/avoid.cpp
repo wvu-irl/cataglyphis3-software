@@ -46,6 +46,7 @@ bool Avoid::runProc()
                 sendDequeClearAll();
                 ROS_INFO("AVOID gave up ROI number %i",currentROIIndex);
                 voiceSay->call("give up r o i");
+                break;
             }
             if(!execInfoMsg.actionBool3[interruptedAvoid] && (interruptedAvoid || interruptedEmergencyEscape))
             {

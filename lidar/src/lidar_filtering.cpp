@@ -377,7 +377,7 @@ void LidarFilter::doMathMapping()
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
+    seg_plane.setDistanceThreshold (0.25); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac

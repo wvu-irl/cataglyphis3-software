@@ -26,8 +26,8 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#define EVANSDALE
-//#define WPI
+//#define EVANSDALE
+#define WPI
 //#define QUAD
 //#define CHESTNUT_RIDGE
 
@@ -175,8 +175,8 @@ public:
 	int numRandomWaypointSearchDistanceCriteriaFailed;
 	const int randomWaypointDistanceCriteriaFailedLimit = 100;
 	const float mapResolution = 1.0; // m
-	const float searchLocalMapLength = 40.0; // m
-	const float searchLocalMapWidth = 40.0; // m
+	const float searchLocalMapLength = 20.0; // m
+	const float searchLocalMapWidth = 20.0; // m
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 	const float randomWaypointMinDistance = 4.0; // m

@@ -217,9 +217,10 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             searchLocalMapExists = true;
             //grid_map::GridMapRosConverter::fromMessage(createROIKeyframeSrv.response.keyframe.map, ROIKeyframe);
             searchLocalMapToROIAngle = RAD2DEG*atan2(regionsOfInterest.at(req.roiIndex).s, regionsOfInterest.at(req.roiIndex).e) - fmod(globalPose.heading, 360.0);
-            sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
-            sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
-            searchLocalMap.add(layerToString(_localMapDriveability), 0.0);
+            //sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
+            //sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
+            searchLocalMap.setGeometry(grid_map::Length(regionsOfInterest.at(searchLocalMapROINum).radialAxis*2.0, regionsOfInterest.at(searchLocalMapROINum).tangentialAxis*2.0), mapResolution, grid_map::Position(0.0, 0.0));
+            searchLocalMap.add(layerToString(_localMapDriveability), 1.0);
             for(int i=0; i<createROIHazardMapSrv.response.x_mean.size(); i++)
             {
                 searchLocalMapCoord[0] = createROIHazardMapSrv.response.x_mean.at(i);
@@ -230,12 +231,12 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                 //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 if(searchLocalMap.isInside(searchLocalMapCoord)) searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
             }
-            for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
+            /*for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
                 rotateCoord(searchLocalMapCoord[0], searchLocalMapCoord[1], ROIX, ROIY, searchLocalMapToROIAngle);
                 searchLocalMap.at(layerToString(_sampleProb), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
-            }
+            }*/
             grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
             searchLocalMapPub.publish(searchLocalMapMsg);
         }
