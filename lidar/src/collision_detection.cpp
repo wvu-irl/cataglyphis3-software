@@ -20,7 +20,7 @@ CollisionDetection::CollisionDetection()
 	_sub_velodyne = _nh.subscribe("/velodyne_points", 1, &CollisionDetection::registrationCallback, this);
 	_sub_waypoint = _nh.subscribe("/control/exec/nextwaypoint", 1, &CollisionDetection::waypointsCallback, this);
 	_sub_position = _nh.subscribe("/hsm/masterexec/globalpose", 1, &CollisionDetection::positionCallback, this);
-	_sub_zedcollision = _nh.subscribe("/zedcollisiondetectionout", 1, &CollisionDetection::zedcollisionCallback, this);
+	// _sub_zedcollision = _nh.subscribe("/zedcollisiondetectionout", 1, &CollisionDetection::zedcollisionCallback, this);
 
 	//predictive avoidance service
 	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
@@ -40,16 +40,17 @@ void CollisionDetection::Initializations()
 	threshold_min_angle = 45; //degree, min angle to turn, avoid tan 90 happens, choose 44 not 45
 
 	threshold_counter_lidar = 2;	//counter should be bigger than threshold, than do something
-	threshold_counter_zed = 5; 
+	// threshold_counter_zed = 5; 
 	threshold_counter_ransac = 2;
 
 	//zed data
-	_zedcollision = 0;
+	// _zedcollision = 0;
 
 	//counter clean
 	_collision_counter_lidar_slowdown = 0;
 	_collision_counter_lidar_avoid = 0;
-	_collision_counter_zed = 0;
+	// _collision_counter_zed = 0;
+	_collision_counter_ransac = 0;
 
 	_slowdown = false;
 	_distance_to_drive = 0;
@@ -69,11 +70,11 @@ void CollisionDetection::positionCallback(messages::RobotPose const &position_ms
 	_headingposition = position_msg.heading * PI / 180;	//should change to radian
 }
 
-void CollisionDetection::zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg)
-{
-	_zedcollision = zedcollisionout_msg.collision;
-	_registration_counter = _registration_counter + 1;
-}
+// void CollisionDetection::zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg)
+// {
+// 	_zedcollision = zedcollisionout_msg.collision;
+// 	_registration_counter = _registration_counter + 1;
+// }
 
 void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
@@ -146,8 +147,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	int collision_right_counter = 0;
 
 	//angle for robot to turn
-	std::vector<double> angle;
-	angle.clear();
+	// std::vector<double> angle;
+	// angle.clear();
 	
 
 	for(int i=0; i<cloud->points.size(); i++)
@@ -209,18 +210,20 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	}
 
 	//count how many time the zed report collision
-	if(_zedcollision != 0)
-	{
-		_collision_counter_zed++;
-	}
-	else	//report should be continue
-	{
-		_collision_counter_zed = 0;
-	}
+	// if(_zedcollision != 0)
+	// {
+	// 	_collision_counter_zed++;
+	// }
+	// else	//report should be continue
+	// {
+	// 	_collision_counter_zed = 0;
+	// }
 
 	//check for collision with ransac
 	int ransacCollisionStatus = 0;
-	if(_collision_counter_lidar_avoid == 0)
+	// if(_collision_counter_lidar_avoid == 0)
+	//if the robot do slow down, that means it detects an obstacle, otherwise, we need use RANSAC to confirm
+	if(_collision_counter_lidar_slowdown < threshold_counter_lidar)	
 	{
 		ransacCollisionStatus = doMathRANSAC();
 	}
@@ -260,7 +263,8 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	// else if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
 	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD || _zedcollision != 0)
 	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
-	if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_zed >= threshold_counter_zed || _collision_counter_ransac >= threshold_counter_ransac)
+	// if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_zed >= threshold_counter_zed || _collision_counter_ransac >= threshold_counter_ransac)
+	if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_ransac >= threshold_counter_ransac)
 	{	
 		_collision_status = 1;	//detected a obstacle
 
@@ -290,7 +294,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			//use avoidance map to detect angle and distance
 			generateAvoidancemap();
 
-			//check 44, 59, 74, 89 degree for getting good option
+			//check 45, 60, 75, 90 degree for getting good option
 			for(int i = 0; i < 4; i++)
 			{
 
@@ -360,45 +364,46 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		}		
 		else	//no obstacle on avoidance map
 		{
-			if(_collision_counter_zed >= threshold_counter_zed)
+			// if(_collision_counter_zed >= threshold_counter_zed)
+			// {
+			// 	if(_zedcollision == 1)	//collision on the left
+			// 	{
+			// 		_angle_to_drive = threshold_min_angle;
+			// 		ROS_INFO_STREAM("ZED, collision on the left");
+			// 	}
+
+			// 	if(_zedcollision == 2)	//collision on the right
+			// 	{
+			// 		_angle_to_drive = -threshold_min_angle;
+			// 		ROS_INFO_STREAM("ZED, collision on the right");
+			// 	}
+
+			// 	_distance_to_drive = short_distance - _CORRIDOR_LENGTH_AVOID;
+
+			// 	_zedcollision = 0;
+			// }
+			// else if(_collision_counter_lidar_avoid >= threshold_counter_lidar)
+			// {
+			if(collision_left_counter > collision_right_counter)
 			{
-				if(_zedcollision == 1)	//collision on the left
-				{
-					_angle_to_drive = threshold_min_angle;
-					ROS_INFO_STREAM("ZED, collision on the left");
-				}
-
-				if(_zedcollision == 2)	//collision on the right
-				{
-					_angle_to_drive = -threshold_min_angle;
-					ROS_INFO_STREAM("ZED, collision on the right");
-				}
-
-				_distance_to_drive = short_distance - _CORRIDOR_LENGTH_AVOID;
-
-				_zedcollision = 0;
+				_angle_to_drive = threshold_min_angle;
 			}
-			else if(_collision_counter_lidar_avoid >= threshold_counter_lidar)
+			else
 			{
-				if(collision_left_counter > collision_right_counter)
-				{
-					_angle_to_drive = threshold_min_angle;
-				}
-				else
-				{
-					_angle_to_drive = -threshold_min_angle;
-				}
-				
-				_distance_to_drive = short_distance - _CORRIDOR_LENGTH_AVOID;
+				_angle_to_drive = -threshold_min_angle;
+			}
+			
+			_distance_to_drive = short_distance - _CORRIDOR_LENGTH_AVOID;
 
-				ROS_INFO_STREAM("there is no obstacle on hazard map, turn " << _angle_to_drive << " degree and 3 m");
-			}	
+			ROS_INFO_STREAM("there is no obstacle on hazard map, turn " << _angle_to_drive << " degree and 3 m");
+			// }	
 		}
 
 		//clean counter
 		_collision_counter_lidar_avoid = 0;
 		_collision_counter_lidar_slowdown = 0;
-		_collision_counter_zed = 0;
+		// _collision_counter_zed = 0;
+		_collision_counter_ransac = 0;
 	}
 	else if(_collision_counter_lidar_slowdown >= threshold_counter_lidar)
 	{
@@ -415,8 +420,10 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		_distance_to_drive = 0;
 		_angle_to_drive = 0;
 		// ROS_INFO("No Collision...");
-		return 0;
+		
 	}
+
+	return 0;
 }
 
 
@@ -435,7 +442,7 @@ int CollisionDetection::doMathRANSAC() // FIRST LAYER: SAFE ENVELOPE
 	pass.setFilterLimits(-1,1);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("z");
-	pass.setFilterLimits(-2,1.5); //positive z is down, negative z is up
+	pass.setFilterLimits(-1.5,1.5); //positive z is down, negative z is up
 	pass.filter(*cloud);
 
 	//fit plane and check for outliers if at least 500 points are contained in cloud

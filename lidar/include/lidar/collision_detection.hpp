@@ -45,7 +45,7 @@
 #include <messages/CreateROIHazardMap.h>
 #include <messages/NextWaypointOut.h>
 #include <messages/RobotPose.h>
-#include <messages/ZedCollisionOut.h>
+// #include <messages/ZedCollisionOut.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
 #include <pcl/common/transforms.h>
@@ -100,7 +100,7 @@ private:
 	double threshold_min_angle;
 
 	int threshold_counter_lidar;
-	int threshold_counter_zed;
+	// int threshold_counter_zed;
 	int threshold_counter_ransac;
 
 	double error_angle;
@@ -115,12 +115,12 @@ private:
 	double _headingposition;
 
 	//zed data
-	int _zedcollision;
+	// int _zedcollision;
 
 	//counters
 	int _collision_counter_lidar_slowdown;
 	int _collision_counter_lidar_avoid;
-	int _collision_counter_zed;
+	// int _collision_counter_zed;
 	int _collision_counter_ransac;
 
 	std::vector<float> _hazard_x;
@@ -142,14 +142,13 @@ private:
 	void registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud);
 	void waypointsCallback(messages::NextWaypointOut const &waypoint_msg);
 	void positionCallback(messages::RobotPose const &position_msg);
-	void zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg);
+	// void zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg);
 
 	int firstChoice(double angle, double distance);
 	int secondChoice(double angle, double distance, double xg, double yg);
 	int finalChoice(double left_angle, double right_angle, int collision_left_counter, int collision_right_counter, double xg_local, double yg_local);
 	void generateAvoidancemap();
 	void generateHazardmap();
-	// void service(messages::::Request &req, messages::::Response &res);
 };
 
 #endif // COLLISION_DETECTION_H
