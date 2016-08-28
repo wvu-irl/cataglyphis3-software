@@ -609,7 +609,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.05) && encoders.delta_distance < 5)
 		{
-			if((sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)&&!homing_updated)
+			if((sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)&&!homing_updated&&(!pause_switch||latest_nav_control_request.runBiasRemoval))
 			{
 				do_homing = true;
 			}
@@ -939,7 +939,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 
 
-	if (stopFlag && homing_found && registration_counter!=registration_counter_prev && do_homing && !homing_updated)
+	if (stopFlag && homing_found && registration_counter!=registration_counter_prev && do_homing && !homing_updated && (!pause_switch||latest_nav_control_request.runBiasRemoval))
 	{
 		filter.homing_update(homing_heading, homing_x, homing_y, dull_x, dull_y, shiny_x, shiny_y, cylinder_std, possibly_lost, square_update);
 		if(filter.homing_verified)

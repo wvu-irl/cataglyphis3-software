@@ -213,6 +213,36 @@ if __name__ == "__main__":
 	classifierDict[classifierType]['mean'] = meanData50Rock
 	classifierDict[classifierType]['modulePath'] = cvModulePath
 
+	# classifier version
+	classifierVersion = 'ALL_V1'
+	classifierSampleType = 'ALL'
+	classifierType = 3
+
+	# imgSize
+	imgSize = 50
+	
+	# read the mean data
+	meanData50PathAll = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
+	meanData50All = np.load(meanData50PathAll)
+	meanData50All = np.reshape(meanData50All, (1, 3, imgSize, imgSize))
+	
+	# read the classifier
+	classifier50PathAll = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
+
+	# set dropout parameters for better performance
+	dropoutParams50All = {}
+	dropoutParams50All['conv'] = 0.5
+	dropoutParams50All['fc'] = 0.5
+	
+	# initialize DeepFishNet50Rock
+	myClassifier50All = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50All, mode='Test', modelToLoad = classifier50PathAll)
+	
+	# store 50 x 15 classifier details
+	classifierDict[classifierType] = {}
+	classifierDict[classifierType]['classifier'] = myClassifier50All
+	classifierDict[classifierType]['mean'] = meanData50All
+	classifierDict[classifierType]['modulePath'] = cvModulePath
+
 	# initialize classifier service
 	cService = ClassifierService(classifierDict)
 	cService.startService()

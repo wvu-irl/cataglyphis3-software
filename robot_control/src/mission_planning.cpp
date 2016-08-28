@@ -558,7 +558,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
     robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
-    if(msg->homingUpdated && !robotStatus.homingUpdated) avoid.sendWait(shortRecomputeActionWaitTime, true);
+    //if(msg->homingUpdated && !robotStatus.homingUpdated) avoid.sendWait(shortRecomputeActionWaitTime, true);
     robotStatus.homingUpdated = msg->homingUpdated;
     if(robotStatus.homingUpdated)
     {

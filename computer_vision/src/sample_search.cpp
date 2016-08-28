@@ -467,7 +467,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		//precached sample classifier
 		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 0;
+		imageProbabilitiesSrv.request.classifierType = 3;
 		if(classifierClient.call(imageProbabilitiesSrv))
 		{
 			ROS_INFO("imageProbabilitiesSrv call successful with type 0 (cach)!");
@@ -489,7 +489,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		{
 			G_hard_probabilities.push_back(0);
 			G_rock_probabilities.push_back(0);
-			float tempMappedProbabilityCach = cachSigCoef[0]+(cachSigCoef[1]-cachSigCoef[0])/(1+pow(10,( (cachSigCoef[2]-G_cach_probabilities[i])*cachSigCoef[3]) ) );
+			float tempMappedProbabilityCach = G_cach_probabilities[i];//cachSigCoef[0]+(cachSigCoef[1]-cachSigCoef[0])/(1+pow(10,( (cachSigCoef[2]-G_cach_probabilities[i])*cachSigCoef[3]) ) );
 			G_sample_probabilities.push_back(tempMappedProbabilityCach);
 			G_sample_ids.push_back(0);
 		}
@@ -499,7 +499,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		//hard sample classifier
 		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 1;
+		imageProbabilitiesSrv.request.classifierType = 3;
 		if(classifierClient.call(imageProbabilitiesSrv))
 		{
 			ROS_INFO("imageProbabilitiesSrv call successful with type 1 (hard)!");
@@ -519,7 +519,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		//rock sample classifier
 		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
 		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 2;
+		imageProbabilitiesSrv.request.classifierType = 3;
 		if(classifierClient.call(imageProbabilitiesSrv))
 		{
 			ROS_INFO("imageProbabilitiesSrv call successful with type 2 (rock)!");
@@ -550,8 +550,8 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		for(int i=0; i<G_rock_probabilities.size(); i++) //this is the number of blobs in rock and hard probabilities
 		{
 			G_cach_probabilities.push_back(0);
-			float tempMappedProbabilityHard = hardSigCoef[0]+(hardSigCoef[1]-hardSigCoef[0])/(1+pow(10,( (hardSigCoef[2]-G_hard_probabilities[i])*hardSigCoef[3]) ) );
-			float tempMappedProbabilityRock = rockSigCoef[0]+(rockSigCoef[1]-rockSigCoef[0])/(1+pow(10,( (rockSigCoef[2]-G_rock_probabilities[i])*rockSigCoef[3]) ) );
+			float tempMappedProbabilityHard = G_hard_probabilities[i];//hardSigCoef[0]+(hardSigCoef[1]-hardSigCoef[0])/(1+pow(10,( (hardSigCoef[2]-G_hard_probabilities[i])*hardSigCoef[3]) ) );
+			float tempMappedProbabilityRock = G_rock_probabilities[i];//rockSigCoef[0]+(rockSigCoef[1]-rockSigCoef[0])/(1+pow(10,( (rockSigCoef[2]-G_rock_probabilities[i])*rockSigCoef[3]) ) );
 			if(tempMappedProbabilityHard >= tempMappedProbabilityRock)
 			{
 				G_sample_probabilities.push_back(tempMappedProbabilityHard);
@@ -579,7 +579,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	std::vector<int> blobsOfInterest, blobsOfNotInterest;
 	for(int i=0; i<G_sample_probabilities.size(); i++)
 	{
-		if(G_sample_probabilities[i]>0.1)
+		if(G_sample_probabilities[i]>0.5)
 		{
 			blobsOfInterest.push_back(i);
 		}
@@ -710,7 +710,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		//add sample information to message
 		if(publish_sample_info==true)
 		{
+			ROS_INFO("Publishing detected samples...");
 			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
+		}
+		else
+		{
+			ROS_INFO("No samples of interest detected...");
 		}
 	}
 

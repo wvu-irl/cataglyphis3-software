@@ -706,7 +706,7 @@ void MapManager::writeKeyframesIntoGlobalMap()
         for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
         {
             globalMap.getPosition(*it, globalTransformCoord);
-            rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], -keyframeHeading);
+            rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], keyframeHeading);
             if(currentKeyframe.isInside(keyframeCoord))
             {
                 if(currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord)!=0.0)

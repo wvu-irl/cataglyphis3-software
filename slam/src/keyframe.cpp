@@ -344,7 +344,7 @@ void Keyframe::Initialization()
 	threshold_mindistance = 5; //distance between current frame and previous keyframe less than the threshold, it will not generate a new keyframe
 
 	//parmeters for temp keyframe
-	threshold_permanent_keyframe_distance = 10; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
+	threshold_permanent_keyframe_distance = 20; //in the threshold area, if a permanent keyframe exist, then discard the temp keyframe
 
 	//overlap
 	LocalMap_size = 120; // localmap size will be 120 + 120

@@ -26,8 +26,8 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-//#define EVANSDALE
-#define WPI
+#define EVANSDALE
+//#define WPI
 //#define QUAD
 //#define CHESTNUT_RIDGE
 
@@ -197,7 +197,7 @@ public:
 	float satMapStartE3Offset;
 	float satMapStartS3Offset;
 	float highestSampleValue;
-	const float possibleSampleConfThresh = 0.6; // Change corresponding value in mission planning if ever changed
+	const float possibleSampleConfThresh = 0.5; // Change corresponding value in mission planning if ever changed
 	grid_map::Polygon donutSmashPolygon;
 	std::vector<grid_map::Position> donutSmashVerticies;
 	const float donutSmashSearchRadius = 4.0; // m

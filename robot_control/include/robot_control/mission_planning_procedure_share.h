@@ -90,8 +90,8 @@ public:
 	const float initGrabberAngleTolerance = 6.0; // deg
 	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
 	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
-	const float possibleSampleConfThresh = 0.6; // Change corresponding value in map manager if ever changed
-	const float definiteSampleConfThresh = 0.62;
+	const float possibleSampleConfThresh = 0.5; // Change corresponding value in map manager if ever changed
+	const float definiteSampleConfThresh = 0.6;
 	static int currentROIIndex;
 	static int prevROIIndex;
 	static bool initialized;
