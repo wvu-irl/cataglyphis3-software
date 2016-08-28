@@ -3,6 +3,8 @@
 void Open::init()
 {
     clearDeques();
+    dropFailed_ = false;
+    slidesFailed_ = false;
 	pushTask(_grabberSetSlides_);
 	grabberDeque.back()->params.int1 = GRABBER_OPEN;
 }

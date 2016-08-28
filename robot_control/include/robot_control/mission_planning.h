@@ -97,6 +97,7 @@ private:
 	void lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr& msg);
 	void hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr& msg);
 	void nextWaypointCallback_(const messages::NextWaypointOut::ConstPtr& msg);
+	void grabberStatusCallback_(const messages::ExecGrabberStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
 	void biasRemovalTimerCallback_(const ros::TimerEvent& event);

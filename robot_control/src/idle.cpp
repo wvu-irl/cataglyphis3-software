@@ -5,6 +5,8 @@ void Idle::init()
     clearDeques();
     driveHalt.init();
     visionHalt.init();
+    dropFailed_ = false;
+    slidesFailed_ = false;
 }
 
 int Idle::run()

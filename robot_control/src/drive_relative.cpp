@@ -2,6 +2,8 @@
 
 void DriveRelative::init()
 {
+    dropFailed_ = false;
+    slidesFailed_ = false;
 	distanceToDrive_ = params.float1;
 	angleToTurn_ = params.float2;
     desiredEndHeading_ = params.float3;

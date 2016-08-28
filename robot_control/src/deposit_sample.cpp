@@ -10,6 +10,7 @@ bool DepositSample::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
+        dropFailed = false;
         driveSpeedsMsg.vMax = slowVMax;
         driveSpeedsMsg.rMax = defaultRMax;
         driveSpeedsMsgPrev.vMax = slowVMax;
@@ -26,10 +27,9 @@ bool DepositSample::runProc()
 		}
 		else
 		{
-            sendOpen();
 			missionEnded = true;
 			state = _finish_;
-            voiceSay->call("mission ended");
+            voiceSay->call("mission ended. show me the money");
 		}
 		break;
 	case _exec_:
@@ -39,6 +39,8 @@ bool DepositSample::runProc()
         procsToResume[procType] = false;
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
+        if(grabberStatusMsg.dropFailed) dropFailed = true;
+        else dropFailed = false;
 		break;
 	case _interrupt_:
 		avoidLockout = false;
@@ -47,16 +49,28 @@ bool DepositSample::runProc()
 		state = _init_;
 		break;
 	case _finish_:
-		avoidLockout = false;
-		possessingSample = false;
-		confirmedPossession = false;
-		atHome = false;
-		inDepositPosition = false;
-		possibleSample = false;
-		definiteSample = false;
-		sampleDataActedUpon = false;
-		sampleInCollectPosition = false;
-		startSLAM = true;
+        if(dropFailed)
+        {
+            avoidLockout = true;
+            possessingSample = true;
+            confirmedPossession = true;
+            atHome = true;
+            inDepositPosition = false;
+            startSLAM = false;
+        }
+        else
+        {
+            avoidLockout = false;
+            possessingSample = false;
+            confirmedPossession = false;
+            atHome = false;
+            inDepositPosition = false;
+            possibleSample = false;
+            definiteSample = false;
+            sampleDataActedUpon = false;
+            sampleInCollectPosition = false;
+            startSLAM = true;
+        }
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

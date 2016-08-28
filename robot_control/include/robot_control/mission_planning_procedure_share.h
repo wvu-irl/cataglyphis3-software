@@ -21,6 +21,7 @@
 #include <messages/MasterStatus.h>
 #include <messages/NavFilterControl.h>
 #include <messages/NextWaypointOut.h>
+#include <messages/ExecGrabberStatus.h>
 #include <hsm/voice.h>
 #include <armadillo>
 #include <math.h>
@@ -49,6 +50,8 @@ public:
 	static messages::MasterStatus hsmMasterStatusMsg;
 	static ros::Subscriber nextWaypointSub;
 	static messages::NextWaypointOut nextWaypointMsg;
+	static ros::Subscriber grabberStatusSub;
+	static messages::ExecGrabberStatus grabberStatusMsg;
     static ros::ServiceClient intermediateWaypointsClient;
     static robot_control::IntermediateWaypoints intermediateWaypointsSrv;
     static ros::ServiceClient reqROIClient;
@@ -204,6 +207,8 @@ ros::Subscriber MissionPlanningProcedureShare::hsmMasterStatusSub;
 messages::MasterStatus MissionPlanningProcedureShare::hsmMasterStatusMsg;
 ros::Subscriber MissionPlanningProcedureShare::nextWaypointSub;
 messages::NextWaypointOut MissionPlanningProcedureShare::nextWaypointMsg;
+ros::Subscriber MissionPlanningProcedureShare::grabberStatusSub;
+messages::ExecGrabberStatus MissionPlanningProcedureShare::grabberStatusMsg;
 ros::ServiceClient MissionPlanningProcedureShare::intermediateWaypointsClient;
 robot_control::IntermediateWaypoints MissionPlanningProcedureShare::intermediateWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::reqROIClient;

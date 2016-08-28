@@ -44,7 +44,6 @@ bool GoHome::runProc()
 		break;
 	case _finish_:
 		avoidLockout = false;
-		atHome = true;
         if(robotStatus.homingUpdated)
         {
             //timers[_homingTimer_]->stop();
@@ -53,11 +52,14 @@ bool GoHome::runProc()
             performHoming = false;
             homingUpdateFailed = false;
             useDeadReckoning = false;
+            if(hypot(homeWaypointX - robotStatus.xPos, homeWaypointY - robotStatus.yPos) > goHomeDistanceTolerance) atHome = false;
+            else atHome = true;
         }
         else
         {
             homingUpdatedFailedCount++;
             homingUpdateFailed = true;
+            atHome = false;
         }
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

@@ -24,6 +24,8 @@ bool Collect::runProc()
         computeDriveSpeeds();
 		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
 		else state = _exec_;
+        if(grabberStatusMsg.dropFailed || grabberStatusMsg.slidesFailed) dropOrSlidesFailed = true;
+        else dropOrSlidesFailed = false;
 		break;
 	case _interrupt_:
 		avoidLockout = false;
@@ -32,9 +34,20 @@ bool Collect::runProc()
 		state = _init_;
 		break;
 	case _finish_:
-		avoidLockout = true;
-		possessingSample = true;
-        sideOffsetGrab = false;
+        if(dropOrSlidesFailed)
+        {
+            avoidLockout = false;
+            possessingSample = false;
+            sideOffsetGrab = false;
+            performReorient = true;
+            sendDriveRel(failedBackUpDistance, 0.0, false, 0.0, false, false);
+        }
+        else
+        {
+            avoidLockout = true;
+            possessingSample = true;
+            sideOffsetGrab = false;
+        }
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

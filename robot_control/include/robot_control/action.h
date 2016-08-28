@@ -5,10 +5,6 @@
 #include "robot_control_interface.h"
 #include "cataglyphis_timer.h"
 #include <math.h>
-#define GRABBER_OPEN 1000
-#define GRABBER_CLOSED -900
-#define GRABBER_DROPPED 1000
-#define GRABBER_RAISED -1000
 
 class Action : public ActuatorDequeInterface, public RobotControlInterface
 {

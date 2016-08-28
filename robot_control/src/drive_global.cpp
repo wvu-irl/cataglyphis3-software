@@ -2,6 +2,8 @@
 
 void DriveGlobal::init()
 {
+    dropFailed_ = false;
+    slidesFailed_ = false;
 	desiredX_ = params.float1;
 	desiredY_ = params.float2;
     desiredEndHeading_ = params.float3;

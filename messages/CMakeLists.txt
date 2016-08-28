@@ -81,6 +81,7 @@ find_package(catkin REQUIRED COMPONENTS
    VoiceSayPhrase.msg
    NextWaypointOut.msg
    ZedCollisionOut.msg
+   ExecGrabberStatus.msg
  )
 
 ## Generate services in the 'srv' folder

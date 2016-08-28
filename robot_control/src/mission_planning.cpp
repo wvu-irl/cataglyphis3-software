@@ -21,6 +21,7 @@ MissionPlanning::MissionPlanning()
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
     nextWaypointSub = nh.subscribe<messages::NextWaypointOut>("/control/exec/nextwaypoint", 1, &MissionPlanning::nextWaypointCallback_, this);
     navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
+    grabberStatusSub = nh.subscribe<messages::ExecGrabberStatus>("/control/exec/grabberstatus", 1, &MissionPlanning::grabberStatusCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
     controlServ = nh.advertiseService("/control/missionplanning/control", &MissionPlanning::controlCallback_, this);
     infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
@@ -324,13 +325,13 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute reorient");
             voiceSay->call("reorient");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed && !sampleInCollectPosition && !possessingSample && !performReorient && !inSearchableRegion)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession) || (performHoming && !sampleInCollectPosition && !possessingSample && !performReorient && !inSearchableRegion)) && !atHome && !homingUpdateFailed && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
             voiceSay->call("go home");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !(possibleSample || definiteSample) && !sampleInCollectPosition && !performReorient && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && !(possibleSample || definiteSample) && !sampleInCollectPosition && !performReorient && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
@@ -648,6 +649,11 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
 void MissionPlanning::nextWaypointCallback_(const messages::NextWaypointOut::ConstPtr &msg)
 {
     nextWaypointMsg = *msg;
+}
+
+void MissionPlanning::grabberStatusCallback_(const messages::ExecGrabberStatus::ConstPtr &msg)
+{
+    grabberStatusMsg = *msg;
 }
 
 bool MissionPlanning::emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res)

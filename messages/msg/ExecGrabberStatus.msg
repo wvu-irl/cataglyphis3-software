@@ -1,0 +1,2 @@
+bool dropFailed
+bool slidesFailed
