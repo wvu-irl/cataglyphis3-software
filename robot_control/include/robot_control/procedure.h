@@ -2,8 +2,6 @@
 #define PROCEDURE_H
 #include "mission_planning_procedure_share.h"
 
-enum PROC_STATE_T {_init_, _exec_, _interrupt_, _finish_};
-
 class Procedure : public MissionPlanningProcedureShare
 {
 public:
