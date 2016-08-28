@@ -41,6 +41,7 @@ void CollisionDetection::Initializations()
 
 	threshold_counter_lidar = 2;	//counter should be bigger than threshold, than do something
 	threshold_counter_zed = 5; 
+	threshold_counter_ransac = 2;
 
 	//zed data
 	_zedcollision = 0;
@@ -217,6 +218,23 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		_collision_counter_zed = 0;
 	}
 
+	//check for collision with ransac
+	int ransacCollisionStatus = 0;
+	if(_collision_counter_lidar_avoid == 0)
+	{
+		ransacCollisionStatus = doMathRANSAC();
+	}
+
+	if(ransacCollisionStatus == 1 || _collision_counter_lidar_avoid == 1)
+	{
+		_collision_counter_ransac++;
+	}
+	else
+	{
+		_collision_counter_ransac=0;
+	}
+	
+
 	// ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
 	//check zed input
 	// ROS_INFO_STREAM("_zedcollision: " << _zedcollision);
@@ -242,7 +260,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	// else if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
 	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD || _zedcollision != 0)
 	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
-	if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_zed >= threshold_counter_zed)
+	if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_zed >= threshold_counter_zed || _collision_counter_ransac >= threshold_counter_ransac)
 	{	
 		_collision_status = 1;	//detected a obstacle
 
@@ -399,6 +417,70 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		// ROS_INFO("No Collision...");
 		return 0;
 	}
+}
+
+
+int CollisionDetection::doMathRANSAC() // FIRST LAYER: SAFE ENVELOPE
+{
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+	*cloud = _input_cloud;
+
+	//remove points based on hard thresholds (too far, too high, too low)
+	pcl::PassThrough<pcl::PointXYZI> pass;
+	pass.setInputCloud(cloud);
+	pass.setFilterFieldName("x");
+	pass.setFilterLimits(0,5);
+	pass.filter(*cloud);
+	pass.setFilterFieldName("y");
+	pass.setFilterLimits(-1,1);
+	pass.filter(*cloud);
+	pass.setFilterFieldName("z");
+	pass.setFilterLimits(-2,1.5); //positive z is down, negative z is up
+	pass.filter(*cloud);
+
+	//fit plane and check for outliers if at least 500 points are contained in cloud
+	int conditionTriggeredByRansac = 0;
+	if(cloud->points.size()> 500)
+	{
+		//fit plane using ransac
+		pcl::SACSegmentation<pcl::PointXYZI> seg_plane;
+		seg_plane.setOptimizeCoefficients (true); //optional (why is this optional??)
+		seg_plane.setModelType (pcl::SACMODEL_PLANE);
+		seg_plane.setMethodType (pcl::SAC_RANSAC);
+		seg_plane.setMaxIterations (1000); //max iterations for RANSAC
+		seg_plane.setDistanceThreshold (0.25); //ground detection threshold parameter
+		seg_plane.setInputCloud (cloud); //was raw_cloud
+		// std::cout << "cloud->points.size() = " << cloud->points.size() << std::endl;
+
+		//segment the points fitted to the plane using ransac
+		pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ()); //what is this? (coefficients for fitted plane?)
+		pcl::PointIndices::Ptr inliers (new pcl::PointIndices ()); //what is this? (inliers for points that fit the plane?)
+		seg_plane.segment (*inliers, *coefficients);
+
+		//seperate the ground points and the points above the ground (object points)
+		pcl::ExtractIndices<pcl::PointXYZI> extract;
+		extract.setInputCloud (cloud);
+		extract.setIndices (inliers);
+
+		extract.setNegative (false);
+		pcl::PointCloud<pcl::PointXYZI>::Ptr ground_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+		extract.filter (*ground_filtered);
+		// std::cout << "ground_filtered->points.size() = " << ground_filtered->points.size() << std::endl;
+
+		extract.setNegative (true);
+		pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+		extract.filter (*object_filtered);
+		// std::cout << "object_filtered->points.size() = " << object_filtered->points.size() << std::endl;
+
+		int numOutliersRansac = object_filtered->points.size();
+		if(numOutliersRansac > 100)
+		{
+			ROS_INFO("RANSAC %i outliers.",numOutliersRansac);
+			return 1;
+		}
+	}
+	
+	return 0;
 }
 
 // 20 * 22 avoidance map y*x

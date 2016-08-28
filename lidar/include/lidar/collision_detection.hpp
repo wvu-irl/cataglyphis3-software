@@ -67,8 +67,8 @@ public:
 	bool newPointCloudAvailable();
 	void packCollisionMessage(messages::CollisionOut &msg);
 	int doMathSafeEnvelope();
+	int doMathRANSAC();
 	void Initializations();
-	// int doMathRANSAC();
 	// bool doPredictiveAovidance();
 
 private:
@@ -101,6 +101,7 @@ private:
 
 	int threshold_counter_lidar;
 	int threshold_counter_zed;
+	int threshold_counter_ransac;
 
 	double error_angle;
 
@@ -120,6 +121,7 @@ private:
 	int _collision_counter_lidar_slowdown;
 	int _collision_counter_lidar_avoid;
 	int _collision_counter_zed;
+	int _collision_counter_ransac;
 
 	std::vector<float> _hazard_x;
 	std::vector<float> _hazard_y;
