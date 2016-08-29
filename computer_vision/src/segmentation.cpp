@@ -378,7 +378,10 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
 
     //write origional image to file
     boost::filesystem::path P( ros::package::getPath("computer_vision") );
+
+    #if defined(SAVE_DETECTION_IMAGE) || defined(SAVE_HIGH_PROBABILITY_BLOBS)
     cv::imwrite(P.string() + "/data/images/input_image.jpg",image_file_copy);
+    #endif
 
 	//display resized image (just for debugging)
 	// cv::resize(image_file_copy,image_file_copy,cv::Size(800,800));
@@ -416,7 +419,9 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
         cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
     }
 
+    #if defined(SAVE_SEGMENTED_IMAGE)
     cv::imwrite(P.string() + "/data/images/segmented.jpg",channels[0].clone());
+    #endif
 
     //t = (get_wall_time() - t)*1000;
     //cout << "Time to extract blue channel: " << t << " milliseconds." << endl;
@@ -433,7 +438,9 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
     dilate(channels[0], channels[0], dilateElement);
     dilate(channels[0], channels[0], dilateElement);
 
+    #if defined(SAVE_MORPHED_IMAGE)
     cv::imwrite(P.string() + "/data/images/morphed.jpg",channels[0].clone());
+    #endif
 
     //t = (get_wall_time() - t)*1000;
     //cout << "Time perform morphological operations: " << t << " milliseconds." << endl;

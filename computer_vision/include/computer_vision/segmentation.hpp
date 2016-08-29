@@ -12,6 +12,7 @@
 #include <boost/filesystem.hpp>
 #include <computer_vision/patch.hpp>
 #include <computer_vision/sample_types.h>
+#include <computer_vision/settings.h>
 
 class Segmentation
 {

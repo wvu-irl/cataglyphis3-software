@@ -18,6 +18,7 @@
 #include <iostream>
 #include <computer_vision/sample_types.h>
 #include <messages/CVSetSampleParams.h>
+#include <computer_vision/settings.h>
 
 class SampleSearch
 {
@@ -87,6 +88,13 @@ public:
 	const float cachSigCoef[4] = {0.014343043024976,0.996308298545352,0.556984792625824,12.655992533439981};
 	const float hardSigCoef[4] = {0.009590048374287,0.996948659156515,0.513078429713242,15.391445601972140};
 	const float rockSigCoef[4] = {0.046567867798548,0.996253031121210,0.472406154111716,21.523462524555410};
+	int whiteSampleCounter;
+	int silverSampleCounter;
+	int blueOrPurpleSampleCounter;
+	int pinkSampleCounter;
+	int redSampleCounter;
+	int orangeSampleCounter;
+	int yellowSampleCounter;
 };
 
 #endif // SAMPLE_SEARCH_H
