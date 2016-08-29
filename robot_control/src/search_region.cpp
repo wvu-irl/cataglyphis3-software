@@ -49,6 +49,13 @@ bool SearchRegion::runProc()
             if(currentROIIndex == 0) modROISrv.request.sampleProb = 0.0;
             else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
             modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+            modROISrv.request.whiteProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb;
+            modROISrv.request.silverProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb;
+            modROISrv.request.blueOrPurpleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).blueOrPurpleProb;
+            modROISrv.request.pinkProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).pinkProb;
+            modROISrv.request.redProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).redProb;
+            modROISrv.request.orangeProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb;
+            modROISrv.request.yellowProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb;
 			modROISrv.request.addNewROI = false;
             modROISrv.request.editGroup = false;
 			if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
@@ -84,6 +91,7 @@ bool SearchRegion::runProc()
 			state = _exec_;
 		}
 		computeDriveSpeeds();
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = false;
@@ -97,8 +105,9 @@ bool SearchRegion::runProc()
 			sendDequeClearAll();
 			state = _finish_;
 		}
-        else if(searchEnded()) state = _finish_; // Last search action ended, but nothing found. Finish the proc.
+        else if(searchEnded() || queueEmptyTimedOut) state = _finish_; // Last search action ended, but nothing found. Finish the proc.
 		else state = _exec_; // Not finished, keep executing.
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;

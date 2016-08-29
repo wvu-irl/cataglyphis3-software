@@ -25,17 +25,20 @@ bool GoHome::runProc()
 		callIntermediateWaypoints();
         sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
-        if(execLastProcType == procType && execLastSerialNum == (serialNum-1)) avoidLockout = true; // *** Not sure if this is really the right condition...
-        else avoidLockout = false;
+        //if(execLastProcType == procType && execLastSerialNum == (serialNum-1)) avoidLockout = true; // *** Not sure if this is really the right condition...
+        //else avoidLockout = false;
+        avoidLockout = false; // ***
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
-		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;

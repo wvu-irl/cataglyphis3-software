@@ -43,6 +43,8 @@ public:
 	void computeDriveSpeeds();
 	void serviceAvoidCounterDecrement();
 	bool searchEnded();
+	void resetQueueEmptyCondition();
+	void serviceQueueEmptyCondition();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -794,6 +796,18 @@ bool Procedure::searchEnded()
 		return true;
 	}
 	else return false;
+}
+
+void Procedure::resetQueueEmptyCondition()
+{
+	timers[_queueEmptyTimer_]->stop();
+	queueEmptyTimedOut = false;
+	ROS_INFO("reset queue empty timer");
+}
+
+void Procedure::serviceQueueEmptyCondition()
+{
+	if(execInfoMsg.actionDequeSize==0 && !timers[_queueEmptyTimer_]->running && !queueEmptyTimedOut) {timers[_queueEmptyTimer_]->start(); ROS_WARN("start queue empty timer");}
 }
 
 #endif // PROCEDURE_H

@@ -31,16 +31,18 @@ bool DepositSample::runProc()
 			state = _finish_;
             voiceSay->call("mission ended. show me the money");
 		}
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
         if(grabberStatusMsg.dropFailed) dropFailed = true;
         else dropFailed = false;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		avoidLockout = false;
