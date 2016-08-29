@@ -19,17 +19,28 @@ bool Approach::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        grabberDistanceTolerance = initGrabberDistanceTolerance;
-        grabberAngleTolerance = initGrabberAngleTolerance;
-        //findHighestConfSample();
-		expectedSampleDistance = highestConfSample.distance;
-		expectedSampleAngle = highestConfSample.bearing;
-        //sampleTypeMux = (1 << (static_cast<uint8_t>(highestConfSample.type) & 255)) & 255;
-		//ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
-		//sendSearch(sampleTypeMux);
-        computeDriveSpeeds();
-		step = _computeManeuver;
-		state = _exec_;
+        if(roiOvertimeExpired)
+        {
+            roiOvertimeExpired = false;
+            possibleSample = false;
+            definiteSample = false;
+            state = _finish_;
+        }
+        else
+        {
+            if(!timers[_roiTimer_]->running) {roiTimeExpired = false; timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
+            grabberDistanceTolerance = initGrabberDistanceTolerance;
+            grabberAngleTolerance = initGrabberAngleTolerance;
+            //findHighestConfSample();
+            expectedSampleDistance = highestConfSample.distance;
+            expectedSampleAngle = highestConfSample.bearing;
+            //sampleTypeMux = (1 << (static_cast<uint8_t>(highestConfSample.type) & 255)) & 255;
+            //ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
+            //sendSearch(sampleTypeMux);
+            computeDriveSpeeds();
+            step = _computeManeuver;
+            state = _exec_;
+        }
         resetQueueEmptyCondition();
 		break;
 	case _exec_:
@@ -126,6 +137,7 @@ bool Approach::runProc()
 			state = _exec_;
 			break;
 		}
+        if(roiTimeExpired && !roiOvertimeExpired && !timers[_roiOvertimeTimer_]->running) {roiTimeExpired = false; timers[_roiOvertimeTimer_]->start(); ROS_INFO("roi overtime started");}
         serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:

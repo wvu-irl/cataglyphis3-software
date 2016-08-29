@@ -103,6 +103,7 @@ public:
 	static bool performHoming;
 	static bool inSearchableRegion;
 	static bool roiTimeExpired;
+	static bool roiOvertimeExpired;
 	static bool possessingSample;
 	static bool possibleSample;
 	static bool definiteSample;
@@ -188,6 +189,7 @@ public:
 	const float biasRemovalActionTimeoutTime = 20.0; // sec
 	const float shortRecomputeActionWaitTime = 0.1; // sec
 	const float queueEmptyTimerPeriod = 30.0; // sec
+	const float roiOvertimePeriod = 120.0; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -250,6 +252,7 @@ bool MissionPlanningProcedureShare::performBiasRemoval;
 bool MissionPlanningProcedureShare::performHoming;
 bool MissionPlanningProcedureShare::inSearchableRegion;
 bool MissionPlanningProcedureShare::roiTimeExpired;
+bool MissionPlanningProcedureShare::roiOvertimeExpired;
 bool MissionPlanningProcedureShare::possessingSample;
 bool MissionPlanningProcedureShare::possibleSample;
 bool MissionPlanningProcedureShare::definiteSample;

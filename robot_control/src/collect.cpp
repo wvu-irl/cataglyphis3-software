@@ -25,7 +25,7 @@ bool Collect::runProc()
         computeDriveSpeeds();
         if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
-        if(grabberStatusMsg.dropFailed || grabberStatusMsg.slidesFailed) dropOrSlidesFailed = true;
+        if(grabberStatusMsg.dropFailed || grabberStatusMsg.slidesFailed) {dropOrSlidesFailed = true; ROS_WARN("collect drop or slides failed");}
         else dropOrSlidesFailed = false;
         serviceQueueEmptyCondition();
 		break;
