@@ -42,6 +42,7 @@ bool Examine::runProc()
                    regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb,
                    regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb);
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = false;
@@ -49,15 +50,17 @@ bool Examine::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
 		computeDriveSpeeds();
-        if(searchEnded()) state = _finish_;
+        if(searchEnded() || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
-		avoidLockout = false;
+        avoidLockout = true;
 		examineCount = 0;
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+        procsToResume[procType] = false;
 		state = _init_;
 		break;
 	case _finish_:

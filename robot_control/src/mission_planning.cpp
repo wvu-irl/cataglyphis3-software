@@ -104,12 +104,15 @@ MissionPlanning::MissionPlanning()
     timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
     timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
     timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalActionTimerCallback_, this);
+    timers[_queueEmptyTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::queueEmptyTimerCallback_, this);
     timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
     timers[_searchTimer_]->setPeriod(searchTimeoutPeriod);
     timers[_searchTimer_]->stop();
     timers[_biasRemovalActionTimeoutTimer_]->stop();
     timers[_biasRemovalTimer_]->setPeriod(biasRemovalTimeoutPeriod);
     timers[_homingTimer_]->setPeriod(homingTimeoutPeriod);
+    timers[_queueEmptyTimer_]->setPeriod(queueEmptyTimerPeriod);
+    timers[_queueEmptyTimer_]->stop();
     timers[_biasRemovalTimer_]->start();
     timers[_homingTimer_]->start();
     driveSpeedsMsg.vMax = defaultVMax;
@@ -239,19 +242,20 @@ void MissionPlanning::evalConditions_()
                         shouldExecuteAvoidManeuver = false;
                     }
                 }
-                else if(procsToInterrupt[__examine__] || procsToInterrupt[__approach__])
-                {
-                    avoid.sendDequeClearAll();
-                    shouldExecuteAvoidManeuver = false;
-                    possibleSample = false;
-                    definiteSample = false;
-                }
                 /*robotStatus.pauseSwitch = true;
                 pause.sendPause();
                 std::cout << "press enter to continue" << std::endl;
                 std::cin >> temp;
                 robotStatus.pauseSwitch = false;
                 pause.sendUnPause();*/
+            }
+            else if(procsToInterrupt[__examine__] || procsToInterrupt[__approach__])
+            {
+                ROS_INFO("avoid interrupted examine or approach");
+                avoid.sendDequeClearAll();
+                shouldExecuteAvoidManeuver = false;
+                possibleSample = false;
+                definiteSample = false;
             }
             if(shouldExecuteAvoidManeuver)
             {
@@ -798,4 +802,11 @@ void MissionPlanning::biasRemovalActionTimerCallback_(const ros::TimerEvent &eve
 {
     ROS_WARN("biasRemovalTimedOut");
     biasRemovalTimedOut = true;
+}
+
+void MissionPlanning::queueEmptyTimerCallback_(const ros::TimerEvent &event)
+{
+    queueEmptyTimedOut = true;
+    ROS_WARN("queue empty timer expired");
+    voiceSay->call("queue empty timer expired");
 }

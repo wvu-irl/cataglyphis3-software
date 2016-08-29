@@ -87,7 +87,7 @@ public:
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	const float distanceToGrabber = 0.86;
 	const float distanceToBlindDriveLocation = 0.88; // m
-	const float blindDriveDistance = 0.39; // m (0.39)
+	const float blindDriveDistance = 0.35; // m (0.39)
 	const float sideGrabAngleOffset = 15.0; // deg
 	const float initGrabberDistanceTolerance = 0.17; // m
 	const float initGrabberAngleTolerance = 6.0; // deg
@@ -129,6 +129,7 @@ public:
 	static bool tiltTooExtremeForBiasRemoval;
 	static bool biasRemovalTimedOut;
 	static bool navStopRequest;
+	static bool queueEmptyTimedOut;
 	static unsigned int avoidCount;
 	const unsigned int maxNormalWaypointAvoidCount = 3;
 	const unsigned int maxROIWaypointAvoidCount = 6;
@@ -186,6 +187,7 @@ public:
 	const float biasRemovalTiltLimit = 5.0; // deg
 	const float biasRemovalActionTimeoutTime = 20.0; // sec
 	const float shortRecomputeActionWaitTime = 0.1; // sec
+	const float queueEmptyTimerPeriod = 30.0; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -274,6 +276,7 @@ bool MissionPlanningProcedureShare::searchTimedOut;
 bool MissionPlanningProcedureShare::newSearchActionOnExec;
 bool MissionPlanningProcedureShare::biasRemovalTimedOut;
 bool MissionPlanningProcedureShare::navStopRequest;
+bool MissionPlanningProcedureShare::queueEmptyTimedOut;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;

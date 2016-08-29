@@ -72,6 +72,7 @@ bool DepositApproach::runProc()
             step = _align;
         }
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = true;
@@ -109,7 +110,7 @@ bool DepositApproach::runProc()
 			}
 			break;
 		case _platform:
-			if(execLastProcType == procType && execLastSerialNum == serialNum)
+            if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut)
 			{
 				state = _finish_;
 			}
@@ -120,6 +121,7 @@ bool DepositApproach::runProc()
 			}
 			break;
 		}
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		avoidLockout = false;

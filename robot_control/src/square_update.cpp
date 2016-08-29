@@ -39,6 +39,7 @@ bool SquareUpdate::runProc()
         waypointsToTravel.at(0).maxAvoids = maxCornerWaypointAvoidCount;
 		sendDriveAndWait(lidarUpdateWaitTime, true, 180.0);
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = false;
@@ -46,8 +47,9 @@ bool SquareUpdate::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
 		computeDriveSpeeds();
-		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;

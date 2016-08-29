@@ -157,6 +157,7 @@ bool NextBestRegion::runProc()
             state = _finish_;
         }
         computeDriveSpeeds();
+        resetQueueEmptyCondition();
         break;
     case _exec_:
 		avoidLockout = false;
@@ -165,23 +166,9 @@ bool NextBestRegion::runProc()
         procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
-        if(searchEnded() || possibleSample || definiteSample || giveUpROI) state = _finish_;
+        if(searchEnded() || possibleSample || definiteSample || giveUpROI || queueEmptyTimedOut) state = _finish_;
         else state = _exec_;
-        /*if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
-        else state = _exec_;*/
-
-        /*if(waypointsToTravel.at(0).searchable)
-        {
-            ROS_INFO("searchable case");
-            if(searchEnded() || possibleSample || definiteSample) state = _finish_;
-            else state = _exec_;
-        }
-        else
-        {
-            ROS_INFO("non-searchable case");
-            if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
-            else state = _exec_;
-        }*/
+        serviceQueueEmptyCondition();
         break;
     case _interrupt_:
 		procsBeingExecuted[procType] = false;

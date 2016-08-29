@@ -30,6 +30,7 @@ bool Approach::runProc()
         computeDriveSpeeds();
 		step = _computeManeuver;
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = false;
@@ -108,7 +109,7 @@ bool Approach::runProc()
 		case _performManeuver:
 			if(commandedSearch)
 			{
-                if(searchEnded())
+                if(searchEnded() || queueEmptyTimedOut)
 				{
                     //findHighestConfSample();
 					expectedSampleDistance = highestConfSample.distance;
@@ -119,19 +120,21 @@ bool Approach::runProc()
 			}
 			else
 			{
-				if(execLastProcType == procType && execLastSerialNum == serialNum) step = _computeManeuver;
+                if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) step = _computeManeuver;
 				else step = _performManeuver;
 			}
 			state = _exec_;
 			break;
 		}
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
-		avoidLockout = false;
+        avoidLockout = true;
 		backUpCount = 0;
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+        procsToResume[procType] = false;
 		step = _computeManeuver;
 		state = _init_;
 		break;

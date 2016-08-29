@@ -23,6 +23,7 @@ bool SafeMode::runProc()
         sendDriveRel(driveDistance, turnAngle, false, 0.0, false, false);
         sendWait(lidarUpdateWaitTime, false);
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = false;
@@ -30,8 +31,9 @@ bool SafeMode::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
 		computeDriveSpeeds();
-		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;
