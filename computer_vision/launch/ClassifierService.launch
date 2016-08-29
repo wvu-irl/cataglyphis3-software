@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="computer_vision" type="ClassifierService.py" name="ClassifierService" output="screen" respawn="true">
+  </node>
+</launch>

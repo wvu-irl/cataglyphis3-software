@@ -1,2 +1,2 @@
 #!/bin/bash
-rosrun computer_vision sample_search_node respawn=true
+roslaunch computer_vision sample_search_node.launch
