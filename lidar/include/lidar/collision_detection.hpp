@@ -47,6 +47,7 @@
 #include <messages/NextWaypointOut.h>
 #include <messages/RobotPose.h>
 #include <messages/MissionPlanningInfo.h>
+#include <messages/NavFilterOut.h>	//NAV
 // #include <messages/ZedCollisionOut.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
@@ -65,6 +66,8 @@ public:
 	ros::Subscriber _sub_position;
 	ros::Subscriber _sub_zedcollision;
 	ros::Subscriber _sub_mission;
+
+	ros::Subscriber _sub_navigation;
 	// ros::ServerService ;
 	void setPreviousCounters();
 	bool newPointCloudAvailable();
@@ -77,6 +80,7 @@ public:
 private:
 	//transform points from lidar frame to robot body
 	Eigen::Matrix3f _R_lidar_to_robot; //lidar body from to robot body frame (rotation)
+	Eigen::Matrix3f _R_tilt_robot_to_beacon; //robot to homing beacon rotation (pitch and roll rotation only)	//NAV
 
 	//registration callback
 	pcl::PointCloud<pcl::PointXYZI> _input_cloud;
@@ -136,6 +140,13 @@ private:
 
 	bool _collision_counter_ransac_switch;
 
+	//navigation filter callback 	//NAV
+	float _navigation_filter_x;
+	float _navigation_filter_y;
+	float _navigation_filter_roll;
+	float _navigation_filter_pitch;
+	float _navigation_filter_heading;
+
 
 	std::vector<float> _hazard_x;
 	std::vector<float> _hazard_y;
@@ -158,6 +169,9 @@ private:
 	void positionCallback(messages::RobotPose const &position_msg);
 	// void zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg);
 	void missionCallback(messages::MissionPlanningInfo const &msg);
+
+	void navigationFilterCallback(const messages::NavFilterOut::ConstPtr &navigation_msg);	//NAV
+
 	int firstChoice(double angle, double distance);
 	int secondChoice(double angle, double distance, double xg, double yg);
 	int finalChoice(double left_angle, double right_angle, int collision_left_counter, int collision_right_counter, double xg_local, double yg_local);

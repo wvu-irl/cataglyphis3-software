@@ -23,6 +23,8 @@ CollisionDetection::CollisionDetection()
 	// _sub_zedcollision = _nh.subscribe("/zedcollisiondetectionout", 1, &CollisionDetection::zedcollisionCallback, this);
 	_sub_mission = _nh.subscribe("/control/missionplanning/info", 1, &CollisionDetection::missionCallback, this);
 
+	_sub_navigation = _nh.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &CollisionDetection::navigationFilterCallback, this);	//NAV
+
 	//predictive avoidance service
 	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
 	
@@ -66,6 +68,13 @@ void CollisionDetection::Initializations()
 	_slowdown = false;
 	_distance_to_drive = 0;
 	_angle_to_drive = 0;
+
+	//navigation filter callback initialization
+	_navigation_filter_x = 0;
+	_navigation_filter_y = 0;
+	_navigation_filter_roll = 0;
+	_navigation_filter_pitch = 0;
+	_navigation_filter_heading = 0;
 }
 
 void CollisionDetection::waypointsCallback(messages::NextWaypointOut const &waypoint_msg)
@@ -86,6 +95,64 @@ void CollisionDetection::positionCallback(messages::RobotPose const &position_ms
 // 	_zedcollision = zedcollisionout_msg.collision;
 // 	_registration_counter = _registration_counter + 1;
 // }
+
+void CollisionDetection::navigationFilterCallback(const messages::NavFilterOut::ConstPtr &navigation_msg)	//NAV
+{
+	_navigation_filter_x = navigation_msg->x_position; //meters
+	_navigation_filter_y = navigation_msg->y_position; //meters
+	_navigation_filter_roll = navigation_msg->roll * PI / 180.0; //radians
+	_navigation_filter_pitch = navigation_msg->pitch * PI / 180.0; //radians
+	_navigation_filter_heading = navigation_msg->heading * PI / 180.0; //radians
+
+	//roll rotation using navigation data
+	Eigen::Matrix3f _R_roll;
+	_R_roll(0,0) = 1;
+	_R_roll(0,1) = 0;
+	_R_roll(0,2) = 0;
+	_R_roll(1,0) = 0;
+	_R_roll(1,1) = cos(_navigation_filter_roll);
+	_R_roll(1,2) = -sin(_navigation_filter_roll);
+	_R_roll(2,0) = 0;
+	_R_roll(2,1) = sin(_navigation_filter_roll);
+	_R_roll(2,2) = cos(_navigation_filter_roll);
+
+	//set roll transformation to identity for testing
+	// _R_roll(0,0) = 1;
+	// _R_roll(0,1) = 0;
+	// _R_roll(0,2) = 0;
+	// _R_roll(1,0) = 0;
+	// _R_roll(1,1) = 1;
+	// _R_roll(1,2) = 0;
+	// _R_roll(2,0) = 0;
+	// _R_roll(2,1) = 0;
+	// _R_roll(2,2) = 1;
+
+	//pitch rotation using navigation data
+	Eigen::Matrix3f _R_pitch;
+	_R_pitch(0,0) = cos(_navigation_filter_pitch);
+	_R_pitch(0,1) = 0;
+	_R_pitch(0,2) = -sin(_navigation_filter_pitch);
+	_R_pitch(1,0) = 0;
+	_R_pitch(1,1) = 1;
+	_R_pitch(1,2) = 0;
+	_R_pitch(2,0) = sin(_navigation_filter_pitch);
+	_R_pitch(2,1) = 0;
+	_R_pitch(2,2) = cos(_navigation_filter_pitch);
+
+	//set pitch transformation to identity for testing
+	// _R_pitch(0,0) = 1;
+	// _R_pitch(0,1) = 0;
+	// _R_pitch(0,2) = 0;
+	// _R_pitch(1,0) = 0;
+	// _R_pitch(1,1) = 1;
+	// _R_pitch(1,2) = 0;
+	// _R_pitch(2,0) = 0;
+	// _R_pitch(2,1) = 0;
+	// _R_pitch(2,2) = 1;
+
+	//rotation from lidar to robot body frame (rotation)
+	_R_tilt_robot_to_beacon = _R_roll*_R_pitch;
+}
 
 void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &input_cloud)
 {
@@ -472,8 +539,38 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 
 int CollisionDetection::doMathRANSAC() // FIRST LAYER: SAFE ENVELOPE
 {
+	//NAV
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-	*cloud = _input_cloud;
+	pcl::PointCloud<pcl::PointXYZI> temp_cloud;
+
+	//calculate rotation from lidar to robot body then compensate for the robot tilt
+    Eigen::Matrix3f R_temporary = _R_tilt_robot_to_beacon;
+
+	//create 4x4 transformation with 0 translation
+    Eigen::Matrix4f T_temporary;
+    T_temporary(0,0) = R_temporary(0,0);
+    T_temporary(0,1) = R_temporary(0,1);
+    T_temporary(0,2) = R_temporary(0,2);
+    T_temporary(0,3) = 0;
+
+    T_temporary(1,0) = R_temporary(1,0);
+    T_temporary(1,1) = R_temporary(1,1);
+    T_temporary(1,2) = R_temporary(1,2);
+    T_temporary(1,3) = 0;
+
+    T_temporary(2,0) = R_temporary(2,0);
+    T_temporary(2,1) = R_temporary(2,1);
+    T_temporary(2,2) = R_temporary(2,2);
+    T_temporary(2,3) = 0;
+
+    T_temporary(3,0) = 0;
+    T_temporary(3,1) = 0;
+    T_temporary(3,2) = 0;
+    T_temporary(3,3) = 1;
+	
+	pcl::transformPointCloud(_input_cloud, temp_cloud, T_temporary);
+
+	*cloud = temp_cloud;
 
 	//remove points based on hard thresholds (too far, too high, too low)
 	pcl::PassThrough<pcl::PointXYZI> pass;
