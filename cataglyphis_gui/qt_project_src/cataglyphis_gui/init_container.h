@@ -29,9 +29,7 @@ class init_container : public QWidget
     Q_OBJECT
 
 public:
-    explicit init_container(QWidget *parent = 0,
-                                            boost::shared_ptr<ros::NodeHandle> nhArg =
-                                                boost::shared_ptr<ros::NodeHandle>());
+    explicit init_container(QWidget *parent = 0);
     ~init_container();
 
     //boost::shared_ptr<Ui::cataglyphis_startup_form_main> ui;

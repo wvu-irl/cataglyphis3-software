@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTabWidget>
 #include <QMenuBar>
+#include <QThread>
 #include <boost/smart_ptr.hpp>
 #include <boost/atomic.hpp>
 #include <ros/ros.h>
@@ -12,6 +13,10 @@
 #include "map_viewer.h"
 #include "exec_info_queue.h"
 #include "mission_planning.h"
+
+#include <messages/RobotPose.h>
+
+#include <ros_workers.h>
 
 #define NUM_MSG_CALLBACK_THREADS 2
 #define CATAGLYPHIS_GUI_ID 3
@@ -22,7 +27,7 @@ class core_app_form;
 
 class core_app : public QMainWindow
 {
-    Q_OBJECT
+    Q_OBJECT    
 
 public:
     explicit core_app(QWidget *parent = 0, boost::shared_ptr<ros::NodeHandle> nh =
@@ -31,6 +36,9 @@ public:
 
     Ui::core_app_form *ui;
     //boost::shared_ptr<Ui::cataglyphis_gui> ui;
+
+public slots:
+    void on_hsm_global_pose_callback(const messages::RobotPose hsmRobotPose);
 private slots:
 
 private:
@@ -43,6 +51,9 @@ private:
 
     boost::shared_ptr<ros::NodeHandle> guiNhPtr;
     boost::shared_ptr<ros::AsyncSpinner> asyncSpinnerPtr;
+
+    QThread rosWorkerThread;
+    boost::shared_ptr<ros_workers> rosWorker;
 
 };
 

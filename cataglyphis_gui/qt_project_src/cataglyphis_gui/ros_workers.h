@@ -36,8 +36,9 @@
 
 #define ON_SERIVCE_FAILURE_RETURN_PAUSE 3
 #define NAV_INFO_MIN_PUB_TIME 1.00
-#define HSM_POSE_MIN_PUB_TIME 1.00
+#define HSM_POSE_MIN_PUB_TIME 0.25
 #define EXEC_INFO_MIN_PUB_TIME 0.24
+#define MISSION_PLANNING_INFO_MIN_PUB_TIME 0.50
 #define DEFAULT_ACTION_WAIT_TIME 0.5 //seconds
 
 class ros_workers : public QObject
@@ -50,6 +51,9 @@ signals:
 
     void modify_roi_service_returned(const robot_control::ModifyROI,
                                         bool wasSuccessful);
+
+    void mission_planning_service_returned(const messages::MissionPlanningControl response,
+                                            bool wasSuccessful);
 
     void add_exec_action_returned(const messages::ExecAction response,
                                     bool wasSuccessful);
@@ -77,10 +81,13 @@ signals:
 
     void exec_info_callback(const messages::ExecInfo execQueue);
 
+    void mission_planning_info_callback(const messages::MissionPlanningInfo info);
+
 public slots:
     void on_run_nav_service(messages::NavFilterControl serviceRequest);
     void on_run_modify_roi(robot_control::ModifyROI serviceRequest);
     void on_run_add_exec_action(messages::ExecAction serviceRequest);
+    void on_run_mission_planning_service(messages::MissionPlanningControl serviceRequest);
 
     void on_add_pause_to_exec_queue(float seconds);
 
@@ -101,6 +108,9 @@ public slots:
 
     void on_run_exec_info_subscriber_start();
     void on_run_exec_info_subscriber_stop();
+
+    void on_run_mission_planning_info_subscriber_start();
+    void on_run_mission_planning_info_subscriber_stop();
 
 private:
     boost::shared_ptr<ros::NodeHandle> nh;
@@ -132,6 +142,12 @@ private:
     ros::Subscriber execInfoSub;
     messages::ExecInfo lastExecInfoMsg;
     void getExecInfoCallback(const messages::ExecInfo::ConstPtr &msg);
+
+    ros::Time missionPlanningInfoTime;
+    bool missionPlanningInfoSubStarted;
+    ros::Subscriber missionPlanningInfoSub;
+    messages::MissionPlanningInfo lastMissionPlanningInfoMsg;
+    void getMissionPlanningInfoCallback(const messages::MissionPlanningInfo::ConstPtr &msg);
 
     void _implSetup();
 

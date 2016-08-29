@@ -9,7 +9,7 @@ map_view_roi_ellipse::map_view_roi_ellipse(robot_control::ROI roiData, int roiNu
    borderColor(QColor::fromRgb(0,0,0,0)),
    fillBrush(fillColor),
    borderPen(borderColor),
-   roiTextNumber(QString::number(roiNum), this)
+   roiTextNumber(QString::number(roiNum))
 {
    worker = workerArg;
    pixelsPerDist = pixelsPerDistance;
@@ -26,9 +26,10 @@ map_view_roi_ellipse::map_view_roi_ellipse(robot_control::ROI roiData, int roiNu
    this->setTransform(mapTransform);
 //   roiTextNumber.setTransformOriginPoint(mapCenter);
 //   roiTextNumber.setTransform(mapTransform);
-   roiTextNumber.setPos(0,0/*roiTextNumber->parentItem()->boundingRect().width()/2-roiTextNumber->boundingRect().width()/2,
-                           roiTextNumber->parentItem()->boundingRect().height()/2-roiTextNumber->boundingRect().height()/2*/);
+//   roiTextNumber.setPos(0,0/*roiTextNumber->parentItem()->boundingRect().width()/2-roiTextNumber->boundingRect().width()/2,
+//                           roiTextNumber->parentItem()->boundingRect().height()/2-roiTextNumber->boundingRect().height()/2*/);
    roiTextNumber.show();
+   //roiTextNumber.hide();
 }
 
 void map_view_roi_ellipse::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)

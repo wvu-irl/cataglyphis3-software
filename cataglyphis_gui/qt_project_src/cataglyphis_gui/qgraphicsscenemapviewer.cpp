@@ -117,6 +117,8 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
 void QGraphicsSceneMapViewer::on_confirm_map_changes()
 {
     emit confirm_roi_changes();
+    roiLayer.properties.isLayerSetup = false;
+    _implSetupLayer(map_viewer_enums::ROI, roiLayer.properties.isLayerVisible);
 }
 
 void QGraphicsSceneMapViewer::on_discard_map_changes()

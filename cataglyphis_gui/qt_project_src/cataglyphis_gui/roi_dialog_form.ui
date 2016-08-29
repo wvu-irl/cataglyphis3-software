@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>553</width>
+    <width>472</width>
     <height>492</height>
    </rect>
   </property>
@@ -338,7 +338,7 @@ Params</string>
           </spacer>
          </item>
          <item>
-          <widget class="QLedIndicator" name="add_pause_action_indicator" native="true">
+          <widget class="QLedIndicator" name="add_pause_action_indicator">
            <property name="minimumSize">
             <size>
              <width>14</width>
@@ -372,7 +372,7 @@ Params</string>
           </spacer>
          </item>
          <item>
-          <widget class="QLedIndicator" name="lockout_indicator" native="true">
+          <widget class="QLedIndicator" name="lockout_indicator">
            <property name="minimumSize">
             <size>
              <width>14</width>
@@ -406,7 +406,7 @@ Params</string>
           </spacer>
          </item>
          <item>
-          <widget class="QLedIndicator" name="edit_roi_group_indicator" native="true">
+          <widget class="QLedIndicator" name="edit_roi_group_indicator">
            <property name="minimumSize">
             <size>
              <width>14</width>
@@ -440,7 +440,7 @@ Params</string>
           </spacer>
          </item>
          <item>
-          <widget class="QLedIndicator" name="high_risk_indicator" native="true">
+          <widget class="QLedIndicator" name="high_risk_indicator">
            <property name="minimumSize">
             <size>
              <width>14</width>
@@ -737,7 +737,7 @@ Params</string>
  <customwidgets>
   <customwidget>
    <class>QLedIndicator</class>
-   <extends>QWidget</extends>
+   <extends>QPushButton</extends>
    <header>qledindicator.h</header>
   </customwidget>
  </customwidgets>

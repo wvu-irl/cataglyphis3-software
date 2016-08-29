@@ -38,26 +38,44 @@ core_app::core_app(QWidget *parent, boost::shared_ptr<ros::NodeHandle> nh) :
 #endif
 
 
-    cataglyphisStartupFormPtr.reset(new init_container(ui->guiTabber, nh));
-    mapViewFormPtr.reset(new map_viewer(ui->guiTabber, 0, nh));
+    cataglyphisStartupFormPtr.reset(new init_container(ui->guiTabber));
+    mapViewFormPtr.reset(new map_viewer(ui->guiTabber, 1));
     manualControlFormPtr.reset(new manual_control(ui->guiTabber));
     execInfoFormPtr.reset(new exec_info_queue(ui->guiTabber));
     missionPlanningInfoFormPtr.reset(new mission_planning(ui->guiTabber));
 
-    ui->guiTabber->addTab(cataglyphisStartupFormPtr.get(), "Startup");
+    ui->guiTabber->addTab(cataglyphisStartupFormPtr.get(), "Init/Recovery");
     ui->guiTabber->addTab(mapViewFormPtr.get(), "Map");
     ui->guiTabber->addTab(manualControlFormPtr.get(), "Manual Control");
     ui->guiTabber->addTab(execInfoFormPtr.get(), "Exec Queue");
     ui->guiTabber->addTab(missionPlanningInfoFormPtr.get(), "Mission Planning");
+
+    rosWorker = boost::shared_ptr<ros_workers>(new ros_workers());
+
+    connect(rosWorker.get(), &ros_workers::hsm_global_pose_callback,
+                this, &core_app::on_hsm_global_pose_callback);
+
+    rosWorker->moveToThread(&rosWorkerThread);
+    rosWorker->on_run_hsm_global_pose_subscriber_start();
+    rosWorkerThread.start();
+
 }
 
 core_app::~core_app()
 {
     asyncSpinnerPtr->stop();
+    rosWorkerThread.quit();
+    rosWorkerThread.wait();
     delete ui;
     //ui.reset();
 }
 
 
-
+void core_app::on_hsm_global_pose_callback(const messages::RobotPose hsmRobotPose)
+{
+    //ROS_DEBUG("Core:: HSM Callback");
+    ui->x_spinbox->setValue(hsmRobotPose.x);
+    ui->y_spinbox->setValue(hsmRobotPose.y);
+    ui->heading_spinbox->setValue(hsmRobotPose.humanHeading);
+}
 

@@ -37,8 +37,7 @@ signals:
     void discard_map_changes();
 
 public:
-    explicit map_viewer(QWidget *parent = 0, int startIndex = 0, boost::shared_ptr<ros::NodeHandle> nhArg =
-                                                                        boost::shared_ptr<ros::NodeHandle>());
+    explicit map_viewer(QWidget *parent = 0, int startIndex = 0);
     ~map_viewer();
 
     //boost::shared_ptr<Ui::map_viewer> ui;
