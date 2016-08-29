@@ -199,6 +199,7 @@ std::vector<SAMPLE_TYPE_T> map_to_simple_color(SAMPLE_TYPE_T type)
 		case _whiteYellow_t:
 			possible_types.push_back(_white_t);
 			possible_types.push_back(_silver_t);
+			possible_types.push_back(_orange_t);
 			possible_types.push_back(_yellow_t);
 			break;
 		case _silver_t:
@@ -231,10 +232,12 @@ std::vector<SAMPLE_TYPE_T> map_to_simple_color(SAMPLE_TYPE_T type)
 			// possible_types.push_back(_white_t);
 			// possible_types.push_back(_silver_t);
 			possible_types.push_back(_orange_t);
+			possible_types.push_back(_yellow_t);
 			break;
 		case _yellow_t:
 			// possible_types.push_back(_white_t);
 			// possible_types.push_back(_silver_t);
+			possible_types.push_back(_orange_t);
 			possible_types.push_back(_yellow_t);
 			break;
 		default:

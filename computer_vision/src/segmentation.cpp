@@ -219,7 +219,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         float yCoordPixels = (boundingBoxonBlob.x+boundingBoxonBlob.width/2 - imageWidth/2);
         float distanceFromCenterOfImageInPixels = sqrt(xCoordPixels*xCoordPixels + yCoordPixels*yCoordPixels);
         float segmentAreaInPixels = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)*(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
-        ROS_INFO("distance, area, index = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
+        // ROS_INFO("distance, area, index = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
         tempCounter++;
 
         // if( distanceFromCenterOfImageInPixels > 2000 )
@@ -511,7 +511,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         }
 
         std::string temp = map_enum_to_string((SAMPLE_TYPE_T)bestColor);
-        ROS_INFO("color, pixels, index = %s, %i, %i", temp.c_str(), maxPixels, req.blobsOfInterest[i]);
+        // ROS_INFO("color, pixels, index = %s, %i, %i", temp.c_str(), maxPixels, req.blobsOfInterest[i]);
         types.push_back(bestColor);
     }
 
