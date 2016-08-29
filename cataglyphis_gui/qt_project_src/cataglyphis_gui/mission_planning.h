@@ -41,6 +41,13 @@
             arg2->setValue(arg1); \
     } \
 
+#define DIRECTION_MOVE_NORMAL(arg2, arg1, boolDir) { \
+        if(boolDir) \
+            MOVE_DATA_1_2(arg1, arg2) \
+        else \
+            MOVE_DATA_2_1(arg1, arg2); \
+    } \
+
 
 namespace Ui {
 class mission_planning_form;
@@ -80,7 +87,11 @@ private slots:
 private:
     Ui::mission_planning_form *ui;
     mission_planning_proc_model procTabelModel;
-    ComboBoxDelegate delegate;
+    boost::scoped_ptr<ComboBoxDelegate> procDelegate;
+    boost::scoped_ptr<ComboBoxDelegate> executeDelegate;
+    boost::scoped_ptr<ComboBoxDelegate> interruptDelegate;
+    boost::scoped_ptr<ComboBoxDelegate> beginExecutedDelegate;
+    boost::scoped_ptr<ComboBoxDelegate> resumeDelegate;
 
     QThread rosWorkerThread;
     boost::shared_ptr<ros_workers> rosWorker;

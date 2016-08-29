@@ -32,15 +32,43 @@ public:
     mission_planning_proc_model(QObject *parent = 0);
     mission_planning_proc_model(int row, int column, QObject *parent = 0);
 
-    QList<QStandardItem*> addProcStateColumn(messages::MissionPlanningInfo *info);
-    QList<QStandardItem*> addProcBoolColumn(messages::MissionPlanningInfo *info, mission_planning_enums::PROC_COLUMN_BOOL_T column);
+    void addProcStateColumn(messages::MissionPlanningInfo *info);
+    void addProcBoolColumn(std::vector<uint8_t> *data, int column);
+
+    std::vector<uint8_t> formBoolVectorFromColumn(int column);
+    std::vector<int32_t> formIntVectorFromColumn(int column);
 
     void addAllColumns();
 
+    void setReadOnly(bool readOnly);
+
     void setupTable()
     {
-//        setHorizontalHeaderLabels(horizontalLabels);
-//        setVerticalHeaderLabels(verticalLabels);
+        verticalLabels.append("Initialize");
+        verticalLabels.append("Emergency\nEscape");
+        verticalLabels.append("Avoid");
+        verticalLabels.append("Bias\nRemoval");
+        verticalLabels.append("Next Best\nRegion");
+        verticalLabels.append("Search\nRegion");
+        verticalLabels.append("Examine");
+        verticalLabels.append("Approach");
+        verticalLabels.append("Collect");
+        verticalLabels.append("Confirm\nCollect");
+        verticalLabels.append("Re-Orient");
+        verticalLabels.append("Go Home");
+        verticalLabels.append("Square\nUpdate");
+        verticalLabels.append("Deposit\nApproach");
+        verticalLabels.append("Deposit\nSample");
+        verticalLabels.append("Safe Mode");
+        verticalLabels.append("SOS Mode");
+        horizontalLabels.append("State");
+        horizontalLabels.append("To\nExecute");
+        horizontalLabels.append("To\nInterrupt");
+        horizontalLabels.append("Being\nExecuted");
+        horizontalLabels.append("To\nResume");
+
+        setHorizontalHeaderLabels(horizontalLabels);
+        setVerticalHeaderLabels(verticalLabels);
     }
     void clearTable()
     {

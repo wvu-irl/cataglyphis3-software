@@ -1,5 +1,7 @@
 #include "qcomboboxdelegate.h"
 
+#include <QGuiApplication>
+
 QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
     const QStyleOptionViewItem &/* option */,
     const QModelIndex &/* index */) const
@@ -8,10 +10,10 @@ QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
     std::cout << "Adding editor \r\n";
     QComboBox *editor = new QComboBox(parent);
     editor->setEditable(false);
-    editor->addItem("Init");
-    editor->addItem("Exec");
-    editor->addItem("Interrupt");
-    editor->addItem("Finish");
+    for(int i = 0; i < comboOptions.length(); i++)
+    {
+        editor->addItem(comboOptions.at(i));
+    }
     editor->setFrame(true);
     editor->setCurrentIndex(0);
     return editor;
@@ -20,22 +22,39 @@ QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
 void ComboBoxDelegate::setEditorData(QWidget *editor,
                     const QModelIndex &index) const
 {
-//    QString value = index.model()->data(index, Qt::EditRole).toString();
-
     QComboBox *comboBox = static_cast<QComboBox*>(editor);
-    std::printf("SetEditorData::str %s\r\n",index.data(Qt::EditRole).toString().toStdString().c_str());
-    std::printf("SetEditorData::int %d\r\n",index.data(Qt::EditRole+1).toInt());
-    //QString currentText = index.data(Qt::EditRole).toString();
-    comboBox->setCurrentIndex(index.data(Qt::EditRole+1).toInt());
+    std::printf("SeteditorData %d\r\n", index.data(QT_MISSION_DATA_ROLE).toInt());
+    comboBox->setCurrentIndex(index.data(QT_MISSION_DATA_ROLE).toInt());
+    if(comboBox->currentIndex()!=0)
+    {
+        std::printf("SeteditorData2 %d\r\n", index.data(QT_READ_ONLY_ROLE).toBool());
+        std::printf("SeteditorData3 %d\r\n", index.data(QT_READ_ONLY_ROLE+1).toBool());
+        if(!index.data(QT_READ_ONLY_ROLE).toBool() && !comboBox->itemData(0,QT_READ_ONLY_ROLE+1).toBool())
+        {
+            comboBox->setPalette(QPalette(Qt::red));
+        }
+        else
+        {
+            comboBox->setPalette( QPalette( Qt::blue ) );
+        }
+    }
+    else
+    {
+        comboBox->setPalette( QGuiApplication::palette());
+    }
+    comboBox->setItemData(0,index.data(QT_READ_ONLY_ROLE).toBool(),QT_READ_ONLY_ROLE+1);
+    comboBox->setAttribute(Qt::WA_TransparentForMouseEvents, index.data(QT_READ_ONLY_ROLE).toBool());
+    comboBox->setFocusPolicy(index.data(QT_READ_ONLY_ROLE).toBool() ? Qt::NoFocus : Qt::StrongFocus);
 }
 
 void ComboBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
                                    const QModelIndex &index) const
 {
     QComboBox *comboBox = static_cast<QComboBox*>(editor);
-    std::printf("setModelData:: %d\r\n",index.data(Qt::EditRole+1).toInt());
+    std::printf("SetModelData %d\r\n", comboBox->currentIndex());
+    model->setData(index, comboBox->currentIndex(), QT_MISSION_DATA_ROLE);
+    std::printf("SetModelData2 %d\r\n", comboBox->currentIndex());
     model->setData(index, comboBox->currentText(), Qt::EditRole);
-    model->setData(index, comboBox->currentIndex(), Qt::EditRole+1);
 }
 
 void ComboBoxDelegate::updateEditorGeometry(QWidget *editor,

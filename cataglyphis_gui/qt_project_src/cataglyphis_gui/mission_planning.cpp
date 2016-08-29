@@ -10,22 +10,39 @@ mission_planning::mission_planning(QWidget *parent) :
     rosWorker->moveToThread(&rosWorkerThread);
     rosWorkerThread.start();
 
+    connectSignals();
+
     modified = false;
 
     tableModel.reset(new mission_planning_proc_model(17,5));
     ui->proc_table->setModel(tableModel.get());
-    ui->proc_table->setItemDelegateForColumn(1, &delegate);
+    QList<QString> tempList;
+    tempList.append("Init");tempList.append("Exec");tempList.append("Interrupt");tempList.append("Finish");
+    procDelegate.reset(new ComboBoxDelegate(tempList));
+    tempList.clear();
+    tempList.append("False");tempList.append("True");
+    executeDelegate.reset(new ComboBoxDelegate(tempList));
+    interruptDelegate.reset(new ComboBoxDelegate(tempList));
+    beginExecutedDelegate.reset(new ComboBoxDelegate(tempList));
+    resumeDelegate.reset(new ComboBoxDelegate(tempList));
+    ui->proc_table->setItemDelegateForColumn(0, procDelegate.get());
+    ui->proc_table->setItemDelegateForColumn(static_cast<int>(mission_planning_enums::executing)+1, executeDelegate.get());
+    ui->proc_table->setItemDelegateForColumn(static_cast<int>(mission_planning_enums::interrupted)+1, interruptDelegate.get());
+    ui->proc_table->setItemDelegateForColumn(static_cast<int>(mission_planning_enums::to_be_executed)+1, beginExecutedDelegate.get());
+    ui->proc_table->setItemDelegateForColumn(static_cast<int>(mission_planning_enums::resume)+1, resumeDelegate.get());
+    ui->proc_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     for(int row = 0; row < 17; row++)
     {
-        QModelIndex index = tableModel->index(row, 1, QModelIndex());
-        tableModel->setData(index, 1, Qt::EditRole +1);
-        ui->proc_table->openPersistentEditor( index );
         ROS_DEBUG("Setting default data");
+        for(int column = 0; column < 5; column ++)
+        {
+            QModelIndex index = tableModel->index(row, column, QModelIndex());
+            tableModel->setData(index, 0, QT_MISSION_DATA_ROLE);
+            ui->proc_table->openPersistentEditor(index);
+        }
     }
 
     _implSetReadOnly(true);
-
-    connectSignals();
 
     emit start_mission_planning_callback();
 }
@@ -79,6 +96,8 @@ void mission_planning::on_confirm_changes()
 
     emit modify_mission_planning_request(info);
     emit add_wait_to_exec(1); //add 1 second wait to exec
+
+    on_reset_edit_button_clicked();
 }
 
 void mission_planning::on_discard_changes()
@@ -158,6 +177,11 @@ void mission_planning::_implMoveData(messages::MissionPlanningInfo *info, bool u
             DIRECTION_MOVE(ui->side_grab_indicator,                 info->sideOffsetGrab, uiToMsg);
             DIRECTION_MOVE(ui->start_slam_indicator,                info->startSLAM, uiToMsg);
             DIRECTION_MOVE(ui->use_dead_reckoning_indicator,        info->useDeadReckoning, uiToMsg);
+            DIRECTION_MOVE_NORMAL(tableModel->formIntVectorFromColumn(0), info->procStates, uiToMsg);
+            DIRECTION_MOVE_NORMAL(tableModel->formBoolVectorFromColumn(mission_planning_enums::executing+1), info->procsBeingExecuted, uiToMsg);
+            DIRECTION_MOVE_NORMAL(tableModel->formBoolVectorFromColumn(mission_planning_enums::to_be_executed+1),info->procsToExecute,  uiToMsg);
+            DIRECTION_MOVE_NORMAL(tableModel->formBoolVectorFromColumn(mission_planning_enums::interrupted+1), info->procsToInterrupt, uiToMsg);
+            DIRECTION_MOVE_NORMAL(tableModel->formBoolVectorFromColumn(mission_planning_enums::resume+1), info->procsToResume, uiToMsg);
 }
 
 void mission_planning::_implMoveUiToService(messages::MissionPlanningControl *serviceInfo)
@@ -196,6 +220,11 @@ DIRECTION_MOVE_SPINBOX(ui->sample_collected_spinbox,        serviceInfo->request
     DIRECTION_MOVE(ui->side_grab_indicator,                 serviceInfo->request.sideOffsetGrab, true);
     DIRECTION_MOVE(ui->start_slam_indicator,                serviceInfo->request.startSLAM, true);
     DIRECTION_MOVE(ui->use_dead_reckoning_indicator,        serviceInfo->request.useDeadReckoning, true);
+    serviceInfo->request.procStates =           tableModel->formIntVectorFromColumn(0);
+    serviceInfo->request.procsBeingExecuted =   tableModel->formBoolVectorFromColumn(mission_planning_enums::executing+1);
+    serviceInfo->request.procsToExecute =       tableModel->formBoolVectorFromColumn(mission_planning_enums::to_be_executed+1);
+    serviceInfo->request.procsToInterrupt =     tableModel->formBoolVectorFromColumn(mission_planning_enums::interrupted+1);
+    serviceInfo->request.procsToResume =        tableModel->formBoolVectorFromColumn(mission_planning_enums::resume+1);
 }
 
 void mission_planning::_implSetReadOnly(bool readOnly)
@@ -234,4 +263,14 @@ void mission_planning::_implSetReadOnly(bool readOnly)
     ui->side_grab_indicator->setReadOnly(readOnly);
     ui->start_slam_indicator->setReadOnly(readOnly);
     ui->use_dead_reckoning_indicator->setReadOnly(readOnly);
+
+    int column = 0;
+    for(int row = 0; tableModel->hasIndex(row, column); row++)
+    {
+        for(column = 0; tableModel->hasIndex(row, column); column++)
+        {
+            tableModel->setData(tableModel->index(row,column, QModelIndex()), readOnly, QT_READ_ONLY_ROLE);
+        }
+        column = 0;
+    }
 }

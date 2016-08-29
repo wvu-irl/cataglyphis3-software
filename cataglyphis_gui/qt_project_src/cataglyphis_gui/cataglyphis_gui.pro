@@ -53,7 +53,8 @@ SOURCES +=\
     qledindicator.cpp \
     mission_planning.cpp \
     mission_planning_proc_model.cpp \
-    qcomboboxdelegate.cpp
+    qcomboboxdelegate.cpp \
+    qcomboboxdelegatebool.cpp
 
 HEADERS  += \
     map_viewer.h \
@@ -86,7 +87,8 @@ HEADERS  += \
     qledindicator.h \
     mission_planning.h \
     mission_planning_enums.h \
-    qcomboboxdelegate.h
+    qcomboboxdelegate.h \
+    qcomboboxdelegatebool.h
 
 FORMS    += \
     generic_error_dialog_form.ui \
