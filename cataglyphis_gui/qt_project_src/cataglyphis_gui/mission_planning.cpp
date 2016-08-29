@@ -12,7 +12,18 @@ mission_planning::mission_planning(QWidget *parent) :
 
     modified = false;
 
-    tableModel.reset(new mission_planning_proc_model());
+    tableModel.reset(new mission_planning_proc_model(17,5));
+    ui->proc_table->setModel(tableModel.get());
+    ui->proc_table->setItemDelegateForColumn(1, &delegate);
+    for(int row = 0; row < 17; row++)
+    {
+        QModelIndex index = tableModel->index(row, 1, QModelIndex());
+        tableModel->setData(index, 1, Qt::EditRole +1);
+        ui->proc_table->openPersistentEditor( index );
+        ROS_DEBUG("Setting default data");
+    }
+
+    _implSetReadOnly(true);
 
     connectSignals();
 

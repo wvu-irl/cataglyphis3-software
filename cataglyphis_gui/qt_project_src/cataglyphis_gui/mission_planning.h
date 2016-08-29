@@ -10,6 +10,8 @@
 #include <qledindicator.h>
 #include <QThread>
 
+#include <qcomboboxdelegate.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -78,6 +80,7 @@ private slots:
 private:
     Ui::mission_planning_form *ui;
     mission_planning_proc_model procTabelModel;
+    ComboBoxDelegate delegate;
 
     QThread rosWorkerThread;
     boost::shared_ptr<ros_workers> rosWorker;

@@ -9,6 +9,9 @@
 #include <QList>
 #include <QStringList>
 #include <ros_workers.h>
+#include <QModelIndex>
+
+#include <mission_planning_enums.h>
 
 #include <messages/MissionPlanningInfo.h>
 #include <messages/MissionPlanningControl.h>
@@ -26,24 +29,24 @@ public slots:
 
 public:
 
-    enum PROC_COLUMN_BOOL_T {resume, executing, interrupted, to_be_executed};
-
     mission_planning_proc_model(QObject *parent = 0);
+    mission_planning_proc_model(int row, int column, QObject *parent = 0);
 
     QList<QStandardItem*> addProcStateColumn(messages::MissionPlanningInfo *info);
-    QList<QStandardItem*> addProcBoolColumn(messages::MissionPlanningInfo *info, PROC_COLUMN_BOOL_T column);
+    QList<QStandardItem*> addProcBoolColumn(messages::MissionPlanningInfo *info, mission_planning_enums::PROC_COLUMN_BOOL_T column);
 
     void addAllColumns();
 
     void setupTable()
     {
-        setHorizontalHeaderLabels(horizontalLabels);
-        setVerticalHeaderLabels(verticalLabels);
+//        setHorizontalHeaderLabels(horizontalLabels);
+//        setVerticalHeaderLabels(verticalLabels);
     }
     void clearTable()
     {
-        this->clear();
+        //this->clear();
         itemList.clear();
+
     }
     void refreshTable()
     {
@@ -55,6 +58,7 @@ private:
 
     messages::MissionPlanningInfo lastMissionInfo;
 
+    bool once;
     QList<QStandardItem> itemList;
     QStringList horizontalLabels;
     QStringList verticalLabels;

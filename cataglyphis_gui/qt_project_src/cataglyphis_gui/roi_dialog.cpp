@@ -86,35 +86,42 @@ void ROI_dialog::reject()
 
 void ROI_dialog::on_confirm_changes()
 {
-    ROS_DEBUG("ROI Dialog:: Committing Changes");
-    ROIData = *_implCurrentROISet();
-    //call ros service here
-    robot_control::ModifyROI modRoiMsg;
-    modRoiMsg.request.modROIIndex = roiNumber;
-    modRoiMsg.request.setHardLockoutROI = true;
-    modRoiMsg.request.hardLockoutROIState = ROIData.hardLockout;
-    modRoiMsg.request.setPosXY = true;
-    modRoiMsg.request.x = ROIData.x;
-    modRoiMsg.request.y = ROIData.y;
-    modRoiMsg.request.setROISize = true;
-    modRoiMsg.request.radialAxis = ROIData.radialAxis;
-    modRoiMsg.request.tangentialAxis = ROIData.tangentialAxis;
-    modRoiMsg.request.setSampleProps = true;
-    modRoiMsg.request.sampleProb = ROIData.sampleProb;
-    modRoiMsg.request.sampleSig = ROIData.sampleSig;
-    modRoiMsg.request.whiteProb = ROIData.whiteProb;
-    modRoiMsg.request.silverProb = ROIData.silverProb;
-    modRoiMsg.request.blueOrPurpleProb = ROIData.blueOrPurpleProb;
-    modRoiMsg.request.pinkProb = ROIData.pinkProb;
-    modRoiMsg.request.redProb = ROIData.redProb;
-    modRoiMsg.request.orangeProb = ROIData.orangeProb;
-    modRoiMsg.request.yellowProb = ROIData.yellowProb;
-    modRoiMsg.request.editGroup = ui->edit_roi_group_indicator->isChecked();
-    emit modify_roi_request(modRoiMsg);
-
-    if(ui->add_pause_action_indicator->isChecked())
+    ROS_DEBUG("ROI Dialog:: Committing Changes %d", roiNumber);
+    if(isModified())
     {
-        emit add_wait_to_exec(0.05); //add 3 second wait to exec
+        ROS_DEBUG("ROI %d edited", roiNumber);
+        ROIData = *_implCurrentROISet();
+        //call ros service here
+        robot_control::ModifyROI modRoiMsg;
+        modRoiMsg.request.modROIIndex = roiNumber;
+        modRoiMsg.request.setHardLockoutROI = true;
+        modRoiMsg.request.hardLockoutROIState = ROIData.hardLockout;
+        modRoiMsg.request.setPosXY = true;
+        modRoiMsg.request.x = ROIData.x;
+        modRoiMsg.request.y = ROIData.y;
+        modRoiMsg.request.setROISize = true;
+        modRoiMsg.request.radialAxis = ROIData.radialAxis;
+        modRoiMsg.request.tangentialAxis = ROIData.tangentialAxis;
+        modRoiMsg.request.setSampleProps = true;
+        modRoiMsg.request.sampleProb = ROIData.sampleProb;
+        modRoiMsg.request.sampleSig = ROIData.sampleSig;
+        modRoiMsg.request.whiteProb = ROIData.whiteProb;
+        modRoiMsg.request.silverProb = ROIData.silverProb;
+        modRoiMsg.request.blueOrPurpleProb = ROIData.blueOrPurpleProb;
+        modRoiMsg.request.pinkProb = ROIData.pinkProb;
+        modRoiMsg.request.redProb = ROIData.redProb;
+        modRoiMsg.request.orangeProb = ROIData.orangeProb;
+        modRoiMsg.request.yellowProb = ROIData.yellowProb;
+        modRoiMsg.request.editGroup = ui->edit_roi_group_indicator->isChecked();
+
+        emit modify_roi_request(modRoiMsg);
+
+        if(ui->add_pause_action_indicator->isChecked() && isModified())
+        {
+            emit add_wait_to_exec(0.05); //add 3 second wait to exec
+        }
+
+        modified = false;
     }
 }
 void ROI_dialog::on_discard_changes()
