@@ -21,12 +21,18 @@ CollisionDetection::CollisionDetection()
 	_sub_waypoint = _nh.subscribe("/control/exec/nextwaypoint", 1, &CollisionDetection::waypointsCallback, this);
 	_sub_position = _nh.subscribe("/hsm/masterexec/globalpose", 1, &CollisionDetection::positionCallback, this);
 	// _sub_zedcollision = _nh.subscribe("/zedcollisiondetectionout", 1, &CollisionDetection::zedcollisionCallback, this);
+	_sub_mission = _nh.subscribe("/control/missionplanning/info", 1, &CollisionDetection::missionCallback, this);
 
 	//predictive avoidance service
 	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
 	
 	//collision output
 	_collision_status = 0;
+
+	//mission planning variables
+	_doingApproach = false;
+	_doingExamine = false;
+	_currentROI = 0;
 }
 
 void CollisionDetection::Initializations()
@@ -42,6 +48,9 @@ void CollisionDetection::Initializations()
 	threshold_counter_lidar = 2;	//counter should be bigger than threshold, than do something
 	// threshold_counter_zed = 5; 
 	threshold_counter_ransac = 2;
+	threshold_counter_ransac_avoid = 1;
+
+	_collision_counter_ransac_switch = true; //use ransac
 
 	//zed data
 	// _zedcollision = 0;
@@ -51,6 +60,8 @@ void CollisionDetection::Initializations()
 	_collision_counter_lidar_avoid = 0;
 	// _collision_counter_zed = 0;
 	_collision_counter_ransac = 0;
+	_collision_counter_ransac_slowdown = 0;
+	_collision_counter_ransac_avoid = 0;
 
 	_slowdown = false;
 	_distance_to_drive = 0;
@@ -105,6 +116,26 @@ void CollisionDetection::registrationCallback(pcl::PointCloud<pcl::PointXYZI> co
 
     //apply rotation to temp_cloud (note translation is 0)
     pcl::transformPointCloud(temp_cloud, _input_cloud, T_temporary);
+}
+
+void CollisionDetection::missionCallback(messages::MissionPlanningInfo const &msg)
+{
+	if(msg.procsBeingExecuted.at(__approach__)==true) _doingApproach = true;
+	else _doingApproach = false;
+	
+	if(msg.procsBeingExecuted.at(__examine__)==true) _doingExamine = true;
+	else _doingExamine = false;
+
+	_currentROI = msg.currentROIIndex;
+
+	if((_doingApproach == true || _doingExamine == true) && _currentROI !=7)
+	{
+		_collision_counter_ransac_switch = false;
+	}
+	else
+	{
+		_collision_counter_ransac_switch = true;
+	}
 }
 
 void CollisionDetection::setPreviousCounters()
@@ -223,7 +254,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	int ransacCollisionStatus = 0;
 	// if(_collision_counter_lidar_avoid == 0)
 	//if the robot do slow down, that means it detects an obstacle, otherwise, we need use RANSAC to confirm
-	if(_collision_counter_lidar_slowdown < threshold_counter_lidar)	
+	if(_collision_counter_lidar_avoid < threshold_counter_lidar && _collision_counter_ransac_switch)	
 	{
 		ransacCollisionStatus = doMathRANSAC();
 	}
@@ -237,6 +268,15 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		_collision_counter_ransac=0;
 	}
 	
+	if(_collision_counter_ransac >= threshold_counter_ransac && _collision_counter_ransac_slowdown < 2)
+	{
+		_collision_counter_ransac_slowdown = 2;
+	}
+
+	if(_collision_counter_ransac_slowdown >= 8)
+	{
+		_collision_counter_ransac_avoid = 1;
+	}
 
 	// ROS_INFO_STREAM("collision_point_counter: " << collision_point_counter);
 	//check zed input
@@ -264,7 +304,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD || _zedcollision != 0)
 	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
 	// if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_zed >= threshold_counter_zed || _collision_counter_ransac >= threshold_counter_ransac)
-	if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_ransac >= threshold_counter_ransac)
+	if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_ransac_avoid >= threshold_counter_ransac_avoid)
 	{	
 		_collision_status = 1;	//detected a obstacle
 
@@ -404,9 +444,12 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		_collision_counter_lidar_slowdown = 0;
 		// _collision_counter_zed = 0;
 		_collision_counter_ransac = 0;
+		_collision_counter_ransac_slowdown = 0;
+		_collision_counter_ransac_avoid = 0;
 	}
-	else if(_collision_counter_lidar_slowdown >= threshold_counter_lidar)
+	else if(_collision_counter_lidar_slowdown >= threshold_counter_lidar || _collision_counter_ransac_slowdown > 1)
 	{
+		_collision_counter_ransac_slowdown = _collision_counter_ransac_slowdown * _collision_counter_ransac_slowdown;
 		_collision_status = 0;
 		_slowdown = true;
 		_distance_to_drive = 0;
@@ -455,7 +498,7 @@ int CollisionDetection::doMathRANSAC() // FIRST LAYER: SAFE ENVELOPE
 		seg_plane.setModelType (pcl::SACMODEL_PLANE);
 		seg_plane.setMethodType (pcl::SAC_RANSAC);
 		seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-		seg_plane.setDistanceThreshold (0.25); //ground detection threshold parameter
+		seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
 		seg_plane.setInputCloud (cloud); //was raw_cloud
 		// std::cout << "cloud->points.size() = " << cloud->points.size() << std::endl;
 

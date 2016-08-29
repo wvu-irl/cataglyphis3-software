@@ -15,7 +15,7 @@ bool Approach::runProc()
 	switch(state)
 	{
 	case _init_:
-		avoidLockout = true;
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
@@ -32,7 +32,7 @@ bool Approach::runProc()
 		state = _exec_;
 		break;
 	case _exec_:
-		avoidLockout = true;
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
@@ -41,7 +41,7 @@ bool Approach::runProc()
 		{
 		case _computeManeuver:
 			sampleTypeMux = 0;
-			computeSampleValuesWithExpectedDistance();
+			computeSampleValuesWithExpectedDistance(true);
             if(sampleDistanceAdjustedConf >= approachValueThreshold && definiteSample) approachableSample = true;
 			else approachableSample = false;
 			if(approachableSample)

@@ -33,9 +33,9 @@ bool ConfirmCollect::runProc()
         procsToResume[procType] = false;
         if(searchEnded())
 		{
-			computeSampleValuesWithExpectedDistance();
+			computeSampleValuesWithExpectedDistance(false);
             ROS_INFO("confirmCollect sampleDistanceAdjustedConf = %f",sampleDistanceAdjustedConf);
-            if(sampleDistanceAdjustedConf < confirmCollectValueThreshold) noSampleOnGround = true;
+            if((sampleDistanceAdjustedConf < confirmCollectValueThreshold) && sampleHistoryTypeMatch(highestConfSample.types)) noSampleOnGround = true;
 			else noSampleOnGround = false;
 			if(noSampleOnGround)
 			{

@@ -123,100 +123,100 @@ if __name__ == "__main__":
 	# dictionary to store classifier parameters
 	classifierDict = {}
 
-	# classifier version
-	classifierVersion = 'CACH_V1'
-	classifierSampleType = 'CACH'
-	classifierType = 0
+	# # classifier version
+	# classifierVersion = 'CACH_V1'
+	# classifierSampleType = 'CACH'
+	# classifierType = 0
 
-	# imgSize
-	imgSize = 50
+	# # imgSize
+	# imgSize = 50
 	
-	# read the mean data
-	meanData50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
-	meanData50Cach = np.load(meanData50PathCach)
-	meanData50Cach = np.reshape(meanData50Cach, (1, 3, imgSize, imgSize))
+	# # read the mean data
+	# meanData50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
+	# meanData50Cach = np.load(meanData50PathCach)
+	# meanData50Cach = np.reshape(meanData50Cach, (1, 3, imgSize, imgSize))
 	
-	# read the classifier 
-	classifier50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
+	# # read the classifier 
+	# classifier50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
-	# set dropout parameters for better performance
-	dropoutParams50Cach = {}
-	dropoutParams50Cach['conv'] = 0.5
-	dropoutParams50Cach['fc'] = 0.5
+	# # set dropout parameters for better performance
+	# dropoutParams50Cach = {}
+	# dropoutParams50Cach['conv'] = 0.5
+	# dropoutParams50Cach['fc'] = 0.5
 	
-	# initialize DeepFishNet50Cach
-	myClassifier50Cach = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Cach, mode='Test', modelToLoad = classifier50PathCach)
+	# # initialize DeepFishNet50Cach
+	# myClassifier50Cach = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Cach, mode='Test', modelToLoad = classifier50PathCach)
 	
-	# store 50 x 50 classifier details
-	classifierDict[classifierType] = {}
-	classifierDict[classifierType]['classifier'] = myClassifier50Cach
-	classifierDict[classifierType]['mean'] = meanData50Cach
-	classifierDict[classifierType]['modulePath'] = cvModulePath
+	# # store 50 x 50 classifier details
+	# classifierDict[classifierType] = {}
+	# classifierDict[classifierType]['classifier'] = myClassifier50Cach
+	# classifierDict[classifierType]['mean'] = meanData50Cach
+	# classifierDict[classifierType]['modulePath'] = cvModulePath
 
-	# classifier version
-	classifierVersion = 'HARD_V1'
-	classifierSampleType = 'HARD'
-	classifierType = 1
+	# # classifier version
+	# classifierVersion = 'HARD_V1'
+	# classifierSampleType = 'HARD'
+	# classifierType = 1
 
-	# imgSize
-	imgSize = 50
+	# # imgSize
+	# imgSize = 50
 	
-	# read the mean data
-	meanData50PathHard = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
-	meanData50Hard = np.load(meanData50PathHard)
-	meanData50Hard = np.reshape(meanData50Hard, (1, 3, imgSize, imgSize))
+	# # read the mean data
+	# meanData50PathHard = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
+	# meanData50Hard = np.load(meanData50PathHard)
+	# meanData50Hard = np.reshape(meanData50Hard, (1, 3, imgSize, imgSize))
 	
-	# read the classifier
-	classifier50PathHard = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
+	# # read the classifier
+	# classifier50PathHard = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
-	# set dropout parameters for better performance
-	dropoutParams50Hard = {}
-	dropoutParams50Hard['conv'] = 0.5
-	dropoutParams50Hard['fc'] = 0.5
+	# # set dropout parameters for better performance
+	# dropoutParams50Hard = {}
+	# dropoutParams50Hard['conv'] = 0.5
+	# dropoutParams50Hard['fc'] = 0.5
 	
-	# initialize DeepFishNet50Hard
-	myClassifier50Hard = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Hard, mode='Test', modelToLoad = classifier50PathHard)
+	# # initialize DeepFishNet50Hard
+	# myClassifier50Hard = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Hard, mode='Test', modelToLoad = classifier50PathHard)
 	
-	# store 50 x 50 classifier details
-	classifierDict[classifierType] = {}
-	classifierDict[classifierType]['classifier'] = myClassifier50Hard
-	classifierDict[classifierType]['mean'] = meanData50Hard
-	classifierDict[classifierType]['modulePath'] = cvModulePath
+	# # store 50 x 50 classifier details
+	# classifierDict[classifierType] = {}
+	# classifierDict[classifierType]['classifier'] = myClassifier50Hard
+	# classifierDict[classifierType]['mean'] = meanData50Hard
+	# classifierDict[classifierType]['modulePath'] = cvModulePath
 
-	# classifier version
-	classifierVersion = 'ROCK_V1'
-	classifierSampleType = 'ROCK'
-	classifierType = 2
+	# # classifier version
+	# classifierVersion = 'ROCK_V1'
+	# classifierSampleType = 'ROCK'
+	# classifierType = 2
 
-	# imgSize
-	imgSize = 50
+	# # imgSize
+	# imgSize = 50
 	
-	# read the mean data
-	meanData50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
-	meanData50Rock = np.load(meanData50PathRock)
-	meanData50Rock = np.reshape(meanData50Rock, (1, 3, imgSize, imgSize))
+	# # read the mean data
+	# meanData50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
+	# meanData50Rock = np.load(meanData50PathRock)
+	# meanData50Rock = np.reshape(meanData50Rock, (1, 3, imgSize, imgSize))
 	
-	# read the classifier
-	classifier50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
+	# # read the classifier
+	# classifier50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
-	# set dropout parameters for better performance
-	dropoutParams50Rock = {}
-	dropoutParams50Rock['conv'] = 0.5
-	dropoutParams50Rock['fc'] = 0.5
+	# # set dropout parameters for better performance
+	# dropoutParams50Rock = {}
+	# dropoutParams50Rock['conv'] = 0.5
+	# dropoutParams50Rock['fc'] = 0.5
 	
-	# initialize DeepFishNet50Rock
-	myClassifier50Rock = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Rock, mode='Test', modelToLoad = classifier50PathRock)
+	# # initialize DeepFishNet50Rock
+	# myClassifier50Rock = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Rock, mode='Test', modelToLoad = classifier50PathRock)
 	
-	# store 50 x 15 classifier details
-	classifierDict[classifierType] = {}
-	classifierDict[classifierType]['classifier'] = myClassifier50Rock
-	classifierDict[classifierType]['mean'] = meanData50Rock
-	classifierDict[classifierType]['modulePath'] = cvModulePath
+	# # store 50 x 15 classifier details
+	# classifierDict[classifierType] = {}
+	# classifierDict[classifierType]['classifier'] = myClassifier50Rock
+	# classifierDict[classifierType]['mean'] = meanData50Rock
+	# classifierDict[classifierType]['modulePath'] = cvModulePath
 
 	# classifier version
 	classifierVersion = 'ALL_V1'
 	classifierSampleType = 'ALL'
-	classifierType = 3
+	classifierType = 0
 
 	# imgSize
 	imgSize = 50

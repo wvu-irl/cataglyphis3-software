@@ -33,7 +33,7 @@ public:
 	void sendPause();
 	void sendUnPause();
 	void findHighestConfSample();
-	void computeSampleValuesWithExpectedDistance();
+	void computeSampleValuesWithExpectedDistance(bool useHistoryValue);
 	void computeExpectedSampleLocation();
 	void clearSampleHistory();
 	void startSampleHistory(float& conf, bool* sampleTypes);
@@ -650,9 +650,12 @@ void Procedure::findHighestConfSample()
 	}
 }
 
-void Procedure::computeSampleValuesWithExpectedDistance()
+void Procedure::computeSampleValuesWithExpectedDistance(bool useHistoryValue)
 {
-	sampleDistanceAdjustedConf = sampleConfidenceGain*sampleHistoryModifiedConf -
+    float sampleConf;
+    if(useHistoryValue) sampleConf = sampleHistoryModifiedConf;
+    else sampleConf = highestConfSample.confidence;
+	sampleDistanceAdjustedConf = sampleConfidenceGain*sampleConf -
 							(sampleDistanceToExpectedGain*sqrt(pow(highestConfSample.distance,2.0)+pow(expectedSampleDistance,2.0)-
 								2.0*highestConfSample.distance*expectedSampleDistance*
 									cos(DEG2RAD*(highestConfSample.bearing-expectedSampleAngle))));

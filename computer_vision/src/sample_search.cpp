@@ -421,7 +421,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
 
     //do not call classifier if no blobs or too many  blobs were extracted from segmentation
-	if(segmentImageSrv.response.coordinates.size()/2 < 1 && segmentImageSrv.response.coordinates.size()/2 > 1000)
+	if(segmentImageSrv.response.coordinates.size()/2 < 1 || segmentImageSrv.response.coordinates.size()/2 > 1000)
 	{
 		ROS_WARN("No blobs detected in image. Not performing classification.");
 		searchForSamplesMsgOut.sampleList.clear();
@@ -438,13 +438,15 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-    //ALL SAMPLE CLASSIFIER (THIS WILL BE REMOVED ONCE THE OTHER CLASSIFIERS ARE TRAINED)
+    //ALL SAMPLE CLASSIFIER
+	G_sample_probabilities.clear();
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
-	imageProbabilitiesSrv.request.classifierType = 2;
+	imageProbabilitiesSrv.request.imgSize = 50;
+	imageProbabilitiesSrv.request.classifierType = 0;
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
-		ROS_INFO("imageProbabilitiesSrv call successful!");
+		ROS_INFO("imageProbabilitiesSrv call successful with type 0 (cach)!");
+		G_sample_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
 	}
 	else
 	{
@@ -455,114 +457,6 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		searchForSamplesPub.publish(searchForSamplesMsgOut);
 		ros::spinOnce();
 		return true;
-	}
-
-	G_cach_probabilities.clear();
-	G_hard_probabilities.clear();
-	G_rock_probabilities.clear();
-	G_sample_probabilities.clear();
-	G_sample_ids.clear();
-	if(req.roi == 0)
-	{
-		//precached sample classifier
-		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 3;
-		if(classifierClient.call(imageProbabilitiesSrv))
-		{
-			ROS_INFO("imageProbabilitiesSrv call successful with type 0 (cach)!");
-			G_cach_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
-		}
-		else
-		{
-			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-			searchForSamplesMsgOut.sampleList.clear();
-			searchForSamplesMsgOut.procType = req.procType;
-			searchForSamplesMsgOut.serialNum = req.serialNum;
-			searchForSamplesPub.publish(searchForSamplesMsgOut);
-			ros::spinOnce();
-			return true;
-		}
-
-		//assign probabilties and sample ids
-		for(int i=0; i<G_cach_probabilities.size(); i++) //this is the number of blobs from segmentation
-		{
-			G_hard_probabilities.push_back(0);
-			G_rock_probabilities.push_back(0);
-			float tempMappedProbabilityCach = G_cach_probabilities[i];//cachSigCoef[0]+(cachSigCoef[1]-cachSigCoef[0])/(1+pow(10,( (cachSigCoef[2]-G_cach_probabilities[i])*cachSigCoef[3]) ) );
-			G_sample_probabilities.push_back(tempMappedProbabilityCach);
-			G_sample_ids.push_back(0);
-		}
-	}
-	else
-	{
-		//hard sample classifier
-		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 3;
-		if(classifierClient.call(imageProbabilitiesSrv))
-		{
-			ROS_INFO("imageProbabilitiesSrv call successful with type 1 (hard)!");
-			G_hard_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
-		}
-		else
-		{
-			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-			searchForSamplesMsgOut.sampleList.clear();
-			searchForSamplesMsgOut.procType = req.procType;
-			searchForSamplesMsgOut.serialNum = req.serialNum;
-			searchForSamplesPub.publish(searchForSamplesMsgOut);
-			ros::spinOnce();
-			return true;
-		}
-
-		//rock sample classifier
-		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 3;
-		if(classifierClient.call(imageProbabilitiesSrv))
-		{
-			ROS_INFO("imageProbabilitiesSrv call successful with type 2 (rock)!");
-			G_rock_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
-		}
-		else
-		{
-			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-			searchForSamplesMsgOut.sampleList.clear();
-			searchForSamplesMsgOut.procType = req.procType;
-			searchForSamplesMsgOut.serialNum = req.serialNum;
-			searchForSamplesPub.publish(searchForSamplesMsgOut);
-			ros::spinOnce();
-			return true;
-		}
-
-		//make sure the number of blobs is correct
-		if(G_rock_probabilities.size() != G_hard_probabilities.size() || G_rock_probabilities.size() != segmentImageSrv.response.coordinates.size()/2)
-		{
-			ROS_ERROR("Error! The size of G_rock_probabilities and G_hard_probabilities should be equal to the number of blobs from segmentation!");
-			G_hard_probabilities.clear();
-			G_rock_probabilities.clear();
-		}
-
-		//assign probabilties and sample ids (use higher probability and the cooresponding id)
-		G_sample_probabilities.clear();
-		G_sample_ids.clear();
-		for(int i=0; i<G_rock_probabilities.size(); i++) //this is the number of blobs in rock and hard probabilities
-		{
-			G_cach_probabilities.push_back(0);
-			float tempMappedProbabilityHard = G_hard_probabilities[i];//hardSigCoef[0]+(hardSigCoef[1]-hardSigCoef[0])/(1+pow(10,( (hardSigCoef[2]-G_hard_probabilities[i])*hardSigCoef[3]) ) );
-			float tempMappedProbabilityRock = G_rock_probabilities[i];//rockSigCoef[0]+(rockSigCoef[1]-rockSigCoef[0])/(1+pow(10,( (rockSigCoef[2]-G_rock_probabilities[i])*rockSigCoef[3]) ) );
-			if(tempMappedProbabilityHard >= tempMappedProbabilityRock)
-			{
-				G_sample_probabilities.push_back(tempMappedProbabilityHard);
-				G_sample_ids.push_back(1);
-			}
-			else
-			{
-				G_sample_probabilities.push_back(tempMappedProbabilityRock);
-				G_sample_ids.push_back(0);
-			}
-		}
 	}
 
 	gettimeofday(&this->localTimer, NULL);  
@@ -610,7 +504,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-	saveLowAndHighProbabilityBlobs(G_sample_probabilities, segmentImageSrv.response.coordinates);
+	//saveLowAndHighProbabilityBlobs(G_sample_probabilities, segmentImageSrv.response.coordinates);
 
 	gettimeofday(&this->localTimer, NULL);  
     double endSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -666,38 +560,51 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		}
 
 		//confidence of sample
-		sampleProps.confidenceCach = G_cach_probabilities[blobsOfInterest[i]];
-		sampleProps.confidenceHard = G_hard_probabilities[blobsOfInterest[i]];
-		sampleProps.confidenceRock = G_rock_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceCach = G_sample_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceHard = G_sample_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceRock = G_sample_probabilities[blobsOfInterest[i]];
 		sampleProps.confidence = G_sample_probabilities[blobsOfInterest[i]];
 
 		//only publish results depending on expected probabilities
 		bool publish_sample_info = false;
+		bool lower_request_threshold = true; //lower the threshold unless 1 sample > 0.6
 		if(req.white > 0.6)
 		{
 			if(sampleProps.white == true) publish_sample_info = true;
+			lower_request_threshold = false;
 		}
-		else if(req.silver > 0.6)
+		
+		if(req.silver > 0.6)
 		{
 			if(sampleProps.silver == true) publish_sample_info = true;
+			lower_request_threshold = false;
 		}
-		else if(req.blueOrPurple > 0.6)
+		
+		if(req.blueOrPurple > 0.6)
 		{
 			if(sampleProps.blueOrPurple == true) publish_sample_info = true;
+			lower_request_threshold = false;
 		}
-		else if(req.pink > 0.6 || req.red > 0.6)
+		
+		if(req.pink > 0.6 || req.red > 0.6)
 		{
 			if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
+			lower_request_threshold = false;
 		}
-		else if(req.orange > 0.6)
+		
+		if(req.orange > 0.6)
 		{
 			if(sampleProps.orange == true) publish_sample_info = true;
+			lower_request_threshold = false;
 		}
-		else if(req.yellow > 0.6)
+		
+		if(req.yellow > 0.6)
 		{
 			if(sampleProps.yellow == true) publish_sample_info = true;	
+			lower_request_threshold = false;
 		}
-		else
+		
+		if(lower_request_threshold == true)
 		{
 			if(req.white > 0.03) if(sampleProps.white == true) publish_sample_info = true;
 			if(req.silver > 0.03) if(sampleProps.silver == true) publish_sample_info = true;

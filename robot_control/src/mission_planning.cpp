@@ -239,6 +239,13 @@ void MissionPlanning::evalConditions_()
                         shouldExecuteAvoidManeuver = false;
                     }
                 }
+                else if(procsToInterrupt[__examine__] || procsToInterrupt[__approach__])
+                {
+                    avoid.sendDequeClearAll();
+                    shouldExecuteAvoidManeuver = false;
+                    possibleSample = false;
+                    definiteSample = false;
+                }
                 /*robotStatus.pauseSwitch = true;
                 pause.sendPause();
                 std::cout << "press enter to continue" << std::endl;
@@ -550,6 +557,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     }
     infoMsg.collisionCondition = collisionMsg.collision;
     infoMsg.missionTime = missionTime;
+    infoMsg.currentROIIndex = currentROIIndex;
     infoPub.publish(infoMsg);
 }
 
@@ -761,6 +769,7 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
     }
     collisionMsg.collision = req.collisionCondition;
     missionTime = req.missionTime;
+    currentROIIndex = req.currentROIIndex;
     return true;
 }
 

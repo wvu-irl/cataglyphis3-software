@@ -22,11 +22,11 @@ NavigationFilter::NavigationFilter()
 	registration_counter = 0;
 	registration_counter_prev = 0;
 
-	filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
-	init_filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
-	filter1.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
-	filter2.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
-	filterS.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+	filter.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+	init_filter.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+	filter1.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+	filter2.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+	filterS.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 
 	encoders.set_wheel_radius(0.2286/2);
 	encoders.set_counts_per_revolution(4476.16*1.062);
@@ -249,33 +249,35 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 {
     init_filter.which_nb_to_keep(imu.nb1_drive_counter, imu.nb1_current, imu.nb1_good, imu.nb1_good_prev, imu.nb2_drive_counter, imu.nb2_current, imu.nb2_good, imu.nb2_good_prev, imu.nbS_current, imu.nbS_good, imu.nbS_good_prev);
-	if (imu.new_nb1!=0)
+	if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)> 0.05 || sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))>0.005) || encoders.delta_distance != 0)
 	{
-		filter1.turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
-	}
-	else
-	{
-		filter1.blind_turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
-	}
+		if (imu.new_nb1!=0)
+		{
+			filter1.turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
+		}
+		else
+		{
+			filter1.blind_turning(imu.nb1_p,imu.nb1_q,imu.nb1_r,imu.dt1);
+		}
 
-	if (imu.new_nb2!=0)
-	{
-		filter2.turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
-	}
-	else
-	{
-		filter2.blind_turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
-	}
+		if (imu.new_nb2!=0)
+		{
+			filter2.turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
+		}
+		else
+		{
+			filter2.blind_turning(imu.nb2_p,imu.nb2_q,imu.nb2_r,imu.dt2);
+		}
 
-	if (imu.new_nbS!=0)
-	{
-		filterS.turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
+		if (imu.new_nbS!=0)
+		{
+			filterS.turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
+		}
+		else
+		{
+			filterS.blind_turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
+		}
 	}
-	else
-	{
-		filterS.blind_turning(imu.nbS_p,imu.nbS_q,imu.nbS_r,imu.dtS);
-	}
-
 
 	if(init_filter.keep_nb == 3 || init_filter.keep_nb == 28 || init_filter.keep_nb == 1 || init_filter.keep_nb == 5 || init_filter.keep_nb == 7 || init_filter.keep_nb == 9 || init_filter.keep_nb == 11 || init_filter.keep_nb == 12 || init_filter.keep_nb == 14 || init_filter.keep_nb == 20 || init_filter.keep_nb == 22 || init_filter.keep_nb == 24 || init_filter.keep_nb == 26 || init_filter.keep_nb == 29 || init_filter.keep_nb == 31 || init_filter.keep_nb == 33 || init_filter.keep_nb == 35)
 	{
@@ -461,10 +463,10 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 		filter.P_north_angle = init_filter.P_psi;
 
 		state = _run; 
-		filter.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter1.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter2.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
-		filterS.initialize_states(0,0,0,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filter.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filter1.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filter2.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+		filterS.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
 	}
 	else state = _forklift_drive;
 }

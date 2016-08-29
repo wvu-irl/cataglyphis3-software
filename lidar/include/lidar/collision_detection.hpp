@@ -1,5 +1,6 @@
 #ifndef COLLISION_DETECTION_H
 #define COLLISION_DETECTION_H
+#include <robot_control/mission_planning_types_defines.h>
 #include "ros/ros.h"
 #include "ros/console.h"
 #include <iostream>
@@ -45,6 +46,7 @@
 #include <messages/CreateROIHazardMap.h>
 #include <messages/NextWaypointOut.h>
 #include <messages/RobotPose.h>
+#include <messages/MissionPlanningInfo.h>
 // #include <messages/ZedCollisionOut.h>
 #include "pcl/conversions.h"
 #include "sensor_msgs/PointCloud2.h"
@@ -62,6 +64,7 @@ public:
 	ros::Subscriber _sub_waypoint;
 	ros::Subscriber _sub_position;
 	ros::Subscriber _sub_zedcollision;
+	ros::Subscriber _sub_mission;
 	// ros::ServerService ;
 	void setPreviousCounters();
 	bool newPointCloudAvailable();
@@ -89,7 +92,7 @@ private:
 	const float _SAFE_ENVELOPE_ANGLE = 15.0*3.14159265/180.0; //safe envelope angle (radians)
 	const short int _TRIGGER_POINT_THRESHOLD = 10; //number of points in safe envelope that will trigger the avoidance
 
-	const double PI = 3.141592653589793238462643383279502884197169399375105820974944592307816406286;
+	// const double PI = 3.141592653589793238462643383279502884197169399375105820974944592307816406286;
 
 	//parameters
 	double short_distance;
@@ -102,6 +105,7 @@ private:
 	int threshold_counter_lidar;
 	// int threshold_counter_zed;
 	int threshold_counter_ransac;
+	int threshold_counter_ransac_avoid;
 
 	double error_angle;
 
@@ -117,11 +121,21 @@ private:
 	//zed data
 	// int _zedcollision;
 
+	//mission planning info
+	bool _doingApproach;
+	bool _doingExamine;
+	int _currentROI;
+
 	//counters
 	int _collision_counter_lidar_slowdown;
 	int _collision_counter_lidar_avoid;
 	// int _collision_counter_zed;
 	int _collision_counter_ransac;
+	int _collision_counter_ransac_slowdown;
+	int _collision_counter_ransac_avoid;
+
+	bool _collision_counter_ransac_switch;
+
 
 	std::vector<float> _hazard_x;
 	std::vector<float> _hazard_y;
@@ -143,7 +157,7 @@ private:
 	void waypointsCallback(messages::NextWaypointOut const &waypoint_msg);
 	void positionCallback(messages::RobotPose const &position_msg);
 	// void zedcollisionCallback(messages::ZedCollisionOut const &zedcollisionout_msg);
-
+	void missionCallback(messages::MissionPlanningInfo const &msg);
 	int firstChoice(double angle, double distance);
 	int secondChoice(double angle, double distance, double xg, double yg);
 	int finalChoice(double left_angle, double right_angle, int collision_left_counter, int collision_right_counter, double xg_local, double yg_local);

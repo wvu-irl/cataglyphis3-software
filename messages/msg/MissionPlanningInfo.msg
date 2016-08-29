@@ -40,3 +40,4 @@ bool[] procsToResume
 int32[] procStates
 uint8 collisionCondition
 float64 missionTime
+uint32 currentROIIndex

@@ -23,7 +23,8 @@ int GrabberSetSlides::run()
         else {returnValue_ = 0; state_ = _normal_;}
         break;
     case _recovering_:
-        robotOutputs.slidePosCmd = failsafePosition_;
+        if(slidePos_== GRABBER_CLOSED) robotOutputs.slidePosCmd = GRABBER_OPEN;
+        else robotOutputs.slidePosCmd = GRABBER_CLOSED;
         robotOutputs.grabberStopCmd = 0;
         if(slidesEnded_) {returnValue_ = 0; numFailedAttempts_++; state_ = _normal_;}
         else {returnValue_ = 0; state_ = _recovering_;}

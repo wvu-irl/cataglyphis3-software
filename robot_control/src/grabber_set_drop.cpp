@@ -23,7 +23,8 @@ int GrabberSetDrop::run()
         else {returnValue_ = 0; state_ = _normal_;}
         break;
     case _recovering_:
-        robotOutputs.dropPosCmd = failsafePosition_;
+        if(dropPos_ == GRABBER_DROPPED) robotOutputs.dropPosCmd = GRABBER_RAISED;
+        else robotOutputs.dropPosCmd = GRABBER_DROPPED;
         robotOutputs.grabberStopCmd = 0;
         if(dropEnded_) {returnValue_ = 0; numFailedAttempts_++; state_ = _normal_;}
         else {returnValue_ = 0; state_ = _recovering_;}

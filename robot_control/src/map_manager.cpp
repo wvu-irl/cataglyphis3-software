@@ -220,7 +220,8 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             //sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
             //sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
             searchLocalMap.setGeometry(grid_map::Length(regionsOfInterest.at(searchLocalMapROINum).radialAxis*2.0, regionsOfInterest.at(searchLocalMapROINum).tangentialAxis*2.0), mapResolution, grid_map::Position(0.0, 0.0));
-            searchLocalMap.add(layerToString(_localMapDriveability), 1.0);
+            searchLocalMap.add(layerToString(_localMapDriveability), 0.0);
+            searchLocalMap.add(layerToString(_sampleProb), 1.0);
             for(int i=0; i<createROIHazardMapSrv.response.x_mean.size(); i++)
             {
                 searchLocalMapCoord[0] = createROIHazardMapSrv.response.x_mean.at(i);
