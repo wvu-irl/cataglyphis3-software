@@ -9,10 +9,12 @@ bool Initialize::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		procsToResume[procType] = false;
+		sendWait(initWaitTime, false);
 		sendOpen(); // Make sure the grabber is open initially
 		sendDriveRel(driveOffPlatformDistance, 0.0, false, 0.0, false, false);
 		step = _drivingOffPlatform;
 		state = _exec_;
+		resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = true;
@@ -22,7 +24,7 @@ bool Initialize::runProc()
 		switch(step)
 		{
 		case _drivingOffPlatform:
-			if(execLastProcType == procType && execLastSerialNum == serialNum)
+			if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut)
 			{
 				biasRemovalTimedOut = false;
 				timers[_biasRemovalActionTimeoutTimer_]->start();
@@ -54,7 +56,7 @@ bool Initialize::runProc()
 			}
 			break;
 		}
-
+		serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		avoidLockout = false;

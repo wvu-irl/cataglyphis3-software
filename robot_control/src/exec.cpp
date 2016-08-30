@@ -15,6 +15,7 @@ Exec::Exec()
 	infoPub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
     actionEndedPub = nh.advertise<messages::ExecActionEnded>("control/exec/actionended",1);
     nextWaypointOutPub = nh.advertise<messages::NextWaypointOut>("/control/exec/nextwaypoint", 1);
+    grabberStatusPub = nh.advertise<messages::ExecGrabberStatus>("/control/exec/grabberstatus", 1);
     cvSearchCmdClient = nh.serviceClient<messages::CVSearchCmd>("/vision/samplesearch/searchforsamples");
 	// "allocate" deque memory
     for(int i=0; i<NUM_ACTIONS; i++)
@@ -58,8 +59,8 @@ Exec::Exec()
 void Exec::run()
 {
     ROS_INFO_THROTTLE(3,"Exec running...");
-    dropStatusLEL_.LE_Latch(robotStatus.grabberDropStatus);
-    slideStatusLEL_.LE_Latch(robotStatus.grabberSlideStatus);
+    if(dropStatusLEL_.LE_Latch(robotStatus.grabberDropStatus)) dropEnded_ = true;
+    if(slideStatusLEL_.LE_Latch(robotStatus.grabberSlideStatus)) slidesEnded_ = true;
     if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.clearDeques();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
@@ -121,12 +122,14 @@ void Exec::run()
 	packActuatorMsgOut_();
 	packInfoMsgOut_();
     packNextWaypointOut_();
+    packGabberStatusOut_();
     if(!manualOverride_)
     {
         actuatorPub.publish(actuatorMsgOut_);
         infoPub.publish(execInfoMsgOut_);
     }
     nextWaypointOutPub.publish(nextWaypointMsgOut_);
+    grabberStatusPub.publish(grabberStatusMsgOut_);
     /*execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
     ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
     for(int i=0; i<NUM_ACTIONS; i++) ROS_INFO("actionPoolIndex[%i] = %i",i,actionPoolIndex_[i]);
@@ -291,4 +294,10 @@ void Exec::packNextWaypointOut_()
             //nextWaypointMsgOut_.unskippable = actionDeque_.at(0)->params.bool3;
         }
     }
+}
+
+void Exec::packGabberStatusOut_()
+{
+    grabberStatusMsgOut_.dropFailed = dropFailed_;
+    grabberStatusMsgOut_.slidesFailed = slidesFailed_;
 }

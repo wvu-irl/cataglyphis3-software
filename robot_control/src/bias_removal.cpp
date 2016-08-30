@@ -26,14 +26,16 @@ bool BiasRemoval::runProc()
             voiceSay->call("Tilt too extreme for bias removal. Moving on.");
             state = _finish_;
         }
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-		if(navStatus!=0 || biasRemovalTimedOut) state = _finish_;
-		else state = _exec_;
+        if(navStatus!=0 || biasRemovalTimedOut || queueEmptyTimedOut) state = _finish_;
+        else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;

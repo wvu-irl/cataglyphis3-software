@@ -8,6 +8,8 @@ Wait::Wait()
 
 void Wait::init()
 {
+    dropFailed_ = false;
+    slidesFailed_ = false;
 	waitTime_ = params.float1;
 	timeExpired_ = false;
 	waitTimer->stop();

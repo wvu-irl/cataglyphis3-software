@@ -38,6 +38,14 @@ bool Avoid::runProc()
                 if(currentROIIndex==0) modROISrv.request.sampleProb = 0.0;
                 else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*giveUpROIFromAvoidNewSampleProbMultiplier;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.whiteProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb;
+                modROISrv.request.silverProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb;
+                modROISrv.request.blueOrPurpleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).blueOrPurpleProb;
+                modROISrv.request.pinkProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).pinkProb;
+                modROISrv.request.redProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).redProb;
+                modROISrv.request.orangeProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb;
+                modROISrv.request.yellowProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb;
                 modROISrv.request.addNewROI = false;
                 modROISrv.request.editGroup = false;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
@@ -46,6 +54,7 @@ bool Avoid::runProc()
                 sendDequeClearAll();
                 ROS_INFO("AVOID gave up ROI number %i",currentROIIndex);
                 voiceSay->call("give up r o i");
+                break;
             }
             if(!execInfoMsg.actionBool3[interruptedAvoid] && (interruptedAvoid || interruptedEmergencyEscape))
             {
@@ -83,7 +92,8 @@ bool Avoid::runProc()
         }
         computeDriveSpeeds();
         sendDriveRel(collisionMsg.distance_to_drive, collisionMsg.angle_to_drive, false, 0.0, true, false);
-		state = _exec_;
+        state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		procsBeingExecuted[procType] = true;
@@ -91,8 +101,9 @@ bool Avoid::runProc()
         procsToResume[procType] = false;
         computeDriveSpeeds();
         if(!execInfoMsg.stopFlag && !execInfoMsg.turnFlag && execInfoMsg.actionProcType.at(0)==procType) avoidLockout = false;
-		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
         procsBeingExecuted[procType] = true;

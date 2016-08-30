@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="computer_vision" type="segmentation_node" name="segmentation_node" output="screen" respawn="true">
+  </node>
+</launch>

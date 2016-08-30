@@ -39,13 +39,22 @@ public:
 	double north_angle_thresh;
 	double heading_update;
 	int keep_nb;
-	bool heading_verified;
+	bool homing_verified;
+	double b_h_diff_k; 
+	double heading_est_k;
+	double heading_est_k_prev;
+	double heading_prev;
+	double l_dist;
 	arma::mat p_values;
 	arma::mat q_values;
 	arma::mat r_values;
 	arma::mat ax_values;
 	arma::mat ay_values;
 	arma::mat az_values;
+	arma::mat dull_x_vec;
+	arma::mat dull_y_vec;
+	arma::mat shiny_x_vec;
+	arma::mat shiny_y_vec;
 
 
 	unsigned short int counter;
@@ -60,7 +69,8 @@ public:
 	void blind_dead_reckoning(double p, double q, double r, double delta_distance, double dt);
 	void blind_turning(double p, double q, double r, double dt);
 	void which_nb_to_keep(int nb1_drive_counter, bool nb1_current, bool nb1_good, bool nb1_good_prev, int nb2_drive_counter, bool nb2_current, bool nb2_good, bool nb2_good_prev, bool nbS_current, bool nbS_good, bool nbS_good_prev);
-	void verify_homing(double homing_heading, double homing_x, double homing_y, bool possibly_lost);
+	void homing_update(double homing_heading, double homing_x, double homing_y, double dull_x, double dull_y, double shiny_x, double shiny_y, double cylinder_std, bool possibly_lost, bool square_update);
+	void clear_cylinder_vec();
 
 };
 

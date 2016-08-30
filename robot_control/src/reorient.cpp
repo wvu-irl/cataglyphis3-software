@@ -9,6 +9,7 @@ bool Reorient::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
 		procsToResume[procType] = false;
+		clearSampleHistory();
 		sendDriveRel(reorientDriveDistance, reorientPivotAngle, false, 0.0, false, false);
 		sendDriveRel(0.0, -(90.0+reorientPivotAngle), false, 0.0, false, false);
 		sendSearch(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb,
@@ -20,6 +21,7 @@ bool Reorient::runProc()
 				   regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb);
 		reorientCount++;
 		state = _exec_;
+		resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = false;
@@ -27,8 +29,9 @@ bool Reorient::runProc()
 		procsToExecute[procType] = false;
 		procsToResume[procType] = false;
 		computeDriveSpeeds();
-		if(searchEnded()) state = _finish_;
+		if(searchEnded() || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+		serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		avoidLockout = false;

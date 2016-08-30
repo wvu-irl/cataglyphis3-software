@@ -3,6 +3,8 @@
 void Search::init()
 {
 	clearDeques();
+    dropFailed_ = false;
+    slidesFailed_ = false;
 	pushTask(_search_);
     visionDeque.back()->params.float1 = params.float1;
     visionDeque.back()->params.float2 = params.float2;

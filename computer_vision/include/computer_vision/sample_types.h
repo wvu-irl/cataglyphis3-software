@@ -211,30 +211,30 @@ std::vector<SAMPLE_TYPE_T> map_to_simple_color(SAMPLE_TYPE_T type)
 			possible_types.push_back(_yellow_t);
 			break;
 		case _blueOrPurple_t:
-			possible_types.push_back(_white_t);
-			possible_types.push_back(_silver_t);
+			// possible_types.push_back(_white_t);
+			// possible_types.push_back(_silver_t);
 			possible_types.push_back(_blueOrPurple_t);
 			break;
 		case _pink_t:
-			possible_types.push_back(_white_t);
-			possible_types.push_back(_silver_t);
+			// possible_types.push_back(_white_t);
+			// possible_types.push_back(_silver_t);
 			possible_types.push_back(_pink_t);
 			possible_types.push_back(_red_t);
 			break;
 		case _red_t:
-			possible_types.push_back(_white_t);
-			possible_types.push_back(_silver_t);
+			// possible_types.push_back(_white_t);
+			// possible_types.push_back(_silver_t);
 			possible_types.push_back(_pink_t);
 			possible_types.push_back(_red_t);
 			break;
 		case _orange_t:
-			possible_types.push_back(_white_t);
-			possible_types.push_back(_silver_t);
+			// possible_types.push_back(_white_t);
+			// possible_types.push_back(_silver_t);
 			possible_types.push_back(_orange_t);
 			break;
 		case _yellow_t:
-			possible_types.push_back(_white_t);
-			possible_types.push_back(_silver_t);
+			// possible_types.push_back(_white_t);
+			// possible_types.push_back(_silver_t);
 			possible_types.push_back(_yellow_t);
 			break;
 		default:

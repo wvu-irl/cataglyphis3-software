@@ -85,7 +85,7 @@ private:
 	void resumeTimers_();
 	void serviceSearchTimer_();
 	void calcnumProcsBeingOrToBeExecOrRes_();
-	void updateSampleFlags_();
+	//void updateSampleFlags_();
 	void packAndPubInfoMsg_();
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
@@ -97,12 +97,16 @@ private:
 	void lidarFilterCallback_(const messages::LidarFilterOut::ConstPtr& msg);
 	void hsmMasterStatusCallback_(const messages::MasterStatus::ConstPtr& msg);
 	void nextWaypointCallback_(const messages::NextWaypointOut::ConstPtr& msg);
+	void grabberStatusCallback_(const messages::ExecGrabberStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
+	void roiTimeExpiredCallback_(const ros::TimerEvent &event);
 	void biasRemovalTimerCallback_(const ros::TimerEvent& event);
 	void homingTimerCallback_(const ros::TimerEvent& event);
 	void searchTimerCallback_(const ros::TimerEvent& event);
 	void biasRemovalActionTimerCallback_(const ros::TimerEvent &event);
+	void queueEmptyTimerCallback_(const ros::TimerEvent &event);
+	void roiOvertimeTimerCallback_(const ros::TimerEvent &event);
 };
 
 #endif // MISSION_PLANNING_H

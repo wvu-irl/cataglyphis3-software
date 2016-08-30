@@ -15,24 +15,36 @@ bool Approach::runProc()
 	switch(state)
 	{
 	case _init_:
-		avoidLockout = true;
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        grabberDistanceTolerance = initGrabberDistanceTolerance;
-        grabberAngleTolerance = initGrabberAngleTolerance;
-		findHighestConfSample();
-		expectedSampleDistance = highestConfSample.distance;
-		expectedSampleAngle = highestConfSample.bearing;
-		//sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
-		//ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
-		//sendSearch(sampleTypeMux);
-        computeDriveSpeeds();
-		step = _computeManeuver;
-		state = _exec_;
+        if(roiOvertimeExpired)
+        {
+            roiOvertimeExpired = false;
+            possibleSample = false;
+            definiteSample = false;
+            state = _finish_;
+        }
+        else
+        {
+            if(!timers[_roiTimer_]->running && !roiTimeExpired) {roiTimeExpired = false; timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
+            grabberDistanceTolerance = initGrabberDistanceTolerance;
+            grabberAngleTolerance = initGrabberAngleTolerance;
+            //findHighestConfSample();
+            expectedSampleDistance = highestConfSample.distance;
+            expectedSampleAngle = highestConfSample.bearing;
+            //sampleTypeMux = (1 << (static_cast<uint8_t>(highestConfSample.type) & 255)) & 255;
+            //ROS_INFO("approach sampleTypeMux = %u",sampleTypeMux);
+            //sendSearch(sampleTypeMux);
+            computeDriveSpeeds();
+            step = _computeManeuver;
+            state = _exec_;
+        }
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
-		avoidLockout = true;
+		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
@@ -40,9 +52,10 @@ bool Approach::runProc()
 		switch(step)
 		{
 		case _computeManeuver:
+            resetQueueEmptyCondition();
 			sampleTypeMux = 0;
-			computeSampleValuesWithExpectedDistance();
-			if(bestSampleValue >= approachValueThreshold) approachableSample = true;
+			computeSampleValuesWithExpectedDistance(true);
+            if(sampleDistanceAdjustedConf >= approachValueThreshold && definiteSample) approachableSample = true;
 			else approachableSample = false;
 			if(approachableSample)
 			{
@@ -54,6 +67,14 @@ bool Approach::runProc()
 					backUpCount = 0;
 					state = _finish_;
 				}
+                else if(roiOvertimeExpired)
+                {
+                    backUpCount = 0;
+                    roiOvertimeExpired = false;
+                    possibleSample = false;
+                    definiteSample = false;
+                    state = _finish_;
+                }
 				else
 				{
                     grabberDistanceTolerance += grabberDistanceToleranceIncrementPerApproachManeuver;
@@ -85,8 +106,8 @@ bool Approach::runProc()
 				}
 				else
 				{
-					bestSample.distance = expectedSampleDistance;
-					bestSample.bearing = expectedSampleAngle;
+                    highestConfSample.distance = expectedSampleDistance;
+                    highestConfSample.bearing = expectedSampleAngle;
 					distanceToDrive = backUpDistance;
 					angleToTurn = 0.0;
 					computeExpectedSampleLocation();
@@ -108,9 +129,9 @@ bool Approach::runProc()
 		case _performManeuver:
 			if(commandedSearch)
 			{
-                if(searchEnded())
+                if(searchEnded() || queueEmptyTimedOut)
 				{
-					findHighestConfSample();
+                    //findHighestConfSample();
 					expectedSampleDistance = highestConfSample.distance;
 					expectedSampleAngle = highestConfSample.bearing;
 					step = _computeManeuver;
@@ -119,19 +140,22 @@ bool Approach::runProc()
 			}
 			else
 			{
-				if(execLastProcType == procType && execLastSerialNum == serialNum) step = _computeManeuver;
+                if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) step = _computeManeuver;
 				else step = _performManeuver;
 			}
 			state = _exec_;
 			break;
 		}
+        if(roiTimeExpired && !roiOvertimeExpired && !timers[_roiOvertimeTimer_]->running) {roiTimeExpired = false; timers[_roiOvertimeTimer_]->start(); ROS_INFO("roi overtime started");}
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
-		avoidLockout = false;
+        avoidLockout = true;
 		backUpCount = 0;
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+        procsToResume[procType] = false;
 		step = _computeManeuver;
 		state = _init_;
 		break;
@@ -152,14 +176,14 @@ void Approach::computeManeuver_()
     float deltaAngle; // degrees
     if(confirmCollectFailedCount>=confirmCollectsFailedBeforeSideGrab)
     {
-        deltaAngle = RAD2DEG*asin(distanceToGrabber/bestSample.distance*sin(DEG2RAD*(180.0-sideGrabAngleOffset))); // degrees
+        deltaAngle = RAD2DEG*asin(distanceToGrabber/highestConfSample.distance*sin(DEG2RAD*(180.0-sideGrabAngleOffset))); // degrees
         distanceToDrive = distanceToGrabber*sin(DEG2RAD*(sideGrabAngleOffset-deltaAngle))/sin(DEG2RAD*deltaAngle) + pitchCorrectionGain*robotStatus.pitchAngle;
-        angleToTurn = bestSample.bearing - deltaAngle;
+        angleToTurn = highestConfSample.bearing - deltaAngle;
     }
     else
     {
-        distanceToDrive = bestSample.distance - distanceToBlindDriveLocation - blindDriveDistance + pitchCorrectionGain*robotStatus.pitchAngle;
-        angleToTurn = bestSample.bearing;
+        distanceToDrive = highestConfSample.distance - distanceToBlindDriveLocation - blindDriveDistance + pitchCorrectionGain*robotStatus.pitchAngle;
+        angleToTurn = highestConfSample.bearing;
     }
     if(distanceToDrive > maxDriveDistance) distanceToDrive = maxDriveDistance;
 }
@@ -168,12 +192,12 @@ bool Approach::sampleInPosition_()
 {
     if(confirmCollectFailedCount>=confirmCollectsFailedBeforeSideGrab)
     {
-        return (bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber) <= grabberDistanceTolerance) &&
-                (fabs(bestSample.bearing - sideGrabAngleOffset) <= grabberAngleTolerance);
+        return (sampleDistanceAdjustedConf >= definiteSampleConfThresh) && (fabs(highestConfSample.distance - distanceToGrabber) <= grabberDistanceTolerance) &&
+                (fabs(highestConfSample.bearing - sideGrabAngleOffset) <= grabberAngleTolerance);
     }
     else
     {
-        return (bestSample.confidence >= definiteSampleConfThresh) && (fabs(bestSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
-                (fabs(bestSample.bearing) <= grabberAngleTolerance);
+        return (sampleDistanceAdjustedConf >= definiteSampleConfThresh) && (fabs(highestConfSample.distance - distanceToGrabber - blindDriveDistance) <= grabberDistanceTolerance) &&
+                (fabs(highestConfSample.bearing) <= grabberAngleTolerance);
     }
 }

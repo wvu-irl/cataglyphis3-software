@@ -38,7 +38,8 @@ int Action::runDeques()
 	else grabberDequeEnded = grabberDeque.front()->run();
 	if(grabberDequeEnded!=0)
 	{
-		grabberDeque.pop_front();
+        if(dropFailed_) grabberDeque.clear();
+        else grabberDeque.pop_front();
 		grabberDequeEmpty = grabberDeque.empty();
 		if(grabberDequeEmpty==0) grabberDeque.front()->init();
 	}

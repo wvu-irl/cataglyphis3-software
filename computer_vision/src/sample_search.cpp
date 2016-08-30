@@ -29,6 +29,23 @@ SampleSearch::SampleSearch()
 		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob2.jpg");
 		_rois.push_back(roi);	
 	}
+
+	// //initialize coefficients for mapping deep fish net probabilities to actual probabilities based on statistics
+	// cachSigCoef.clear();
+	// cachSigCoef.push_back(0.014343043024976);
+	// cachSigCoef.push_back(0.996308298545352);
+	// cachSigCoef.push_back(0.556984792625824);
+	// cachSigCoef.push_back(12.655992533439981)
+	// hardSigCoef.clear();
+	// hardSigCoef.push_back(0.009590048374287);
+	// hardSigCoef.push_back(0.996948659156515);
+	// hardSigCoef.push_back(0.513078429713242);
+	// hardSigCoef.push_back(15.391445601972140);
+	// rockSigCoef.clear();
+	// rockSigCoef.push_back(0.046567867798548);
+	// rockSigCoef.push_back(0.996253031121210);
+	// rockSigCoef.push_back(0.472406154111716);
+	// rockSigCoef.push_back(21.523462524555410);
 }
 
 void SampleSearch::createFolderForImageData()
@@ -307,7 +324,7 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
 				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
-				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
 			}
 			else if(probabilities[blobsOfInterest[i]] > _rois[roi].probabilities[1])
 			{
@@ -319,14 +336,14 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				_rois[roi].types[1] = static_cast<SAMPLE_TYPE_T>(types[i]);
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
-				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
 			}
 			else if (probabilities[blobsOfInterest[i]] > _rois[roi].probabilities[2])
 			{
 				// ROS_INFO(">2");
 				_rois[roi].probabilities[2] = probabilities[blobsOfInterest[i]];
 				_rois[roi].types[2] = static_cast<SAMPLE_TYPE_T>(types[i]);
-				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
 			}
 		}
 
@@ -346,7 +363,7 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
 				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
-				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
 			}
 			else if(probabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[1])
 			{
@@ -358,14 +375,14 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				_rois[roi].types[1] = _unknown_t;
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
-				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
 			}
 			else if (probabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[2])
 			{
 				// ROS_INFO(">2");
 				_rois[roi].probabilities[2] = probabilities[blobsOfNotInterest[i]];
 				_rois[roi].types[2] = _unknown_t;
-				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
 			}
 		}
 	}
@@ -404,7 +421,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
 
     //do not call classifier if no blobs or too many  blobs were extracted from segmentation
-	if(segmentImageSrv.response.coordinates.size()/2 < 1 && segmentImageSrv.response.coordinates.size()/2 > 1000)
+	if(segmentImageSrv.response.coordinates.size()/2 < 1 || segmentImageSrv.response.coordinates.size()/2 > 1000)
 	{
 		ROS_WARN("No blobs detected in image. Not performing classification.");
 		searchForSamplesMsgOut.sampleList.clear();
@@ -421,13 +438,15 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
 
-    //ALL SAMPLE CLASSIFIER (THIS WILL BE REMOVED ONCE THE OTHER CLASSIFIERS ARE TRAINED)
+    //ALL SAMPLE CLASSIFIER
+	G_sample_probabilities.clear();
 	imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-	imageProbabilitiesSrv.request.imgSize = 50; //50 will do 50x50 classifier, 150 will do 150x150 classifier (BUT 150x150 no longer exists)
-	imageProbabilitiesSrv.request.classifierType = 2;
+	imageProbabilitiesSrv.request.imgSize = 50;
+	imageProbabilitiesSrv.request.classifierType = 0;
 	if(classifierClient.call(imageProbabilitiesSrv))
 	{
-		ROS_INFO("imageProbabilitiesSrv call successful!");
+		ROS_INFO("imageProbabilitiesSrv call successful with type 0 (cach)!");
+		G_sample_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
 	}
 	else
 	{
@@ -440,109 +459,6 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return true;
 	}
 
-	G_cach_probabilities.clear();
-	G_hard_probabilities.clear();
-	G_rock_probabilities.clear();
-	G_sample_probabilities.clear();
-	G_sample_ids.clear();
-	if(req.roi == 0)
-	{
-		//precached sample classifier
-		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 0;
-		if(classifierClient.call(imageProbabilitiesSrv))
-		{
-			ROS_INFO("imageProbabilitiesSrv call successful with type 0 (cach)!");
-		}
-		else
-		{
-			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-			searchForSamplesMsgOut.sampleList.clear();
-			searchForSamplesMsgOut.procType = req.procType;
-			searchForSamplesMsgOut.serialNum = req.serialNum;
-			searchForSamplesPub.publish(searchForSamplesMsgOut);
-			ros::spinOnce();
-			return true;
-		}
-
-		//assign probabilties and sample ids
-		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs from segmentation
-		{
-			G_cach_probabilities.push_back(imageProbabilitiesSrv.response.responseProbabilities[i]);
-			G_hard_probabilities.push_back(0);
-			G_rock_probabilities.push_back(0);
-			G_sample_probabilities.push_back(imageProbabilitiesSrv.response.responseProbabilities[i]);
-			G_sample_ids.push_back(0);
-		}
-	}
-	else
-	{
-		//hard sample classifier
-		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 1;
-		if(classifierClient.call(imageProbabilitiesSrv))
-		{
-			ROS_INFO("imageProbabilitiesSrv call successful with type 1 (hard)!");
-			G_hard_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
-		}
-		else
-		{
-			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-			searchForSamplesMsgOut.sampleList.clear();
-			searchForSamplesMsgOut.procType = req.procType;
-			searchForSamplesMsgOut.serialNum = req.serialNum;
-			searchForSamplesPub.publish(searchForSamplesMsgOut);
-			ros::spinOnce();
-			return true;
-		}
-
-		//rock sample classifier
-		imageProbabilitiesSrv.request.numBlobs = segmentImageSrv.response.coordinates.size()/2;
-		imageProbabilitiesSrv.request.imgSize = 50;
-		imageProbabilitiesSrv.request.classifierType = 2;
-		if(classifierClient.call(imageProbabilitiesSrv))
-		{
-			ROS_INFO("imageProbabilitiesSrv call successful with type 2 (rock)!");
-			G_rock_probabilities = imageProbabilitiesSrv.response.responseProbabilities;
-		}
-		else
-		{
-			ROS_ERROR("Error! Failed to call service ImageProbabilities!");
-			searchForSamplesMsgOut.sampleList.clear();
-			searchForSamplesMsgOut.procType = req.procType;
-			searchForSamplesMsgOut.serialNum = req.serialNum;
-			searchForSamplesPub.publish(searchForSamplesMsgOut);
-			ros::spinOnce();
-			return true;
-		}
-
-		//make sure the number of blobs is correct
-		if(G_rock_probabilities.size() != G_hard_probabilities.size() || G_rock_probabilities.size() != segmentImageSrv.response.coordinates.size()/2)
-		{
-			ROS_ERROR("Error! The size of G_rock_probabilities and G_hard_probabilities should be equal to the number of blobs from segmentation!");
-		}
-
-		//assign probabilties and sample ids (use higher probability and the cooresponding id)
-		G_sample_probabilities.clear();
-		G_sample_ids.clear();
-		for(int i=0; i<segmentImageSrv.response.coordinates.size()/2; i++) //this is the number of blobs in rock and hard probabilities
-		{
-			G_cach_probabilities.push_back(0);
-			if(G_hard_probabilities[i] >= G_rock_probabilities[i])
-			{
-				G_sample_probabilities.push_back(G_hard_probabilities[i]);
-				G_sample_ids.push_back(1);
-			}
-			else
-			{
-				G_sample_probabilities.push_back(G_rock_probabilities[i]);
-				G_sample_ids.push_back(0);
-			}
-		}
-	}
-
 	gettimeofday(&this->localTimer, NULL);  
     double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for classifier service: %f", endClassifierTime - startClassifierTime);
@@ -553,11 +469,11 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	gettimeofday(&this->localTimer, NULL);
     double startColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0); 
 
-    //find samples of interest for extracting colors (sample must have at least 0.5 confidence)
+    //find samples of interest for extracting colors (sample must have at least 0.1 confidence)
 	std::vector<int> blobsOfInterest, blobsOfNotInterest;
 	for(int i=0; i<G_sample_probabilities.size(); i++)
 	{
-		if(G_sample_probabilities[i]>0.50)
+		if(G_sample_probabilities[i]>0.5)
 		{
 			blobsOfInterest.push_back(i);
 		}
@@ -587,9 +503,9 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	*/
 	gettimeofday(&this->localTimer, NULL);
     double startSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-
+    #if defined(SAVE_HIGH_PROBABILITY_BLOBS)
 	saveLowAndHighProbabilityBlobs(G_sample_probabilities, segmentImageSrv.response.coordinates);
-
+	#endif
 	gettimeofday(&this->localTimer, NULL);  
     double endSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for saving high probability blobs: %f", endSaveBlobsTime - startSaveBlobsTime);
@@ -599,15 +515,15 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	*/
 	gettimeofday(&this->localTimer, NULL);
     double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-
+    #if defined(SAVE_DETECTION_IMAGE)
 	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types, G_sample_probabilities);
-
+	#endif
 	gettimeofday(&this->localTimer, NULL);  
     double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for drawing output image: %f", endDrawTime - startDrawTime);
 
 	/*
-		Calculate the position and publish each sample requested
+		Calculate the position, analyze type, and publish each sample of the type requested
 	*/
 	gettimeofday(&this->localTimer, NULL);
     double startSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -615,6 +531,13 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
     std::vector<double> position;
 	messages::CVSampleProps sampleProps;
 	searchForSamplesMsgOut.sampleList.clear();
+	whiteSampleCounter = 0;
+	silverSampleCounter = 0;
+	blueOrPurpleSampleCounter = 0;
+	pinkSampleCounter = 0;
+	redSampleCounter = 0;
+	orangeSampleCounter = 0;
+	yellowSampleCounter = 0;
 	for(int i=0; i<blobsOfInterest.size(); i++)
 	{
 		//position of sample
@@ -634,25 +557,109 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		std::vector<SAMPLE_TYPE_T> possibleTypes = map_to_simple_color( static_cast<SAMPLE_TYPE_T>(extractColorSrv.response.types[i]) );
 		for(int j=0; j<possibleTypes.size(); j++) //change each type to true if possible
 		{
-			if(possibleTypes[j] == _white_t) sampleProps.white = true;
-			if(possibleTypes[j] == _silver_t) sampleProps.silver = true;
-			if(possibleTypes[j] == _blueOrPurple_t) sampleProps.blueOrPurple = true;
-			if(possibleTypes[j] == _pink_t) sampleProps.pink = true;
-			if(possibleTypes[j] == _red_t) sampleProps.red = true;
-			if(possibleTypes[j] == _orange_t) sampleProps.orange = true;
-			if(possibleTypes[j] == _yellow_t) sampleProps.yellow = true;
+			if(possibleTypes[j] == _white_t)
+			{
+				sampleProps.white = true;
+				whiteSampleCounter++;
+			}
+			if(possibleTypes[j] == _silver_t) 
+			{
+				sampleProps.silver = true;
+				silverSampleCounter++;
+			}
+			if(possibleTypes[j] == _blueOrPurple_t) 
+			{
+				sampleProps.blueOrPurple = true;
+				blueOrPurpleSampleCounter++;
+			}
+			if(possibleTypes[j] == _pink_t)
+			{
+				sampleProps.pink = true;
+				pinkSampleCounter++;
+			}
+			if(possibleTypes[j] == _red_t)
+			{
+				sampleProps.red = true;
+				redSampleCounter++;
+			}
+			if(possibleTypes[j] == _orange_t)
+			{
+				sampleProps.orange = true;
+				orangeSampleCounter++;
+			}
+			if(possibleTypes[j] == _yellow_t)
+			{
+				sampleProps.yellow = true;
+				yellowSampleCounter++;
+			}
 		}
 
 		//confidence of sample
-		sampleProps.confidenceCach = G_cach_probabilities[blobsOfInterest[i]];
-		sampleProps.confidenceHard = G_hard_probabilities[blobsOfInterest[i]];
-		sampleProps.confidenceRock = G_rock_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceCach = G_sample_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceHard = G_sample_probabilities[blobsOfInterest[i]];
+		sampleProps.confidenceRock = G_sample_probabilities[blobsOfInterest[i]];
 		sampleProps.confidence = G_sample_probabilities[blobsOfInterest[i]];
 
-		//add sample information to message
-		searchForSamplesMsgOut.sampleList.push_back(sampleProps);
-	}
+		//only publish results depending on expected probabilities
+		bool publish_sample_info = false;
+		bool lower_request_threshold = true; //lower the threshold unless 1 sample > 0.6
+		if(req.white > 0.6)
+		{
+			if(sampleProps.white == true) publish_sample_info = true;
+			lower_request_threshold = false;
+		}
+		
+		if(req.silver > 0.6)
+		{
+			if(sampleProps.silver == true) publish_sample_info = true;
+			lower_request_threshold = false;
+		}
+		
+		if(req.blueOrPurple > 0.6)
+		{
+			if(sampleProps.blueOrPurple == true) publish_sample_info = true;
+			lower_request_threshold = false;
+		}
+		
+		if(req.pink > 0.6 || req.red > 0.6)
+		{
+			if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
+			lower_request_threshold = false;
+		}
+		
+		if(req.orange > 0.6)
+		{
+			if(sampleProps.orange == true) publish_sample_info = true;
+			lower_request_threshold = false;
+		}
+		
+		if(req.yellow > 0.6)
+		{
+			if(sampleProps.yellow == true) publish_sample_info = true;	
+			lower_request_threshold = false;
+		}
+		
+		if(lower_request_threshold == true)
+		{
+			if(req.white > 0.03) if(sampleProps.white == true) publish_sample_info = true;
+			if(req.silver > 0.03) if(sampleProps.silver == true) publish_sample_info = true;
+			if(req.blueOrPurple > 0.03) if(sampleProps.blueOrPurple == true) publish_sample_info = true;
+			if(req.red > 0.03 || req.pink > 0.03) if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
+			if(req.orange > 0.03) if(sampleProps.orange == true) publish_sample_info = true;
+			if(req.yellow > 0.03) if(sampleProps.yellow == true) publish_sample_info = true;	
+		}
 
+		//add sample information to message
+		if(publish_sample_info==true)
+		{
+			ROS_INFO("Publishing detected samples...");
+			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
+		}
+		else
+		{
+			ROS_INFO("No samples of interest detected...");
+		}
+	}
 
 	gettimeofday(&this->localTimer, NULL);  
     double endSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
@@ -663,9 +670,9 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	*/
 	gettimeofday(&this->localTimer, NULL);
     double startROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
-
+    #if defined(SAVE_ROI_BLOBS)
 	saveTopROICandidates(blobsOfInterest, blobsOfNotInterest, extractColorSrv.response.types, G_sample_probabilities, req.roi);
-
+	#endif
 	gettimeofday(&this->localTimer, NULL);  
     double endROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
     ROS_INFO("Time taken in seconds for adding information to ROIs: %f", endROICandidatesTime - startROICandidatesTime);
@@ -673,6 +680,69 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 	/*
 		Publish results of search
 	*/
+
+	//check if too many sample are detected of a certain type
+	for(int i=0; i<searchForSamplesMsgOut.sampleList.size(); i++)
+	{
+		if(whiteSampleCounter > 15)
+		{
+			// if(searchForSamplesMsgOut.sampleList[i].white == true)
+			// {
+			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			// }
+			ROS_WARN("Too many white samples (%i not removed with current version of code)", whiteSampleCounter);
+		}
+		if(silverSampleCounter > 15)
+		{
+			// if(searchForSamplesMsgOut.sampleList[i].silver == true)
+			// {
+			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			// }
+			ROS_WARN("Too many silver samples (%i not removed with current version of code)", silverSampleCounter);
+		}
+		if(blueOrPurpleSampleCounter > 15)
+		{
+			// if(searchForSamplesMsgOut.sampleList[i].blueOrPurple == true)
+			// {
+			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			// }
+			ROS_WARN("Too many blueOrPurple samples (%i not removed with current version of code)", blueOrPurpleSampleCounter);
+		}
+		if(pinkSampleCounter > 15)
+		{
+			// if(searchForSamplesMsgOut.sampleList[i].pink == true)
+			// {
+			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			// }
+			ROS_WARN("Too many pink samples (%i not removed with current version of code)", pinkSampleCounter);
+		}
+		if(redSampleCounter > 15)
+		{
+			// if(searchForSamplesMsgOut.sampleList[i].red == true)
+			// {
+			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			// }
+			ROS_WARN("Too many red samples (%i not removed with current version of code)", redSampleCounter);
+		}
+		if(orangeSampleCounter > 15)
+		{
+			// if(searchForSamplesMsgOut.sampleList[i].orange == true)
+			// {
+			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			// }
+			ROS_WARN("Too many orange samples (%i not removed with current version of code)", orangeSampleCounter);
+		}
+		if(yellowSampleCounter > 15)
+		{
+			// if(searchForSamplesMsgOut.sampleList[i].yellow == true)
+			// {
+			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			// }
+			ROS_WARN("Too many yellow samples (not removed with current version of code)", yellowSampleCounter);
+		}
+	}
+
+	//publish results
     searchForSamplesMsgOut.procType = req.procType; //must return req.procType
     searchForSamplesMsgOut.serialNum = req.serialNum; //must return req.serialNum
     searchForSamplesPub.publish(searchForSamplesMsgOut);

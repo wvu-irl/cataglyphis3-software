@@ -217,9 +217,11 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             searchLocalMapExists = true;
             //grid_map::GridMapRosConverter::fromMessage(createROIKeyframeSrv.response.keyframe.map, ROIKeyframe);
             searchLocalMapToROIAngle = RAD2DEG*atan2(regionsOfInterest.at(req.roiIndex).s, regionsOfInterest.at(req.roiIndex).e) - fmod(globalPose.heading, 360.0);
-            sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
-            sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
+            //sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
+            //sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
+            searchLocalMap.setGeometry(grid_map::Length(regionsOfInterest.at(searchLocalMapROINum).radialAxis*2.0, regionsOfInterest.at(searchLocalMapROINum).tangentialAxis*2.0), mapResolution, grid_map::Position(0.0, 0.0));
             searchLocalMap.add(layerToString(_localMapDriveability), 0.0);
+            searchLocalMap.add(layerToString(_sampleProb), 1.0);
             for(int i=0; i<createROIHazardMapSrv.response.x_mean.size(); i++)
             {
                 searchLocalMapCoord[0] = createROIHazardMapSrv.response.x_mean.at(i);
@@ -230,12 +232,12 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                 //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 if(searchLocalMap.isInside(searchLocalMapCoord)) searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
             }
-            for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
+            /*for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
                 rotateCoord(searchLocalMapCoord[0], searchLocalMapCoord[1], ROIX, ROIY, searchLocalMapToROIAngle);
                 searchLocalMap.at(layerToString(_sampleProb), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
-            }
+            }*/
             grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
             searchLocalMapPub.publish(searchLocalMapMsg);
         }
@@ -551,8 +553,13 @@ void MapManager::keyframeRelPoseCallback(const messages::SLAMPoseOut::ConstPtr &
 
 void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr &msg) // need to figure out how the sample prob update works
 {
+    highestSampleValue = 0.0;
     cvSamplesFoundMsg = *msg;
-    if(searchLocalMapExists/* && (keyframeRelPose.keyframeIndex == currentROIMsg.currentROINum)*/) // Do we want this condition?
+    for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+    {
+        if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestSampleValue) highestSampleValue = cvSamplesFoundMsg.sampleList.at(i).confidence;
+    }
+    if(searchLocalMapExists && (highestSampleValue < possibleSampleConfThresh))
     {
         //donutSmash(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY));
         //addFoundSamples(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
@@ -580,6 +587,37 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
         else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveability) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialValue);
         else if(static_cast<MAP_LAYERS_T>(i)==_keyframeDriveabilityConf) map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), keyframeDriveabilityInitialConf);
         else map.add(layerToString(static_cast<MAP_LAYERS_T>(i)), 0.0);
+    }
+}
+
+void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
+{
+    donutSmashVerticies.clear();
+    donutSmashVerticies.resize(4);
+    donutSmashVerticies.at(0)[0] = pos[0] + donutSmashSearchRadius;
+    donutSmashVerticies.at(0)[1] = pos[1] + donutSmashSearchRadius;
+    donutSmashVerticies.at(1)[0] = pos[0] - donutSmashSearchRadius;
+    donutSmashVerticies.at(1)[1] = pos[1] + donutSmashSearchRadius;
+    donutSmashVerticies.at(2)[0] = pos[0] - donutSmashSearchRadius;
+    donutSmashVerticies.at(2)[1] = pos[1] - donutSmashSearchRadius;
+    donutSmashVerticies.at(3)[0] = pos[0] + donutSmashSearchRadius;
+    donutSmashVerticies.at(3)[1] = pos[1] - donutSmashSearchRadius;
+    donutSmashPolygon.removeVertices();
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(0));
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(1));
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(2));
+    donutSmashPolygon.addVertex(donutSmashVerticies.at(3));
+    searchLocalMap.getIndex(pos, donutSmashRobotPosIndex);
+    for(grid_map::PolygonIterator polyIt(searchLocalMap, donutSmashPolygon); !polyIt.isPastEnd(); ++polyIt)
+    {
+        if((*polyIt)[0] != donutSmashRobotPosIndex[0] && (*polyIt)[1] != donutSmashRobotPosIndex[1])
+        {
+            //searchLocalMap.at(layerToString(_sampleProb), *polyIt) -= push down
+            for(grid_map::GridMapIterator wholeIt(searchLocalMap); !wholeIt.isPastEnd(); ++wholeIt)
+            {
+                if((*wholeIt)[0] != (*polyIt)[0] && (*wholeIt)[1] != (*polyIt)[1]) ;//searchLocalMap.at(layerToString(_sampleProb), *wholeIt) -= push up
+            }
+        }
     }
 }
 
@@ -670,7 +708,7 @@ void MapManager::writeKeyframesIntoGlobalMap()
         for(grid_map::GridMapIterator it(globalMap); !it.isPastEnd(); ++it)
         {
             globalMap.getPosition(*it, globalTransformCoord);
-            rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], -keyframeHeading);
+            rotateCoord(globalTransformCoord[0]-keyframeXPos, globalTransformCoord[1]-keyframeYPos, keyframeCoord[0], keyframeCoord[1], keyframeHeading);
             if(currentKeyframe.isInside(keyframeCoord))
             {
                 if(currentKeyframe.atPosition(layerToString(_keyframeDriveability), keyframeCoord)!=0.0)

@@ -48,8 +48,13 @@ LidarFilter::LidarFilter()
 	_homing_y = 0;
 	_homing_heading = 0;
 	_homing_found = false;
+	_dull_x = 0.0;
+	_dull_y = 0.0;
+	_shiny_x = 0.0;
+	_shiny_y = 0.0;
+	_cylinder_std = 100.0;
 
-	//clouds stitch
+	//clouds stack
 	pcl::PointCloud<pcl::PointXYZI> _piece_one;
 	pcl::PointCloud<pcl::PointXYZI> _piece_two;
 	pcl::PointCloud<pcl::PointXYZI> _piece_three;
@@ -134,7 +139,6 @@ void LidarFilter::registrationCallback(pcl::PointCloud<pcl::PointXYZI> const &in
 {
 	pcl::PointCloud<pcl::PointXYZI> temp_cloud = input_cloud;
     _registration_counter = _registration_counter + 1;
-    _stitch_counter = _stitch_counter + 1;
 
     //calculate rotation from lidar to robot body then compensate for the robot tilt
     Eigen::Matrix3f R_temporary = _R_tilt_robot_to_beacon*_R_lidar_to_robot;
@@ -185,34 +189,37 @@ bool LidarFilter::newPointCloudAvailable()
 	}
 }
 
-void LidarFilter::stitchClouds() //try to stitch 5 scans into 1
+void LidarFilter::stackClouds()
 {
-	if(_stitch_counter % 5 == 1) // initialize single point cloud
+	//stack clouds incrementally (only stack the filtered clouds)
+	if(_stack_counter == 0)
 	{
-		_piece_one = _input_cloud;
-        _input_cloud = _piece_one;
+		_piece_one = _object_filtered;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter % 5 == 2) // stitch second point cloud to the 
+	else if(_stack_counter == 1)
 	{
-		_piece_two = _input_cloud + _piece_one;
-        _input_cloud = _piece_two;
+		_piece_two = _object_filtered + _piece_one;
+        _object_filtered = _piece_two;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter % 5 == 3)
+	else if(_stack_counter == 2)
 	{
-		_piece_three = _input_cloud + _piece_two;
-        _input_cloud = _piece_three;
+		_piece_three = _object_filtered + _piece_two;
+        _object_filtered = _piece_three;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter % 5 == 4)
+	else if(_stack_counter == 3)
 	{
-		_piece_four = _input_cloud + _piece_three;
-        _input_cloud = _piece_four;
+		_piece_four = _object_filtered + _piece_three;
+        _object_filtered = _piece_four;
+        _stack_counter = _stack_counter + 1;
 	}
-	else if(_stitch_counter % 5 == 0 && _stitch_counter != 0)
+	else if(_stack_counter == 4)
 	{
-		_piece_five = _input_cloud + _piece_four;
-        _input_cloud = _piece_five;
-		// clean up one to five
-		
+		_piece_five = _object_filtered + _piece_four;
+        _object_filtered = _piece_five;
+        _stack_counter = 0;
 	}
 }
  
@@ -264,15 +271,26 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 		msg.homing_x = _homing_x;
 		msg.homing_y = _homing_y;
 		msg.homing_heading = _homing_heading;
-		msg.homing_found = _homing_found;		
+		msg.homing_found = _homing_found;	
+		msg.dull_x = _dull_x;
+		msg.dull_y = _dull_y;
+		msg.shiny_x = _shiny_x;
+		msg.shiny_y = _shiny_y;	
+		msg.cylinder_std = _cylinder_std;		
 	}
 	else
 	{
 		msg.homing_x = 0;
 		msg.homing_y = 0;
 		msg.homing_heading = 0;
-		msg.homing_found = _homing_found;			
+		msg.homing_found = _homing_found;	
+		msg.dull_x = 0.0;
+		msg.dull_y = 0.0;
+		msg.shiny_x = 0.0;
+		msg.shiny_y = 0.0;	
+		msg.cylinder_std = 100.0;			
 	}
+	msg.registration_counter = _registration_counter;
 	msg.terrain_type = 0; // Set this based on terrain classification. 1 means obstacles/sidewalk/anything we need to go slow on, 0 means clear, grassy, go full speed
 }
 
@@ -283,7 +301,7 @@ void LidarFilter::doMathMapping()
 	*cloud = _input_cloud;
 
 	ROS_INFO("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*");
-	//ROS_INFO("Running callback function with %i points.",cloud->points.size());
+	// ROS_INFO("Running callback function with %i points.",cloud->points.size());
 
 	//test the intensity data
     //for (int jj=1; jj<cloud->points.size();jj++)
@@ -311,14 +329,15 @@ void LidarFilter::doMathMapping()
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(cloud);
 	pass.setFilterFieldName("x");
-	pass.setFilterLimits(-map_range,map_range);
+	pass.setFilterLimits(-map_range,map_range - 0.1);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("y");
-	pass.setFilterLimits(-map_range,map_range);
+	pass.setFilterLimits(-map_range,map_range - 0.1);
 	pass.filter(*cloud);
 	pass.setFilterFieldName("z");
 	pass.setFilterLimits(-1*threshold_tree_height,1.5); //positive z is down, negative z is up
 	pass.filter(*cloud);
+
 
 	//save point cloud after hard thresholds
 	// std::stringstream ss1;
@@ -358,7 +377,7 @@ void LidarFilter::doMathMapping()
 	seg_plane.setModelType (pcl::SACMODEL_PLANE);
 	seg_plane.setMethodType (pcl::SAC_RANSAC);
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
-	seg_plane.setDistanceThreshold (0.15); //ground detection threshold parameter
+    seg_plane.setDistanceThreshold (0.25); //ground detection threshold parameter
 	seg_plane.setInputCloud (cloud); //was raw_cloud
 
 	//segment the points fitted to the plane using ransac
@@ -378,6 +397,7 @@ void LidarFilter::doMathMapping()
 	extract.setNegative (true);
 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
 	extract.filter (*object_filtered);
+
 
 	//copy filtered point cloud after hard thresholding and ground removal
 	_object_filtered = *object_filtered; 
@@ -436,7 +456,6 @@ void LidarFilter::doMathMapping()
 	    grid_map_cells[index].push_back(point);
 	    point.clear();
 	}
-
 	//clear it up before using it
 	// _local_grid_map.clear();
 
@@ -485,253 +504,253 @@ void LidarFilter::doMathMapping()
 	_object_filtered = *object_filtered; 
 }
 
-void LidarFilter::doMathHoming()
-{
-	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
-	*object_filtered= _object_filtered;
+// void LidarFilter::doMathHoming()
+// {
+// 	pcl::PointCloud<pcl::PointXYZI>::Ptr object_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+// 	*object_filtered= _object_filtered;
 
-	// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
-	// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
-	pcl::PassThrough<pcl::PointXYZI> pass;
-	pass.setInputCloud(object_filtered);
-    pass.setFilterFieldName("z");
-    pass.setFilterLimits(-5,5); 
-    pass.filter(*object_filtered);
-    pass.setInputCloud(object_filtered);
-    pass.setFilterFieldName("x");
-    pass.setFilterLimits(-home_detection_range,home_detection_range);
-    pass.filter(*object_filtered);
-    pass.setInputCloud(object_filtered);
-    pass.setFilterFieldName("y");
-    pass.setFilterLimits(-home_detection_range,home_detection_range); 
-    pass.filter(*object_filtered);
-    //ROS_INFO("PassThrough done.");
+// 	// FROM HERE, IS THE HOME BEACON CYLINDER DETECTION PART
+// 	// ONLY KEEP POINTS WITHIN THE HOME DETECTION RANGE
+// 	pcl::PassThrough<pcl::PointXYZI> pass;
+// 	pass.setInputCloud(object_filtered);
+//     pass.setFilterFieldName("z");
+//     pass.setFilterLimits(-5,5); 
+//     pass.filter(*object_filtered);
+//     pass.setInputCloud(object_filtered);
+//     pass.setFilterFieldName("x");
+//     pass.setFilterLimits(-home_detection_range,home_detection_range);
+//     pass.filter(*object_filtered);
+//     pass.setInputCloud(object_filtered);
+//     pass.setFilterFieldName("y");
+//     pass.setFilterLimits(-home_detection_range,home_detection_range); 
+//     pass.filter(*object_filtered);
+//     //ROS_INFO("PassThrough done.");
 	
-	// std::stringstream ss;
-	// ss << "file.pcd";
-	// pcl::io::savePCDFile( ss.str(), *object_filtered);
+// 	// std::stringstream ss;
+// 	// ss << "file.pcd";
+// 	// pcl::io::savePCDFile( ss.str(), *object_filtered);
 
-    // CREATING THE KDTREE OBJECT FOR THE SEARCH METHOD OF THE EXTRACTION
-    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>); //for clustering
-    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZI> ());
-    tree->setInputCloud (object_filtered);
-    //cout << "0" << endl;
+//     // CREATING THE KDTREE OBJECT FOR THE SEARCH METHOD OF THE EXTRACTION
+//     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>); //for clustering
+//     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZI> ());
+//     tree->setInputCloud (object_filtered);
+//     //cout << "0" << endl;
     
-    //use the euclidean clustering method to put points into different clusters based on their relative distance
-    std::vector<pcl::PointIndices> cluster_indices;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-    ec.setClusterTolerance (0.3); // distance threshold
-    ec.setMinClusterSize (50); //minial size to generate a cluster 
-    ec.setMaxClusterSize (5000); //max size
-    ec.setSearchMethod (tree);
-    ec.setInputCloud (object_filtered); //use the points after ground removal 
-    ec.extract (cluster_indices);
+//     //use the euclidean clustering method to put points into different clusters based on their relative distance
+//     std::vector<pcl::PointIndices> cluster_indices;
+//     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+//     ec.setClusterTolerance (0.3); // distance threshold
+//     ec.setMinClusterSize (50); //minial size to generate a cluster 
+//     ec.setMaxClusterSize (5000); //max size
+//     ec.setSearchMethod (tree);
+//     ec.setInputCloud (object_filtered); //use the points after ground removal 
+//     ec.extract (cluster_indices);
 
-    //cout << "1" << endl;
+//     //cout << "1" << endl;
     
-    //generate empty clouds to hold previous cluster
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
+//     //generate empty clouds to hold previous cluster
+//     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
+//     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
 
-    for (int ii=0;ii<cluster_indices.size ();ii++)
-    {
-        points_cluster.push_back(cloud_middle);
-    }
+//     for (int ii=0;ii<cluster_indices.size ();ii++)
+//     {
+//         points_cluster.push_back(cloud_middle);
+//     }
     
-	    //cout << "2" << endl;
+// 	    //cout << "2" << endl;
 	    
-    //put above clusters into differnt point clouds
-    int j = 0;
-    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
-    {
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
-        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
-        {
-        	cloud_cluster->points.push_back (object_filtered->points[*pit]);
-        }
-        cloud_cluster->width = cloud_cluster->points.size ();
-        cloud_cluster->height = 1;
-        cloud_cluster->is_dense = true;
-        points_cluster[j] = cloud_cluster;
-        j++;
-    }
+//     //put above clusters into differnt point clouds
+//     int j = 0;
+//     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
+//     {
+//         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
+//         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//         {
+//         	cloud_cluster->points.push_back (object_filtered->points[*pit]);
+//         }
+//         cloud_cluster->width = cloud_cluster->points.size ();
+//         cloud_cluster->height = 1;
+//         cloud_cluster->is_dense = true;
+//         points_cluster[j] = cloud_cluster;
+//         j++;
+//     }
 
-    //from here is the cylinder detection method 
-    //input data is previous clusters
-    //loop through clusters
-    //ROS_INFO("%i clusters extracted from scan.", points_cluster.size());
+//     //from here is the cylinder detection method 
+//     //input data is previous clusters
+//     //loop through clusters
+//     //ROS_INFO("%i clusters extracted from scan.", points_cluster.size());
 
 	
-	//parameters need to run the cylinder detection algorithm
-	pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
-	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
-	pcl::SACSegmentationFromNormals<pcl::PointXYZI, pcl::Normal> seg;
-	pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
-	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
-	pcl::ExtractIndices<pcl::PointXYZI> extract;
-	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZI> ());
+// 	//parameters need to run the cylinder detection algorithm
+// 	pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
+// 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+// 	pcl::SACSegmentationFromNormals<pcl::PointXYZI, pcl::Normal> seg;
+// 	pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
+// 	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
+// 	pcl::ExtractIndices<pcl::PointXYZI> extract;
+// 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZI> ());
 
-	//define variables for point intensity value checking
-	int high_intensity_counter = 0;
-	int high_intensity_threshold = 200;
-	bool high_intensity_cluster = false;
+// 	//define variables for point intensity value checking
+// 	int high_intensity_counter = 0;
+// 	int high_intensity_threshold = 200;
+// 	bool high_intensity_cluster = false;
 
-    //make sure cylinder vector is cleared
-    _cylinders.clear();
+//     //make sure cylinder vector is cleared
+//     _cylinders.clear();
 
-    //loop through all clusters
-    for (int i=0; i<points_cluster.size(); i++)
-    {
-    	// pre-check if that particular cluser fit the general requirement
-    	float max_x_pre = 0;
-    	float min_x_pre = 0;
-    	float max_y_pre = 0;
-    	float min_y_pre = 0;
-    	float max_z_pre = 0;
-    	float min_z_pre = 0;
+//     //loop through all clusters
+//     for (int i=0; i<points_cluster.size(); i++)
+//     {
+//     	// pre-check if that particular cluser fit the general requirement
+//     	float max_x_pre = 0;
+//     	float min_x_pre = 0;
+//     	float max_y_pre = 0;
+//     	float min_y_pre = 0;
+//     	float max_z_pre = 0;
+//     	float min_z_pre = 0;
 
-    	max_x_pre = points_cluster[i]->points[0].x;
-    	min_x_pre = points_cluster[i]->points[0].x;
-    	max_y_pre = points_cluster[i]->points[0].y;
-    	min_y_pre = points_cluster[i]->points[0].y;
-    	max_z_pre = points_cluster[i]->points[0].z;
-    	min_z_pre = points_cluster[i]->points[0].z;
+//     	max_x_pre = points_cluster[i]->points[0].x;
+//     	min_x_pre = points_cluster[i]->points[0].x;
+//     	max_y_pre = points_cluster[i]->points[0].y;
+//     	min_y_pre = points_cluster[i]->points[0].y;
+//     	max_z_pre = points_cluster[i]->points[0].z;
+//     	min_z_pre = points_cluster[i]->points[0].z;
 
-    	for (int ii=0; ii<points_cluster[i]->points.size();ii++)
-    	{
-    		if(points_cluster[i]->points[ii].x > max_x_pre)
-    		{
-    			max_x_pre = points_cluster[i]->points[ii].x;
-    		}
-    		if(points_cluster[i]->points[ii].x < min_x_pre)
-    		{
-    			min_x_pre = points_cluster[i]->points[ii].x;
-    		}
-    		if(points_cluster[i]->points[ii].y > max_y_pre)
-    		{
-    			max_y_pre = points_cluster[i]->points[ii].y;
-    		}
-    		if(points_cluster[i]->points[ii].y < min_y_pre)
-    		{
-    			min_y_pre = points_cluster[i]->points[ii].y;
-    		}
-    		if(points_cluster[i]->points[ii].z > max_z_pre)
-    		{
-    			max_z_pre = points_cluster[i]->points[ii].z;
-    		}
-    		if(points_cluster[i]->points[ii].z < min_z_pre)
-    		{
-    			min_z_pre = points_cluster[i]->points[ii].z;
-    		}
+//     	for (int ii=0; ii<points_cluster[i]->points.size();ii++)
+//     	{
+//     		if(points_cluster[i]->points[ii].x > max_x_pre)
+//     		{
+//     			max_x_pre = points_cluster[i]->points[ii].x;
+//     		}
+//     		if(points_cluster[i]->points[ii].x < min_x_pre)
+//     		{
+//     			min_x_pre = points_cluster[i]->points[ii].x;
+//     		}
+//     		if(points_cluster[i]->points[ii].y > max_y_pre)
+//     		{
+//     			max_y_pre = points_cluster[i]->points[ii].y;
+//     		}
+//     		if(points_cluster[i]->points[ii].y < min_y_pre)
+//     		{
+//     			min_y_pre = points_cluster[i]->points[ii].y;
+//     		}
+//     		if(points_cluster[i]->points[ii].z > max_z_pre)
+//     		{
+//     			max_z_pre = points_cluster[i]->points[ii].z;
+//     		}
+//     		if(points_cluster[i]->points[ii].z < min_z_pre)
+//     		{
+//     			min_z_pre = points_cluster[i]->points[ii].z;
+//     		}
 
-    		//check if enough high intensity points are detected in one cluster
-    		if(points_cluster[i]->points[ii].intensity > high_intensity_threshold)
-    		{
-    			high_intensity_counter = high_intensity_counter + 1;
-    		}
+//     		//check if enough high intensity points are detected in one cluster
+//     		if(points_cluster[i]->points[ii].intensity > high_intensity_threshold)
+//     		{
+//     			high_intensity_counter = high_intensity_counter + 1;
+//     		}
 
-    	}
+//     	}
 
-    	// a cluster needs to have at least 15 high intensity points
-    	if (high_intensity_counter > 15)
-    	{
-    		high_intensity_cluster = true;
-    	}
+//     	// a cluster needs to have at least 15 high intensity points
+//     	if (high_intensity_counter > 15)
+//     	{
+//     		high_intensity_cluster = true;
+//     	}
 
-	    //pre check to filter out some obvious false detection
-    	if(high_intensity_cluster == true && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) > 0.5 && fabs(max_z_pre - min_z_pre) < 3)
-    	{
-    		ne.setSearchMethod (tree2);
-	        ne.setInputCloud (points_cluster[i]);
-	        ne.setKSearch (25); //use 25 nearest points to run the algorithm
-	        ne.compute (*cloud_normals);
+// 	    //pre check to filter out some obvious false detection
+//     	if(high_intensity_cluster == true && fabs(max_x_pre - min_x_pre) < 1 && fabs(max_y_pre - min_y_pre) < 1 && fabs(max_z_pre - min_z_pre) > 0.5 && fabs(max_z_pre - min_z_pre) < 3)
+//     	{
+//     		ne.setSearchMethod (tree2);
+// 	        ne.setInputCloud (points_cluster[i]);
+// 	        ne.setKSearch (25); //use 25 nearest points to run the algorithm
+// 	        ne.compute (*cloud_normals);
 
-	        //ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
+// 	        //ROS_INFO("cluster %i has %i points", i, cloud_normals->points.size());
 
-	        // CREATE THE SEGMENTATION OBJECT FOR CYLINDER SEGMENTATION AND SET ALL THE PARAMETERS
-	        seg.setOptimizeCoefficients (true);
-	        seg.setModelType (pcl::SACMODEL_CYLINDER);
-	        seg.setMethodType (pcl::SAC_RANSAC);
-	        seg.setNormalDistanceWeight (0.01);
-	        seg.setMaxIterations (1000);
-	        seg.setDistanceThreshold (0.05);
-	        seg.setRadiusLimits (0.14,0.17);
-	        seg.setInputCloud (points_cluster[i]);
-	        seg.setInputNormals (cloud_normals);
+// 	        // CREATE THE SEGMENTATION OBJECT FOR CYLINDER SEGMENTATION AND SET ALL THE PARAMETERS
+// 	        seg.setOptimizeCoefficients (true);
+// 	        seg.setModelType (pcl::SACMODEL_CYLINDER);
+// 	        seg.setMethodType (pcl::SAC_RANSAC);
+// 	        seg.setNormalDistanceWeight (0.01);
+// 	        seg.setMaxIterations (1000);
+// 	        seg.setDistanceThreshold (0.05);
+// 	        seg.setRadiusLimits (0.14,0.17);
+// 	        seg.setInputCloud (points_cluster[i]);
+// 	        seg.setInputNormals (cloud_normals);
 
-	        // OBTAIN THE CYLINDER INLIERS AND COEFFICIENTS
-	        seg.segment (*inliers_cylinder, *coefficients_cylinder);
-	        extract.setInputCloud (points_cluster[i]);
-	        extract.setIndices (inliers_cylinder);
-	        extract.setNegative (false);
-	        extract.filter (*cloud_cylinder);
-	        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
+// 	        // OBTAIN THE CYLINDER INLIERS AND COEFFICIENTS
+// 	        seg.segment (*inliers_cylinder, *coefficients_cylinder);
+// 	        extract.setInputCloud (points_cluster[i]);
+// 	        extract.setIndices (inliers_cylinder);
+// 	        extract.setNegative (false);
+// 	        extract.filter (*cloud_cylinder);
+// 	        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
 	        
-	        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
-	        cylinder current_cylinder;
-	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
-	        {
-	            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
-	            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
-	                                            << coefficients_cylinder->values[1] << " "
-	                                            << coefficients_cylinder->values[2] << " "
-	                                            << coefficients_cylinder->values[3] << " "
-	                                            << coefficients_cylinder->values[4] << " "
-	                                            << coefficients_cylinder->values[5] << " "
-	                                            << coefficients_cylinder->values[6] << endl;
-	            cout << "Probability is " << seg.getProbability () << endl;
+// 	        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
+// 	        cylinder current_cylinder;
+// 	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
+// 	        {
+// 	            ROS_INFO("cluster %i has the size of %i and has fit the cylinder model with probability %f", i, cloud_normals->points.size(), seg.getProbability());
+// 	            cout << "Model coefficients: " << coefficients_cylinder->values[0] << " "
+// 	                                            << coefficients_cylinder->values[1] << " "
+// 	                                            << coefficients_cylinder->values[2] << " "
+// 	                                            << coefficients_cylinder->values[3] << " "
+// 	                                            << coefficients_cylinder->values[4] << " "
+// 	                                            << coefficients_cylinder->values[5] << " "
+// 	                                            << coefficients_cylinder->values[6] << endl;
+// 	            cout << "Probability is " << seg.getProbability () << endl;
 
-	            //test the intensity data
-	            //for (int jj=1; jj<cloud_cylinder->points.size();jj++)
-	            //{
-	            //	cout << cloud_cylinder->points[jj].intensity << endl;
-	            //}
+// 	            //test the intensity data
+// 	            //for (int jj=1; jj<cloud_cylinder->points.size();jj++)
+// 	            //{
+// 	            //	cout << cloud_cylinder->points[jj].intensity << endl;
+// 	            //}
 
-				float max_x = cloud_cylinder->points[0].x;
-				float max_y = cloud_cylinder->points[0].y;
-				float min_x = cloud_cylinder->points[0].x;
-				float min_y = cloud_cylinder->points[0].y;
-				for (int jj=1; jj<cloud_cylinder->points.size();jj++)
-				{
-					if(cloud_cylinder->points[jj].x > max_x)
-					    max_x = cloud_cylinder->points[jj].x;
-					if(cloud_cylinder->points[jj].y > max_y)
-					    max_y = cloud_cylinder->points[jj].y;
-					if(cloud_cylinder->points[jj].x < min_x)
-					    min_x = cloud_cylinder->points[jj].x;
-					if(cloud_cylinder->points[jj].y < min_y)
-					    min_y = cloud_cylinder->points[jj].y;
-			    }
-				if(fabs(max_x-min_x)<0.6 && fabs(max_y-min_y)<0.6)
-				{
-					current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
-					current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
-					current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
-					current_cylinder.axis_direction(0,0) =  (double)coefficients_cylinder->values[3];
-					current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
-					current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
-					current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
+// 				float max_x = cloud_cylinder->points[0].x;
+// 				float max_y = cloud_cylinder->points[0].y;
+// 				float min_x = cloud_cylinder->points[0].x;
+// 				float min_y = cloud_cylinder->points[0].y;
+// 				for (int jj=1; jj<cloud_cylinder->points.size();jj++)
+// 				{
+// 					if(cloud_cylinder->points[jj].x > max_x)
+// 					    max_x = cloud_cylinder->points[jj].x;
+// 					if(cloud_cylinder->points[jj].y > max_y)
+// 					    max_y = cloud_cylinder->points[jj].y;
+// 					if(cloud_cylinder->points[jj].x < min_x)
+// 					    min_x = cloud_cylinder->points[jj].x;
+// 					if(cloud_cylinder->points[jj].y < min_y)
+// 					    min_y = cloud_cylinder->points[jj].y;
+// 			    }
+// 				if(fabs(max_x-min_x)<0.6 && fabs(max_y-min_y)<0.6)
+// 				{
+// 					current_cylinder.point_in_space(0,0) =  (double)coefficients_cylinder->values[0];
+// 					current_cylinder.point_in_space(1,0) = -(double)coefficients_cylinder->values[1];
+// 					current_cylinder.point_in_space(2,0) = -(double)coefficients_cylinder->values[2];
+// 					current_cylinder.axis_direction(0,0) =  (double)coefficients_cylinder->values[3];
+// 					current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
+// 					current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
+// 					current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
 			    	
-					current_cylinder.points.zeros(4,cloud_cylinder->points.size());
-					for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
-					{
-						current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
-						current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
-						current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
-					}
-					//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
-					_cylinders.push_back(current_cylinder);
-				}
-	        }
-    	}   
-    }
+// 					current_cylinder.points.zeros(4,cloud_cylinder->points.size());
+// 					for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
+// 					{
+// 						current_cylinder.points(0,jj)= (double)cloud_cylinder->points[jj].x;
+// 						current_cylinder.points(1,jj)=-(double)cloud_cylinder->points[jj].y;
+// 						current_cylinder.points(2,jj)=-(double)cloud_cylinder->points[jj].z;
+// 					}
+// 					//cout << "current_cylinder.points size = " << current_cylinder.points.n_rows << ", " << current_cylinder.points.n_cols << endl;
+// 					_cylinders.push_back(current_cylinder);
+// 				}
+// 	        }
+//     	}   
+//     }
     
-    //begin homing detection from cylinders
-    if(_cylinders.size()>=2) 
-    {
-    	fitCylinderShort();
-	}
-}
+//     //begin homing detection from cylinders
+//     if(_cylinders.size()>=2) 
+//     {
+//     	fitCylinderShort();
+// 	}
+// }
 
 
 //use this member function to detect homing cylinder from a long distance 10 m < distance < 20 m
@@ -986,10 +1005,6 @@ void LidarFilter::doLongDistanceHoming()
     {
     	fitCylinderLong();
     }
-    if(_stitch_counter >=5)
-    {
-    	_stitch_counter = 0;
-    }
 }
 
 void LidarFilter::fitCylinderLong()
@@ -1045,7 +1060,7 @@ void LidarFilter::fitCylinderLong()
 			_potential_cylinders_nonintensity[jj].point_in_space(1,0) = c2_y;
 
 			//std::cout << "fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist) = " << fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist) << std::endl;
-    		if (fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.2)
+    		if (fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.1)
     		{
     			cylinder_found = true;
     			keep_intensity = ii;
@@ -1084,7 +1099,7 @@ void LidarFilter::fitCylinderLong()
 		X(3,0) = cy2; //column 2 y-center
 
 
-		for (int ii = 0; ii<20; ii++)
+		for (int ii = 0; ii<30; ii++)
 		{
 			ax1 = X(0,0);
 			ay1 = X(1,0);
@@ -1102,6 +1117,7 @@ void LidarFilter::fitCylinderLong()
 				//std::cout << "sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1)) = " << (x-ax1)*(x-ax1)+(y-ay2)*(y-ay1) << std::endl;
 				J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
 				J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
+				W(jj,jj)= 1.0/((0.01+0.02/30*sqrt(x*x+y*y))*(0.01+0.02/30*sqrt(x*x+y*y)));
 				//std:: cout << "sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) = " << sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) << std::endl;
 			}
 			for (int jj = n1; jj<n1+n2; jj++)
@@ -1112,6 +1128,7 @@ void LidarFilter::fitCylinderLong()
 				//std::cout << "sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2)) = " << (x-ax2)*(x-ax2)+(y-ay2)*(y-ay2) << std::endl;
 				J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
 				J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
+				W(jj,jj)= 1.0/((0.01+0.02/30*sqrt(x*x+y*y))*(0.01+0.02/30*sqrt(x*x+y*y)));
 				//std:: cout << "sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) = " << sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) << std::endl;
 			}
 			FX(n1+n2,0) = sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2))-dist;
@@ -1126,11 +1143,11 @@ void LidarFilter::fitCylinderLong()
 			//std::cout << "arma::cond(JtWJ) = " << arma::cond(JtWJ) << std::endl;
 			if (!JtWJ.has_nan() && !JtWJ.has_inf())
 			{
-				//X = X-0.25*arma::solve(JtWJ,J.st()*W*FX);
+				X = X-0.25*arma::solve(JtWJ,J.st()*W*FX);
 				//std::cout << "arma::inv(JtWJ) = " << arma::inv(JtWJ) << std::endl;
 				//std::cout << "FX = " << FX << std::endl;
 				//std::cout << "0.25*arma::inv(JtWJ)*J.st()*W*FX = " << 0.25*arma::inv(JtWJ)*J.st()*W*FX << std::endl;
-				X = X-0.25*arma::inv(JtWJ)*J.st()*W*FX;
+				// X = X-0.25*arma::inv(JtWJ)*J.st()*W*FX;
 			}
 			else
 			{
@@ -1175,7 +1192,7 @@ void LidarFilter::fitCylinderLong()
 		std::cout << "y_est_k = " << y_est_k << std::endl;
 		std::cout << "heading_est_k = " << heading_est_k*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
 
-		x_mean = (cx1+cx2)/2;
+		/*x_mean = (cx1+cx2)/2;
 		y_mean = (cy1+cy2)/2;
 		d = sqrt(x_mean*x_mean+y_mean*y_mean);
 
@@ -1210,32 +1227,48 @@ void LidarFilter::fitCylinderLong()
 		ROS_INFO("\nHOMING UPDATE!");
 		ROS_INFO("x = %f", x_est_k);
 		ROS_INFO("y = %f", y_est_k);
-		ROS_INFO("heading = %f", heading_est_k*180.0/3.14159265);
+		ROS_INFO("heading = %f", heading_est_k*180.0/3.14159265);*/
+
+		arma::mat P_c = arma::inv(JtWJ);
 
 		_homing_x=x_est_k;
 		_homing_y=y_est_k;
 		_homing_heading=heading_est_k;
 		_homing_found=true;
-		_stitch_counter=0;
-		ROS_INFO("********************");
-		ROS_INFO("x_est = %f",x_est);
-		ROS_INFO("y_est = %f",y_est);
-		ROS_INFO("x_mean = %f",x_mean);
-		ROS_INFO("y_mean = %f",y_mean);
-		ROS_INFO("heading = %f\n",heading_est);
-		ROS_INFO("explode = %i\n",explode);
+		_dull_x=X(2,0);
+		_dull_y=X(3,0);
+		_shiny_x=X(0,0);
+		_shiny_y=X(1,0);
+		_cylinder_std = sqrt(P_c(0,0)*P_c(0,0)+P_c(1,1)*P_c(1,1)+P_c(2,2)*P_c(2,2)+P_c(3,3)*P_c(3,3));
+
+		// ROS_INFO("********************");
+		// ROS_INFO("x_est = %f",x_est_k);
+		// ROS_INFO("y_est = %f",y_est_k);
+		// ROS_INFO("x_mean = %f",x_mean_k);
+		// ROS_INFO("y_mean = %f",y_mean_k);
+		// ROS_INFO("heading = %f\n",heading_est_k);
+		// ROS_INFO("explode = %i\n",explode_k);
 	}
 	else
 	{
-		_homing_x=0;
-		_homing_y=0;
-		_homing_heading=0;
+		_homing_x=0.0;
+		_homing_y=0.0; 
+		_homing_heading=0.0;
 		_homing_found=false;
+		_dull_x=0.0;
+		_dull_y=0.0;
+		_shiny_x=0.0;
+		_shiny_y=0.0;
+		_cylinder_std = 100.0;
 	} //end if cylinder found
 	
 	double diff1, diff2;
 	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
 	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
+	if (sqrt(diff1*diff1+diff2*diff2)>0.13||diff1>0.1||diff2>0.1||explode)
+	{
+		_homing_found = false;
+	}
 	
 	if(_homing_found==true && (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14))
 	{
@@ -1267,9 +1300,10 @@ void LidarFilter::fitCylinderLong()
 				outputFile << X(3) << ",";
 				outputFile << i << ","; //cylinder number
 				outputFile << 1 << ","; //nonintensity = 1
-				outputFile << _stitch_counter << ",";
+				outputFile << _stack_counter << ",";
 				outputFile << keep_nonintensity << ","; 
-				outputFile << diff1+diff2 << ","; 
+				outputFile << diff1 << ","; 
+				outputFile << diff2 << ","; 
 				outputFile << explode; 
 				outputFile << std::endl; 	
 			}
@@ -1292,9 +1326,10 @@ void LidarFilter::fitCylinderLong()
 				outputFile << X(3) << ",";
 				outputFile << i << ","; //cylinder number
 				outputFile << 2 << ","; //intensity = 2
-				outputFile << _stitch_counter << ","; 
+				outputFile << _stack_counter << ","; 
 				outputFile << keep_intensity << ",";
-				outputFile << diff1+diff2 << ","; 
+				outputFile << diff1 << ","; 
+				outputFile << diff2 << ","; 
 				outputFile << explode; 
 				outputFile << std::endl; 	
 			}
@@ -1304,277 +1339,277 @@ void LidarFilter::fitCylinderLong()
 
 }
 
-void LidarFilter::fitCylinderShort()
-{
-    static bool stopSavingDataToFile = false;
-	std::ofstream outputFile;
-	if(stopSavingDataToFile==false)
-	{
-		outputFile.open("bad_point_cloud.txt", ofstream::out | ofstream::trunc);
-	}
+// void LidarFilter::fitCylinderShort()
+// {
+//     static bool stopSavingDataToFile = false;
+// 	std::ofstream outputFile;
+// 	if(stopSavingDataToFile==false)
+// 	{
+// 		outputFile.open("bad_point_cloud.txt", ofstream::out | ofstream::trunc);
+// 	}
 
-    // find correct cylinders
-    arma::mat xs1;
-    arma::mat xs2;
-    arma::mat ys1;
-    arma::mat ys2;
-	//double dist = 2.0-12.0*0.0254;
-	double r = 6.0*0.0254;
-	std::cout << "r = " << r << std::endl;
-	double dist = 2.0-2*r-14.5*0.0254;
-	double t, c1_x, c1_y, c2_x, c2_y, x, y, ax1, ay1, ax2, ay2, x_mean, y_mean, d, bearing;
-	double v1_x, v1_y, v2_x, v2_y, v1_mag, v2_mag, v_dot, X1s_x, X1s_y, X2s_x, X2s_y, X1s_mag, X2s_mag;
-	double cx1, cx2, cy1, cy2;
-	bool cylinder_found = false;
+//     // find correct cylinders
+//     arma::mat xs1;
+//     arma::mat xs2;
+//     arma::mat ys1;
+//     arma::mat ys2;
+// 	//double dist = 2.0-12.0*0.0254;
+// 	double r = 6.0*0.0254;
+// 	std::cout << "r = " << r << std::endl;
+// 	double dist = 2.0-2*r-14.5*0.0254;
+// 	double t, c1_x, c1_y, c2_x, c2_y, x, y, ax1, ay1, ax2, ay2, x_mean, y_mean, d, bearing;
+// 	double v1_x, v1_y, v2_x, v2_y, v1_mag, v2_mag, v_dot, X1s_x, X1s_y, X2s_x, X2s_y, X1s_mag, X2s_mag;
+// 	double cx1, cx2, cy1, cy2;
+// 	bool cylinder_found = false;
 
-	// rotate points and transform cylinder parameters
-    for (int ii=0; ii<_cylinders.size(); ii++)
-    {
-		if (_cylinders[ii].axis_direction(2,0)!=0)
-		{
-			t = -_cylinders[ii].point_in_space(2,0)/_cylinders[ii].axis_direction(2,0);
-			_cylinders[ii].point_in_space(0,0) = _cylinders[ii].point_in_space(0,0)+t*_cylinders[ii].axis_direction(0,0);
-			_cylinders[ii].point_in_space(1,0) = _cylinders[ii].point_in_space(1,0)+t*_cylinders[ii].axis_direction(1,0);
-			_cylinders[ii].point_in_space(2,0) = 0.0;
-		}
-    }
+// 	// rotate points and transform cylinder parameters
+//     for (int ii=0; ii<_cylinders.size(); ii++)
+//     {
+// 		if (_cylinders[ii].axis_direction(2,0)!=0)
+// 		{
+// 			t = -_cylinders[ii].point_in_space(2,0)/_cylinders[ii].axis_direction(2,0);
+// 			_cylinders[ii].point_in_space(0,0) = _cylinders[ii].point_in_space(0,0)+t*_cylinders[ii].axis_direction(0,0);
+// 			_cylinders[ii].point_in_space(1,0) = _cylinders[ii].point_in_space(1,0)+t*_cylinders[ii].axis_direction(1,0);
+// 			_cylinders[ii].point_in_space(2,0) = 0.0;
+// 		}
+//     }
 
-    // find all cylinders correct distance apart
-	for (int ii=0; ii<_cylinders.size()-1; ii++)
-    {
-    	//cout << "2" << endl;
-    	c1_x = _cylinders[ii].point_in_space(0,0);
-    	c1_y = _cylinders[ii].point_in_space(1,0);
-    	for (int jj=ii+1; jj<_cylinders.size(); jj++)
-    	{
-    		//cout << "3" << endl;
-    		c2_x = _cylinders[jj].point_in_space(0,0);
-    		c2_y = _cylinders[jj].point_in_space(1,0);
-    		if (fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.05)
-    		{
-    			cylinder_found = true;
-    			if (c1_x*c2_y-c2_x*c1_y>0)
-    			{
-    				xs1 = _cylinders[ii].points.row(0);
-    				ys1 = _cylinders[ii].points.row(1);
-    				xs2 = _cylinders[jj].points.row(0);
-    				ys2 = _cylinders[jj].points.row(1);
-					cx1 = c1_x;
-					cy1 = c1_y;
-					cx2 = c2_x;
-					cy2 = c2_y;
-    			}
-    			else
-    			{
-    				xs1 = _cylinders[jj].points.row(0);
-    				ys1 = _cylinders[jj].points.row(1);
-    				xs2 = _cylinders[ii].points.row(0);
-    				ys2 = _cylinders[ii].points.row(1);
-					cx1 = c2_x;
-					cy1 = c2_y;
-					cx2 = c1_x;
-					cy2 = c1_y;
-    			}
-    		}
-    	}
-    }
+//     // find all cylinders correct distance apart
+// 	for (int ii=0; ii<_cylinders.size()-1; ii++)
+//     {
+//     	//cout << "2" << endl;
+//     	c1_x = _cylinders[ii].point_in_space(0,0);
+//     	c1_y = _cylinders[ii].point_in_space(1,0);
+//     	for (int jj=ii+1; jj<_cylinders.size(); jj++)
+//     	{
+//     		//cout << "3" << endl;
+//     		c2_x = _cylinders[jj].point_in_space(0,0);
+//     		c2_y = _cylinders[jj].point_in_space(1,0);
+//     		if (fabs(sqrt((c1_x-c2_x)*(c1_x-c2_x)+(c1_y-c2_y)*(c1_y-c2_y))-dist)<0.05)
+//     		{
+//     			cylinder_found = true;
+//     			if (c1_x*c2_y-c2_x*c1_y>0)
+//     			{
+//     				xs1 = _cylinders[ii].points.row(0);
+//     				ys1 = _cylinders[ii].points.row(1);
+//     				xs2 = _cylinders[jj].points.row(0);
+//     				ys2 = _cylinders[jj].points.row(1);
+// 					cx1 = c1_x;
+// 					cy1 = c1_y;
+// 					cx2 = c2_x;
+// 					cy2 = c2_y;
+//     			}
+//     			else
+//     			{
+//     				xs1 = _cylinders[jj].points.row(0);
+//     				ys1 = _cylinders[jj].points.row(1);
+//     				xs2 = _cylinders[ii].points.row(0);
+//     				ys2 = _cylinders[ii].points.row(1);
+// 					cx1 = c2_x;
+// 					cy1 = c2_y;
+// 					cx2 = c1_x;
+// 					cy2 = c1_y;
+//     			}
+//     		}
+//     	}
+//     }
 
-    // do the fit
-	int n1 = xs1.n_cols;
-	int n2 = xs2.n_cols;
-	arma::mat X(4,1);
-	arma::mat FX(n1+n2+1,1,arma::fill::zeros);
-	arma::mat J(n1+n2+1,4,arma::fill::zeros);
-	arma::mat W(n1+n2+1,n1+n2+1,arma::fill::eye);
-	arma::mat JtWJ(4,4);
-	W(n1+n2,n1+n2) = 1600.0;
-	bool explode = false;
+//     // do the fit
+// 	int n1 = xs1.n_cols;
+// 	int n2 = xs2.n_cols;
+// 	arma::mat X(4,1);
+// 	arma::mat FX(n1+n2+1,1,arma::fill::zeros);
+// 	arma::mat J(n1+n2+1,4,arma::fill::zeros);
+// 	arma::mat W(n1+n2+1,n1+n2+1,arma::fill::eye);
+// 	arma::mat JtWJ(4,4);
+// 	W(n1+n2,n1+n2) = 1600.0;
+// 	bool explode = false;
 
-	if(cylinder_found)
-	{
-		// X(0,0) = cx1; //column 1 x-center
-		// X(1,0) = cy1; //column 1 y-center
-		// X(2,0) = cx2; //column 2 x-center
-		// X(3,0) = cy2; //column 2 y-center
+// 	if(cylinder_found)
+// 	{
+// 		// X(0,0) = cx1; //column 1 x-center
+// 		// X(1,0) = cy1; //column 1 y-center
+// 		// X(2,0) = cx2; //column 2 x-center
+// 		// X(3,0) = cy2; //column 2 y-center
 
-		// alternate initial guess
-		double X1s_x = arma::as_scalar(arma::mean(xs1,1));
-		double X1s_y = arma::as_scalar(arma::mean(ys1,1));
-		double X2s_x = arma::as_scalar(arma::mean(xs2,1));
-		double X2s_y = arma::as_scalar(arma::mean(ys2,1));
-		// cout<<"X1s_x="<<X1s_x<<endl;
-		// cout<<"X1s_y="<<X1s_y<<endl;
-		// cout<<"X2s_x="<<X2s_x<<endl;
-		// cout<<"X2s_y="<<X2s_y<<endl;
-		double X1s_mag = sqrt(X1s_x*X1s_x+X1s_y*X1s_y);
-		double X2s_mag = sqrt(X2s_x*X2s_x+X2s_y*X2s_y);
-		X1s_x = X1s_x+r*X1s_x/X1s_mag;
-		X1s_y = X1s_y+r*X1s_y/X1s_mag;
-		X2s_x = X2s_x+r*X2s_x/X2s_mag;
-		X2s_y = X2s_y+r*X2s_y/X2s_mag;
-		X(0,0) = X1s_x; //column 1 x-center
-		X(1,0) = X1s_y; //column 1 y-center
-		X(2,0) = X2s_x; //column 2 x-center
-		X(3,0) = X2s_y; //column 2 y-center
+// 		// alternate initial guess
+// 		double X1s_x = arma::as_scalar(arma::mean(xs1,1));
+// 		double X1s_y = arma::as_scalar(arma::mean(ys1,1));
+// 		double X2s_x = arma::as_scalar(arma::mean(xs2,1));
+// 		double X2s_y = arma::as_scalar(arma::mean(ys2,1));
+// 		// cout<<"X1s_x="<<X1s_x<<endl;
+// 		// cout<<"X1s_y="<<X1s_y<<endl;
+// 		// cout<<"X2s_x="<<X2s_x<<endl;
+// 		// cout<<"X2s_y="<<X2s_y<<endl;
+// 		double X1s_mag = sqrt(X1s_x*X1s_x+X1s_y*X1s_y);
+// 		double X2s_mag = sqrt(X2s_x*X2s_x+X2s_y*X2s_y);
+// 		X1s_x = X1s_x+r*X1s_x/X1s_mag;
+// 		X1s_y = X1s_y+r*X1s_y/X1s_mag;
+// 		X2s_x = X2s_x+r*X2s_x/X2s_mag;
+// 		X2s_y = X2s_y+r*X2s_y/X2s_mag;
+// 		X(0,0) = X1s_x; //column 1 x-center
+// 		X(1,0) = X1s_y; //column 1 y-center
+// 		X(2,0) = X2s_x; //column 2 x-center
+// 		X(3,0) = X2s_y; //column 2 y-center
 
-		for (int ii = 0; ii<20; ii++)
-		{
-			ax1 = X(0,0);
-			ay1 = X(1,0);
-			ax2 = X(2,0);
-			ay2 = X(3,0);
-			//std::cout << "ax1 = " << ax1 << std::endl;
-			//std::cout << "ay1 = " << ay1 << std::endl;
-			//std::cout << "ax2 = " << ax2 << std::endl;
-			//std::cout << "ay2 = " << ay2 << std::endl;
-			for (int jj = 0; jj<n1; jj++)
-			{
-				x = xs1(0,jj);
-				y = ys1(0,jj);
-				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay1)*(y-ay1))-r; 
-				//std::cout << "sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1)) = " << (x-ax1)*(x-ax1)+(y-ay2)*(y-ay1) << std::endl;
-				J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
-				J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
-				//std:: cout << "sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) = " << sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) << std::endl;
-			}
-			for (int jj = n1; jj<n1+n2; jj++)
-			{
-				x = xs2(0,jj-n1);
-				y = ys2(0,jj-n1);
-				FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r; 
-				//std::cout << "sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2)) = " << (x-ax2)*(x-ax2)+(y-ay2)*(y-ay2) << std::endl;
-				J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
-				J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
-				//std:: cout << "sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) = " << sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) << std::endl;
-			}
-			FX(n1+n2,0) = sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2))-dist;
-			J(n1+n2,0) = (ax1-ax2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
-			J(n1+n2,1) = (ay1-ay2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
-			J(n1+n2,2) = (ax2-ax1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
-			J(n1+n2,3) = (ay2-ay1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
-			//std:: cout << "sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2)) = " << sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2)) << std::endl;
-			JtWJ = J.st()*W*J;
-			//J.print("J = ");
-			//JtWJ.print("JtWJ = ");
-			//std::cout << "arma::cond(JtWJ) = " << arma::cond(JtWJ) << std::endl;
-			if (!JtWJ.has_nan() && !JtWJ.has_inf())
-			{
-				//X = X-0.25*arma::solve(JtWJ,J.st()*W*FX);
-				//std::cout << "arma::inv(JtWJ) = " << arma::inv(JtWJ) << std::endl;
-				//std::cout << "FX = " << FX << std::endl;
-				//std::cout << "0.25*arma::inv(JtWJ)*J.st()*W*FX = " << 0.25*arma::inv(JtWJ)*J.st()*W*FX << std::endl;
-				X = X-0.25*arma::inv(JtWJ)*J.st()*W*FX;
-			}
-			else
-			{
-				explode = true;
-			}
-		}
+// 		for (int ii = 0; ii<20; ii++)
+// 		{
+// 			ax1 = X(0,0);
+// 			ay1 = X(1,0);
+// 			ax2 = X(2,0);
+// 			ay2 = X(3,0);
+// 			//std::cout << "ax1 = " << ax1 << std::endl;
+// 			//std::cout << "ay1 = " << ay1 << std::endl;
+// 			//std::cout << "ax2 = " << ax2 << std::endl;
+// 			//std::cout << "ay2 = " << ay2 << std::endl;
+// 			for (int jj = 0; jj<n1; jj++)
+// 			{
+// 				x = xs1(0,jj);
+// 				y = ys1(0,jj);
+// 				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay1)*(y-ay1))-r; 
+// 				//std::cout << "sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1)) = " << (x-ax1)*(x-ax1)+(y-ay2)*(y-ay1) << std::endl;
+// 				J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
+// 				J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
+// 				//std:: cout << "sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) = " << sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y)) << std::endl;
+// 			}
+// 			for (int jj = n1; jj<n1+n2; jj++)
+// 			{
+// 				x = xs2(0,jj-n1);
+// 				y = ys2(0,jj-n1);
+// 				FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r; 
+// 				//std::cout << "sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2)) = " << (x-ax2)*(x-ax2)+(y-ay2)*(y-ay2) << std::endl;
+// 				J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
+// 				J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
+// 				//std:: cout << "sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) = " << sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y)) << std::endl;
+// 			}
+// 			FX(n1+n2,0) = sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2))-dist;
+// 			J(n1+n2,0) = (ax1-ax2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+// 			J(n1+n2,1) = (ay1-ay2)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+// 			J(n1+n2,2) = (ax2-ax1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+// 			J(n1+n2,3) = (ay2-ay1)/sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2));
+// 			//std:: cout << "sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2)) = " << sqrt((ax1-ax2)*(ax1-ax2)+(ay1-ay2)*(ay1-ay2)) << std::endl;
+// 			JtWJ = J.st()*W*J;
+// 			//J.print("J = ");
+// 			//JtWJ.print("JtWJ = ");
+// 			//std::cout << "arma::cond(JtWJ) = " << arma::cond(JtWJ) << std::endl;
+// 			if (!JtWJ.has_nan() && !JtWJ.has_inf())
+// 			{
+// 				//X = X-0.25*arma::solve(JtWJ,J.st()*W*FX);
+// 				//std::cout << "arma::inv(JtWJ) = " << arma::inv(JtWJ) << std::endl;
+// 				//std::cout << "FX = " << FX << std::endl;
+// 				//std::cout << "0.25*arma::inv(JtWJ)*J.st()*W*FX = " << 0.25*arma::inv(JtWJ)*J.st()*W*FX << std::endl;
+// 				X = X-0.25*arma::inv(JtWJ)*J.st()*W*FX;
+// 			}
+// 			else
+// 			{
+// 				explode = true;
+// 			}
+// 		}
 
-		// this part is used for comparing the results between two parts
-		x_mean = (X(0,0)+X(2,0))/2;
-		y_mean = (X(1,0)+X(3,0))/2;
+// 		// this part is used for comparing the results between two parts
+// 		x_mean = (X(0,0)+X(2,0))/2;
+// 		y_mean = (X(1,0)+X(3,0))/2;
 
-		d = sqrt(x_mean*x_mean+y_mean*y_mean);
+// 		d = sqrt(x_mean*x_mean+y_mean*y_mean);
 
-		v2_x = X(0,0)-X(2,0);
-		v2_y = X(1,0)-X(3,0);
+// 		v2_x = X(0,0)-X(2,0);
+// 		v2_y = X(1,0)-X(3,0);
 
-		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
-		v1_x = x_mean/v1_mag;
-		v1_y = y_mean/v1_mag;
-		v2_x = v2_x/v2_mag;
-		v2_y = v2_y/v2_mag;
+// 		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
+// 		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+// 		v1_x = x_mean/v1_mag;
+// 		v1_y = y_mean/v1_mag;
+// 		v2_x = v2_x/v2_mag;
+// 		v2_y = v2_y/v2_mag;
 
-		v_dot = v1_x*v2_x+v1_y*v2_y;
-		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
-		double x_est_k = d*cos(bearing);
-		double y_est_k = d*sin(bearing);
-		double b_h_diff_k = atan2(-v1_y,-v1_x); 
-		double heading_est_k = -(b_h_diff_k-bearing);
-		std::cout << "x_est_k = " << x_est_k << std::endl;
-		std::cout << "y_est_k = " << y_est_k << std::endl;
-		std::cout << "heading_est_k = " << heading_est_k*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
+// 		v_dot = v1_x*v2_x+v1_y*v2_y;
+// 		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
+// 		double x_est_k = d*cos(bearing);
+// 		double y_est_k = d*sin(bearing);
+// 		double b_h_diff_k = atan2(-v1_y,-v1_x); 
+// 		double heading_est_k = -(b_h_diff_k-bearing);
+// 		std::cout << "x_est_k = " << x_est_k << std::endl;
+// 		std::cout << "y_est_k = " << y_est_k << std::endl;
+// 		std::cout << "heading_est_k = " << heading_est_k*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
 
-		x_mean = (cx1+cx2)/2;
-		y_mean = (cy1+cy2)/2;
-		d = sqrt(x_mean*x_mean+y_mean*y_mean);
+// 		x_mean = (cx1+cx2)/2;
+// 		y_mean = (cy1+cy2)/2;
+// 		d = sqrt(x_mean*x_mean+y_mean*y_mean);
 
-		v2_x = cx1-cx2;
-		v2_y = cy1-cy2;
-		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
-		v1_x = x_mean/v1_mag;
-		v1_y = y_mean/v1_mag;
-		v2_x = v2_x/v2_mag;
-		v2_y = v2_y/v2_mag;
+// 		v2_x = cx1-cx2;
+// 		v2_y = cy1-cy2;
+// 		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
+// 		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+// 		v1_x = x_mean/v1_mag;
+// 		v1_y = y_mean/v1_mag;
+// 		v2_x = v2_x/v2_mag;
+// 		v2_y = v2_y/v2_mag;
 
-		v_dot = v1_x*v2_x+v1_y*v2_y;
-		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
-		double x_est = d*cos(bearing);
-		double y_est = d*sin(bearing);
-		double b_h_diff = atan2(-v1_y,-v1_x); 
-		double heading_est = -(b_h_diff-bearing);
-		std::cout << "x_est = " << x_est << std::endl;
-		std::cout << "y_est = " << y_est << std::endl;
-		std::cout << "heading_est = " << heading_est*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
+// 		v_dot = v1_x*v2_x+v1_y*v2_y;
+// 		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
+// 		double x_est = d*cos(bearing);
+// 		double y_est = d*sin(bearing);
+// 		double b_h_diff = atan2(-v1_y,-v1_x); 
+// 		double heading_est = -(b_h_diff-bearing);
+// 		std::cout << "x_est = " << x_est << std::endl;
+// 		std::cout << "y_est = " << y_est << std::endl;
+// 		std::cout << "heading_est = " << heading_est*180/3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651 << std::endl;
 
-		ROS_INFO("\nHOMING UPDATE!");
-		ROS_INFO("x = %f", x_est);
-		ROS_INFO("y = %f", y_est);
-		ROS_INFO("heading = %f", heading_est*180.0/3.14159265);
+// 		ROS_INFO("\nHOMING UPDATE!");
+// 		ROS_INFO("x = %f", x_est);
+// 		ROS_INFO("y = %f", y_est);
+// 		ROS_INFO("heading = %f", heading_est*180.0/3.14159265);
 
-		_homing_x=x_est;
-		_homing_y=y_est;
-		_homing_heading=heading_est;
-		_homing_found=true;
-		ROS_INFO("********************");
-		ROS_INFO("x_est = %f",x_est);
-		ROS_INFO("y_est = %f",y_est);
-		ROS_INFO("x_mean = %f",x_mean);
-		ROS_INFO("y_mean = %f",y_mean);
-		ROS_INFO("heading = %f\n",heading_est);
-		ROS_INFO("explode = %i\n",explode);
-	}
-	else
-	{
-		_homing_x=0;
-		_homing_y=0;
-		_homing_heading=0;
-		_homing_found=false;
-	} //end if cylinder found
+// 		_homing_x=x_est;
+// 		_homing_y=y_est;
+// 		_homing_heading=heading_est;
+// 		_homing_found=true;
+// 		ROS_INFO("********************");
+// 		ROS_INFO("x_est = %f",x_est);
+// 		ROS_INFO("y_est = %f",y_est);
+// 		ROS_INFO("x_mean = %f",x_mean);
+// 		ROS_INFO("y_mean = %f",y_mean);
+// 		ROS_INFO("heading = %f\n",heading_est);
+// 		ROS_INFO("explode = %i\n",explode);
+// 	}
+// 	else
+// 	{
+// 		_homing_x=0;
+// 		_homing_y=0;
+// 		_homing_heading=0;
+// 		_homing_found=false;
+// 	} //end if cylinder found
 
-	double diff1, diff2;
-	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
-	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
+// 	double diff1, diff2;
+// 	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
+// 	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
 
-	if(stopSavingDataToFile==false && _homing_found==true && (diff1+diff2>0.3 || explode == true))
-	{
-		for (int i=0; i<_cylinders.size(); i++)
-		{
-			for (int jj=0; jj<_cylinders[i].points.n_cols; jj++)
-			{
-				outputFile << _cylinders[i].points(0,jj) << ",";
-				outputFile << _cylinders[i].points(1,jj) << ",";
-				outputFile << _cylinders[i].points(2,jj) << ",";
-				outputFile << i << ","; //cylinder number
-				outputFile << _cylinders[i].point_in_space(0,0) << ",";
-				outputFile << _cylinders[i].point_in_space(1,0) << ",";
-				outputFile << _cylinders[i].point_in_space(2,0) << ",";
-				outputFile << _cylinders[i].axis_direction(0,0) << ",";
-				outputFile << _cylinders[i].axis_direction(1,0) << ",";
-				outputFile << _cylinders[i].axis_direction(2,0) << ",";
-				outputFile << _cylinders[i].raius_estimate(0,0) << ",";
-				outputFile << X(0) << ",";
-				outputFile << X(1) << ",";
-				outputFile << X(2) << ",";
-				outputFile << X(3) << ",";
-				outputFile << diff1+diff2; 
-				outputFile << std::endl; 	
-			}
-		}
-		stopSavingDataToFile=true; 
-		outputFile.close();
-	}
-}
+// 	if(stopSavingDataToFile==false && _homing_found==true && (diff1+diff2>0.3 || explode == true))
+// 	{
+// 		for (int i=0; i<_cylinders.size(); i++)
+// 		{
+// 			for (int jj=0; jj<_cylinders[i].points.n_cols; jj++)
+// 			{
+// 				outputFile << _cylinders[i].points(0,jj) << ",";
+// 				outputFile << _cylinders[i].points(1,jj) << ",";
+// 				outputFile << _cylinders[i].points(2,jj) << ",";
+// 				outputFile << i << ","; //cylinder number
+// 				outputFile << _cylinders[i].point_in_space(0,0) << ",";
+// 				outputFile << _cylinders[i].point_in_space(1,0) << ",";
+// 				outputFile << _cylinders[i].point_in_space(2,0) << ",";
+// 				outputFile << _cylinders[i].axis_direction(0,0) << ",";
+// 				outputFile << _cylinders[i].axis_direction(1,0) << ",";
+// 				outputFile << _cylinders[i].axis_direction(2,0) << ",";
+// 				outputFile << _cylinders[i].raius_estimate(0,0) << ",";
+// 				outputFile << X(0) << ",";
+// 				outputFile << X(1) << ",";
+// 				outputFile << X(2) << ",";
+// 				outputFile << X(3) << ",";
+// 				outputFile << diff1+diff2; 
+// 				outputFile << std::endl; 	
+// 			}
+// 		}
+// 		stopSavingDataToFile=true; 
+// 		outputFile.close();
+// 	}
+// }

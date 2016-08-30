@@ -21,6 +21,7 @@ MissionPlanning::MissionPlanning()
     cvSamplesSub = nh.subscribe<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1, &MissionPlanning::cvSamplesCallback_, this);
     nextWaypointSub = nh.subscribe<messages::NextWaypointOut>("/control/exec/nextwaypoint", 1, &MissionPlanning::nextWaypointCallback_, this);
     navSub = nh.subscribe<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout", 1, &MissionPlanning::navCallback_, this);
+    grabberStatusSub = nh.subscribe<messages::ExecGrabberStatus>("/control/exec/grabberstatus", 1, &MissionPlanning::grabberStatusCallback_, this);
     emergencyEscapeServ = nh.advertiseService("/control/missionplanning/emergencyescapetrigger", &MissionPlanning::emergencyEscapeCallback_, this);
     controlServ = nh.advertiseService("/control/missionplanning/control", &MissionPlanning::controlCallback_, this);
     infoPub = nh.advertise<messages::MissionPlanningInfo>("/control/missionplanning/info", 1);
@@ -33,6 +34,7 @@ MissionPlanning::MissionPlanning()
     performHoming = false;
     inSearchableRegion = false;
     roiTimeExpired = false;
+    roiOvertimeExpired = false;
     possessingSample = false;
     possibleSample = false;
     definiteSample = false;
@@ -89,7 +91,8 @@ MissionPlanning::MissionPlanning()
     sosMode.reg(__sosMode__);
     //procsToExecute.resize(NUM_PROC_TYPES);
     samplesCollected = 0;
-    currentROIIndex = 99;
+    currentROIIndex = 0;
+    prevROIIndex = 99;
     examineCount = 0;
     backUpCount = 0;
     reorientCount = 0;
@@ -98,16 +101,24 @@ MissionPlanning::MissionPlanning()
     missionTime = 0.0;
     prevTime = ros::Time::now().toSec();
     missionStarted = false;
+    timers[_roiTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::roiTimeExpiredCallback_, this);
     timers[_biasRemovalTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalTimerCallback_, this);
     timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
     timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
     timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalActionTimerCallback_, this);
+    timers[_queueEmptyTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::queueEmptyTimerCallback_, this);
+    timers[_roiOvertimeTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::roiOvertimeTimerCallback_, this);
+    timers[_roiTimer_]->stop();
     timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
     timers[_searchTimer_]->setPeriod(searchTimeoutPeriod);
     timers[_searchTimer_]->stop();
     timers[_biasRemovalActionTimeoutTimer_]->stop();
     timers[_biasRemovalTimer_]->setPeriod(biasRemovalTimeoutPeriod);
     timers[_homingTimer_]->setPeriod(homingTimeoutPeriod);
+    timers[_queueEmptyTimer_]->setPeriod(queueEmptyTimerPeriod);
+    timers[_queueEmptyTimer_]->stop();
+    timers[_roiOvertimeTimer_]->setPeriod(roiOvertimePeriod);
+    timers[_roiOvertimeTimer_]->stop();
     timers[_biasRemovalTimer_]->start();
     timers[_homingTimer_]->start();
     driveSpeedsMsg.vMax = defaultVMax;
@@ -120,6 +131,7 @@ MissionPlanning::MissionPlanning()
     infoMsg.procsBeingExecuted.resize(NUM_PROC_TYPES,0);
     infoMsg.procsToResume.resize(NUM_PROC_TYPES,0);
     infoMsg.procStates.resize(NUM_PROC_TYPES,_init_);
+    initialize.clearSampleHistory();
     srand(time(NULL));
     for(int i=0; i<NUM_PROC_TYPES; i++)
     {
@@ -243,6 +255,14 @@ void MissionPlanning::evalConditions_()
                 robotStatus.pauseSwitch = false;
                 pause.sendUnPause();*/
             }
+            else if(procsToInterrupt[__examine__] || procsToInterrupt[__approach__])
+            {
+                ROS_INFO("avoid interrupted examine or approach");
+                avoid.sendDequeClearAll();
+                shouldExecuteAvoidManeuver = false;
+                possibleSample = false;
+                definiteSample = false;
+            }
             if(shouldExecuteAvoidManeuver)
             {
                 if(procsBeingExecuted[__avoid__])
@@ -274,7 +294,7 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = false;
             pause.sendUnPause();*/
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Search Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performSafeMode && initialized && !missionEnded) // Search Region
         {
             procsToExecute[__searchRegion__] = true;
             ROS_INFO("to execute searchRegion");
@@ -322,13 +342,13 @@ void MissionPlanning::evalConditions_()
             ROS_INFO("to execute reorient");
             voiceSay->call("reorient");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession && !atHome) || (performHoming && !homingUpdateFailed && !sampleInCollectPosition && !possessingSample && !performReorient)) && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
+        if(numProcsBeingOrToBeExecOrRes==0 && ((possessingSample && confirmedPossession) || (performHoming && !sampleInCollectPosition && !possessingSample && !performReorient && !inSearchableRegion)) && !atHome && !homingUpdateFailed && !(possibleSample || definiteSample) && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Go Home
         {
             procsToExecute[__goHome__] = true;
             ROS_INFO("to execute goHome");
             voiceSay->call("go home");
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && atHome && !(possibleSample || definiteSample) && !sampleInCollectPosition && !performReorient && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
+        if(numProcsBeingOrToBeExecOrRes==0 && homingUpdateFailed && !(possibleSample || definiteSample) && !sampleInCollectPosition && !performReorient && !inDepositPosition && !performBiasRemoval && !escapeCondition && !shouldExecuteAvoidManeuver && !performSafeMode && initialized && !missionEnded) // Square Update
         {
             procsToExecute[__squareUpdate__] = true;
             ROS_INFO("to execute square update");
@@ -436,7 +456,7 @@ void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
     }
 }
 
-void MissionPlanning::updateSampleFlags_()
+/*void MissionPlanning::updateSampleFlags_()
 {
     possibleSample = false;
     definiteSample = false;
@@ -445,10 +465,11 @@ void MissionPlanning::updateSampleFlags_()
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= possibleSampleConfThresh) possibleSample = true;
         if(cvSamplesFoundMsg.sampleList.at(i).confidence >= definiteSampleConfThresh) definiteSample = true;
     }
-}
+}*/
 
 void MissionPlanning::packAndPubInfoMsg_()
 {
+    infoMsg.initialized = initialized;
     infoMsg.escapeCondition = escapeCondition;
     infoMsg.escapeLockout = escapeLockout;
     infoMsg.avoidLockout = avoidLockout;
@@ -546,6 +567,7 @@ void MissionPlanning::packAndPubInfoMsg_()
     }
     infoMsg.collisionCondition = collisionMsg.collision;
     infoMsg.missionTime = missionTime;
+    infoMsg.currentROIIndex = currentROIIndex;
     infoPub.publish(infoMsg);
 }
 
@@ -555,7 +577,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
     robotStatus.yPos = msg->y;
 	robotStatus.heading = msg->heading;
     robotStatus.bearing = RAD2DEG*atan2(msg->y, msg->x);
-    if(msg->homingUpdated && !robotStatus.homingUpdated) avoid.sendWait(shortRecomputeActionWaitTime, true);
+    //if(msg->homingUpdated && !robotStatus.homingUpdated) avoid.sendWait(shortRecomputeActionWaitTime, true);
     robotStatus.homingUpdated = msg->homingUpdated;
     if(robotStatus.homingUpdated)
     {
@@ -563,6 +585,7 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
         timers[_homingTimer_]->start();
         performHoming = false;
         possiblyLost = false;
+        homingUpdateFailed = false;
     }
 }
 
@@ -625,16 +648,30 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
             ROS_INFO("conf = %f",cvSamplesFoundMsg.sampleList.at(i).confidence);
             ROS_INFO("distance = %f",cvSamplesFoundMsg.sampleList.at(i).distance);
             ROS_INFO("bearing = %f",cvSamplesFoundMsg.sampleList.at(i).bearing);
-            ROS_INFO("type = %i\n",cvSamplesFoundMsg.sampleList.at(i).type);
+            ROS_INFO("white = %i",cvSamplesFoundMsg.sampleList.at(i).white);
+            ROS_INFO("silver = %i",cvSamplesFoundMsg.sampleList.at(i).silver);
+            ROS_INFO("blueOrPurple = %i",cvSamplesFoundMsg.sampleList.at(i).blueOrPurple);
+            ROS_INFO("pink = %i",cvSamplesFoundMsg.sampleList.at(i).pink);
+            ROS_INFO("red = %i",cvSamplesFoundMsg.sampleList.at(i).red);
+            ROS_INFO("oragne = %i",cvSamplesFoundMsg.sampleList.at(i).orange);
+            ROS_INFO("yellow = %i",cvSamplesFoundMsg.sampleList.at(i).yellow);
         }
     }
-    updateSampleFlags_();
+    initialize.findHighestConfSample();
+    if(sampleHistoryActive) initialize.sampleHistoryNewData(highestConfSample.confidence, highestConfSample.types);
+    else initialize.startSampleHistory(highestConfSample.confidence, highestConfSample.types);
+    if(sampleHistoryActive) initialize.sampleHistoryComputeModifiedConf();
     sampleDataActedUpon = false;
 }
 
 void MissionPlanning::nextWaypointCallback_(const messages::NextWaypointOut::ConstPtr &msg)
 {
     nextWaypointMsg = *msg;
+}
+
+void MissionPlanning::grabberStatusCallback_(const messages::ExecGrabberStatus::ConstPtr &msg)
+{
+    grabberStatusMsg = *msg;
 }
 
 bool MissionPlanning::emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res)
@@ -742,7 +779,15 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
     }
     collisionMsg.collision = req.collisionCondition;
     missionTime = req.missionTime;
+    currentROIIndex = req.currentROIIndex;
     return true;
+}
+
+void MissionPlanning::roiTimeExpiredCallback_(const ros::TimerEvent &event)
+{
+    roiTimeExpired = true;
+    ROS_WARN("roiTimeExpiredCallback");
+    voiceSay->call("r o i time expired");
 }
 
 void MissionPlanning::biasRemovalTimerCallback_(const ros::TimerEvent &event)
@@ -770,4 +815,18 @@ void MissionPlanning::biasRemovalActionTimerCallback_(const ros::TimerEvent &eve
 {
     ROS_WARN("biasRemovalTimedOut");
     biasRemovalTimedOut = true;
+}
+
+void MissionPlanning::queueEmptyTimerCallback_(const ros::TimerEvent &event)
+{
+    queueEmptyTimedOut = true;
+    ROS_WARN("queue empty timer expired");
+    voiceSay->call("queue empty timer expired");
+}
+
+void MissionPlanning::roiOvertimeTimerCallback_(const ros::TimerEvent &event)
+{
+    roiOvertimeExpired = true;
+    ROS_WARN("roi overtime expired");
+    voiceSay->call("r o i overtime expired");
 }

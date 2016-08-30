@@ -15,6 +15,7 @@ bool Collect::runProc()
 		sendGrab();
         computeDriveSpeeds();
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = true;
@@ -22,8 +23,11 @@ bool Collect::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
         computeDriveSpeeds();
-		if(execLastProcType == procType && execLastSerialNum == serialNum) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+        if(grabberStatusMsg.dropFailed || grabberStatusMsg.slidesFailed) {dropOrSlidesFailed = true; ROS_WARN("collect drop or slides failed");}
+        else dropOrSlidesFailed = false;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		avoidLockout = false;
@@ -32,9 +36,21 @@ bool Collect::runProc()
 		state = _init_;
 		break;
 	case _finish_:
-		avoidLockout = true;
-		possessingSample = true;
-        sideOffsetGrab = false;
+        if(dropOrSlidesFailed)
+        {
+            avoidLockout = false;
+            possessingSample = false;
+            sideOffsetGrab = false;
+            performReorient = true;
+            sampleInCollectPosition = false;
+            sendDriveRel(failedBackUpDistance, 0.0, false, 0.0, false, false);
+        }
+        else
+        {
+            avoidLockout = true;
+            possessingSample = true;
+            sideOffsetGrab = false;
+        }
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

@@ -125,6 +125,7 @@ add_definitions("-std=gnu++11")
 # include_directories(include)
 include_directories(
   include
+  ~/cataglyphis_ws/src/robot_control/include
   ${PCL_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )

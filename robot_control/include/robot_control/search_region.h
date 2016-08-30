@@ -11,7 +11,6 @@ public:
 	const int numRandomWaypoints = 5;
 	// Methods
 	bool runProc();
-	SearchRegion(); // constructor
 private:
 	// Members
 	std::vector<float> value;
@@ -46,7 +45,6 @@ private:
 	robot_control::Waypoint currentLocation;
 	float bestPheromone;
 	// Methods
-	void roiTimeExpiredCallback_(const ros::TimerEvent& event);
 	void chooseRandomWaypoints_();
 	void antColony_();
 };

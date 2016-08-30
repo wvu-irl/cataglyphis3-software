@@ -21,6 +21,7 @@
 #include <messages/MasterStatus.h>
 #include <messages/NavFilterControl.h>
 #include <messages/NextWaypointOut.h>
+#include <messages/ExecGrabberStatus.h>
 #include <hsm/voice.h>
 #include <armadillo>
 #include <math.h>
@@ -49,6 +50,8 @@ public:
 	static messages::MasterStatus hsmMasterStatusMsg;
 	static ros::Subscriber nextWaypointSub;
 	static messages::NextWaypointOut nextWaypointMsg;
+	static ros::Subscriber grabberStatusSub;
+	static messages::ExecGrabberStatus grabberStatusMsg;
     static ros::ServiceClient intermediateWaypointsClient;
     static robot_control::IntermediateWaypoints intermediateWaypointsSrv;
     static ros::ServiceClient reqROIClient;
@@ -82,24 +85,25 @@ public:
 	const float collisionMinDistance = 2.0; // m
 	static ros::Subscriber cvSamplesSub;
 	static messages::CVSamplesFound cvSamplesFoundMsg;
-	static messages::CVSampleProps bestSample;
 	const float distanceToGrabber = 0.86;
-	const float distanceToBlindDriveLocation = 0.96; // m
-	const float blindDriveDistance = 0.44; // m (0.39)
+	const float distanceToBlindDriveLocation = 0.88; // m
+	const float blindDriveDistance = 0.35; // m (0.39)
 	const float sideGrabAngleOffset = 15.0; // deg
 	const float initGrabberDistanceTolerance = 0.17; // m
 	const float initGrabberAngleTolerance = 6.0; // deg
 	const float grabberDistanceToleranceIncrementPerApproachManeuver = 0.01; // m
 	const float grabberAngleToleranceIncrementPerApproachManeuver = 0.05; // deg
-	const float possibleSampleConfThresh = 0.6;
-	const float definiteSampleConfThresh = 0.62;
+	const float possibleSampleConfThresh = 0.5; // Change corresponding value in map manager if ever changed
+	const float definiteSampleConfThresh = 0.6;
 	static int currentROIIndex;
+	static int prevROIIndex;
 	static bool initialized;
 	static bool escapeCondition;
 	static bool performBiasRemoval;
 	static bool performHoming;
 	static bool inSearchableRegion;
 	static bool roiTimeExpired;
+	static bool roiOvertimeExpired;
 	static bool possessingSample;
 	static bool possibleSample;
 	static bool definiteSample;
@@ -126,6 +130,7 @@ public:
 	static bool tiltTooExtremeForBiasRemoval;
 	static bool biasRemovalTimedOut;
 	static bool navStopRequest;
+	static bool queueEmptyTimedOut;
 	static unsigned int avoidCount;
 	const unsigned int maxNormalWaypointAvoidCount = 3;
 	const unsigned int maxROIWaypointAvoidCount = 6;
@@ -138,12 +143,21 @@ public:
 	static float prevAvoidCountDecYPos;
 	static unsigned int numSampleCandidates;
 	static std::vector<float> sampleValues;
-	static float bestSampleValue;
+	static float sampleDistanceAdjustedConf;
 	static float distanceToDrive; // m
 	static float angleToTurn; // deg
 	static float expectedSampleDistance;
 	static float expectedSampleAngle;
-	static messages::CVSampleProps highestConfSample;
+	//static messages::CVSampleProps highestConfSample;
+	static CV_SAMPLE_PROPS_T highestConfSample;
+	static bool sampleHistoryActive;
+	static float sampleHistoryBestSampleConf;
+	static float sampleHistoryModifiedConf;
+	static bool sampleHistoryTypes[NUM_SAMPLE_TYPES];
+	static int sampleHistoryGoodCount;
+	static int sampleHistoryBadCount;
+	const float sampleHistoryGoodGain = 0.05;
+	const float sampleHistoryBadGain = 0.1;
 	static float allocatedROITime; // sec
 	static unsigned int examineCount;
 	static unsigned int backUpCount;
@@ -166,7 +180,7 @@ public:
 	const float homeWaypointY = 0.0; // m
 	const float lidarUpdateWaitTime = 2.0; // sec
 	const float biasRemovalTimeoutPeriod = 300.0; // sec = 5 minutes
-	const float homingTimeoutPeriod = 1200.0; // sec = 20 minutes
+	const float homingTimeoutPeriod = 840.0; // sec = 16 minutes
 	const float searchTimeoutPeriod = 15.0; // sec
 	const float sampleFoundNewROIProbMultiplier = 0.0;
 	const float roiTimeExpiredNewSampleProbMultiplier = 0.05;
@@ -174,6 +188,8 @@ public:
 	const float biasRemovalTiltLimit = 5.0; // deg
 	const float biasRemovalActionTimeoutTime = 20.0; // sec
 	const float shortRecomputeActionWaitTime = 0.1; // sec
+	const float queueEmptyTimerPeriod = 30.0; // sec
+	const float roiOvertimePeriod = 120.0; // sec
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -195,6 +211,8 @@ ros::Subscriber MissionPlanningProcedureShare::hsmMasterStatusSub;
 messages::MasterStatus MissionPlanningProcedureShare::hsmMasterStatusMsg;
 ros::Subscriber MissionPlanningProcedureShare::nextWaypointSub;
 messages::NextWaypointOut MissionPlanningProcedureShare::nextWaypointMsg;
+ros::Subscriber MissionPlanningProcedureShare::grabberStatusSub;
+messages::ExecGrabberStatus MissionPlanningProcedureShare::grabberStatusMsg;
 ros::ServiceClient MissionPlanningProcedureShare::intermediateWaypointsClient;
 robot_control::IntermediateWaypoints MissionPlanningProcedureShare::intermediateWaypointsSrv;
 ros::ServiceClient MissionPlanningProcedureShare::reqROIClient;
@@ -226,14 +244,15 @@ messages::CollisionOut MissionPlanningProcedureShare::collisionMsg;
 float MissionPlanningProcedureShare::collisionInterruptThresh;
 ros::Subscriber MissionPlanningProcedureShare::cvSamplesSub;
 messages::CVSamplesFound MissionPlanningProcedureShare::cvSamplesFoundMsg;
-messages::CVSampleProps MissionPlanningProcedureShare::bestSample;
 int MissionPlanningProcedureShare::currentROIIndex;
+int MissionPlanningProcedureShare::prevROIIndex;
 bool MissionPlanningProcedureShare::initialized;
 bool MissionPlanningProcedureShare::escapeCondition;
 bool MissionPlanningProcedureShare::performBiasRemoval;
 bool MissionPlanningProcedureShare::performHoming;
 bool MissionPlanningProcedureShare::inSearchableRegion;
 bool MissionPlanningProcedureShare::roiTimeExpired;
+bool MissionPlanningProcedureShare::roiOvertimeExpired;
 bool MissionPlanningProcedureShare::possessingSample;
 bool MissionPlanningProcedureShare::possibleSample;
 bool MissionPlanningProcedureShare::definiteSample;
@@ -260,17 +279,25 @@ bool MissionPlanningProcedureShare::searchTimedOut;
 bool MissionPlanningProcedureShare::newSearchActionOnExec;
 bool MissionPlanningProcedureShare::biasRemovalTimedOut;
 bool MissionPlanningProcedureShare::navStopRequest;
+bool MissionPlanningProcedureShare::queueEmptyTimedOut;
 unsigned int MissionPlanningProcedureShare::avoidCount;
 float MissionPlanningProcedureShare::prevAvoidCountDecXPos;
 float MissionPlanningProcedureShare::prevAvoidCountDecYPos;
 unsigned int MissionPlanningProcedureShare::numSampleCandidates;
 std::vector<float> MissionPlanningProcedureShare::sampleValues;
-float MissionPlanningProcedureShare::bestSampleValue;
+float MissionPlanningProcedureShare::sampleDistanceAdjustedConf;
 float MissionPlanningProcedureShare::distanceToDrive;
 float MissionPlanningProcedureShare::angleToTurn;
 float MissionPlanningProcedureShare::expectedSampleDistance;
 float MissionPlanningProcedureShare::expectedSampleAngle;
-messages::CVSampleProps MissionPlanningProcedureShare::highestConfSample;
+//messages::CVSampleProps MissionPlanningProcedureShare::highestConfSample;
+CV_SAMPLE_PROPS_T MissionPlanningProcedureShare::highestConfSample;
+bool MissionPlanningProcedureShare::sampleHistoryActive;
+float MissionPlanningProcedureShare::sampleHistoryBestSampleConf;
+float MissionPlanningProcedureShare::sampleHistoryModifiedConf;
+bool MissionPlanningProcedureShare::sampleHistoryTypes[NUM_SAMPLE_TYPES];
+int MissionPlanningProcedureShare::sampleHistoryGoodCount;
+int MissionPlanningProcedureShare::sampleHistoryBadCount;
 float MissionPlanningProcedureShare::allocatedROITime;
 unsigned int MissionPlanningProcedureShare::examineCount;
 unsigned int MissionPlanningProcedureShare::backUpCount;

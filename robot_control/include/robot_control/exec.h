@@ -24,6 +24,7 @@
 #include <messages/NextWaypointOut.h>
 #include <messages/encoder_data.h>
 #include <messages/ExecManualOverride.h>
+#include <messages/ExecGrabberStatus.h>
 #include <robot_control/DriveSpeeds.h>
 
 #define ACTION_POOL_SIZE 100
@@ -37,6 +38,7 @@ public:
 	ros::Publisher actuatorPub;
 	ros::Publisher actionEndedPub;
 	ros::Publisher nextWaypointOutPub;
+	ros::Publisher grabberStatusPub;
 	ros::ServiceServer actionServ;
 	ros::ServiceServer manualOverrideServ;
 	ros::Subscriber poseSub;
@@ -72,6 +74,7 @@ private:
 	messages::ExecInfo execInfoMsgOut_;
 	messages::ExecActionEnded execActionEndedMsgOut_;
 	messages::NextWaypointOut nextWaypointMsgOut_;
+	messages::ExecGrabberStatus grabberStatusMsgOut_;
 	double execStartTime_;
 	double execElapsedTime_;
 	// Methods
@@ -86,6 +89,7 @@ private:
 	void packActuatorMsgOut_();
 	void packInfoMsgOut_();
 	void packNextWaypointOut_();
+	void packGabberStatusOut_();
 };
 
 #endif // EXEC_H

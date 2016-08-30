@@ -11,7 +11,7 @@ bool ConfirmCollect::runProc()
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
 		sampleTypeMux = 0;
-		//sampleTypeMux = (1 << (static_cast<uint8_t>(bestSample.type) & 255)) & 255;
+        //sampleTypeMux = (1 << (static_cast<uint8_t>(highestConfSample.type) & 255)) & 255;
 		//ROS_INFO("confirmCollect sampleTypeMux = %u",sampleTypeMux);
 		//sendSearch(sampleTypeMux);
 		expectedSampleAngle = 0.0;
@@ -25,17 +25,19 @@ bool ConfirmCollect::runProc()
                    regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb,
                    regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb);
 		state = _exec_;
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = true;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        if(searchEnded())
+        if(searchEnded() || queueEmptyTimedOut)
 		{
-			computeSampleValuesWithExpectedDistance();
-            ROS_INFO("confirmCollect bestSampleValue = %f",bestSampleValue);
-			if(bestSampleValue < confirmCollectValueThreshold) noSampleOnGround = true;
+			computeSampleValuesWithExpectedDistance(false);
+            ROS_INFO("confirmCollect sampleDistanceAdjustedConf = %f",sampleDistanceAdjustedConf);
+            ROS_INFO("confirmCollect highestConfSample.conf = %f",highestConfSample.confidence);
+            if((sampleDistanceAdjustedConf < confirmCollectValueThreshold) || ((sampleDistanceAdjustedConf >= confirmCollectValueThreshold) && !sampleHistoryTypeMatch(highestConfSample.types))) noSampleOnGround = true;
 			else noSampleOnGround = false;
 			if(noSampleOnGround)
 			{
@@ -45,6 +47,8 @@ bool ConfirmCollect::runProc()
                 possibleSample = false;
                 definiteSample = false;
                 reorientCount = 0;
+                timers[_roiTimer_]->stop();
+                roiTimeExpired = false;
                 // Delete searchLocalMap
                 searchMapSrv.request.createMap = false;
                 searchMapSrv.request.deleteMap = true;
@@ -60,6 +64,14 @@ bool ConfirmCollect::runProc()
                 if(currentROIIndex==0) modROISrv.request.sampleProb = 0.0;
                 else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*sampleFoundNewROIProbMultiplier;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+                modROISrv.request.whiteProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb;
+                modROISrv.request.silverProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb;
+                modROISrv.request.blueOrPurpleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).blueOrPurpleProb;
+                modROISrv.request.pinkProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).pinkProb;
+                modROISrv.request.redProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).redProb;
+                modROISrv.request.orangeProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb;
+                modROISrv.request.yellowProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb;
                 modROISrv.request.editGroup = true;
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
@@ -98,6 +110,7 @@ bool ConfirmCollect::runProc()
 			}
 		}
 		else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		avoidLockout = false;

@@ -69,7 +69,7 @@ public:
 	void cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr& msg);
 	void gridMapResetLayers(int startIndex, int endIndex, grid_map::GridMap& map);
 	void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map);
-	void donutSmash(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos);
+	void donutSmash(grid_map::GridMap& map, grid_map::Position pos);
 	void addFoundSamples(int layerStartIndex, int layerEndIndex, grid_map::GridMap& map, grid_map::Position pos, float heading);
 	void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 	void rotateCoord(double origX, double origY, double &newX, double &newY, double angleDeg);
@@ -175,8 +175,8 @@ public:
 	int numRandomWaypointSearchDistanceCriteriaFailed;
 	const int randomWaypointDistanceCriteriaFailedLimit = 100;
 	const float mapResolution = 1.0; // m
-	const float searchLocalMapLength = 40.0; // m
-	const float searchLocalMapWidth = 40.0; // m
+	const float searchLocalMapLength = 20.0; // m
+	const float searchLocalMapWidth = 20.0; // m
 	const float sampleProbPeak = 1.0;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 	const float randomWaypointMinDistance = 4.0; // m
@@ -196,6 +196,12 @@ public:
 	float satMapStartS2Offset;
 	float satMapStartE3Offset;
 	float satMapStartS3Offset;
+	float highestSampleValue;
+	const float possibleSampleConfThresh = 0.5; // Change corresponding value in mission planning if ever changed
+	grid_map::Polygon donutSmashPolygon;
+	std::vector<grid_map::Position> donutSmashVerticies;
+	const float donutSmashSearchRadius = 4.0; // m
+	grid_map::Index donutSmashRobotPosIndex;
 };
 
 #endif // MAP_MANAGER_H

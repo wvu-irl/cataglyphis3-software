@@ -68,26 +68,31 @@ public:
 
 	ros::Subscriber _sub_velodyne;
 	void doMathMapping();
-	void doMathHoming();
+	// void doMathHoming();
 	void doLongDistanceHoming();
 	void setPreviousCounters();
 	bool newPointCloudAvailable();
 	void packLocalMapMessage(messages::LocalMap &msg);
 	void packHomingMessage(messages::LidarFilterOut &msg);
-	void stitchClouds();
+	void stackClouds();
 	void fitCylinderLong();
-	void fitCylinderShort();
+	// void fitCylinderShort();
 	short int _navigation_filter_counter;
 	short int _navigation_filter_counter_prev;
 	short int _registration_counter;
 	short int _registration_counter_prev;
-	short int _stitch_counter;
+	short int _stack_counter;
 
 	float _homing_x = 0;
 	float _homing_y = 0;
 	float _homing_heading = 0;
 	bool _homing_found = 0;
 	bool _do_homing;
+	float _dull_x = 0.0;
+	float _dull_y = 0.0;
+	float _shiny_x = 0.0;
+	float _shiny_y = 0.0;
+	float _cylinder_std = 0.0;
 
 private:
 	//navigation filter callback

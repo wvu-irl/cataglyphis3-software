@@ -6,7 +6,7 @@ class DepositSample : public Procedure
 {
 public:
 	// Members
-
+	bool dropFailed;
 	// Methods
 	bool runProc();
 };

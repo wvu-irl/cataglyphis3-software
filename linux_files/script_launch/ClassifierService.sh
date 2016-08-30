@@ -1,2 +1,2 @@
 #!/bin/bash
-rosrun computer_vision ClassifierService.py respawn=true
+roslaunch computer_vision ClassifierService.launch

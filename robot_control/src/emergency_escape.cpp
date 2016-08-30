@@ -31,6 +31,7 @@ bool EmergencyEscape::runProc()
             interrupted = false;
             state = _init_;
         }
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		procsBeingExecuted[procType] = true;
@@ -40,8 +41,9 @@ bool EmergencyEscape::runProc()
         //ROS_INFO("backupSerialNum = %u", backupSerialNum);
         //ROS_INFO("offsetDriveSerialNum = %u", offsetDriveSerialNum);
 		if(execLastProcType == procType && execLastSerialNum == backupSerialNum) escapeLockout = false;
-		if(execLastProcType == procType && execLastSerialNum == offsetDriveSerialNum) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == offsetDriveSerialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;

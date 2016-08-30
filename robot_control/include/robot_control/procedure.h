@@ -2,8 +2,6 @@
 #define PROCEDURE_H
 #include "mission_planning_procedure_share.h"
 
-enum PROC_STATE_T {_init_, _exec_, _interrupt_, _finish_};
-
 class Procedure : public MissionPlanningProcedureShare
 {
 public:
@@ -34,12 +32,19 @@ public:
 	void sendDequeClearAll();
 	void sendPause();
 	void sendUnPause();
-	void computeSampleValuesWithExpectedDistance();
-	void computeExpectedSampleLocation();
 	void findHighestConfSample();
+	void computeSampleValuesWithExpectedDistance(bool useHistoryValue);
+	void computeExpectedSampleLocation();
+	void clearSampleHistory();
+	void startSampleHistory(float& conf, bool* sampleTypes);
+	bool sampleHistoryTypeMatch(bool* sampleTypes);
+	void sampleHistoryNewData(float& conf, bool* sampleTypes);
+	void sampleHistoryComputeModifiedConf();
 	void computeDriveSpeeds();
 	void serviceAvoidCounterDecrement();
 	bool searchEnded();
+	void resetQueueEmptyCondition();
+	void serviceQueueEmptyCondition();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -600,59 +605,170 @@ void Procedure::sendUnPause()
     else ROS_ERROR("exec action service call unsuccessful");
 }
 
-void Procedure::computeSampleValuesWithExpectedDistance()
+void Procedure::findHighestConfSample()
 {
-	numSampleCandidates = cvSamplesFoundMsg.sampleList.size();
-	sampleValues.clear();
-	sampleValues.resize(numSampleCandidates);
-	bestSampleValue = 0;
-	for(int i=0; i<numSampleCandidates; i++)
+	highestConfSample.confidence = 0.0;
+	highestConfSample.distance = 0.0;
+	highestConfSample.bearing = 0.0;
+	for(int i=0; i<NUM_SAMPLE_TYPES; i++) highestConfSample.types[i] = false;
+	for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
 	{
-		sampleValues.at(i) = sampleConfidenceGain*cvSamplesFoundMsg.sampleList.at(i).confidence -
-								(sampleDistanceToExpectedGain*sqrt(pow(cvSamplesFoundMsg.sampleList.at(i).distance,2.0)+pow(expectedSampleDistance,2.0)-
-									2.0*cvSamplesFoundMsg.sampleList.at(i).distance*expectedSampleDistance*
-										cos(DEG2RAD*(cvSamplesFoundMsg.sampleList.at(i).bearing-expectedSampleAngle))));
-		ROS_INFO("^^^^^ sampleValues.at(%i) = %f",i,sampleValues.at(i));
-
-		if(sampleValues.at(i) > bestSampleValue) {bestSample = cvSamplesFoundMsg.sampleList.at(i); bestSampleValue = sampleValues.at(i);}
+		if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestConfSample.confidence)
+		{
+			highestConfSample.confidence = cvSamplesFoundMsg.sampleList.at(i).confidence;
+			highestConfSample.distance = cvSamplesFoundMsg.sampleList.at(i).distance;
+			highestConfSample.bearing = cvSamplesFoundMsg.sampleList.at(i).bearing;
+			for(int j=0; j<NUM_SAMPLE_TYPES; j++)
+			{
+				switch(j) // !!! Change this switch case if NUM_SAMPLE_TYPES ever changed
+				{
+				case 0:
+					highestConfSample.types[j] = cvSamplesFoundMsg.sampleList.at(i).white;
+					break;
+				case 1:
+					highestConfSample.types[j] = cvSamplesFoundMsg.sampleList.at(i).silver;
+					break;
+				case 2:
+					highestConfSample.types[j] = cvSamplesFoundMsg.sampleList.at(i).blueOrPurple;
+					break;
+				case 3:
+					highestConfSample.types[j] = cvSamplesFoundMsg.sampleList.at(i).pink;
+					break;
+				case 4:
+					highestConfSample.types[j] = cvSamplesFoundMsg.sampleList.at(i).red;
+					break;
+				case 5:
+					highestConfSample.types[j] = cvSamplesFoundMsg.sampleList.at(i).orange;
+					break;
+				case 6:
+					highestConfSample.types[j] = cvSamplesFoundMsg.sampleList.at(i).yellow;
+					break;
+				default:
+					ROS_ERROR("findHighestConfSample tried to assign a sample type which does not exist");
+					break;
+				}
+			}
+		}
 	}
+}
+
+void Procedure::computeSampleValuesWithExpectedDistance(bool useHistoryValue)
+{
+    float sampleConf;
+    if(useHistoryValue) sampleConf = sampleHistoryModifiedConf;
+    else sampleConf = highestConfSample.confidence;
+	sampleDistanceAdjustedConf = sampleConfidenceGain*sampleConf -
+							(sampleDistanceToExpectedGain*sqrt(pow(highestConfSample.distance,2.0)+pow(expectedSampleDistance,2.0)-
+								2.0*highestConfSample.distance*expectedSampleDistance*
+									cos(DEG2RAD*(highestConfSample.bearing-expectedSampleAngle))));
+	ROS_INFO("^^^^^ sampleDistanceAdjustedConf = %f",sampleDistanceAdjustedConf);
+
+	//ROS_INFO("after assigning sampleDistanceAdjustedConf");
 }
 
 void Procedure::computeExpectedSampleLocation()
 {
-	expectedSampleDistance = sqrt(pow(bestSample.distance,2) + pow(distanceToDrive,2) - 2.0*bestSample.distance*distanceToDrive*cos(DEG2RAD*(bestSample.bearing-angleToTurn)));
-	if(distanceToDrive < bestSample.distance) expectedSampleAngle = bestSample.bearing - angleToTurn + RAD2DEG*asin(distanceToDrive/expectedSampleDistance*sin(DEG2RAD*(bestSample.bearing-angleToTurn)));
+	expectedSampleDistance = sqrt(pow(highestConfSample.distance,2) + pow(distanceToDrive,2) - 2.0*highestConfSample.distance*distanceToDrive*cos(DEG2RAD*(highestConfSample.bearing-angleToTurn)));
+	if(distanceToDrive < highestConfSample.distance) expectedSampleAngle = highestConfSample.bearing - angleToTurn + RAD2DEG*asin(distanceToDrive/expectedSampleDistance*sin(DEG2RAD*(highestConfSample.bearing-angleToTurn)));
 	else
 	{
-		if(bestSample.bearing >= 0.0) expectedSampleAngle = 180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*(bestSample.bearing-angleToTurn)));
-		else expectedSampleAngle = -180.0 - RAD2DEG*asin(bestSample.distance/expectedSampleDistance*sin(DEG2RAD*(bestSample.bearing-angleToTurn)));
+		if(highestConfSample.bearing >= 0.0) expectedSampleAngle = 180.0 - RAD2DEG*asin(highestConfSample.distance/expectedSampleDistance*sin(DEG2RAD*(highestConfSample.bearing-angleToTurn)));
+		else expectedSampleAngle = -180.0 - RAD2DEG*asin(highestConfSample.distance/expectedSampleDistance*sin(DEG2RAD*(highestConfSample.bearing-angleToTurn)));
 	}
 }
 
-void Procedure::findHighestConfSample()
+void Procedure::clearSampleHistory()
 {
-	highestConfSample.confidence = 0;
-	for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
+	sampleHistoryActive = false;
+	for(int i=0; i<NUM_SAMPLE_TYPES; i++) sampleHistoryTypes[i] = false;
+	sampleHistoryGoodCount = 0;
+	sampleHistoryBadCount = 0;
+	sampleHistoryBestSampleConf = 0.0;
+	sampleHistoryModifiedConf = 0.0;
+	ROS_INFO("cleared sample history");
+}
+
+void Procedure::startSampleHistory(float& conf, bool* sampleTypes)
+{
+	if(!sampleHistoryActive)
 	{
-		if(cvSamplesFoundMsg.sampleList.at(i).confidence > highestConfSample.confidence) highestConfSample = cvSamplesFoundMsg.sampleList.at(i);
+		if(conf >= possibleSampleConfThresh) possibleSample = true;
+		else possibleSample = false;
+		if(conf >= definiteSampleConfThresh) definiteSample = true;
+		else definiteSample = false;
+		if(possibleSample || definiteSample)
+		{
+			sampleHistoryActive = true;
+			sampleHistoryBestSampleConf = conf;
+			for(int i=0; i<NUM_SAMPLE_TYPES; i++) sampleHistoryTypes[i] = sampleTypes[i];
+		}
+	}
+	else
+	{
+		ROS_ERROR("tried to start sample history when already started");
+		possibleSample = false;
+		definiteSample = false;
+	}
+}
+
+bool Procedure::sampleHistoryTypeMatch(bool *sampleTypes)
+{
+	bool match = false;
+	if(sampleHistoryActive)
+	{
+		for(int i=0; i<NUM_SAMPLE_TYPES; i++) if(sampleTypes[i] && sampleHistoryTypes[i]) match = true;
+	}
+	else ROS_ERROR("tried to check sample type match when sample history does not exist");
+	return match;
+}
+
+void Procedure::sampleHistoryNewData(float& conf, bool* sampleTypes)
+{
+	if(sampleHistoryActive)
+	{
+		if(sampleHistoryTypeMatch(sampleTypes) && ((conf >= possibleSampleConfThresh) || (conf >= definiteSampleConfThresh)))
+		{
+			if(conf > sampleHistoryBestSampleConf) sampleHistoryBestSampleConf = conf;
+			ROS_INFO("increment good count");
+			sampleHistoryGoodCount++;
+		}
+		else {sampleHistoryBadCount--; ROS_INFO("increment bad count");}
+		sampleHistoryComputeModifiedConf();
+		if((sampleHistoryModifiedConf >= possibleSampleConfThresh) && (conf >= possibleSampleConfThresh)) possibleSample = true;
+		else possibleSample = false;
+		if((sampleHistoryModifiedConf >= definiteSampleConfThresh) && (conf >= definiteSampleConfThresh)) definiteSample = true;
+		else definiteSample = false;
+	}
+	else ROS_ERROR("tried to incorporate new data into sample history when history does not exist");
+}
+
+void Procedure::sampleHistoryComputeModifiedConf()
+{
+	if(sampleHistoryActive)
+	{
+		sampleHistoryModifiedConf = sampleHistoryBestSampleConf + ((float)sampleHistoryGoodCount)*sampleHistoryGoodGain - ((float)sampleHistoryBadCount)*sampleHistoryBadGain;
+		if(sampleHistoryModifiedConf > 1.0) {sampleHistoryModifiedConf = 1.0; sampleHistoryGoodCount--;}
+		else if(sampleHistoryModifiedConf < 0.0) {sampleHistoryModifiedConf = 0.0; sampleHistoryBadCount--;}
+	}
+	else
+	{
+		ROS_ERROR("tried to compute sample history modified conf when sample history does not exist");
+		sampleHistoryModifiedConf = 0.0;
+		possibleSample = false;
+		definiteSample = false;
 	}
 }
 
 void Procedure::computeDriveSpeeds()
 {
-	if(hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0/* && zedMsg.terrain_type==0*/)
+	if(collisionMsg.slowdown)
 	{
-		driveSpeedsMsg.vMax = fastVMax;
-		driveSpeedsMsg.rMax = defaultRMax;
-	}
-	else if(!hsmMasterStatusMsg.zed_go && lidarFilterMsg.terrain_type==0) // collisionMsg.slow_down, get rid of rest
-	{
-		driveSpeedsMsg.vMax = defaultVMax;
+		driveSpeedsMsg.vMax = slowVMax;
 		driveSpeedsMsg.rMax = defaultRMax;
 	}
 	else
 	{
-		driveSpeedsMsg.vMax = slowVMax;
+		driveSpeedsMsg.vMax = defaultVMax;
 		driveSpeedsMsg.rMax = defaultRMax;
 	}
 	if((driveSpeedsMsg.vMax != driveSpeedsMsgPrev.vMax) || (driveSpeedsMsg.rMax != driveSpeedsMsgPrev.rMax)) driveSpeedsPub.publish(driveSpeedsMsg);
@@ -680,6 +796,19 @@ bool Procedure::searchEnded()
 		return true;
 	}
 	else return false;
+}
+
+void Procedure::resetQueueEmptyCondition()
+{
+	timers[_queueEmptyTimer_]->stop();
+	queueEmptyTimedOut = false;
+	ROS_INFO("reset queue empty timer");
+}
+
+void Procedure::serviceQueueEmptyCondition()
+{
+	if(execInfoMsg.actionDequeSize==0 && !timers[_queueEmptyTimer_]->running && !queueEmptyTimedOut) {timers[_queueEmptyTimer_]->start(); ROS_WARN("start queue empty timer");}
+	else if(execInfoMsg.actionDequeSize>0 && timers[_queueEmptyTimer_]->running) {timers[_queueEmptyTimer_]->stop(); queueEmptyTimedOut = false; ROS_INFO("stop queue empty timer");}
 }
 
 #endif // PROCEDURE_H

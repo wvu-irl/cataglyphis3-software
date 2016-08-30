@@ -1,10 +1,5 @@
 #include <robot_control/search_region.h>
 
-SearchRegion::SearchRegion()
-{
-	timers[_roiTimer_] = new CataglyphisTimer<SearchRegion>(&SearchRegion::roiTimeExpiredCallback_, this);
-}
-
 bool SearchRegion::runProc()
 {
     //ROS_INFO("searchRegion state = %i", state);
@@ -16,6 +11,7 @@ bool SearchRegion::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
+        clearSampleHistory();
 		avoidCount = 0;
 		prevAvoidCountDecXPos = robotStatus.xPos;
 		prevAvoidCountDecYPos = robotStatus.yPos;
@@ -31,10 +27,7 @@ bool SearchRegion::runProc()
 			else ROS_ERROR("searchMap service call unsuccessful");
 			roiKeyframed = true;
 			// start timer based on allocated time
-			roiTimeExpired = false;
-			timers[_roiTimer_]->stop();
-			timers[_roiTimer_]->setPeriod(allocatedROITime);
-			timers[_roiTimer_]->start();
+            if(!timers[_roiTimer_]->running) {timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
 		}
 		if(roiTimeExpired)
 		{
@@ -48,6 +41,13 @@ bool SearchRegion::runProc()
             if(currentROIIndex == 0) modROISrv.request.sampleProb = 0.0;
             else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
             modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
+            modROISrv.request.whiteProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb;
+            modROISrv.request.silverProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb;
+            modROISrv.request.blueOrPurpleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).blueOrPurpleProb;
+            modROISrv.request.pinkProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).pinkProb;
+            modROISrv.request.redProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).redProb;
+            modROISrv.request.orangeProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).orangeProb;
+            modROISrv.request.yellowProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).yellowProb;
 			modROISrv.request.addNewROI = false;
             modROISrv.request.editGroup = false;
 			if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
@@ -83,6 +83,7 @@ bool SearchRegion::runProc()
 			state = _exec_;
 		}
 		computeDriveSpeeds();
+        resetQueueEmptyCondition();
 		break;
 	case _exec_:
 		avoidLockout = false;
@@ -96,8 +97,9 @@ bool SearchRegion::runProc()
 			sendDequeClearAll();
 			state = _finish_;
 		}
-        else if(searchEnded()) state = _finish_; // Last search action ended, but nothing found. Finish the proc.
+        else if(searchEnded() || queueEmptyTimedOut) state = _finish_; // Last search action ended, but nothing found. Finish the proc.
 		else state = _exec_; // Not finished, keep executing.
+        serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:
 		procsBeingExecuted[procType] = false;
@@ -112,13 +114,6 @@ bool SearchRegion::runProc()
 		state = _init_;
 		break;
 	}
-}
-
-void SearchRegion::roiTimeExpiredCallback_(const ros::TimerEvent &event)
-{
-	roiTimeExpired = true;
-	ROS_WARN("roiTimeExpiredCallback");
-	voiceSay->call("r o i time expired");
 }
 
 void SearchRegion::chooseRandomWaypoints_()

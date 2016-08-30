@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="computer_vision" type="sample_search_node" name="sample_search_node" output="screen" respawn="true">
+  </node>
+</launch>

@@ -6,7 +6,8 @@ class Collect : public Procedure
 {
 public:
 	// Members
-
+	bool dropOrSlidesFailed;
+	const float failedBackUpDistance = -1.0; // m
 	// Methods
 	bool runProc();
 };

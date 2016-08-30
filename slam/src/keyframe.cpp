@@ -195,7 +195,7 @@ protected:
 	float heading_IMU;
 
 
-	const double PI = 3.1415926;
+	const double PI = 3.14159265358979323846264338327950288419716939937510582;
 
 	const float LIDAR_TO_ROBOT_X = 0.45;	//from lidar to center of robot
 
@@ -333,7 +333,7 @@ void Keyframe::Initialization()
 	max_correspondence_distance = 1.4; //maximum distance for finding correspondence points
 
 	//parameters for verification
-	threshold_verification_low_limit = 3;
+	threshold_verification_low_limit = 1.5;
 	threshold_verification_angle = 15;
 
 	//parameters for points filter
@@ -435,7 +435,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 	{
 		if(LocalMapMsgIn.new_data) //if the localmap data is new, update
 		{
-			ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
+			// ROS_INFO_STREAM("messages_input_index:  " << messages_input_index);
 			//get data
 			Store_Information(LocalMapMsgIn);
 
@@ -444,7 +444,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			{	
 				//get navfilter to initialize the first scan
 				TkeyTomap = angle_to_TransformationMatrix(LocalMap_All_s[messages_input_index].x_filter, LocalMap_All_s[messages_input_index].y_filter, LocalMap_All_s[messages_input_index].heading_filter);
-				Update_GlobalMap(LocalMap_Information_s[messages_input_index], TkeyTomap);
+				// Update_GlobalMap(LocalMap_Information_s[messages_input_index], TkeyTomap);
 				firstscan = false;
 
 				//add the first scan as the first keyframe
@@ -723,7 +723,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			// ROS_INFO_STREAM("guessT:  \n" << icp_result.transformation_matrix);
 			// ROS_INFO_STREAM("overlap:  " << icp_result.overlap);
 			// ROS_INFO_STREAM("verification_result:  " << icp_result.verification_result);
-			ROS_INFO_STREAM("time: " << totaltime << "s");
+			// ROS_INFO_STREAM("time: " << totaltime << "s");
 
 			// if(KeyframeMap_s.size() != 0)
 			// {
@@ -1389,7 +1389,7 @@ bool Keyframe::Do_g2o(std::vector<Position> &Vertex, std::vector<Transformation_
 
 	optimizer.setVerbose(true);
     optimizer.initializeOptimization();
-    ROS_INFO_STREAM("Optimizing ...");
+    // ROS_INFO_STREAM("Optimizing ...");
     optimizer.optimize(maxiteration);
     
 
@@ -1478,8 +1478,10 @@ messages::Keyframe Keyframe::Pcak_Keyframe_message(Keyframe_Information keyframe
 	keyframe_msg.map = KeyframeMapMsg;
 	keyframe_msg.x = keyframe_pointcloud_pub.x;
 	keyframe_msg.y = keyframe_pointcloud_pub.y;
-	keyframe_msg.heading = keyframe_pointcloud_pub.heading;
+	keyframe_msg.heading = keyframe_pointcloud_pub.heading * 180 / PI;	//send message as degree
 	keyframe_msg.associatedROI = -1;
+
+	// ROS_INFO_STREAM("keyframe_globalmap(x,y,heading): " <<keyframe_msg.x << " " << keyframe_msg.y <<" " << keyframe_msg.heading);
 
 	return keyframe_msg;
 }
@@ -1584,6 +1586,10 @@ double Keyframe::Update_GlobalMap(LocalMap_Information localmap_information_upda
 	Cell_Global cell_global;
 	int update_check_counter = 0;
 	double update_rate;
+
+	//for test
+
+	// ROS_INFO_STREAM("keyframe_updata(x, y, heading): " << transformation_matrix_update(0,3) << " " << transformation_matrix_update(1,3) << " " << TransformationMatrix_to_angle(transformation_matrix_update) * 180 / PI);
 
   	for(int i = 0; i < localmap_information_update.Information_cloudMsgIn.size(); i++)
   	{
@@ -1876,7 +1882,7 @@ void Keyframe::DetectNearestKeyframe()
 		// segmentation fault problem is here
 		for(int i = 0; i < pointIdxNKNSearch.size(); i++)
 		{
-			ROS_INFO_STREAM(sqrt(pointNKNSquaredDistance[i]));
+			// ROS_INFO_STREAM(sqrt(pointNKNSquaredDistance[i]));
 					
 			if(sqrt(pointNKNSquaredDistance[i]) < threshold_permanent_keyframe_distance)
 			{
@@ -1932,7 +1938,7 @@ void Keyframe::DetectNearestKeyframe()
 		matrix4f TpermanentkeyTomap;
 		TpermanentkeyTomap = angle_to_TransformationMatrix(Vertex[Vertex.size() - 1].x, Vertex[Vertex.size() - 1].y, Vertex[Vertex.size() - 1].heading);
 		int update_Rate = 0;
-		update_Rate = Update_GlobalMap(LocalMap_Information_temp_s[LocalMap_Information_temp_s.size() - 2], TpermanentkeyTomap);	//segmatation fault (core dumped) problem is here, size too big
+		// update_Rate = Update_GlobalMap(LocalMap_Information_temp_s[LocalMap_Information_temp_s.size() - 2], TpermanentkeyTomap);	//segmatation fault (core dumped) problem is here, size too big
 
 		keyframelist_msg.keyframeList.push_back(Pcak_Keyframe_message(KeyframeMap_s[KeyframeMap_s.size() - 1]));
 		keyframePub.publish(keyframelist_msg);
@@ -1991,6 +1997,9 @@ void Keyframe::TkeyTomap_Pub(int option)
  	}
 
 	TkeyTomapPub.publish(tkeytomap_msg);
+
+	// ROS_INFO_STREAM("keyframe(x, y, heading): " << tkeytomap_msg.x <<" " << tkeytomap_msg.y <<" " << tkeytomap_msg.heading * 180 / PI);
+	// ROS_INFO_STREAM("keyframe_nav(x,y,heading): " << tkeytomap_msg.x_filter << " " << tkeytomap_msg.y_filter << " " << tkeytomap_msg.heading_filter * 180 / PI);
 
 
 }
@@ -2120,6 +2129,8 @@ int main(int argc, char **argv)
 	Keyframe keyframe;
 
 	keyframe.Initialization();
+
+	ROS_INFO_STREAM("Start SLAM.............");
 
 	ros::spin();
 
