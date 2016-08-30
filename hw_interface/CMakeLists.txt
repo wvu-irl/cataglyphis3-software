@@ -107,6 +107,7 @@ include_directories(
  add_library(UDP_Sender_Port_class_fault_test src/UDP_Sender_Port_class_fault_test.cpp)
  add_library(UDP_Receiver_Port_class src/UDP_Receiver_Port_class.cpp)
  add_library(nb1_to_i7_packet src/nb1_to_i7_packet.cpp)
+ add_library(nb1_to_i7_serial_packet src/nb1_to_i7_serial_packet.cpp)
  add_library(i7_to_nb1_packet src/i7_to_nb1_packet.cpp)
  add_library(nb2_3_to_i7_packet src/nb2_3_to_i7_packet.cpp)
  add_library(drive_packet src/drive_packet.cpp)
@@ -131,6 +132,8 @@ include_directories(
  add_dependencies(Comm_Node ${catkin_EXPORTED_TARGETS})
  add_dependencies(nb1_to_i7_packet ${catkin_EXPORTED_TARGETS})
  add_dependencies(nb1_to_i7_packet messages_generate_messages_cpp)
+ add_dependencies(nb1_to_i7_serial_packet ${catkin_EXPORTED_TARGETS})
+ add_dependencies(nb1_to_i7_serial_packet messages_generate_messages_cpp)
  add_dependencies(i7_to_nb1_packet ${catkin_EXPORTED_TARGETS})
  add_dependencies(i7_to_nb1_packet messages_generate_messages_cpp)
  add_dependencies(drive_packet ${catkin_EXPORTED_TARGETS})
@@ -164,6 +167,7 @@ include_directories(
  							UDP_Sender_Port_class_fault_test
  							UDP_Receiver_Port_class
  							nb1_to_i7_packet
+ 							nb1_to_i7_serial_packet
  							nb2_3_to_i7_packet
  							i7_to_nb1_packet
  							#Serial_HSM_Act_class

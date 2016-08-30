@@ -100,11 +100,13 @@ private:
 	void grabberStatusCallback_(const messages::ExecGrabberStatus::ConstPtr& msg);
 	bool emergencyEscapeCallback_(messages::EmergencyEscapeTrigger::Request &req, messages::EmergencyEscapeTrigger::Response &res);
 	bool controlCallback_(messages::MissionPlanningControl::Request &req, messages::MissionPlanningControl::Response &res);
+	void roiTimeExpiredCallback_(const ros::TimerEvent &event);
 	void biasRemovalTimerCallback_(const ros::TimerEvent& event);
 	void homingTimerCallback_(const ros::TimerEvent& event);
 	void searchTimerCallback_(const ros::TimerEvent& event);
 	void biasRemovalActionTimerCallback_(const ros::TimerEvent &event);
 	void queueEmptyTimerCallback_(const ros::TimerEvent &event);
+	void roiOvertimeTimerCallback_(const ros::TimerEvent &event);
 };
 
 #endif // MISSION_PLANNING_H

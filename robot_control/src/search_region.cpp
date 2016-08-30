@@ -1,10 +1,5 @@
 #include <robot_control/search_region.h>
 
-SearchRegion::SearchRegion()
-{
-	timers[_roiTimer_] = new CataglyphisTimer<SearchRegion>(&SearchRegion::roiTimeExpiredCallback_, this);
-}
-
 bool SearchRegion::runProc()
 {
     //ROS_INFO("searchRegion state = %i", state);
@@ -32,10 +27,7 @@ bool SearchRegion::runProc()
 			else ROS_ERROR("searchMap service call unsuccessful");
 			roiKeyframed = true;
 			// start timer based on allocated time
-			roiTimeExpired = false;
-			timers[_roiTimer_]->stop();
-			timers[_roiTimer_]->setPeriod(allocatedROITime);
-			timers[_roiTimer_]->start();
+            if(!timers[_roiTimer_]->running) {timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
 		}
 		if(roiTimeExpired)
 		{
@@ -122,13 +114,6 @@ bool SearchRegion::runProc()
 		state = _init_;
 		break;
 	}
-}
-
-void SearchRegion::roiTimeExpiredCallback_(const ros::TimerEvent &event)
-{
-	roiTimeExpired = true;
-	ROS_WARN("roiTimeExpiredCallback");
-	voiceSay->call("r o i time expired");
 }
 
 void SearchRegion::chooseRandomWaypoints_()

@@ -6,7 +6,7 @@ class GoHome : public Procedure
 {
 public:
 	// Members
-	const float goHomeDistanceTolerance = 2.0; // m
+	const float goHomeDistanceTolerance = 1.5; // m
 	// Methods
 	bool runProc();
 };
