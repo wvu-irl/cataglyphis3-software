@@ -9,7 +9,6 @@ public:
 	int run();
 private:
 	int slidePos_;
-	const int slideTol_ = 80;
 	int numFailedAttempts_;
 	const int maxFailedAttempts_ = 2;
 	const int limitedRetryPosition_ = GRABBER_CLOSED;

@@ -35,9 +35,11 @@ bool Reorient::runProc()
 		break;
 	case _interrupt_:
 		avoidLockout = false;
+		performReorient = false;
 		sampleDataActedUpon = true;
 		procsBeingExecuted[procType] = false;
 		procsToInterrupt[procType] = false;
+		procsToResume[procType] = false;
 		state = _init_;
 		break;
 	case _finish_:

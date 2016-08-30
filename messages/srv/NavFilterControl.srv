@@ -11,6 +11,14 @@ bool sunnyDay
 
 bool beginForkliftDeadReckoning
 
+bool skipInit
+
+bool setKensAngle
+float32 kensAngle
+
+bool setPlatform
+int32 platformNum
+
 bool setGlobalPose
 float32 newX
 float32 newY

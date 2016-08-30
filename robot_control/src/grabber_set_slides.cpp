@@ -19,7 +19,7 @@ int GrabberSetSlides::run()
         robotOutputs.slidePosCmd = slidePos_;
         robotOutputs.grabberStopCmd = 0;
         if(slidesEnded_ && abs(robotStatus.grabberSlidePos - slidePos_) <= slideTol_) {returnValue_ = 1; state_ = _normal_;}
-        else if(slidesEnded_ && abs(robotStatus.grabberSlidePos - slidePos_) > slideTol_) {returnValue_ = 0; state_ = _recovering_;}
+        else if(slidesEnded_ && abs(robotStatus.grabberSlidePos - slidePos_) > slideTol_) {returnValue_ = 0; slidesEnded_ = false; state_ = _recovering_;}
         else {returnValue_ = 0; state_ = _normal_;}
         break;
     case _recovering_:

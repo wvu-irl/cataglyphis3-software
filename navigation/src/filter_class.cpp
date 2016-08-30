@@ -28,6 +28,8 @@ Filter::Filter()
 	Q_phi = 2.2847e-008;
 	Q_theta = 2.2847e-008;
 	Q_psi = 2.2847e-008;
+	Kens_angle = 0.0;
+	Kens_north_angle = 0.0;
 	north_angle = 0.0;
 	P_north_angle = 25.0;
 	keep_nb = 3;
@@ -40,6 +42,7 @@ Filter::Filter()
 	heading_est_k_prev = 0.0;
 	heading_prev = 0.0;
 	l_dist = 0.44;
+	platform_number = 0;
 }
 
 void Filter::initialize_states(double phi_init, double theta_init, double psi_init, double x_init, double y_init, double P_phi_init, double P_theta_init, double P_psi_init, double P_x_init, double P_y_init)
@@ -746,4 +749,58 @@ void Filter::clear_cylinder_vec()
 	dull_y_vec.clear();
 	shiny_x_vec.clear();
 	shiny_y_vec.clear();
+}
+
+void Filter::find_Kens_north_angle()
+{
+	double base_angle;
+	double platform_1_angle = 0.0;
+	double platform_2_angle = 0.0;
+	double platform_3_angle = 0.0;
+
+	if (platform_number == 1)
+	{
+		base_angle = platform_1_angle;
+	}
+	else if (platform_number == 2)
+	{
+		base_angle = platform_2_angle;
+	}
+	else if (platform_number == 3)
+	{
+		base_angle = platform_3_angle;
+	}
+
+	Kens_north_angle = base_angle+Kens_angle;
+}
+
+void Filter::check_Kens_north_angle()
+{
+	if (north_angle<Kens_north_angle)
+	{
+		while (north_angle<Kens_north_angle)
+		{
+			north_angle = north_angle+2*PI;
+		}
+		if (fabs(north_angle-Kens_north_angle)>fabs((north_angle-2*PI)-Kens_north_angle))
+		{
+			north_angle = north_angle-2*PI;
+		}
+	}
+	if (north_angle>Kens_north_angle)
+	{
+		while (north_angle>Kens_north_angle)
+		{
+			north_angle = north_angle-2*PI;
+		}
+		if (fabs(north_angle-Kens_north_angle)>fabs((north_angle+2*PI)-Kens_north_angle))
+		{
+			north_angle = north_angle+2*PI;
+		}
+	}
+	if (fabs(north_angle-Kens_north_angle)<5.0*PI/180.0)
+	{
+
+		north_angle = (north_angle+Kens_north_angle)/2.0;
+	} 
 }

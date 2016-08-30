@@ -62,8 +62,9 @@ uint8 new_nb1
 float64 time1
 float64 prev_time1
 float32 dt1
+uint8 nb1_current
 uint16 nb1_missed_counter
-uint16 nb1_drive_counter
+int16 nb1_drive_counter
 uint16 nb1_diff_prev
 uint8 nb1_good
 uint8 nb1_good_prev
@@ -71,8 +72,9 @@ uint8 new_nb2
 float64 time2
 float64 prev_time2
 float32 dt2
+uint8 nb2_current
 uint16 nb2_missed_counter
-uint16 nb2_drive_counter
+int16 nb2_drive_counter
 uint16 nb2_diff_prev
 uint8 nb2_good
 uint8 nb2_good_prev
@@ -86,11 +88,6 @@ float32 y_position2
 float32 roll2
 float32 pitch2
 float32 heading2
-float32 x_positionS
-float32 y_positionS
-float32 rollS
-float32 pitchS
-float32 headingS
 float32 roll_rate
 float32 pitch_rate
 float32 yaw_rate
@@ -109,6 +106,10 @@ float32 roll_init
 float32 pitch_init
 float32 heading_init
 float32 north_angle
+float32 Kens_north_angle
+float32 Kens_angle
+int32 platform_number
 uint8 homing_updated
 uint8 stop_request
+float64 stop_request_time
 uint8 do_homing

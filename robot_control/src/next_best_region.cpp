@@ -13,6 +13,10 @@ bool NextBestRegion::runProc()
         procsToResume[procType] = false;
         execDequeEmpty = false;
         atHome = false;
+        if(timers[_roiTimer_]->running) timers[_roiTimer_]->stop();
+        roiTimeExpired = false;
+        if(timers[_roiOvertimeTimer_]->running) timers[_roiOvertimeTimer_]->stop();
+        roiOvertimeExpired = false;
         avoidCount = 0;
         prevAvoidCountDecXPos = robotStatus.xPos;
         prevAvoidCountDecYPos = robotStatus.yPos;

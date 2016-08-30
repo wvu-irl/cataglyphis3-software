@@ -324,7 +324,7 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
 				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
-				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
 			}
 			else if(probabilities[blobsOfInterest[i]] > _rois[roi].probabilities[1])
 			{
@@ -336,14 +336,14 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				_rois[roi].types[1] = static_cast<SAMPLE_TYPE_T>(types[i]);
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
-				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
 			}
 			else if (probabilities[blobsOfInterest[i]] > _rois[roi].probabilities[2])
 			{
 				// ROS_INFO(">2");
 				_rois[roi].probabilities[2] = probabilities[blobsOfInterest[i]];
 				_rois[roi].types[2] = static_cast<SAMPLE_TYPE_T>(types[i]);
-				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfInterest[i]) + ".jpg") );
 			}
 		}
 
@@ -363,7 +363,7 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
 				cv::imwrite( _rois[roi].paths[1], cv::imread(_rois[roi].paths[0]) );
-				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[0], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
 			}
 			else if(probabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[1])
 			{
@@ -375,14 +375,14 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 				_rois[roi].types[1] = _unknown_t;
 
 				cv::imwrite( _rois[roi].paths[2], cv::imread(_rois[roi].paths[1]) );
-				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[1], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
 			}
 			else if (probabilities[blobsOfNotInterest[i]] > _rois[roi].probabilities[2])
 			{
 				// ROS_INFO(">2");
 				_rois[roi].probabilities[2] = probabilities[blobsOfNotInterest[i]];
 				_rois[roi].types[2] = _unknown_t;
-				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + "_" + patch::to_string((int)100*_rois[roi].probabilities[0]) + ".jpg") );
+				cv::imwrite( _rois[roi].paths[2], cv::imread(P.string() + "/data/blobs/blob" + patch::to_string(blobsOfNotInterest[i]) + ".jpg") );
 			}
 		}
 	}
@@ -652,12 +652,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		//add sample information to message
 		if(publish_sample_info==true)
 		{
-			ROS_INFO("Publishing detected samples...");
+			// ROS_INFO("Publishing detected samples...");
 			searchForSamplesMsgOut.sampleList.push_back(sampleProps);
 		}
 		else
 		{
-			ROS_INFO("No samples of interest detected...");
+			// ROS_INFO("No samples of interest detected...");
 		}
 	}
 
@@ -724,21 +724,21 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			// }
 			ROS_WARN("Too many red samples (%i not removed with current version of code)", redSampleCounter);
 		}
-		if(orangeSampleCounter > 15)
+		if(orangeSampleCounter > 10)
 		{
-			// if(searchForSamplesMsgOut.sampleList[i].orange == true)
-			// {
-			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
-			// }
-			ROS_WARN("Too many orange samples (%i not removed with current version of code)", orangeSampleCounter);
+			if(searchForSamplesMsgOut.sampleList[i].orange == true)
+			{
+				searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			}
+			ROS_WARN("Too many orange samples (%i REMOVED)", orangeSampleCounter);
 		}
-		if(yellowSampleCounter > 15)
+		if(yellowSampleCounter > 10)
 		{
-			// if(searchForSamplesMsgOut.sampleList[i].yellow == true)
-			// {
-			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
-			// }
-			ROS_WARN("Too many yellow samples (not removed with current version of code)", yellowSampleCounter);
+			if(searchForSamplesMsgOut.sampleList[i].yellow == true)
+			{
+				searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			}
+			ROS_WARN("Too many yellow samples (%i REMOVED)", yellowSampleCounter);
 		}
 	}
 
@@ -758,29 +758,38 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 
 bool SampleSearch::setSampleParams(messages::CVSetSampleParams::Request &req, messages::CVSetSampleParams::Response &res)
 {
-	if(req.roi < MAX_NUMBER_OF_ROIS)
+	for(int i=0; i<MAX_NUMBER_OF_ROIS; i++)
 	{
-		std::string path1Param = "/vision/roi" + patch::to_string(req.roi) + "/path1";
-		std::string path2Param = "/vision/roi" + patch::to_string(req.roi) + "/path2";
-		std::string path3Param = "/vision/roi" + patch::to_string(req.roi) + "/path3";
-		std::string conf1Param = "/vision/roi" + patch::to_string(req.roi) + "/confidence1";
-		std::string conf2Param = "/vision/roi" + patch::to_string(req.roi) + "/confidence2";
-		std::string conf3Param = "/vision/roi" + patch::to_string(req.roi) + "/confidence3";
-		std::string type1Param = "/vision/roi" + patch::to_string(req.roi) + "/type1";
-		std::string type2Param = "/vision/roi" + patch::to_string(req.roi) + "/type2";
-		std::string type3Param = "/vision/roi" + patch::to_string(req.roi) + "/type3";
+		std::string path1Param = "/vision/roi" + patch::to_string(i) + "/path0";
+		std::string path2Param = "/vision/roi" + patch::to_string(i) + "/path1";
+		std::string path3Param = "/vision/roi" + patch::to_string(i) + "/path2";
+		std::string conf1Param = "/vision/roi" + patch::to_string(i) + "/confidence0";
+		std::string conf2Param = "/vision/roi" + patch::to_string(i) + "/confidence1";
+		std::string conf3Param = "/vision/roi" + patch::to_string(i) + "/confidence2";
+		std::string type1Param = "/vision/roi" + patch::to_string(i) + "/type0";
+		std::string type2Param = "/vision/roi" + patch::to_string(i) + "/type1";
+		std::string type3Param = "/vision/roi" + patch::to_string(i) + "/type2";
 
-		nh.setParam(path1Param.c_str(), _rois[req.roi].paths[0]);
-		nh.setParam(path2Param.c_str(), _rois[req.roi].paths[1]);
-		nh.setParam(path3Param.c_str(), _rois[req.roi].paths[2]);
-		nh.setParam(conf1Param.c_str(), _rois[req.roi].probabilities[0]);
-		nh.setParam(conf2Param.c_str(), _rois[req.roi].probabilities[1]);
-		nh.setParam(conf3Param.c_str(), _rois[req.roi].probabilities[2]);
-		nh.setParam(type1Param.c_str(), _rois[req.roi].types[0]);
-		nh.setParam(type2Param.c_str(), _rois[req.roi].types[1]);
-		nh.setParam(type3Param.c_str(), _rois[req.roi].types[2]);
+		nh.setParam(path1Param.c_str(), _rois[i].paths[0]);
+		nh.setParam(path2Param.c_str(), _rois[i].paths[1]);
+		nh.setParam(path3Param.c_str(), _rois[i].paths[2]);
+		nh.setParam(conf1Param.c_str(), _rois[i].probabilities[0]);
+		nh.setParam(conf2Param.c_str(), _rois[i].probabilities[1]);
+		nh.setParam(conf3Param.c_str(), _rois[i].probabilities[2]);
+		nh.setParam(type1Param.c_str(), _rois[i].types[0]);
+		nh.setParam(type2Param.c_str(), _rois[i].types[1]);
+		nh.setParam(type3Param.c_str(), _rois[i].types[2]);
+
+		std::cout << path1Param << ": " << _rois[i].paths[0] << std::endl;
+		std::cout << path2Param << ": " << _rois[i].paths[1] << std::endl;
+		std::cout << path3Param << ": " << _rois[i].paths[2] << std::endl;
+		std::cout << conf1Param << ": " << _rois[i].probabilities[0] << std::endl;
+		std::cout << conf2Param << ": " << _rois[i].probabilities[1] << std::endl;
+		std::cout << conf3Param << ": " << _rois[i].probabilities[2] << std::endl;
+		std::cout << type1Param << ": " << _rois[i].types[0] << std::endl;
+		std::cout << type2Param << ": " << _rois[i].types[1] << std::endl;
+		std::cout << type3Param << ": " << _rois[i].types[2] << std::endl;
 	}
-
 	res.namespace_str = nh.getNamespace();
 	return true;
 }

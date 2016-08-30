@@ -23,6 +23,8 @@ public:
 	static bool slidesEnded_;
 	static bool dropFailed_;
 	static bool slidesFailed_;
+	const int dropTol_ = 150;
+	const int slideTol_ = 80;
 };
 
 RobotStatus RobotControlInterface::robotStatus;
