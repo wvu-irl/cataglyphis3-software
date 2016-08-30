@@ -29,7 +29,7 @@ bool DepositSample::runProc()
 		{
 			missionEnded = true;
 			state = _finish_;
-            voiceSay->call("mission ended. show me the money");
+            voiceSay->call("mission ended");
 		}
         resetQueueEmptyCondition();
 		break;

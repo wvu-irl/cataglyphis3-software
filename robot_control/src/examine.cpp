@@ -19,7 +19,7 @@ bool Examine::runProc()
         }
         else
         {
-            if(!timers[_roiTimer_]->running) {timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
+            if(!timers[_roiTimer_]->running && !roiTimeExpired) {timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
             computeDriveSpeeds();
             examineCount++;
             if(examineCount>examineLimit) {possibleSample = false; definiteSample = false; examineCount = 0; state = _finish_; break;}

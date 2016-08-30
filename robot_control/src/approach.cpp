@@ -28,7 +28,7 @@ bool Approach::runProc()
         }
         else
         {
-            if(!timers[_roiTimer_]->running) {roiTimeExpired = false; timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
+            if(!timers[_roiTimer_]->running && !roiTimeExpired) {roiTimeExpired = false; timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
             grabberDistanceTolerance = initGrabberDistanceTolerance;
             grabberAngleTolerance = initGrabberAngleTolerance;
             //findHighestConfSample();
@@ -52,6 +52,7 @@ bool Approach::runProc()
 		switch(step)
 		{
 		case _computeManeuver:
+            resetQueueEmptyCondition();
 			sampleTypeMux = 0;
 			computeSampleValuesWithExpectedDistance(true);
             if(sampleDistanceAdjustedConf >= approachValueThreshold && definiteSample) approachableSample = true;
@@ -66,6 +67,14 @@ bool Approach::runProc()
 					backUpCount = 0;
 					state = _finish_;
 				}
+                else if(roiOvertimeExpired)
+                {
+                    backUpCount = 0;
+                    roiOvertimeExpired = false;
+                    possibleSample = false;
+                    definiteSample = false;
+                    state = _finish_;
+                }
 				else
 				{
                     grabberDistanceTolerance += grabberDistanceToleranceIncrementPerApproachManeuver;

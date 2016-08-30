@@ -808,6 +808,7 @@ void Procedure::resetQueueEmptyCondition()
 void Procedure::serviceQueueEmptyCondition()
 {
 	if(execInfoMsg.actionDequeSize==0 && !timers[_queueEmptyTimer_]->running && !queueEmptyTimedOut) {timers[_queueEmptyTimer_]->start(); ROS_WARN("start queue empty timer");}
+	else if(execInfoMsg.actionDequeSize>0 && timers[_queueEmptyTimer_]->running) {timers[_queueEmptyTimer_]->stop(); queueEmptyTimedOut = false; ROS_INFO("stop queue empty timer");}
 }
 
 #endif // PROCEDURE_H
