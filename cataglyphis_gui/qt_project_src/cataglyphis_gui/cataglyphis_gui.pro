@@ -13,6 +13,8 @@ TEMPLATE = app
 
 CONFIG += c++11
 
+#QTPLUGIN += png
+
 CONFIG(static, debug|release|static):{
     CONFIG += static
     DEFINES += STATIC

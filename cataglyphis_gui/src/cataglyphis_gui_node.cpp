@@ -4,6 +4,7 @@
 
 #ifdef STATIC
     #include <QtPlugin>
+//Q_IMPORT_PLUGIN(png)
 #endif
 
 
@@ -15,7 +16,7 @@ int main(int argc, char **argv)
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
        ros::console::notifyLoggerLevelsChanged();
     }
-//    Q_INIT_RESOURCE(resources);
+    Q_INIT_RESOURCE(resources);
     ros::init(argc, argv, "GUI_Node", ros::init_options::AnonymousName);
     ROS_INFO("GUI_Node - ros::init complete");
     boost::shared_ptr<ros::NodeHandle> nh(new ros::NodeHandle());

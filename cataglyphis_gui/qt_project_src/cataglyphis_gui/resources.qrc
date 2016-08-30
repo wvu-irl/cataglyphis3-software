@@ -6,6 +6,8 @@
         <file>resources/chestnut_ridge.jpg</file>
     </qresource>
     <qresource prefix="/objects">
-        <file>resources/arrowheart2.png</file>
+        <file>resources/arrow.jpg</file>
+        <file>resources/arrowheart.png</file>
+        <file>resources/arrowheart.tif</file>
     </qresource>
 </RCC>

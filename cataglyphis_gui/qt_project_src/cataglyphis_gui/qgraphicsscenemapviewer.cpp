@@ -168,6 +168,17 @@ void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_co
     }
 }
 
+bool QGraphicsSceneMapViewer::drawRobot()
+{
+    if(isMapSetup())
+    {
+        QPointF tempPoint(lastRobotPose.x, lastRobotPose.y);
+        cataglyphisCircle->setPos(robotToObjTransform.map(tempPoint));
+        cataglyphisCircle->setRotation(lastRobotPose.heading-90);
+    }
+    return true;
+}
+
 bool QGraphicsSceneMapViewer::_implGenericGridMapLayerDisplay()
 {
     return true;
@@ -214,6 +225,43 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         robotToObjTransform.rotate(lastRobotPose.northAngle-90);
         robotToObjTransform.scale(pixelsPerDistance,pixelsPerDistance);
         this->setItemIndexMethod(QGraphicsScene::NoIndex);
+
+        const double circleRadius = 12;
+        //this->removeItem(cataglyphisCircle);
+        if(!cataglyphisCircle)
+        {
+            cataglyphisCircle = new QGraphicsEllipseItem(0,0,circleRadius,circleRadius);
+        }
+        else
+        {
+            this->removeItem(cataglyphisCircle);
+        }
+        if(!cataglyphisHeadingLine)
+        {
+            cataglyphisHeadingLine = new QGraphicsLineItem(0,0,0,4);
+        }
+        else
+        {
+            this->removeItem(cataglyphisHeadingLine);
+        }
+
+        QPointF tempPoint(0,0);
+        QBrush tempbrush(QColor::fromRgb(0,255,0));
+        QPen circleLinePen(QColor::fromRgb(0,0,0), 1.5);
+        QPen temppen(tempbrush, 2);
+
+        cataglyphisCircle->setTransformOriginPoint(circleRadius/2, circleRadius/2);
+        cataglyphisCircle->setPos(robotToObjTransform.map(tempPoint));
+        cataglyphisCircle->setBrush(tempbrush);
+        cataglyphisCircle->setPen(circleLinePen);
+
+        cataglyphisHeadingLine->setPen(temppen);
+        cataglyphisHeadingLine->setLine(circleRadius/2,circleRadius/2,circleRadius/2,circleRadius+3);
+        cataglyphisHeadingLine->setParentItem(cataglyphisCircle);
+
+        this->addItem(cataglyphisCircle);
+
+        cataglyphisCircle->show();
     }
    // else
     {
@@ -350,8 +398,9 @@ void QGraphicsSceneMapViewer::_implInitLayer(mapLayer_t *layer, bool reInit)
 
 void QGraphicsSceneMapViewer::on_hsm_global_pose_callback(const messages::RobotPose navInfo)
 {
-    //ROS_DEBUG("SCENE:: HSM Global pose callback");
+    ROS_DEBUG_THROTTLE(5,"SCENE:: HSM Global pose callback");
     lastRobotPose = navInfo;
+    drawRobot();
 }
 
 void QGraphicsSceneMapViewer::_implConnectSignals()

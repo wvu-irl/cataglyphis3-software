@@ -90,6 +90,8 @@ public:
         ignoreSetup = ignoreSetupStep;
         mapSetup = false;
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
+        cataglyphisCircle = 0;
+        cataglyphisHeadingLine = 0;
     }
     //this constructor takes ownership of the pointer
     QGraphicsSceneMapViewer(QImage *image, float pixelsPerDist, bool ignoreSetupStep = false, QObject * parent = 0,
@@ -102,6 +104,8 @@ public:
         mapSetup = false;
         *areaImage = *image;
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
+        cataglyphisCircle = 0;
+        cataglyphisHeadingLine = 0;
     }
 
     void mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent);
@@ -112,6 +116,7 @@ public:
 
     bool setupMap(QPointF scenePos);
     bool isMapSetup(){ return mapSetup; }
+    bool drawRobot();
     const layerProperties_t & getLayerProperties(map_viewer_enums::mapViewerLayers_t mapLayer);
     mapLayer_t * getLayerFromEnum(const map_viewer_enums::mapViewerLayers_t &mapLayer);
     void setupLayer(map_viewer_enums::mapViewerLayers_t mapLayer);
@@ -144,6 +149,11 @@ private:
     QGraphicsPixmapItem *areaImagePixmap;
     boost::shared_ptr<map_viewer_rect> cataglyphisRect;
     boost::scoped_ptr<map_viewer_rect> startingPlatformRect;
+
+    boost::scoped_ptr<QGraphicsItemGroup> cataglyphis;
+
+    QGraphicsLineItem *cataglyphisHeadingLine;
+    QGraphicsEllipseItem *cataglyphisCircle;
 
 
     grid_map::GridMap gridMapContainer;
