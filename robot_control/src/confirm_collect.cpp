@@ -47,6 +47,8 @@ bool ConfirmCollect::runProc()
                 possibleSample = false;
                 definiteSample = false;
                 reorientCount = 0;
+                timers[_roiTimer_]->stop();
+                roiTimeExpired = false;
                 // Delete searchLocalMap
                 searchMapSrv.request.createMap = false;
                 searchMapSrv.request.deleteMap = true;

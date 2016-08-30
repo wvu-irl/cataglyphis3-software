@@ -25,7 +25,7 @@ bool Collect::runProc()
         computeDriveSpeeds();
         if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
-        if(grabberStatusMsg.dropFailed || grabberStatusMsg.slidesFailed) dropOrSlidesFailed = true;
+        if(grabberStatusMsg.dropFailed || grabberStatusMsg.slidesFailed) {dropOrSlidesFailed = true; ROS_WARN("collect drop or slides failed");}
         else dropOrSlidesFailed = false;
         serviceQueueEmptyCondition();
 		break;
@@ -42,6 +42,7 @@ bool Collect::runProc()
             possessingSample = false;
             sideOffsetGrab = false;
             performReorient = true;
+            sampleInCollectPosition = false;
             sendDriveRel(failedBackUpDistance, 0.0, false, 0.0, false, false);
         }
         else

@@ -3,34 +3,34 @@
 DepositApproach::DepositApproach()
 {
 	depositLocations.resize(MAX_SAMPLES);
-	depositLocations.at(0).x = 0.85;
+	depositLocations.at(0).x = 0.8;
 	depositLocations.at(0).y = 0.0;
 
-	depositLocations.at(1).x = 0.85;
+	depositLocations.at(1).x = 0.8;
 	depositLocations.at(1).y = -0.483;
 
-	depositLocations.at(2).x = 1.3;
+	depositLocations.at(2).x = 1.25;
 	depositLocations.at(2).y = -0.483;
 
-	depositLocations.at(3).x = 0.05;
+	depositLocations.at(3).x = 0.8;
 	depositLocations.at(3).y = 0.483;
 
-	depositLocations.at(4).x = 1.3;
+	depositLocations.at(4).x = 1.25;
 	depositLocations.at(4).y = 0.0;
 
-	depositLocations.at(5).x = 1.75;
+	depositLocations.at(5).x = 1.7;
 	depositLocations.at(5).y = -0.483;
 
-	depositLocations.at(6).x = 1.3;
+	depositLocations.at(6).x = 1.25;
 	depositLocations.at(6).y = 0.483;
 
-	depositLocations.at(7).x = 1.75;
+	depositLocations.at(7).x = 1.7;
     depositLocations.at(7).y = 0.483;
 
-	depositLocations.at(8).x = 1.75;
+	depositLocations.at(8).x = 1.7;
     depositLocations.at(8).y = 0.0;
 
-	depositLocations.at(9).x = 1.75;
+	depositLocations.at(9).x = 1.7;
 	depositLocations.at(9).y = 0.0;
 }
 
@@ -131,7 +131,7 @@ bool DepositApproach::runProc()
 		state = _exec_;
 		break;
 	case _finish_:
-		avoidLockout = false;
+		avoidLockout = true;
 		inDepositPosition = true;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

@@ -20,17 +20,17 @@ Comm::Comm()
 	if(node_type=="i7_nb1_serial")
 	{
 		ROS_INFO(" - - - - node_type==i7_nb1_serial");
-		packet_in_ptr = new NB1_To_I7(pktread);
+        packet_in_ptr = new NB1_To_I7_Serial(pktread);
 		ROS_INFO(" - - - - new NB1_To_I7(pktread)");
-		packet_out_ptr = new I7_To_NB1(pktwrite);
+        packet_out_ptr = new I7_To_NB1(pktwrite);
 		ROS_INFO(" - - - - new I7_To_NB1(pktwrite)");
 		port_ptr = new Serial_Port(_fixed_length_packet);
 		ROS_INFO(" - - - - new Serial_Port");
-		pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
-		ROS_INFO(" - - - - advertise<hw_interface::nb1_to_i7_msg>(hw_interface/nb1in/nb1in,1)");
+        pub = nh.advertise<messages::nb1_to_i7_serial_msg>("hw_interface/nb1inserial/nb1inserial",1);
+        ROS_INFO(" - - - - advertise<hw_interface::nb1_to_i7_msg>(hw_interface/nb1inserial/nb1inserial,1)");
 		packet_out_ptr->subscribeMsg();		
 		ROS_INFO(" - - - - packet_out_ptr->subscribeMsg()");
-		publish_enabled = false;
+        publish_enabled = true;
 		//Serial_act_ptr = new Serial_HSM_Act(&publish_enabled);
 	}
 	else if(node_type=="i7_nb1_udp_sender")

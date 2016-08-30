@@ -29,7 +29,7 @@ bool DepositSample::runProc()
 		{
 			missionEnded = true;
 			state = _finish_;
-            voiceSay->call("mission ended. show me the money");
+            voiceSay->call("mission ended");
 		}
         resetQueueEmptyCondition();
 		break;
@@ -40,7 +40,7 @@ bool DepositSample::runProc()
         procsToResume[procType] = false;
         if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;
-        if(grabberStatusMsg.dropFailed) dropFailed = true;
+        if(grabberStatusMsg.dropFailed) {dropFailed = true; ROS_WARN("deposit sample drop failed");}
         else dropFailed = false;
         serviceQueueEmptyCondition();
 		break;

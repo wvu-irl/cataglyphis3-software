@@ -34,6 +34,7 @@ MissionPlanning::MissionPlanning()
     performHoming = false;
     inSearchableRegion = false;
     roiTimeExpired = false;
+    roiOvertimeExpired = false;
     possessingSample = false;
     possibleSample = false;
     definiteSample = false;
@@ -100,11 +101,14 @@ MissionPlanning::MissionPlanning()
     missionTime = 0.0;
     prevTime = ros::Time::now().toSec();
     missionStarted = false;
+    timers[_roiTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::roiTimeExpiredCallback_, this);
     timers[_biasRemovalTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalTimerCallback_, this);
     timers[_homingTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::homingTimerCallback_, this);
     timers[_searchTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::searchTimerCallback_, this);
     timers[_biasRemovalActionTimeoutTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::biasRemovalActionTimerCallback_, this);
     timers[_queueEmptyTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::queueEmptyTimerCallback_, this);
+    timers[_roiOvertimeTimer_] = new CataglyphisTimer<MissionPlanning>(&MissionPlanning::roiOvertimeTimerCallback_, this);
+    timers[_roiTimer_]->stop();
     timers[_biasRemovalActionTimeoutTimer_]->setPeriod(biasRemovalActionTimeoutTime);
     timers[_searchTimer_]->setPeriod(searchTimeoutPeriod);
     timers[_searchTimer_]->stop();
@@ -113,6 +117,8 @@ MissionPlanning::MissionPlanning()
     timers[_homingTimer_]->setPeriod(homingTimeoutPeriod);
     timers[_queueEmptyTimer_]->setPeriod(queueEmptyTimerPeriod);
     timers[_queueEmptyTimer_]->stop();
+    timers[_roiOvertimeTimer_]->setPeriod(roiOvertimePeriod);
+    timers[_roiOvertimeTimer_]->stop();
     timers[_biasRemovalTimer_]->start();
     timers[_homingTimer_]->start();
     driveSpeedsMsg.vMax = defaultVMax;
@@ -777,6 +783,13 @@ bool MissionPlanning::controlCallback_(messages::MissionPlanningControl::Request
     return true;
 }
 
+void MissionPlanning::roiTimeExpiredCallback_(const ros::TimerEvent &event)
+{
+    roiTimeExpired = true;
+    ROS_WARN("roiTimeExpiredCallback");
+    voiceSay->call("r o i time expired");
+}
+
 void MissionPlanning::biasRemovalTimerCallback_(const ros::TimerEvent &event)
 {
     performBiasRemoval = true;
@@ -809,4 +822,11 @@ void MissionPlanning::queueEmptyTimerCallback_(const ros::TimerEvent &event)
     queueEmptyTimedOut = true;
     ROS_WARN("queue empty timer expired");
     voiceSay->call("queue empty timer expired");
+}
+
+void MissionPlanning::roiOvertimeTimerCallback_(const ros::TimerEvent &event)
+{
+    roiOvertimeExpired = true;
+    ROS_WARN("roi overtime expired");
+    voiceSay->call("r o i overtime expired");
 }

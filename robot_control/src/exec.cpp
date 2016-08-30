@@ -122,6 +122,7 @@ void Exec::run()
 	packActuatorMsgOut_();
 	packInfoMsgOut_();
     packNextWaypointOut_();
+    packGabberStatusOut_();
     if(!manualOverride_)
     {
         actuatorPub.publish(actuatorMsgOut_);
