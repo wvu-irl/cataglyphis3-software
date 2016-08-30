@@ -247,7 +247,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
             minDimension = axis2;
             maxDimension = axis1;
         }
-        if(maxDimension < 30 || minDimension < 20)
+        if(maxDimension < 25 || minDimension < 20)
         {
             ROS_INFO("ignoring (min/max size thresh) %i",i);
             continue;              
