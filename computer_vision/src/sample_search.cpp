@@ -724,21 +724,21 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			// }
 			ROS_WARN("Too many red samples (%i not removed with current version of code)", redSampleCounter);
 		}
-		if(orangeSampleCounter > 15)
+		if(orangeSampleCounter > 10)
 		{
-			// if(searchForSamplesMsgOut.sampleList[i].orange == true)
-			// {
-			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
-			// }
-			ROS_WARN("Too many orange samples (%i not removed with current version of code)", orangeSampleCounter);
+			if(searchForSamplesMsgOut.sampleList[i].orange == true)
+			{
+				searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			}
+			ROS_WARN("Too many orange samples (%i REMOVED)", orangeSampleCounter);
 		}
-		if(yellowSampleCounter > 15)
+		if(yellowSampleCounter > 10)
 		{
-			// if(searchForSamplesMsgOut.sampleList[i].yellow == true)
-			// {
-			// 	searchForSamplesMsgOut.sampleList[i].confidence = 0;
-			// }
-			ROS_WARN("Too many yellow samples (%i not removed with current version of code)", yellowSampleCounter);
+			if(searchForSamplesMsgOut.sampleList[i].yellow == true)
+			{
+				searchForSamplesMsgOut.sampleList[i].confidence = 0;
+			}
+			ROS_WARN("Too many yellow samples (%i REMOVED)", yellowSampleCounter);
 		}
 	}
 
