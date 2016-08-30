@@ -1,6 +1,9 @@
 #include <lidar/collision_detection.hpp>
 
 //test
+#include <lidar/telemetry.hpp>
+
+//test
 // #include <time.h>	// show calculation time
 
 
@@ -18,11 +21,13 @@ int main(int argc, char **argv)
 	//timer definition, for testing
 	// clock_t start, finish;
 	// double totaltime;
+	delta_loop_time telemetry;
 
 	while(ros::ok())
 	{
 		//timer, debug
 		// start = clock();
+		// telemetry.printMetrics(true);
 
 		if(collision_detection.newPointCloudAvailable())
 		{

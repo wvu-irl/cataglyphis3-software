@@ -219,18 +219,9 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         float yCoordPixels = (boundingBoxonBlob.x+boundingBoxonBlob.width/2 - imageWidth/2);
         float distanceFromCenterOfImageInPixels = sqrt(xCoordPixels*xCoordPixels + yCoordPixels*yCoordPixels);
         float segmentAreaInPixels = (float)(boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x)*(float)(boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
-        ROS_INFO("distance, area, index = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
+        // ROS_INFO("distance, area, index = %f,%f,%i",distanceFromCenterOfImageInPixels,segmentAreaInPixels,tempCounter);
         tempCounter++;
 
-        // if( distanceFromCenterOfImageInPixels > 2000 )
-        // {
-        //     if(segmentAreaInPixels < 750)
-        //     {
-        //         //ignore blob
-        //         ROS_INFO("ignoring (near area thresh) %i",i);
-        //         continue;
-        //     }
-        // }
         if(distanceFromCenterOfImageInPixels < 5792/4)
         {
             if((boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) < 50 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) < 50)
@@ -239,6 +230,27 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
                 ROS_INFO("ignoring (far area thresh) %i",i);
                 continue;              
             }
+        }
+
+        //global threshold for blob short and long axis
+        int axis1 = (boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x);
+        int axis2 = (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y);
+        int minDimension;
+        int maxDimension;
+        if(axis1 < axis2)
+        {
+            minDimension = axis1;
+            maxDimension = axis2;
+        }
+        else
+        {
+            minDimension = axis2;
+            maxDimension = axis1;
+        }
+        if(maxDimension < 25 || minDimension < 20)
+        {
+            ROS_INFO("ignoring (min/max size thresh) %i",i);
+            continue;              
         }
 
         blob_list.push_back(boundingBoxonBlob);
@@ -511,7 +523,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         }
 
         std::string temp = map_enum_to_string((SAMPLE_TYPE_T)bestColor);
-        ROS_INFO("color, pixels, index = %s, %i, %i", temp.c_str(), maxPixels, req.blobsOfInterest[i]);
+        // ROS_INFO("color, pixels, index = %s, %i, %i", temp.c_str(), maxPixels, req.blobsOfInterest[i]);
         types.push_back(bestColor);
     }
 
