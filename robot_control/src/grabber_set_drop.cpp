@@ -19,7 +19,7 @@ int GrabberSetDrop::run()
         robotOutputs.dropPosCmd = dropPos_;
         robotOutputs.grabberStopCmd = 0;
         if(dropEnded_ && abs(robotStatus.grabberDropPos - dropPos_) <= dropTol_) {returnValue_ = 1; state_ = _normal_;}
-        else if(dropEnded_ && abs(robotStatus.grabberDropPos - dropPos_) > dropTol_) {returnValue_ = 0; state_ = _recovering_;}
+        else if(dropEnded_ && abs(robotStatus.grabberDropPos - dropPos_) > dropTol_) {returnValue_ = 0; dropEnded_ = false; state_ = _recovering_;}
         else {returnValue_ = 0; state_ = _normal_;}
         break;
     case _recovering_:

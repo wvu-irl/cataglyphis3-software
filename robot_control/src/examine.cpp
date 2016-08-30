@@ -60,7 +60,7 @@ bool Examine::runProc()
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;
-        if(roiTimeExpired && !roiOvertimeExpired && !timers[_roiOvertimeTimer_]->running) {roiTimeExpired = false; timers[_roiOvertimeTimer_]->start(); ROS_INFO("roi overtime started");}
+        if(roiTimeExpired && !roiOvertimeExpired && !timers[_roiOvertimeTimer_]->running) {timers[_roiOvertimeTimer_]->start(); ROS_INFO("roi overtime started");}
 		computeDriveSpeeds();
         if(searchEnded() || queueEmptyTimedOut) state = _finish_;
 		else state = _exec_;

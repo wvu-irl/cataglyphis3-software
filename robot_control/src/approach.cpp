@@ -146,7 +146,7 @@ bool Approach::runProc()
 			state = _exec_;
 			break;
 		}
-        if(roiTimeExpired && !roiOvertimeExpired && !timers[_roiOvertimeTimer_]->running) {roiTimeExpired = false; timers[_roiOvertimeTimer_]->start(); ROS_INFO("roi overtime started");}
+        if(roiTimeExpired && !roiOvertimeExpired && !timers[_roiOvertimeTimer_]->running) {timers[_roiOvertimeTimer_]->start(); ROS_INFO("roi overtime started");}
         serviceQueueEmptyCondition();
 		break;
 	case _interrupt_:

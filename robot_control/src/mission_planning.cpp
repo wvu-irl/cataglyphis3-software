@@ -281,7 +281,7 @@ void MissionPlanning::evalConditions_()
                 }
             }
         }
-        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !performSafeMode && initialized && !missionEnded) // Next Best Region
+        if(numProcsBeingOrToBeExecOrRes==0 && !possessingSample && !confirmedPossession && !(possibleSample || definiteSample) && !inSearchableRegion && !sampleInCollectPosition && !performReorient && !escapeCondition && !shouldExecuteAvoidManeuver && !performBiasRemoval && !performHoming && !homingUpdateFailed && !performSafeMode && initialized && !missionEnded) // Next Best Region
         {
             procsToExecute[__nextBestRegion__] = true;
             ROS_INFO("to execute nextBestRegion");
@@ -373,6 +373,8 @@ void MissionPlanning::evalConditions_()
             voiceSay->call("safe mode");
         }
 
+        //calcnumProcsBeingOrToBeExecOrRes_();
+        //if()
 
         // *************** Multi Proc Lockout for testing *************************
         lockoutSum = 0;
@@ -583,9 +585,9 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
     {
         timers[_homingTimer_]->stop();
         timers[_homingTimer_]->start();
-        performHoming = false;
-        possiblyLost = false;
-        homingUpdateFailed = false;
+        //performHoming = false;
+        //possiblyLost = false;
+        //homingUpdateFailed = false;
     }
 }
 

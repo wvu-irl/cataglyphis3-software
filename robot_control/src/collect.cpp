@@ -41,6 +41,8 @@ bool Collect::runProc()
             avoidLockout = false;
             possessingSample = false;
             sideOffsetGrab = false;
+            possibleSample = false;
+            definiteSample = false;
             performReorient = true;
             sampleInCollectPosition = false;
             sendDriveRel(failedBackUpDistance, 0.0, false, 0.0, false, false);

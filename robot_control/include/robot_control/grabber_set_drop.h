@@ -9,7 +9,6 @@ public:
 	int run();
 private:
 	int dropPos_;
-	const int dropTol_ = 150;
 	int numFailedAttempts_;
 	const int maxFailedAttempts_ = 2;
 	const int limitedRetryPosition_ = GRABBER_DROPPED;

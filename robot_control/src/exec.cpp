@@ -59,8 +59,18 @@ Exec::Exec()
 void Exec::run()
 {
     ROS_INFO_THROTTLE(3,"Exec running...");
-    if(dropStatusLEL_.LE_Latch(robotStatus.grabberDropStatus)) dropEnded_ = true;
-    if(slideStatusLEL_.LE_Latch(robotStatus.grabberSlideStatus)) slidesEnded_ = true;
+    dropStatusLEL_.LE_Latch(robotStatus.grabberDropStatus);
+    slideStatusLEL_.LE_Latch(robotStatus.grabberSlideStatus);
+    if(pause_==false)
+    {
+        if(dropStatusLEL_.get_val()) dropEnded_ = true;
+        if(slideStatusLEL_.get_val()) slidesEnded_ = true;
+    }
+    else
+    {
+        if(abs(robotStatus.grabberDropPos - robotOutputs.dropPosCmd) <= dropTol_) dropEnded_ = true;
+        if(abs(robotStatus.grabberSlidePos - robotOutputs.slidePosCmd) <= slideTol_) slidesEnded_ = true;
+    }
     if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.clearDeques();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
