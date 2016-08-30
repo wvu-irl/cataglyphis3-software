@@ -40,6 +40,7 @@ public:
 	static bool procsToResume[NUM_PROC_TYPES];
 	static unsigned int numProcsBeingOrToBeExecOrRes;
 	static unsigned int numProcsBeingOrToBeExec;
+	static unsigned int numProcsToBeExecAndNotInterrupt;
     static ros::ServiceClient execActionClient;
     static messages::ExecAction execActionSrv;
 	static ros::Subscriber execInfoSub;
@@ -201,6 +202,7 @@ bool MissionPlanningProcedureShare::procsBeingExecuted[NUM_PROC_TYPES];
 bool MissionPlanningProcedureShare::procsToResume[NUM_PROC_TYPES];
 unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExecOrRes;
 unsigned int MissionPlanningProcedureShare::numProcsBeingOrToBeExec;
+unsigned int MissionPlanningProcedureShare::numProcsToBeExecAndNotInterrupt;
 ros::ServiceClient MissionPlanningProcedureShare::execActionClient;
 messages::ExecAction MissionPlanningProcedureShare::execActionSrv;
 ros::Subscriber MissionPlanningProcedureShare::execInfoSub;

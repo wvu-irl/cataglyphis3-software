@@ -34,6 +34,8 @@ public:
 	double Q_theta;
 	double Q_psi;
 	double north_angle;
+	double Kens_north_angle;
+	double Kens_angle;
 	double P_north_angle;
 	double E_north_angle;
 	double north_angle_thresh;
@@ -45,6 +47,7 @@ public:
 	double heading_est_k_prev;
 	double heading_prev;
 	double l_dist;
+	short int platform_number;
 	arma::mat p_values;
 	arma::mat q_values;
 	arma::mat r_values;
@@ -71,6 +74,8 @@ public:
 	void which_nb_to_keep(int nb1_drive_counter, bool nb1_current, bool nb1_good, bool nb1_good_prev, int nb2_drive_counter, bool nb2_current, bool nb2_good, bool nb2_good_prev, bool nbS_current, bool nbS_good, bool nbS_good_prev);
 	void homing_update(double homing_heading, double homing_x, double homing_y, double dull_x, double dull_y, double shiny_x, double shiny_y, double cylinder_std, bool possibly_lost, bool square_update);
 	void clear_cylinder_vec();
+	void find_Kens_north_angle();
+	void check_Kens_north_angle();
 
 };
 

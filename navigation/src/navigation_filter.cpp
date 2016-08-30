@@ -79,6 +79,9 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
 		first_pass = false;
 	}
 
+	filter.find_Kens_north_angle();
+    filter.north_angle = filter.Kens_north_angle;
+
 	if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.01) && encoders.delta_distance == 0)
 	{
 		if (collecting_accelerometer_data)
@@ -211,7 +214,7 @@ void NavigationFilter::waiting(User_Input_Nav_Act user_input_nav_act)
                 collected_gyroS_data = false;
 			}
 
-			if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data && collected_gyroS_data)
+			if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data)
 			{
 				collected_gyro_data = true;
 			}
@@ -363,7 +366,7 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 			}
 		}
 	}
-    else if (ros::Time::now().toSec()-stop_time>20.0)
+    else if (ros::Time::now().toSec()-stop_time>20.0 && stop_request == true)
 	{
 		stop_request = false;
         if (imu.nb1_missed_counter>50)
@@ -381,6 +384,10 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 			 imu.nbS_good = false;
 			 imu.nbS_good_prev = false;
 		}
+	}
+	else if (stop_request == false)
+	{
+		stop_time = ros::Time::now().toSec();
 	}
 
 
@@ -447,20 +454,9 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 			}
 		}
 
-        /*if (fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))<filter.north_angle_thresh || fabs(fmod(init_filter.psi-filter.E_north_angle,2*PI))>2*PI-filter.north_angle_thresh)
-        {
-            filter.north_angle = init_filter.psi;
-            filter.P_north_angle = init_filter.P_psi;
-        }
-        else
-        {
-            filter.north_angle = filter.E_north_angle;
-            filter.P_north_angle = filter.north_angle_thresh*filter.north_angle_thresh;
-        }*/
-
         filter.north_angle = init_filter.psi;
-        ROS_INFO("init_filter.psi (north angle = %f)",init_filter.psi);
 		filter.P_north_angle = init_filter.P_psi;
+        filter.check_Kens_north_angle();
 
 		state = _run; 
 		filter.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
@@ -609,7 +605,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			collecting_accelerometer_data = true;
 		}
 
-		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.05) && encoders.delta_distance < 5)
+		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.01) && fabs(encoders.delta_distance) < 0.001)
 		{
 			if((sqrt(filter.x*filter.x+filter.y*filter.y)<30.0 || possibly_lost)&&!homing_updated&&(!pause_switch||latest_nav_control_request.runBiasRemoval))
 			{
@@ -823,7 +819,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 				}
 
 
-				if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data && collected_gyroS_data)
+				if (collected_gyro1_data && collected_gyro2_data && collected_gyro3_data && collected_gyro4_data && collected_gyro5_data && collected_gyro6_data)
 				{
 					collected_gyro_data = true;
 				}
@@ -953,6 +949,10 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		}
 		filter.homing_verified = false;
 	}
+	else if (!do_homing)
+	{
+		filter.clear_cylinder_vec();
+	}
 	else if (!stopFlag)
 	{
 		filter.clear_cylinder_vec();
@@ -1030,7 +1030,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			}
 		}
 	}
-    else if (ros::Time::now().toSec()-stop_time>20.0)
+    else if (ros::Time::now().toSec()-stop_time>20.0 && stop_request == true)
 	{
 		stop_request = false;
         if (imu.nb1_missed_counter>50)
@@ -1048,6 +1048,10 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 			 imu.nbS_good = false;
 			 imu.nbS_good_prev = false;
 		}
+	}
+	else if (stop_request == false)
+	{
+		stop_time = ros::Time::now().toSec();
 	}
 
 	if (latest_nav_control_request.runBiasRemoval && collected_gyro_data)
@@ -1107,6 +1111,24 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
     response.r3Offset = imu.r3_offset;
     
     if(request.setInitNorthAngle) init_north_angle = request.initNorthAngle*DEG_2_RAD;
+
+    if(request.skipInit) state = _run;
+
+    if(request.setKensAngle)
+    {
+        filter.Kens_angle = request.kensAngle*DEG_2_RAD;
+        filter1.Kens_angle = request.kensAngle*DEG_2_RAD;
+        filter2.Kens_angle = request.kensAngle*DEG_2_RAD;
+        filterS.Kens_angle = request.kensAngle*DEG_2_RAD;
+    }
+
+    if(request.setPlatform)
+    {
+        filter.platform_number = request.platformNum;
+        filter1.platform_number = request.platformNum;
+        filter2.platform_number = request.platformNum;
+        filterS.platform_number = request.platformNum;
+    }
 
     if(request.setGlobalPose)
     {

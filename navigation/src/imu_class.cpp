@@ -85,12 +85,12 @@ IMU::IMU()
 	ax1=0;
 	ay1=0;
 	az1=0;
-	p1_offset = 0.000151251102727;
-	q1_offset = -0.001028705454545;
-	r1_offset = 0.00049114595454;
-	E_p1_offset = 0.000151251102727;
-	E_q1_offset = -0.001028705454545;
-	E_r1_offset = 0.00049114595454;
+	p1_offset = 0.00155578029808;
+	q1_offset = 0.000418158248067;
+	r1_offset = 0.000437778187916;
+	E_p1_offset = 0.00155578029808;
+	E_q1_offset = 0.000418158248067;
+	E_r1_offset = 0.000437778187916;
 	mean_p1 = 0;
 	mean_q1 = 0;
 	mean_r1 = 0;
@@ -99,6 +99,8 @@ IMU::IMU()
 	q1_values.clear();
 	r1_values.clear();
 	new_imu1 = 0;
+	imu_1_good = false;
+
 
 
 	//imu2
@@ -108,12 +110,12 @@ IMU::IMU()
 	ax2=0;
 	ay2=0;
 	az2=0;
-	p2_offset = 0.000548155500000;
-	q2_offset = -0.001647460000000;
-	r2_offset = 0.002133171818182;
-	E_p2_offset = 0.000548155500000;
-	E_q2_offset = -0.001647460000000;
-	E_r2_offset = 0.002133171818182;
+	p2_offset = -0.000307843234623;
+    q2_offset = 0.000208376179216;
+	r2_offset = -0.00213066977449;
+	E_p2_offset = -0.000307843234623;
+    E_q2_offset = 0.000208376179216;
+	E_r2_offset = -0.00213066977449;
 	mean_p2 = 0;
 	mean_q2 = 0;
 	mean_r2 = 0;
@@ -122,6 +124,7 @@ IMU::IMU()
 	q2_values.clear();
 	r2_values.clear();
 	new_imu2 = 0;
+	imu_2_good = false;
 
 	//imu3
 	p3=0;
@@ -130,12 +133,12 @@ IMU::IMU()
 	ax3=0;
 	ay3=0;
 	az3=0;
-	p3_offset = 0.000548155500000;
-	q3_offset = -0.001647460000000;
-	r3_offset = 0.002133171818182;
-	E_p3_offset = 0.000548155500000;
-	E_q3_offset = -0.001647460000000;
-	E_r3_offset = 0.002133171818182;
+	p3_offset = 0.000705252867192;
+	q3_offset = -0.000602908607107;
+	r3_offset = 0.00156109826639;
+	E_p3_offset = 0.000705252867192;
+	E_q3_offset = -0.000602908607107;
+	E_r3_offset = 0.00156109826639;
 	mean_p3 = 0;
 	mean_q3 = 0;
 	mean_r3 = 0;
@@ -144,6 +147,7 @@ IMU::IMU()
 	q3_values.clear();
 	r3_values.clear();
 	new_imu3 = 0;
+	imu_3_good = false;
 
 	//imu4
 	p4=0;
@@ -152,12 +156,12 @@ IMU::IMU()
 	ax4=0;
 	ay4=0;
 	az4=0;
-	p4_offset = 0.000548155500000;
-	q4_offset = -0.001647460000000;
-	r4_offset = 0.002133171818182;
-	E_p4_offset = 0.000548155500000;
-	E_q4_offset = -0.001647460000000;
-	E_r4_offset = 0.002133171818182;
+	p4_offset = 0.000195449843886;
+	q4_offset = -0.000753260857891;
+	r4_offset = -0.00042131691589;
+	E_p4_offset = 0.000195449843886;
+	E_q4_offset = -0.000753260857891;
+	E_r4_offset = -0.00042131691589;
 	mean_p4 = 0;
 	mean_q4 = 0;
 	mean_r4 = 0;
@@ -166,6 +170,7 @@ IMU::IMU()
 	q4_values.clear();
 	r4_values.clear();
 	new_imu4 = 0;
+	imu_4_good = false;
 
 	//imu5
 	p5=0;
@@ -174,12 +179,12 @@ IMU::IMU()
 	ax5=0;
 	ay5=0;
 	az5=0;
-	p5_offset = 0.000548155500000;
-	q5_offset = -0.001647460000000;
-	r5_offset = 0.002133171818182;
-	E_p5_offset = 0.000548155500000;
-	E_q5_offset = -0.001647460000000;
-	E_r5_offset = 0.002133171818182;
+	p5_offset = -0.00571636529639;
+	q5_offset = 0.000290035066428;
+	r5_offset = -0.00263201794587;
+	E_p5_offset = -0.00571636529639;
+	E_q5_offset = 0.000290035066428;
+	E_r5_offset = -0.00263201794587;
 	mean_p5 = 0;
 	mean_q5 = 0;
 	mean_r5 = 0;
@@ -188,6 +193,7 @@ IMU::IMU()
 	q5_values.clear();
 	r5_values.clear();
 	new_imu5 = 0;
+	imu_5_good = false;
 
 	//imu6
 	p6=0;
@@ -196,12 +202,12 @@ IMU::IMU()
 	ax6=0;
 	ay6=0;
 	az6=0;
-	p6_offset = 0.000548155500000;
-	q6_offset = -0.001647460000000;
-	r6_offset = 0.002133171818182;
-	E_p6_offset = 0.000548155500000;
-	E_q6_offset = -0.001647460000000;
-	E_r6_offset = 0.002133171818182;
+	p6_offset = 0.000121627504996;
+	q6_offset = 0.000229120953009;
+	r6_offset = 0.000608300091699;
+	E_p6_offset = 0.000121627504996;
+	E_q6_offset = 0.000229120953009;
+	E_r6_offset = 0.000608300091699;
 	mean_p6 = 0;
 	mean_q6 = 0;
 	mean_r6 = 0;
@@ -210,6 +216,7 @@ IMU::IMU()
 	q6_values.clear();
 	r6_values.clear();
 	new_imu6 = 0;
+	imu_6_good = false;
 
 	pS=0;
 	qS=0;
@@ -1532,9 +1539,9 @@ void IMU::filter_imu_values()
             dt1 = 0.1;
 		}
 
-		new_imu1 = 1;
-		new_imu2 = 1;
-		new_imu3 = 1;
+		new_imu1 = (short int) imu_1_good;
+		new_imu2 = (short int) imu_2_good;
+		new_imu3 = (short int) imu_3_good;
 
 		p1 = p1-p1_offset;
 		q1 = q1-q1_offset;
@@ -1600,9 +1607,9 @@ void IMU::filter_imu_values()
             dt2 = 0.1;
 		}
 
-		new_imu4 = 1;
-		new_imu5 = 1;
-		new_imu6 = 1;
+		new_imu4 = (short int) imu_4_good;
+		new_imu5 = (short int) imu_5_good;
+		new_imu6 = (short int) imu_6_good;
 
 		p4 = p4-p4_offset;
 		q4 = q4-q4_offset;

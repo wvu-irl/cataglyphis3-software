@@ -108,6 +108,7 @@ int main(int argc, char **argv)
 		msg_NavFilterOut.time1 = navigationfilter.imu.time1;
 		msg_NavFilterOut.prev_time1 = navigationfilter.imu.prev_time1;
 		msg_NavFilterOut.dt1 = navigationfilter.imu.dt1;
+		msg_NavFilterOut.nb1_current = navigationfilter.imu.nb1_current;
 		msg_NavFilterOut.nb1_missed_counter = navigationfilter.imu.nb1_missed_counter;
 		msg_NavFilterOut.nb1_drive_counter = navigationfilter.imu.nb1_drive_counter;
 		msg_NavFilterOut.nb1_diff_prev = navigationfilter.imu.nb1_diff_prev;
@@ -117,16 +118,12 @@ int main(int argc, char **argv)
 		msg_NavFilterOut.time2 = navigationfilter.imu.time2;
 		msg_NavFilterOut.prev_time2 = navigationfilter.imu.prev_time2;
 		msg_NavFilterOut.dt2 = navigationfilter.imu.dt2;
+		msg_NavFilterOut.nb2_current = navigationfilter.imu.nb2_current;
 		msg_NavFilterOut.nb2_missed_counter = navigationfilter.imu.nb2_missed_counter;
 		msg_NavFilterOut.nb2_drive_counter = navigationfilter.imu.nb2_drive_counter;
 		msg_NavFilterOut.nb2_diff_prev = navigationfilter.imu.nb2_diff_prev;
 		msg_NavFilterOut.nb2_good = navigationfilter.imu.nb2_good;
 		msg_NavFilterOut.nb2_good_prev = navigationfilter.imu.nb2_good_prev;
-		msg_NavFilterOut.x_positionS = navigationfilter.filterS.x;
-		msg_NavFilterOut.y_positionS = navigationfilter.filterS.y;
-		msg_NavFilterOut.rollS = navigationfilter.filterS.phi*180/3.1415927; 
-		msg_NavFilterOut.pitchS = navigationfilter.filterS.theta*180/3.1415927;
-		msg_NavFilterOut.headingS = navigationfilter.filterS.psi*180/3.1415927;
 		msg_NavFilterOut.x_position1 = navigationfilter.filter1.x;
 		msg_NavFilterOut.y_position1 = navigationfilter.filter1.y;
 		msg_NavFilterOut.roll1 = navigationfilter.filter1.phi*180/3.1415927; 
@@ -155,8 +152,12 @@ int main(int argc, char **argv)
 		msg_NavFilterOut.pitch_init = navigationfilter.init_filter.theta*180.0/navigationfilter.PI;
 		msg_NavFilterOut.heading_init = navigationfilter.init_filter.psi*180.0/navigationfilter.PI;
 		msg_NavFilterOut.north_angle = navigationfilter.filter.north_angle*180.0/navigationfilter.PI; //128.0; // deg+
+		msg_NavFilterOut.Kens_north_angle = navigationfilter.filter.Kens_north_angle*180.0/navigationfilter.PI; //128.0; // deg+
+		msg_NavFilterOut.Kens_angle = navigationfilter.filter.Kens_angle*180.0/navigationfilter.PI; //128.0; // deg+
+        msg_NavFilterOut.platform_number = navigationfilter.filter.platform_number;
 		msg_NavFilterOut.homing_updated = navigationfilter.homing_updated;
 		msg_NavFilterOut.stop_request = navigationfilter.stop_request;
+		msg_NavFilterOut.stop_request_time = ros::Time::now().toSec()-navigationfilter.stop_time;
 		msg_NavFilterOut.do_homing = navigationfilter.do_homing;
 
 		pub.publish(msg_NavFilterOut);

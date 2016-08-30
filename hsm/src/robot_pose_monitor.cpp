@@ -30,6 +30,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
         bestPoseMsg.northAngle = navMsg.north_angle;
 		bestPoseMsg.homingUpdated = navMsg.homing_updated;
+        bestPoseMsg.platformNumber = navMsg.platform_number;
 	}
 	else
 	{
@@ -39,6 +40,7 @@ void RobotPoseMonitor::serviceMonitor(const ros::TimerEvent&)
 		bestPoseMsg.humanHeading = fmod(bestPoseMsg.heading, 360.0);
         bestPoseMsg.northAngle = navMsg.north_angle;
 		bestPoseMsg.homingUpdated = navMsg.homing_updated;
+        bestPoseMsg.platformNumber = navMsg.platform_number;
 	}
 
     navSolutionError = hypot(slamMsg.globalX - navMsg.x_position, slamMsg.globalY - navMsg.y_position);

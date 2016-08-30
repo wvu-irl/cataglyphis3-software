@@ -23,18 +23,21 @@ private:
 		this->ax1 = msg->acc_x1; //G's
 		this->ay1 = msg->acc_y1; //G's
 		this->az1 = msg->acc_z1; //G's
+		this->imu_1_good = msg->imu_1_good; //G's
 		this->p2 = msg->rate_p2*3.1419527/180; //radians
 		this->q2 = msg->rate_q2*3.1419527/180; //radians
 		this->r2 = msg->rate_r2*3.1419527/180; //radians
 		this->ax2 = msg->acc_x2; //G's
 		this->ay2 = msg->acc_y2; //G's
 		this->az2 = msg->acc_z2; //G's
+		this->imu_2_good = msg->imu_2_good; //G's
 		this->p3 = msg->rate_p3*3.1419527/180; //radians
 		this->q3 = msg->rate_q3*3.1419527/180; //radians
 		this->r3 = msg->rate_r3*3.1419527/180; //radians
 		this->ax3 = msg->acc_x3; //G's
 		this->ay3 = msg->acc_y3; //G's
 		this->az3 = msg->acc_z3; //G's
+		this->imu_3_good = msg->imu_3_good; //G's
 		this->nb1_imu_nums=msg->num_imus; //number of imus on nb
 		this->nb1_counter=msg->counter; //counter from nb
 		this->call_counter1=this->call_counter1+1; //increments each time function executed
@@ -50,18 +53,21 @@ private:
 		this->ax4 = msg->acc_x1; //G's
 		this->ay4 = msg->acc_y1; //G's
 		this->az4 = msg->acc_z1; //G's
+		this->imu_4_good = msg->imu_1_good; //G's
 		this->p5 = msg->rate_p2*3.1419527/180; //radians
 		this->q5 = msg->rate_q2*3.1419527/180; //radians
 		this->r5 = msg->rate_r2*3.1419527/180; //radians
 		this->ax5 = msg->acc_x2; //G's
 		this->ay5 = msg->acc_y2; //G's
 		this->az5 = msg->acc_z2; //G's
+		this->imu_5_good = msg->imu_1_good; //G's
 		this->p6 = msg->rate_p3*3.1419527/180; //radians
 		this->q6 = msg->rate_q3*3.1419527/180; //radians
 		this->r6 = msg->rate_r3*3.1419527/180; //radians
 		this->ax6 = msg->acc_x3; //G's
 		this->ay6 = msg->acc_y3; //G's
 		this->az6 = msg->acc_z3; //G's
+		this->imu_6_good = msg->imu_1_good; //G's
 		this->nb2_imu_nums=msg->num_imus; //number of imus on nb
 		this->nb2_counter=msg->counter; //counter from nb
 		this->call_counter2=this->call_counter2+1; //increments each time function executed
@@ -121,6 +127,7 @@ public:
 	double bias_thresh;
 	bool good_bias1, good_bias2, good_bias3, good_bias4, good_bias5, good_bias6, good_biasS;
 	short int new_imu1, new_imu2, new_imu3, new_imu4, new_imu5, new_imu6, new_imuS;
+	bool imu_1_good, imu_2_good, imu_3_good, imu_4_good, imu_5_good, imu_6_good;
 
 	short int new_nb1, new_nb2, new_nbS;
 	int nb1_missed_counter, nb2_missed_counter, nbS_missed_counter;

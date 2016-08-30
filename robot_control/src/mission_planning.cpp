@@ -373,11 +373,37 @@ void MissionPlanning::evalConditions_()
             voiceSay->call("safe mode");
         }
 
-        //calcnumProcsBeingOrToBeExecOrRes_();
-        //if()
+        calcnumProcsBeingOrToBeExecOrRes_();
+        if(numProcsBeingOrToBeExecOrRes==0 || numProcsToBeExecAndNotInterrupt>1 && initialized && !missionEnded)
+        {
+            initialized = true;
+            performHoming = true;
+            inSearchableRegion = false;
+            if(timers[_roiTimer_]->running) timers[_roiTimer_]->stop();
+            roiTimeExpired = false;
+            if(timers[_roiOvertimeTimer_]->running) timers[_roiOvertimeTimer_]->stop();
+            roiOvertimeExpired = false;
+            possibleSample = false;
+            definiteSample = false;
+            sampleInCollectPosition = false;
+            sideOffsetGrab = false;
+            performReorient = false;
+            atHome = false;
+            homingUpdateFailed = false;
+            performSafeMode = false;
+            inDepositPosition = false;
+            if(roiKeyframed)
+            {
+                searchMapSrv.request.createMap = false;
+                searchMapSrv.request.deleteMap = true;
+                if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
+                else ROS_ERROR("searchMap service call unsuccessful");
+                roiKeyframed = false;
+            }
+        }
 
         // *************** Multi Proc Lockout for testing *************************
-        lockoutSum = 0;
+        /*lockoutSum = 0;
         for(int i=0; i<NUM_PROC_TYPES; i++) if(procsToExecute[i] && !procsToInterrupt[i]) lockoutSum++;
         if(lockoutSum>1) multiProcLockout = true;
         else multiProcLockout = false;
@@ -386,7 +412,7 @@ void MissionPlanning::evalConditions_()
             robotStatus.pauseSwitch = true;
             ROS_FATAL("tried to execute multiple procedures..........");
             voiceSay->call("tried to execute multiple procedures. tisk tisk.");
-        }
+        }*/
         // *************************************************************************
     }
 }
@@ -451,10 +477,12 @@ void MissionPlanning::calcnumProcsBeingOrToBeExecOrRes_()
 {
     numProcsBeingOrToBeExecOrRes = 0;
     numProcsBeingOrToBeExec = 0;
+    numProcsToBeExecAndNotInterrupt = 0;
     for(int i=0; i<NUM_PROC_TYPES; i++) 
     {
         if(procsBeingExecuted[i] || procsToExecute[i] || procsToResume[i]) numProcsBeingOrToBeExecOrRes++;
         if(procsBeingExecuted[i] || procsToExecute[i]) numProcsBeingOrToBeExec++;
+        if(procsToExecute[i] && !procsToInterrupt[i]) numProcsToBeExecAndNotInterrupt++;
     }
 }
 
