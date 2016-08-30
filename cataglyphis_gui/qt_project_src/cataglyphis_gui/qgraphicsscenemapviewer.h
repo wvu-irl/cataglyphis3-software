@@ -92,6 +92,7 @@ public:
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
         cataglyphisCircle = 0;
         cataglyphisHeadingLine = 0;
+        startingPlatformRect = 0;
     }
     //this constructor takes ownership of the pointer
     QGraphicsSceneMapViewer(QImage *image, float pixelsPerDist, bool ignoreSetupStep = false, QObject * parent = 0,
@@ -106,6 +107,7 @@ public:
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
         cataglyphisCircle = 0;
         cataglyphisHeadingLine = 0;
+        startingPlatformRect = 0;
     }
 
     void mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent);
@@ -148,10 +150,9 @@ private:
     boost::scoped_ptr<QImage> areaImage;
     QGraphicsPixmapItem *areaImagePixmap;
     boost::shared_ptr<map_viewer_rect> cataglyphisRect;
-    boost::scoped_ptr<map_viewer_rect> startingPlatformRect;
-
     boost::scoped_ptr<QGraphicsItemGroup> cataglyphis;
 
+    QGraphicsRectItem *startingPlatformRect;
     QGraphicsLineItem *cataglyphisHeadingLine;
     QGraphicsEllipseItem *cataglyphisCircle;
 

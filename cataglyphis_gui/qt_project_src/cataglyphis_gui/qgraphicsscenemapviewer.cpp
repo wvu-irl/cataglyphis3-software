@@ -174,7 +174,7 @@ bool QGraphicsSceneMapViewer::drawRobot()
     {
         QPointF tempPoint(lastRobotPose.x, lastRobotPose.y);
         cataglyphisCircle->setPos(robotToObjTransform.map(tempPoint));
-        cataglyphisCircle->setRotation(lastRobotPose.heading-90);
+        cataglyphisCircle->setRotation(lastRobotPose.heading-45);
     }
     return true;
 }
@@ -244,11 +244,28 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         {
             this->removeItem(cataglyphisHeadingLine);
         }
+        if(!startingPlatformRect)
+        {
+            startingPlatformRect = new QGraphicsRectItem(0,0,pixelsPerDistance*3,pixelsPerDistance*3);
+        }
+        else
+        {
+            this->removeItem(startingPlatformRect);
+        }
 
         QPointF tempPoint(0,0);
         QBrush tempbrush(QColor::fromRgb(0,255,0));
+        QBrush blueBrush(QColor::fromRgb(0,0,255));
         QPen circleLinePen(QColor::fromRgb(0,0,0), 1.5);
+        QPen platformLinePen(QColor::fromRgb(0,0,0), 2);
         QPen temppen(tempbrush, 2);
+
+        startingPlatformRect->setTransformOriginPoint(pixelsPerDistance/2*3, pixelsPerDistance/2*3);
+        startingPlatformRect->setRotation(lastRobotPose.northAngle - 90);
+        startingPlatformRect->setPos(robotToObjTransform.map(tempPoint));
+        startingPlatformRect->setBrush(blueBrush);
+        startingPlatformRect->setPen(platformLinePen);
+        this->addItem(startingPlatformRect);
 
         cataglyphisCircle->setTransformOriginPoint(circleRadius/2, circleRadius/2);
         cataglyphisCircle->setPos(robotToObjTransform.map(tempPoint));
