@@ -16,12 +16,14 @@
 #include "Packet_Superclass.h"
 
 #include "nb1_to_i7_packet.h"
+#include "nb1_to_i7_serial_packet.h"
 #include "i7_to_nb1_packet.h"
 #include "nb2_3_to_i7_packet.h"
 
 // Message includes
 
 #include <messages/nb1_to_i7_msg.h>
+#include <messages/nb1_to_i7_serial_msg.h>
 #include <messages/i7_to_nb1_msg.h>
 #include <messages/nb2_3_to_i7_msg.h>
 
