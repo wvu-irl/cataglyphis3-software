@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>318</width>
-    <height>158</height>
+    <height>212</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,13 +25,23 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
+  <layout class="QVBoxLayout" name="verticalLayout_5">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
+        <widget class="QCheckBox" name="set_platform_checkbox">
+         <property name="text">
+          <string>Set Platform</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QRadioButton" name="platform_one_radio">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Platform 1</string>
          </property>
@@ -42,6 +52,9 @@
        </item>
        <item>
         <widget class="QRadioButton" name="platform_two_radio">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Platform 2</string>
          </property>
@@ -55,6 +68,9 @@
        </item>
        <item>
         <widget class="QRadioButton" name="platform_three_radio">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Platform 3</string>
          </property>
@@ -131,19 +147,51 @@ Adjusment</string>
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <widget class="QPushButton" name="submit_map_shift_button">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Submit Map Shift</string>
-       </property>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QPushButton" name="submit_map_shift_button">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Submit Map Shift</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Submission
+Successful</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLedIndicator" name="map_shift_success_indicator" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>15</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>15</width>
+             <height>15</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
      <item>
       <spacer name="horizontalSpacer_2">
@@ -159,26 +207,66 @@ Adjusment</string>
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="reset_platform_adjustment_button">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Reset Platform
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QPushButton" name="reset_platform_adjustment_button">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Reset Platform
 Adjustment</string>
-       </property>
-      </widget>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Submission
+Successful</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLedIndicator" name="reset_platform_success_indicator" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>15</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>15</width>
+             <height>15</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QLedIndicator</class>
+   <extends>QWidget</extends>
+   <header>qledindicator.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
@@ -210,6 +298,54 @@ Adjustment</string>
     <hint type="destinationlabel">
      <x>218</x>
      <y>107</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>set_platform_checkbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>platform_one_radio</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>66</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>66</x>
+     <y>46</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>set_platform_checkbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>platform_two_radio</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>66</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>66</x>
+     <y>72</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>set_platform_checkbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>platform_three_radio</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>66</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>66</x>
+     <y>98</y>
     </hint>
    </hints>
   </connection>

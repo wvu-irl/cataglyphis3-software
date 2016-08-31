@@ -38,12 +38,17 @@ void init_container::on_start_up_button_clicked()
     northAngleTab->hide();
     biasRemovalTab = boost::shared_ptr<init_step_two>(new init_step_two(ui->input_tabber, rosWorker));
     biasRemovalTab->hide();
+    shiftMapTab.reset(new shift_map(ui->input_tabber));
     connect(northAngleTab.get(), &init_step_one::step_one_finished,
                 this, &init_container::on_step_one_returned);
+    connect(northAngleTab.get(), &init_step_one::procedure_finished,
+                this, &init_container::on_procedure_returned);
     connect(biasRemovalTab.get(), &init_step_two::bias_removal_finished,
                 this, &init_container::on_step_two_returned);
+    ui->input_tabber->addTab(shiftMapTab.get(), "Shift Map");
     ui->input_tabber->addTab(northAngleTab.get(), "Nav Init");
-    ui->input_tabber->setCurrentWidget(northAngleTab.get());
+    //ui->input_tabber->setCurrentWidget(northAngleTab.get());
+    ui->input_tabber->setCurrentWidget(shiftMapTab.get());
 }
 
 void init_container::on_step_one_returned()

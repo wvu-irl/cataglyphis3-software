@@ -90,9 +90,7 @@ public:
         ignoreSetup = ignoreSetupStep;
         mapSetup = false;
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
-        cataglyphisCircle = 0;
-        cataglyphisHeadingLine = 0;
-        startingPlatformRect = 0;
+        _implInitPointers();
     }
     //this constructor takes ownership of the pointer
     QGraphicsSceneMapViewer(QImage *image, float pixelsPerDist, bool ignoreSetupStep = false, QObject * parent = 0,
@@ -105,9 +103,7 @@ public:
         mapSetup = false;
         *areaImage = *image;
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
-        cataglyphisCircle = 0;
-        cataglyphisHeadingLine = 0;
-        startingPlatformRect = 0;
+        _implInitPointers();
     }
 
     void mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent);
@@ -118,7 +114,7 @@ public:
 
     bool setupMap(QPointF scenePos);
     bool isMapSetup(){ return mapSetup; }
-    bool drawRobot();
+    bool drawRobot(QPointF position, qreal heading);
     const layerProperties_t & getLayerProperties(map_viewer_enums::mapViewerLayers_t mapLayer);
     mapLayer_t * getLayerFromEnum(const map_viewer_enums::mapViewerLayers_t &mapLayer);
     void setupLayer(map_viewer_enums::mapViewerLayers_t mapLayer);
@@ -136,6 +132,20 @@ public:
     void connectSignals(){ ROS_DEBUG("SCENE:: Connect signals"); _implConnectSignals(); }
     void disconnectSignals(){ ROS_DEBUG("SCENE:: Disconnect signals"); _implDisconnectSignals(); }
 
+    void keyPressEvent(QKeyEvent * keyEvent)
+    {
+        if(keyEvent->key() == Qt::Key_Left)
+        {
+            for(int i = 0; i < roiLayer.itemList->size(); i++)
+            {
+                roiLayer.itemList->at(i)->setRotation(roiLayer.itemList->at(i)->rotation()+5);
+            }
+            keyEvent->accept();
+            return;
+        }
+        QGraphicsScene::keyPressEvent(keyEvent);
+    }
+
 private:
     const QColor defaultCircleFill;
     const QColor fullTransparentColor;
@@ -149,12 +159,9 @@ private:
     messages::RobotPose lastRobotPose;
     boost::scoped_ptr<QImage> areaImage;
     QGraphicsPixmapItem *areaImagePixmap;
-    boost::shared_ptr<map_viewer_rect> cataglyphisRect;
-    boost::scoped_ptr<QGraphicsItemGroup> cataglyphis;
 
-    QGraphicsRectItem *startingPlatformRect;
-    QGraphicsLineItem *cataglyphisHeadingLine;
-    QGraphicsEllipseItem *cataglyphisCircle;
+    QGraphicsRectItem *startingPlatform;
+    QGraphicsEllipseItem *cataglyphis;
 
 
     grid_map::GridMap gridMapContainer;
@@ -167,6 +174,12 @@ private:
     bool _implSatelliteMapDisplay();
     bool _implHazardMapDisplay();
     bool _implGenericGridMapLayerDisplay();
+
+    void _implInitPointers()
+    {
+        cataglyphis = 0;
+        startingPlatform = 0;
+    }
 
 };
 

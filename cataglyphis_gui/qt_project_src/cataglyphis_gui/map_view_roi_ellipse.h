@@ -30,7 +30,8 @@ public:
 
     map_view_roi_ellipse(robot_control::ROI roiData, int roiNum, float pixelsPerDistance,
                             const QTransform &mapTransform, const QPointF &mapCenter,
-                            boost::shared_ptr<ros_workers> workerArg = boost::shared_ptr<ros_workers>());
+                            boost::shared_ptr<ros_workers> workerArg = boost::shared_ptr<ros_workers>(),
+                            QGraphicsItem *parent = 0);
 
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
 

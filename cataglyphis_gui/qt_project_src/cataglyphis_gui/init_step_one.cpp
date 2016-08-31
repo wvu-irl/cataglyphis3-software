@@ -28,6 +28,8 @@ init_step_one::init_step_one(QWidget *parent, boost::shared_ptr<ros_workers> wor
     {
         ROS_DEBUG("Not Startup");
         ui->skip_init_button->hide();
+        ui->kens_angle_spinbox->hide();
+        ui->kens_angle_label->hide();
     }
 
 //    connect(worker.get(), &ros_workers::nav_info_callback,
@@ -47,29 +49,32 @@ init_step_one::~init_step_one()
 void init_step_one::on_skip_init_button_clicked()
 {
     ROS_DEBUG("init_step_one:: skip init clicked");
-    emit step_one_finished();
+    messages::NavFilterControl navInitService;
+    //put nav skip init flag here and send
+    navInitService.request.skipInit = true;
+    emit init_nav_filter(navInitService);
+    emit procedure_finished();
 }
 
 void init_step_one::on_continue_button_clicked()
 {
+    messages::NavFilterControl navInitService;
     if(isThisStartup)
     {
         navInitService.request.setInitNorthAngle = true;
         ROS_DEBUG("init_step_one:: continue init clicked");
         navInitService.request.initNorthAngle = ui->input_NA_spinbox->value();
+        navInitService.request.setKensAngle = true;
+        navInitService.request.kensAngle = ui->kens_angle_spinbox->value();
     }
     else
     {
         navInitService.request.setNorthAngle = true;
         navInitService.request.northAngle = ui->input_NA_spinbox->value();
-
     }
     //navInitService.request.sunnyDay = ui->sunny_day_checkbox->isChecked();
     //navInitService.request.setSunnyDay = true;
     emit init_nav_filter(navInitService);
-    navInitService.request.setInitNorthAngle = false;
-    navInitService.request.setNorthAngle = false;
-
 }
 
 void init_step_one::on_nav_init_return(const messages::NavFilterControl navResponse,

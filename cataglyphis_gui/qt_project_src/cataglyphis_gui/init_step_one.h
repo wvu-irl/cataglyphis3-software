@@ -28,6 +28,7 @@ signals:
     void stop_nav_info_subscriber();
     void start_hsm_pose_subscriber();
     void stop_hsm_pose_subscriber();
+    void procedure_finished();
 
 public:
     explicit init_step_one(QWidget *parent = 0, boost::shared_ptr<ros_workers> workerArg =
@@ -54,8 +55,6 @@ private slots:
 private:
 
     boost::shared_ptr<ros_workers> worker;
-
-    messages::NavFilterControl navInitService;
 
     bool isThisStartup;
 };

@@ -37,6 +37,9 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                 getLayerFromEnum(map_viewer_enums::keyframeDrive)->pixmapItem->hide();
             }
 
+
+            layer->items->setParentItem(startingPlatform);
+
             for(grid_map::GridMapIterator it(gridMapContainer); !it.isPastEnd(); it= (++it))
             {
                 float mapValue = gridMapContainer.at(gridMapLayerName, *it);
@@ -51,22 +54,22 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                     if(mapValue != 0.0)
                     {
                         ROS_DEBUG("Obstacle Located at x: %2.1f, y: %2.1f", cellPosition[0], cellPosition[1]);
-                        gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE);
+                        gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE, startingPlatform);
                         gridRectangle->setFillColor(QColor::fromRgb(255,0,0));
                         gridRectangle->setRect((float)cellPosition[0], (float)cellPosition[1], 1, 1);
-                        gridRectangle->setTransformOriginPoint(startPlatformCenter);
-                        gridRectangle->setTransform(robotToObjTransform);
+                        gridRectangle->setTransformOriginPoint(QPointF(0.5,0.5));
+                        //gridRectangle->setTransform(robotToObjTransform);
                         gridRectangle->setGroup(layer->items.get());
                         layer->itemList->append(gridRectangle);
                     }
                 }
                 else
                 {
-                    gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE);
+                    gridRectangle = new map_viewer_rect(mapValue, MAP_CELL_MIN_VALUE, MAP_CELL_MAX_VALUE, startingPlatform);
                     //ROS_DEBUG("Position %2.3f %2.3f %2.3f %2.3f %2.3f %2.3f",cellPosition[0], cellPosition[1], cellPosition[0], cellPosition[1], pixelsPerDistance, pixelsPerDistance);
                     gridRectangle->setRect((float)cellPosition[0], (float)cellPosition[1], 1, 1);
-                    gridRectangle->setTransformOriginPoint(startPlatformCenter);
-                    gridRectangle->setTransform(robotToObjTransform);
+                    gridRectangle->setTransformOriginPoint(QPointF(0.5,0.5));
+                    //gridRectangle->setTransform(robotToObjTransform);
                     gridRectangle->setGroup(layer->items.get());
                     layer->itemList->append(gridRectangle);
                 }
@@ -145,7 +148,7 @@ void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_co
         {
             ROS_DEBUG("SCENE:: ROI at x:%2.3f, y:%2.3f", listPtr->at(i).x, listPtr->at(i).y);
             map_view_roi_ellipse *roiEllipse = new map_view_roi_ellipse(listPtr->at(i), i, pixelsPerDistance, robotToObjTransform,
-                                                                            startPlatformCenter, worker);
+                                                                            startPlatformCenter, worker, startingPlatform);
             connect(this, &QGraphicsSceneMapViewer::confirm_roi_changes,
                         roiEllipse, &map_view_roi_ellipse::on_confirm_ROI_changes);
             connect(this, &QGraphicsSceneMapViewer::discard_roi_changes,
@@ -168,13 +171,14 @@ void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_co
     }
 }
 
-bool QGraphicsSceneMapViewer::drawRobot()
+bool QGraphicsSceneMapViewer::drawRobot(QPointF position, qreal heading)
 {
     if(isMapSetup())
     {
-        QPointF tempPoint(lastRobotPose.x, lastRobotPose.y);
-        cataglyphisCircle->setPos(robotToObjTransform.map(tempPoint));
-        cataglyphisCircle->setRotation(lastRobotPose.heading-45);
+//        ROS_DEBUG("SCENE:: robot obj at: %2.3f %2.3f", cataglyphis->x(), cataglyphis->y());
+//        ROS_DEBUG("SCENE:: robot obj at: %2.3f %2.3f", cataglyphis->scenePos().x(), cataglyphis->scenePos().y());
+        cataglyphis->setPos(position);
+        cataglyphis->setRotation(heading);
     }
     return true;
 }
@@ -205,7 +209,6 @@ void QGraphicsSceneMapViewer::mousePressEvent(QGraphicsSceneMouseEvent *mouseEve
             setupMap(mouseEvent->buttonDownScenePos(Qt::LeftButton));
             ignoreSetup = true;
             ROS_DEBUG("SCENE:: Setting New Cursor");
-            //((map_viewer*)parent())->ui->fieldDisplay->setCursor(Qt::OpenHandCursor);
             return;
         }
     }
@@ -221,64 +224,47 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         startPlatformCenter.setX(scenePos.x());
         startPlatformCenter.setY(scenePos.y());
         robotToObjTransform.reset();
-        robotToObjTransform.translate(startPlatformCenter.x(), startPlatformCenter.y());
-        robotToObjTransform.rotate(lastRobotPose.northAngle-90);
-        robotToObjTransform.scale(pixelsPerDistance,pixelsPerDistance);
+
+        robotToObjTransform = robotToObjTransform.translate(startPlatformCenter.x()+pixelsPerDistance, startPlatformCenter.y()-pixelsPerDistance);
+        robotToObjTransform = robotToObjTransform.scale(pixelsPerDistance,pixelsPerDistance);
+        robotToObjTransform = robotToObjTransform.rotate(lastRobotPose.northAngle-90);
+
         this->setItemIndexMethod(QGraphicsScene::NoIndex);
 
-        const double circleRadius = 12;
-        //this->removeItem(cataglyphisCircle);
-        if(!cataglyphisCircle)
+        if(cataglyphis)
         {
-            cataglyphisCircle = new QGraphicsEllipseItem(0,0,circleRadius,circleRadius);
+            delete cataglyphis;
         }
-        else
+        if(startingPlatform)
         {
-            this->removeItem(cataglyphisCircle);
-        }
-        if(!cataglyphisHeadingLine)
-        {
-            cataglyphisHeadingLine = new QGraphicsLineItem(0,0,0,4);
-        }
-        else
-        {
-            this->removeItem(cataglyphisHeadingLine);
-        }
-        if(!startingPlatformRect)
-        {
-            startingPlatformRect = new QGraphicsRectItem(0,0,pixelsPerDistance*3,pixelsPerDistance*3);
-        }
-        else
-        {
-            this->removeItem(startingPlatformRect);
+            delete startingPlatform;
         }
 
-        QPointF tempPoint(0,0);
-        QBrush tempbrush(QColor::fromRgb(0,255,0));
-        QBrush blueBrush(QColor::fromRgb(0,0,255));
-        QPen circleLinePen(QColor::fromRgb(0,0,0), 1.5);
-        QPen platformLinePen(QColor::fromRgb(0,0,0), 2);
-        QPen temppen(tempbrush, 2);
+        const double circleRadius = pixelsPerDistance;
+        startingPlatform = new QGraphicsRectItem(0,0,2,2);
+        cataglyphis = new QGraphicsEllipseItem(0,0,circleRadius,circleRadius, startingPlatform);
 
-        startingPlatformRect->setTransformOriginPoint(pixelsPerDistance/2*3, pixelsPerDistance/2*3);
-        startingPlatformRect->setRotation(lastRobotPose.northAngle - 90);
-        startingPlatformRect->setPos(robotToObjTransform.map(tempPoint));
-        startingPlatformRect->setBrush(blueBrush);
-        startingPlatformRect->setPen(platformLinePen);
-        this->addItem(startingPlatformRect);
+        startingPlatform->setTransformOriginPoint(1, 1);
+        startingPlatform->setTransform(robotToObjTransform);
+        startingPlatform->setPos(0,-0);
+        startingPlatform->setBrush(QBrush(QColor::fromRgb(0,0,255)));
+        startingPlatform->setPen(QPen(QColor::fromRgb(0,0,0),0.25));
+        this->addItem(startingPlatform);
 
-        cataglyphisCircle->setTransformOriginPoint(circleRadius/2, circleRadius/2);
-        cataglyphisCircle->setPos(robotToObjTransform.map(tempPoint));
-        cataglyphisCircle->setBrush(tempbrush);
-        cataglyphisCircle->setPen(circleLinePen);
+        cataglyphis->setTransformOriginPoint(circleRadius/2, circleRadius/2);
+        //cataglyphis->setTransform(robotToObjTransform);
+        cataglyphis->setBrush(QBrush(QColor::fromRgb(0,255,0)));
+        cataglyphis->setPen(QPen(QColor::fromRgb(0,0,0),0.5));
 
-        cataglyphisHeadingLine->setPen(temppen);
-        cataglyphisHeadingLine->setLine(circleRadius/2,circleRadius/2,circleRadius/2,circleRadius+3);
-        cataglyphisHeadingLine->setParentItem(cataglyphisCircle);
+        QGraphicsLineItem *cataglyphisHeadingLine = new QGraphicsLineItem(0,0,0,4);
+//        cataglyphisHeadingLine->setTransform(robotToObjTransform);
+        cataglyphisHeadingLine->setPen(QPen(QColor::fromRgb(0,255,0),1));
+        cataglyphisHeadingLine->setLine(circleRadius/2,circleRadius/2, circleRadius+1, circleRadius/2);
+        cataglyphisHeadingLine->setParentItem(cataglyphis);
 
-        this->addItem(cataglyphisCircle);
+        this->addItem(cataglyphis);
 
-        cataglyphisCircle->show();
+        cataglyphis->show();
     }
    // else
     {
@@ -306,6 +292,7 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
     if(!layer->properties.isLayerSetup && visibility)
     {
         generic_ack_dialog dialog("This is layer has not been activated before.\r\nIt could take a while to display the first time");
+        _implInitLayer(layer, false);
         switch(mapLayer)
         {
         case map_viewer_enums::keyframeDrive:
@@ -417,7 +404,7 @@ void QGraphicsSceneMapViewer::on_hsm_global_pose_callback(const messages::RobotP
 {
     ROS_DEBUG_THROTTLE(5,"SCENE:: HSM Global pose callback");
     lastRobotPose = navInfo;
-    drawRobot();
+    drawRobot(QPointF(lastRobotPose.x, lastRobotPose.y), lastRobotPose.heading);
 }
 
 void QGraphicsSceneMapViewer::_implConnectSignals()

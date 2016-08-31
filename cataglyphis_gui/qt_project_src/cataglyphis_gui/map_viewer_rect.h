@@ -22,9 +22,9 @@ public:
     }
     
     map_viewer_rect(float mapValue = 1, float min = 0.0, float max = 10.0,
+                    QGraphicsItem * parent = 0,
                     int hueMin = 120, int hueMax = 0,
-                    int transparency = 160,
-                    QGraphicsItem * parent = 0):
+                    int transparency = 160):
                         QGraphicsRectItem(parent),
                         fillColor(QColor::fromHsv(mapRange(mapValue, min, max, hueMin, hueMax),
                                                              200, 255, transparency)),

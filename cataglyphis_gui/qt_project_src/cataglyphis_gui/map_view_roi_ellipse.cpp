@@ -3,13 +3,13 @@
 
 map_view_roi_ellipse::map_view_roi_ellipse(robot_control::ROI roiData, int roiNum, float pixelsPerDistance,
                                             const QTransform &mapTransform, const QPointF &mapCenter,
-                                            boost::shared_ptr<ros_workers> workerArg):
-   QGraphicsEllipseItem(0),
+                                            boost::shared_ptr<ros_workers> workerArg, QGraphicsItem *parent):
+   QGraphicsEllipseItem(parent),
    fillColor(QColor::fromRgb(255,0,255,100)),
    borderColor(QColor::fromRgb(0,0,0,0)),
    fillBrush(fillColor),
    borderPen(borderColor),
-   roiTextNumber(QString::number(roiNum))
+   roiTextNumber(QString::number(roiNum), this)
 {
    worker = workerArg;
    pixelsPerDist = pixelsPerDistance;
@@ -22,12 +22,10 @@ map_view_roi_ellipse::map_view_roi_ellipse(robot_control::ROI roiData, int roiNu
    _implConnectSignals();
    on_update_roi(roiData, false);
 
-   this->setTransformOriginPoint(mapCenter);
-   this->setTransform(mapTransform);
+   this->setTransformOriginPoint(roiData.radialAxis,roiData.radialAxis);
 //   roiTextNumber.setTransformOriginPoint(mapCenter);
-//   roiTextNumber.setTransform(mapTransform);
-//   roiTextNumber.setPos(0,0/*roiTextNumber->parentItem()->boundingRect().width()/2-roiTextNumber->boundingRect().width()/2,
-//                           roiTextNumber->parentItem()->boundingRect().height()/2-roiTextNumber->boundingRect().height()/2*/);
+   roiTextNumber.setPos(0,0/*roiTextNumber.parentItem()->boundingRect().width()/2-roiTextNumber.boundingRect().width()/2,
+                           roiTextNumber.parentItem()->boundingRect().height()/2-roiTextNumber.boundingRect().height()/2*/);
    roiTextNumber.show();
    //roiTextNumber.hide();
 }
@@ -46,8 +44,12 @@ void map_view_roi_ellipse::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event
 
 void map_view_roi_ellipse::on_update_roi(robot_control::ROI roiData, bool modified)
 {
-    this->setRect(roiData.x,roiData.y,
-                    roiData.radialAxis,roiData.tangentialAxis);
+    this->setRect(roiData.x-roiData.radialAxis,roiData.y-roiData.radialAxis,
+                    roiData.radialAxis*2,roiData.tangentialAxis*2);
+    QGraphicsLineItem *test = new QGraphicsLineItem(roiData.x,roiData.y,roiData.x+5,roiData.y,this);
+//    QGraphicsLineItem *test = new QGraphicsLineItem(0,0,25,0,this);
+//    test->resetTransform();
+//    test->show();
 }
 
 void map_view_roi_ellipse::on_confirm_ROI_changes()
