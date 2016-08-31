@@ -30,7 +30,7 @@ DepositApproach::DepositApproach()
     depositLocations.at(8).x = 1.8;
     depositLocations.at(8).y = 0.55;
 
-    depositLocations.at(9).x = 1.8;
+    depositLocations.at(9).x = 1.75;
 	depositLocations.at(9).y = 0.0;
 }
 

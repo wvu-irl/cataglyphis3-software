@@ -754,9 +754,9 @@ void Filter::clear_cylinder_vec()
 void Filter::find_Kens_north_angle()
 {
 	double base_angle;
-	double platform_1_angle = 0.0;
-	double platform_2_angle = 0.0;
-	double platform_3_angle = 0.0;
+	double platform_1_angle = 103.1045*PI/180;
+	double platform_2_angle = 108.7460*PI/180;
+	double platform_3_angle = 113.7225*PI/180;
 
 	if (platform_number == 1)
 	{

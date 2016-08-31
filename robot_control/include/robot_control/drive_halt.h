@@ -9,7 +9,7 @@ public:
 	int run();
 private:
 	enum DRIVE_HALT_STATES_T {_noHold, _waitingForStop, _holding} state_ = _noHold;
-	const float minTiltForHold_ = 5.0; // deg
+	const float minTiltForHold_ = 6.0; // deg
 	double dt_;
 	double prevTime_;
 	float posError_;

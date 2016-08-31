@@ -9,8 +9,11 @@ public:
 	int run();
 private:
 	int dropPos_;
+	int dropRecoveryPos_;
 	int numFailedAttempts_;
 	const int maxFailedAttempts_ = 2;
+	int dropFinishedCount_;
+	const int maxDropFinishedCount_ = 300; // counts at 20 hz
 	const int limitedRetryPosition_ = GRABBER_DROPPED;
 	const int failsafePosition_ = GRABBER_RAISED;
 	bool limitedRetry_;

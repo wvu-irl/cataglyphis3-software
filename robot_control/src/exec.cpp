@@ -71,6 +71,9 @@ void Exec::run()
         if(abs(robotStatus.grabberDropPos - robotOutputs.dropPosCmd) <= dropTol_) dropEnded_ = true;
         if(abs(robotStatus.grabberSlidePos - robotOutputs.slidePosCmd) <= slideTol_) slidesEnded_ = true;
     }
+    ROS_INFO("========== ============== ===========");
+    ROS_INFO("dropEnded_ = %i",dropEnded_);
+    ROS_INFO("slidesEnded_ = %i",slidesEnded_);
     if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.clearDeques();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
@@ -140,6 +143,7 @@ void Exec::run()
     }
     nextWaypointOutPub.publish(nextWaypointMsgOut_);
     grabberStatusPub.publish(grabberStatusMsgOut_);
+    std::printf("\n");
     /*execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
     ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
     for(int i=0; i<NUM_ACTIONS; i++) ROS_INFO("actionPoolIndex[%i] = %i",i,actionPoolIndex_[i]);

@@ -5,6 +5,7 @@
 #include <messages/RobotPose.h>
 #include <messages/ExecActionEnded.h>
 #include <messages/nb1_to_i7_msg.h>
+#include <messages/nb2_3_to_i7_msg.h>
 #include <messages/EmergencyEscapeTrigger.h>
 #include <messages/MissionPlanningInfo.h>
 #include <messages/MissionPlanningControl.h>
@@ -41,6 +42,7 @@ public:
 	ros::Subscriber poseSub;
 	ros::Subscriber ExecActionEndedSub;
     ros::Subscriber nb1Sub;
+    ros::Subscriber nb2Sub;
 	ros::Subscriber collisionSub;
 	ros::Subscriber navSub;
 	ros::ServiceServer emergencyEscapeServ;
@@ -90,6 +92,7 @@ private:
 	void poseCallback_(const messages::RobotPose::ConstPtr& msg);
 	void ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr& msg);
     void nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg);
+    void nb2Callback_(const messages::nb2_3_to_i7_msg::ConstPtr& msg);
 	void collisionCallback_(const messages::CollisionOut::ConstPtr& msg);
 	void navCallback_(const messages::NavFilterOut::ConstPtr& msg);
 	void execInfoCallback_(const messages::ExecInfo::ConstPtr& msg);

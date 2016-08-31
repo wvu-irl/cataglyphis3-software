@@ -949,14 +949,13 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 		}
 		filter.homing_verified = false;
 	}
-	else if (!do_homing)
+	else if (!do_homing || !stopFlag)
 	{
 		filter.clear_cylinder_vec();
-	}
-	else if (!stopFlag)
-	{
-		filter.clear_cylinder_vec();
-		homing_updated = false;
+		if (!stopFlag)
+		{
+			homing_updated = false;
+		}
 	}
 
 
@@ -1116,6 +1115,7 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
 
     if(request.setKensAngle)
     {
+    	ROS_INFO("set kens angle = %f",request.kensAngle);
         filter.Kens_angle = request.kensAngle*DEG_2_RAD;
         filter1.Kens_angle = request.kensAngle*DEG_2_RAD;
         filter2.Kens_angle = request.kensAngle*DEG_2_RAD;

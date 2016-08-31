@@ -925,7 +925,7 @@ int CollisionDetection::secondChoice(double angle, double distance, double xg, d
 	{
 		for(int i = 0; i < _hazard_x.size(); i++)
 		{
-			if(_hazard_x[i] > distance * cos(angle) && fabs(_hazard_y[i] - distance * sin(angle)) <= distance_second)	//point in distance_second meter near the path
+			if(_hazard_x[i] > distance * sin(angle) && fabs(_hazard_x[i] - distance * sin(angle)) <= distance_second)	//point in distance_second meter near the path
 			{
 				if(fabs(_hazard_x[i] - ((distance * sin(angle) - xg) / (distance * cos(angle) - yg)) * _hazard_y[i] - (xg * distance * cos(angle) - yg * distance * sin(angle)) / (distance * cos(angle) - yg)) /
 				sqrt(1 + pow((distance * sin(angle) - xg) / (distance * cos(angle) - yg),2)) < threshold_obstacle_distance)
@@ -940,7 +940,7 @@ int CollisionDetection::secondChoice(double angle, double distance, double xg, d
 	{
 		for(int i = 0; i < _hazard_x.size(); i++)
 		{
-			if(_hazard_x[i] < distance * cos(angle) && fabs(_hazard_y[i] - distance * sin(angle)) <= distance_second)
+			if(_hazard_x[i] < distance * sin(angle) && fabs(_hazard_x[i] - distance * sin(angle)) <= distance_second)
 			{
 				if(fabs(_hazard_x[i] - ((distance * sin(angle) - xg) / (distance * cos(angle) - yg)) * _hazard_y[i] - (xg * distance * cos(angle) - yg * distance * sin(angle)) / (distance * cos(angle) - yg)) /
 				sqrt(1 + pow((distance * sin(angle) - xg) / (distance * cos(angle) - yg),2)) < threshold_obstacle_distance)

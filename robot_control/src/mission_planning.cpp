@@ -14,6 +14,7 @@ MissionPlanning::MissionPlanning()
     searchLocalMapPathHazardsClient = nh.serviceClient<messages::MapPathHazards>("/control/mapmanager/searchlocalmappathhazards");
     navControlClient = nh.serviceClient<messages::NavFilterControl>("/navigation/navigationfilter/control");
     nb1Sub = nh.subscribe<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in", 1, &MissionPlanning::nb1Callback_, this);
+    nb2Sub = nh.subscribe<messages::nb2_3_to_i7_msg>("hw_interface/nb2in/nb2in", 1, &MissionPlanning::nb2Callback_, this);
     collisionSub = nh.subscribe<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1, &MissionPlanning::collisionCallback_, this);
     execInfoSub = nh.subscribe<messages::ExecInfo>("control/exec/info", 1, &MissionPlanning::execInfoCallback_, this);
     lidarFilterSub = nh.subscribe<messages::LidarFilterOut>("lidar/lidarfilteringout/lidarfilteringout", 1, &MissionPlanning::lidarFilterCallback_, this);
@@ -65,6 +66,10 @@ MissionPlanning::MissionPlanning()
     newSearchActionOnExec = false;
     tiltTooExtremeForBiasRemoval = false;
     navStopRequest = false;
+    nb1Good = false;
+    nb2Good = false;
+    nb1Pause = true;
+    nb2Pause = true;
     avoidCount = 0;
     prevAvoidCountDecXPos = robotStatus.xPos;
     prevAvoidCountDecYPos = robotStatus.yPos;
@@ -150,6 +155,10 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
+	if(nb1Good && nb2Good) robotStatus.pauseSwitch = nb1Pause || nb2Pause;
+	else if(nb1Good && !nb2Good) robotStatus.pauseSwitch = nb1Pause;
+	else if(!nb1Good && nb2Good) robotStatus.pauseSwitch = nb2Pause;
+	else robotStatus.pauseSwitch = true;
     ROS_INFO_THROTTLE(3,"Mission Planning running...");
     evalConditions_();
     ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
@@ -374,7 +383,7 @@ void MissionPlanning::evalConditions_()
         }
 
         calcnumProcsBeingOrToBeExecOrRes_();
-        if(numProcsBeingOrToBeExecOrRes==0 || numProcsToBeExecAndNotInterrupt>1 && initialized && !missionEnded)
+        if((numProcsBeingOrToBeExecOrRes==0 || numProcsToBeExecAndNotInterrupt>1) && initialized && !missionEnded)
         {
             initialized = true;
             performHoming = true;
@@ -628,8 +637,14 @@ void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::
 
 void MissionPlanning::nb1Callback_(const messages::nb1_to_i7_msg::ConstPtr& msg)
 {
-    if(msg->pause_switch==0) robotStatus.pauseSwitch = false;
-    else robotStatus.pauseSwitch = true;
+    if(msg->pause_switch==0) nb1Pause = false;
+    else nb1Pause = true;
+}
+
+void MissionPlanning::nb2Callback_(const messages::nb2_3_to_i7_msg::ConstPtr& msg)
+{
+    if(msg->pause_switch==0) nb2Pause = false;
+    else nb2Pause = true;
 }
 
 void MissionPlanning::collisionCallback_(const messages::CollisionOut::ConstPtr &msg)
@@ -643,6 +658,8 @@ void MissionPlanning::navCallback_(const messages::NavFilterOut::ConstPtr &msg)
     robotStatus.pitchAngle = msg->pitch;
     navStatus = msg->nav_status;
     navStopRequest = msg->stop_request;
+    nb1Good = msg->nb1_good;
+    nb2Good = msg->nb2_good;
     if(msg->pitch > biasRemovalTiltLimit) tiltTooExtremeForBiasRemoval = true;
     else tiltTooExtremeForBiasRemoval = false;
 }
