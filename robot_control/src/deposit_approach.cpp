@@ -90,6 +90,7 @@ bool DepositApproach::runProc()
                 biasRemovalTimedOut = false;
                 performBiasRemoval = false;
                 sendDriveGlobal(false, false, 0.0);
+                sendWait(lidarUpdateWaitTime, false);
                 step = _align;
             }
             else step = _biasRemoval;

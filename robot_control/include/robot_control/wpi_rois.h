@@ -1,8 +1,8 @@
 #ifndef WPI_ROIS_H
 #define WPI_ROIS_H
 
-ROI.e = 96.9 - satMapStartE; // precached (0)
-ROI.s = 26.4 - satMapStartS;
+ROI.eMap = 96.9; // precached (0)
+ROI.sMap = 26.4;
 ROI.sampleProb = 1.0;
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 9.5;
@@ -19,8 +19,8 @@ ROI.redProb = 0.0;
 ROI.orangeProb = 0.0;
 ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
-ROI.e = 18.5 - satMapStartE; // 1
-ROI.s = 25.0 - satMapStartS;
+ROI.eMap = 18.5; // 1
+ROI.sMap = 25.0;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 9.5;
@@ -37,8 +37,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 16.9 - satMapStartE; // 2
-ROI.s = 49.2 - satMapStartS;
+ROI.eMap = 16.9; // 2
+ROI.sMap = 49.2;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
@@ -55,8 +55,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 39.8 - satMapStartE; // 3
-ROI.s = 16.4 - satMapStartS;
+ROI.eMap = 39.8; // 3
+ROI.sMap = 16.4;
 ROI.sampleProb = 0.0;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
@@ -73,8 +73,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 75.9 - satMapStartE; // 4
-ROI.s = 20.9 - satMapStartS;
+ROI.eMap = 75.9; // 4
+ROI.sMap = 20.9;
 ROI.sampleProb = 0.0;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
@@ -91,8 +91,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 95.3 - satMapStartE; // 5
-ROI.s = 53.8 - satMapStartS;
+ROI.eMap = 95.3; // 5
+ROI.sMap = 53.8;
 ROI.sampleProb = 0.3;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
@@ -109,8 +109,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
-ROI.e = 96.6 - satMapStartE; // 6
-ROI.s = 95.6 - satMapStartS;
+ROI.eMap = 96.6; // 6
+ROI.sMap = 95.6;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
@@ -127,8 +127,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 138.5 - satMapStartE; // 7
-ROI.s = 51.6 - satMapStartS;
+ROI.eMap = 138.5; // 7
+ROI.sMap = 51.6;
 ROI.sampleProb = 0.0;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
@@ -145,8 +145,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 160.9 - satMapStartE; // 8
-ROI.s = 83.2 - satMapStartS;
+ROI.eMap = 160.9; // 8
+ROI.sMap = 83.2;
 ROI.sampleProb = 0.3;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
@@ -163,8 +163,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 154.8 - satMapStartE; // 9
-ROI.s = 106.8 - satMapStartS;
+ROI.eMap = 154.8; // 9
+ROI.sMap = 106.8;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
@@ -181,8 +181,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 191.2 - satMapStartE; // 10
-ROI.s = 115.7 - satMapStartS;
+ROI.eMap = 191.2; // 10
+ROI.sMap = 115.7;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
@@ -199,8 +199,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 197.1 - satMapStartE; // 11
-ROI.s = 142.3 - satMapStartS;
+ROI.eMap = 197.1; // 11
+ROI.sMap = 142.3;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
@@ -217,8 +217,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 229.6 - satMapStartE; // 12
-ROI.s = 105.9 - satMapStartS;
+ROI.eMap = 229.6; // 12
+ROI.sMap = 105.9;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 9.5;
@@ -235,8 +235,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 258.2 - satMapStartE; // 13
-ROI.s = 71.9 - satMapStartS;
+ROI.eMap = 258.2; // 13
+ROI.sMap = 71.9;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
@@ -253,8 +253,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 265.4 - satMapStartE; // 14
-ROI.s = 52.2 - satMapStartS;
+ROI.eMap = 265.4; // 14
+ROI.sMap = 52.2;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
@@ -271,8 +271,8 @@ ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
 ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
-ROI.e = 288.3 - satMapStartE; // 15
-ROI.s = 39.0 - satMapStartS;
+ROI.eMap = 288.3; // 15
+ROI.sMap = 39.0;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 9.5;

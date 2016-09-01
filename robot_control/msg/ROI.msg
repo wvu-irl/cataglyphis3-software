@@ -1,3 +1,5 @@
+float32 eMap
+float32 sMap
 float32 e
 float32 s
 float32 x
