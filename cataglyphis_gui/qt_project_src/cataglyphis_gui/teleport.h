@@ -17,6 +17,7 @@ class teleport : public QWidget
 
 signals:
     void navigation_teleport_robot(messages::NavFilterControl request);
+    void add_wait_to_exec(float seconds);
 
 public slots:
     void on_nav_filter_service_returned(messages::NavFilterControl response, bool wasSuccessful);

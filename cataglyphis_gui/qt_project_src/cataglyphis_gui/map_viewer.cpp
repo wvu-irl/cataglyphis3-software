@@ -21,7 +21,7 @@ map_viewer::map_viewer(QWidget *parent, int startIndex) :
     scene[0].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/pattern_test.jpg",   0,          true, this, rosWorker));
     scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 3.584058,   true, this, rosWorker));
     scene[2].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/esb.jpg",            4.52580645, true, this, rosWorker));
-    scene[3].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/chestnut_ridge.jpg", 5.096154,   true, this, rosWorker));
+    scene[3].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/wpi_practice.jpg",   4.65,       true, this, rosWorker));
 
     on_fieldSelector_currentIndexChanged(startIndex);
 }

@@ -69,6 +69,8 @@ public slots:
     void on_confirm_map_changes();
     void on_discard_map_changes();
 
+    void on_refresh_active_layers();
+
 public:
     QGraphicsSceneMapViewer(QObject * parent = 0,
                             boost::shared_ptr<ros_workers> workerArg = boost::shared_ptr<ros_workers>()):
@@ -109,7 +111,7 @@ public:
     void mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent);
 
     struct layerProperties_t { bool isLayerSetup = false, isLayerVisible = false; };
-    struct mapLayer_t { layerProperties_t properties; boost::scoped_ptr<QGraphicsItemGroup> items; boost::scoped_ptr<QList<QGraphicsItem*> > itemList;
+    struct mapLayer_t { layerProperties_t properties; QGraphicsItemGroup *items; boost::scoped_ptr<QList<QGraphicsItem*> > itemList;
                             boost::scoped_ptr<QPixmap> gridPixmap; boost::scoped_ptr<QGraphicsPixmapItem> pixmapItem;};
 
     bool setupMap(QPointF scenePos);
@@ -166,7 +168,7 @@ private:
 
     grid_map::GridMap gridMapContainer;
 
-    void _implSetupLayer(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
+    void _implSetupLayer(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility, bool reInit = false);
     void _implInitLayer(mapLayer_t *layer, bool reInit);
     void _implConnectSignals();
     void _implDisconnectSignals();

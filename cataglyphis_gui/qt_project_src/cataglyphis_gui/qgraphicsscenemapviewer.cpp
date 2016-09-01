@@ -59,7 +59,7 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                         gridRectangle->setRect((float)cellPosition[0], (float)cellPosition[1], 1, 1);
                         gridRectangle->setTransformOriginPoint(QPointF(0.5,0.5));
                         //gridRectangle->setTransform(robotToObjTransform);
-                        gridRectangle->setGroup(layer->items.get());
+                        gridRectangle->setGroup(layer->items);
                         layer->itemList->append(gridRectangle);
                     }
                 }
@@ -70,7 +70,7 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
                     gridRectangle->setRect((float)cellPosition[0], (float)cellPosition[1], 1, 1);
                     gridRectangle->setTransformOriginPoint(QPointF(0.5,0.5));
                     //gridRectangle->setTransform(robotToObjTransform);
-                    gridRectangle->setGroup(layer->items.get());
+                    gridRectangle->setGroup(layer->items);
                     layer->itemList->append(gridRectangle);
                 }
             }
@@ -82,7 +82,7 @@ void QGraphicsSceneMapViewer::on_map_manager_gridmap_service_returned(messages::
             ROS_DEBUG("SCENE:: adding group to scene");
             //drawingScene.addItem(layer->items.get());
 
-            this->addItem(layer->items.get());
+            this->addItem(layer->items);
             areaImagePixmap->hide();
             //drawingScene.removeItem(tempitem.get());
             //drawingView.fitInView(layer->items->childrenBoundingRect(), Qt::KeepAspectRatio);
@@ -121,7 +121,7 @@ void QGraphicsSceneMapViewer::on_confirm_map_changes()
 {
     emit confirm_roi_changes();
     roiLayer.properties.isLayerSetup = false;
-    _implSetupLayer(map_viewer_enums::ROI, roiLayer.properties.isLayerVisible);
+    _implSetupLayer(map_viewer_enums::ROI, roiLayer.properties.isLayerVisible, true);
 }
 
 void QGraphicsSceneMapViewer::on_discard_map_changes()
@@ -136,13 +136,7 @@ void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_co
     if(wasSucessful)
     {
         ROS_DEBUG("SCENE:: service successful");
-        for(int i = 0; i < roiLayer.itemList->size(); i++)
-        {
-            this->removeItem(roiLayer.itemList->at(i));
-            ROS_DEBUG("Deleting Item");
-            delete roiLayer.itemList->at(i);
-        }
-        roiLayer.itemList->clear();
+
         auto listPtr = &mapManagerResponse.response.ROIList;
         for(unsigned int i = 0; i < listPtr->size(); i++)
         {
@@ -215,6 +209,16 @@ void QGraphicsSceneMapViewer::mousePressEvent(QGraphicsSceneMouseEvent *mouseEve
     mouseEvent->ignore();
 }
 
+void QGraphicsSceneMapViewer::on_refresh_active_layers()
+{
+    for(std::map<map_viewer_enums::mapViewerLayers_t, std::string>::iterator it = map_viewer_enums::mapViewerLayersToString.begin();
+            it != map_viewer_enums::mapViewerLayersToString.end(); it++)
+    {
+        mapLayer_t *layer = getLayerFromEnum(it->first);
+        _implSetupLayer(it->first, layer->properties.isLayerVisible, isMapSetup());
+    }
+}
+
 bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
 {
     //if(!isMapSetup())
@@ -262,37 +266,34 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         cataglyphisHeadingLine->setLine(circleRadius/2,circleRadius/2, circleRadius+1, circleRadius/2);
         cataglyphisHeadingLine->setParentItem(cataglyphis);
 
-        this->addItem(cataglyphis);
-
         cataglyphis->show();
     }
    // else
     {
         /*handle re-init, probably clear obj containers and what not.*/
     }
-    for(std::map<map_viewer_enums::mapViewerLayers_t, std::string>::iterator it = map_viewer_enums::mapViewerLayersToString.begin();
-            it != map_viewer_enums::mapViewerLayersToString.end(); it++)
-    {
-        _implInitLayer(getLayerFromEnum(it->first), isMapSetup());
-    }
+
+    on_refresh_active_layers();
+
     emit map_viewer_scene_init(isMapSetup());
     mapSetup = true;
     return isMapSetup();
 }
 
-void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility)
+void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility, bool reInit)
 {
-    ROS_DEBUG("SCENE:: _implSetupLayer");
+    ROS_DEBUG("SCENE:: _implSetupLayer: %s", map_viewer_enums::mapViewerLayersToString.find(mapLayer)->second.c_str());
     if(!isMapSetup())
     {
-        ROS_ERROR("Map has been setup yet");
+        if(!reInit)
+            ROS_ERROR("Map has been setup yet");
         return;
     }
     mapLayer_t *layer = getLayerFromEnum(mapLayer);
-    if(!layer->properties.isLayerSetup && visibility)
+    if((reInit || !layer->properties.isLayerSetup) && visibility)
     {
         generic_ack_dialog dialog("This is layer has not been activated before.\r\nIt could take a while to display the first time");
-        _implInitLayer(layer, false);
+        _implInitLayer(layer, reInit);
         switch(mapLayer)
         {
         case map_viewer_enums::keyframeDrive:
@@ -326,9 +327,8 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
             case map_viewer_enums::ROI:
                 for(int i = 0; i < roiLayer.itemList->size(); i++)
                 {
-                    roiLayer.itemList->at(i)->setVisible(visibility);
+                    roiLayer.itemList->value(i)->setVisible(visibility);
                 }
-                roiLayer.properties.isLayerSetup = false;
                 break;
             default:
                 layer->properties.isLayerVisible = visibility;
@@ -359,7 +359,7 @@ void QGraphicsSceneMapViewer::on_set_layer_visibility(map_viewer_enums::mapViewe
             ROS_DEBUG("SCENE:: Map is not setup yet");
         }
         ROS_DEBUG("Setting Layer %s to %d", map_viewer_enums::mapViewerLayersToString.find(mapLayer)->second.c_str(), (int)visibility);
-        _implSetupLayer(mapLayer, visibility);
+        _implSetupLayer(mapLayer, visibility, false);
     }
 }
 
@@ -389,13 +389,31 @@ void QGraphicsSceneMapViewer::redrawLayers()
 
 void QGraphicsSceneMapViewer::_implInitLayer(mapLayer_t *layer, bool reInit)
 {
+    ROS_DEBUG("Init Layer");
+    if(reInit)
+    {
+//        ROS_DEBUG("Re Init");
+//        if(layer->itemList.get())
+//        {
+//            for(int i = 0; i < layer->itemList->size(); i++)
+//            {
+//                layer->itemList.get()->operator [](i)->hide();
+//                //delete layer->itemList->value(i);
+//            }
+//            layer->itemList->clear();
+//        }
+//        layer->items
+        this->destroyItemGroup(layer->items);
+    }
+
+
     layer->properties.isLayerSetup = false;
     layer->properties.isLayerVisible = false;
     //layer->items.reset(new QGraphicsItemGroup);
     //TODO need to check item group and remove it from the scene
     layer->gridPixmap.reset(new QPixmap());
     layer->itemList.reset(new QList<QGraphicsItem*>());
-    layer->items.reset(new QGraphicsItemGroup());
+    layer->items = new QGraphicsItemGroup();
     layer->items->hide();
 
 }
