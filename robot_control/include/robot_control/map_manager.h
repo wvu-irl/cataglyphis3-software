@@ -26,9 +26,9 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#define EVANSDALE
+//#define EVANSDALE
 //#define WPI
-//#define QUAD
+#define TEST_FIELD
 //#define CHESTNUT_RIDGE
 
 #ifdef EVANSDALE
@@ -39,9 +39,9 @@
 #include "wpi_map.h"
 #endif // WPI
 
-#ifdef QUAD
-#include "quad_map.h"
-#endif // QUAD
+#ifdef TEST_FIELD
+#include "test_field_map.h"
+#endif // TEST_FIELD
 
 #ifdef CHESTNUT_RIDGE
 #include "chestnut_ridge_map.h"

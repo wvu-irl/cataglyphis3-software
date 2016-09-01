@@ -55,10 +55,10 @@ MapManager::MapManager()
 #include <robot_control/wpi_rois.h>
 #endif // WPI
 
-#ifdef QUAD
-// Quad at WPI ROIs
-#include <robot_control/quad_rois.h>
-#endif // QUAD
+#ifdef TEST_FIELD
+// Test field at WPI ROIs
+#include <robot_control/test_field_rois.h>
+#endif // TEST_FIELD
 
 #ifdef CHESTNUT_RIDGE
 // ROIs for Chestnut Ridge Park
@@ -465,6 +465,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
 bool MapManager::globalMapFullCallback(messages::GlobalMapFull::Request &req, messages::GlobalMapFull::Response &res)
 {
     grid_map::GridMapRosConverter::toMessage(globalMap, res.globalMap);
+    res.startingPlatformNum = startingPlatformLocation;
     return true;
 }
 

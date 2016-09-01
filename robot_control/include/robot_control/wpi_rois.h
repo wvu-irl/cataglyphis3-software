@@ -57,7 +57,7 @@ ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
 ROI.e = 39.8 - satMapStartE; // 3
 ROI.s = 16.4 - satMapStartS;
-ROI.sampleProb = 0.5;
+ROI.sampleProb = 0.3;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 7.5;
 ROI.tangentialAxis = 7.5;
@@ -75,7 +75,7 @@ ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
 ROI.e = 75.9 - satMapStartE; // 4
 ROI.s = 20.9 - satMapStartS;
-ROI.sampleProb = 0.5;
+ROI.sampleProb = 0.0;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
 ROI.tangentialAxis = 5.5;
@@ -107,7 +107,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.e = 96.6 - satMapStartE; // 6
 ROI.s = 95.6 - satMapStartS;
@@ -125,11 +125,11 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.e = 138.5 - satMapStartE; // 7
 ROI.s = 51.6 - satMapStartS;
-ROI.sampleProb = 0.5;
+ROI.sampleProb = 0.0;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
 ROI.tangentialAxis = 5.5;
@@ -147,7 +147,7 @@ ROI.yellowProb = 0.07;
 regionsOfInterest.push_back(ROI);
 ROI.e = 160.9 - satMapStartE; // 8
 ROI.s = 83.2 - satMapStartS;
-ROI.sampleProb = 0.5;
+ROI.sampleProb = 0.3;
 ROI.sampleSig = 1.0;
 ROI.radialAxis = 5.5;
 ROI.tangentialAxis = 5.5;

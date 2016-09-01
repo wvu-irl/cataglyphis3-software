@@ -201,7 +201,7 @@ Localization::Transformation_Result Localization::Transformation_compute(int ICP
 	y1 = Navfilterout_All_s[ICP_read_index].y_filter;
 	heading1 = Navfilterout_All_s[ICP_read_index].heading_filter;
 
-	ROS_INFO_STREAM("x0: " << x0 << "y0: " << y0 << "heading0: " <<heading0);
+	// ROS_INFO_STREAM("x0: " << x0 << "y0: " << y0 << "heading0: " <<heading0);
 	//using Nav filter data to calculate guess transformation matrix
 	Coordinate_Normalize(x0, y0, heading0, x1, y1, heading1, theta, diff_x, diff_y);
 
@@ -329,8 +329,8 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 		position.heading = heading_filter_sub;
 		position_data.push_back(position);
 
-		ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
-		ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
+		// ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
+		// ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
 	}
 
 	pre_x = x;
@@ -379,8 +379,8 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	PositionPub.publish(slamposeout);
 
 	//debug, for testing
-	ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
-	ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
+	// ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
+	// ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
 	
 	position.x = TreadTomap(0,3);
 	position.y = TreadTomap(1,3);
@@ -431,6 +431,8 @@ int main(int argc, char **argv)
 	Localization localization;
 
 	localization.Initialization();
+
+	ROS_INFO_STREAM("Localization node running......");
 
 	ros::spin();
 

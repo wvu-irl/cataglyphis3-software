@@ -1,2 +1,3 @@
 ---
 grid_map_msgs/GridMap globalMap
+int16 startingPlatformNum
