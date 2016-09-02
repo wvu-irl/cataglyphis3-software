@@ -83,7 +83,8 @@ public:
         QGraphicsScene(x, y, width, height, parent) {ignoreSetup = ignoreSetupStep; mapSetup = false; worker = workerArg;}
 
     QGraphicsSceneMapViewer(const char *imagePath, float pixelsPerDist, bool ignoreSetupStep = false, QObject * parent = 0,
-                            boost::shared_ptr<ros_workers> workerArg = boost::shared_ptr<ros_workers>()):
+                            boost::shared_ptr<ros_workers> workerArg = boost::shared_ptr<ros_workers>(),
+                            bool hasPredefinedStartingPos = false):
         QGraphicsScene(parent),
         areaImage(new QImage(imagePath))
     {
@@ -91,12 +92,14 @@ public:
         pixelsPerDistance = pixelsPerDist;
         ignoreSetup = ignoreSetupStep;
         mapSetup = false;
+        hasPredefinedStartingPositions = hasPredefinedStartingPos;
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
         _implInitPointers();
     }
     //this constructor takes ownership of the pointer
     QGraphicsSceneMapViewer(QImage *image, float pixelsPerDist, bool ignoreSetupStep = false, QObject * parent = 0,
-                            boost::shared_ptr<ros_workers> workerArg = boost::shared_ptr<ros_workers>()):
+                            boost::shared_ptr<ros_workers> workerArg = boost::shared_ptr<ros_workers>(),
+                            bool hasPredefinedStartingPos = false):
         QGraphicsScene(parent)
     {
         worker = workerArg;
@@ -105,6 +108,7 @@ public:
         mapSetup = false;
         *areaImage = *image;
         areaImagePixmap = this->addPixmap(QPixmap::fromImage(*areaImage));
+        hasPredefinedStartingPositions = hasPredefinedStartingPos;
         _implInitPointers();
     }
 
@@ -148,11 +152,14 @@ public:
         QGraphicsScene::keyPressEvent(keyEvent);
     }
 
+    bool hasPredefinedStartingPositions;
+
 private:
     const QColor defaultCircleFill;
     const QColor fullTransparentColor;
     bool ignoreSetup;
     bool mapSetup;
+    bool requestedMap;
     float pixelsPerDistance;
 
     boost::shared_ptr<ros_workers> worker;
@@ -181,6 +188,7 @@ private:
     {
         cataglyphis = 0;
         startingPlatform = 0;
+        requestedMap = false;
     }
 
 };

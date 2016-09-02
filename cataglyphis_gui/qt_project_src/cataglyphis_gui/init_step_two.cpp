@@ -44,8 +44,8 @@ void init_step_two::on_begin_dead_reckoning_button_clicked()
     //send service
     emit start_dead_reckoning();
     emit bias_removal_finished();
-    emit stop_nav_info_subscriber();
-    emit stop_hsm_info_subscriber();
+//    emit stop_nav_info_subscriber();
+//    emit stop_hsm_info_subscriber();
 }
 
 void init_step_two::on_perform_bias_removal_button_clicked()

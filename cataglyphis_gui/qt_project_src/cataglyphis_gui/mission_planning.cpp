@@ -42,6 +42,8 @@ mission_planning::mission_planning(QWidget *parent) :
         }
     }
 
+    missionTime = 0;
+
     _implSetReadOnly(true);
 
     emit start_mission_planning_callback();
@@ -76,6 +78,7 @@ void mission_planning::on_mission_planning_info_callback(const messages::Mission
         _implMoveData(&latestInfo, false);
         tableModel->on_mission_planning_info_callback(info);
     }
+    emit update_mission_timer(info.missionTime);
 }
 
 void mission_planning::on_commit_changes_button_clicked()
@@ -182,6 +185,7 @@ void mission_planning::_implMoveData(messages::MissionPlanningInfo *info, bool u
             DIRECTION_MOVE_NORMAL(tableModel->formBoolVectorFromColumn(mission_planning_enums::to_be_executed+1),info->procsToExecute,  uiToMsg);
             DIRECTION_MOVE_NORMAL(tableModel->formBoolVectorFromColumn(mission_planning_enums::interrupted+1), info->procsToInterrupt, uiToMsg);
             DIRECTION_MOVE_NORMAL(tableModel->formBoolVectorFromColumn(mission_planning_enums::resume+1), info->procsToResume, uiToMsg);
+            DIRECTION_MOVE_NORMAL(missionTime,                     info->missionTime, uiToMsg);
 }
 
 void mission_planning::_implMoveUiToService(messages::MissionPlanningControl *serviceInfo)
@@ -220,6 +224,7 @@ DIRECTION_MOVE_SPINBOX(ui->sample_collected_spinbox,        serviceInfo->request
     DIRECTION_MOVE(ui->side_grab_indicator,                 serviceInfo->request.sideOffsetGrab, true);
     DIRECTION_MOVE(ui->start_slam_indicator,                serviceInfo->request.startSLAM, true);
     DIRECTION_MOVE(ui->use_dead_reckoning_indicator,        serviceInfo->request.useDeadReckoning, true);
+    DIRECTION_MOVE_NORMAL(missionTime,                     serviceInfo->request.missionTime, true);
     serviceInfo->request.procStates =           tableModel->formIntVectorFromColumn(0);
     serviceInfo->request.procsBeingExecuted =   tableModel->formBoolVectorFromColumn(mission_planning_enums::executing+1);
     serviceInfo->request.procsToExecute =       tableModel->formBoolVectorFromColumn(mission_planning_enums::to_be_executed+1);

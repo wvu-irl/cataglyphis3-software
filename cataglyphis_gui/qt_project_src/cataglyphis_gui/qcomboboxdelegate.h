@@ -17,7 +17,7 @@ public:
                         QObject *parent = 0):
         QStyledItemDelegate(parent),
         comboOptions(comboOpts)
-    {std::printf("list delegate\r\n");}
+    {/*std::printf("list delegate\r\n");*/}
 
     QWidget *createEditor(QWidget *parent,
         const QStyleOptionViewItem &/* option */,

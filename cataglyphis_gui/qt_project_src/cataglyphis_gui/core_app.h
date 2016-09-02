@@ -14,6 +14,8 @@
 #include "exec_info_queue.h"
 #include "mission_planning.h"
 
+#include <QTime>
+
 #include <messages/RobotPose.h>
 
 #include <ros_workers.h>
@@ -39,6 +41,7 @@ public:
 
 public slots:
     void on_hsm_global_pose_callback(const messages::RobotPose hsmRobotPose);
+    void on_update_time(double time);
 private slots:
 
 private:

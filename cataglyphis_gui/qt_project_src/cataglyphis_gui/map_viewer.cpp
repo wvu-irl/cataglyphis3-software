@@ -12,6 +12,19 @@ map_viewer::map_viewer(QWidget *parent, int startIndex) :
     rosWorker->moveToThread(&rosWorkerThread);
     rosWorkerThread.start();
 
+    connect(this, &map_viewer::run_global_map_request,
+                rosWorker.get(), &ros_workers::on_run_map_manager_global_map_request);
+    connect(rosWorker.get(), &ros_workers::map_manager_global_map_service_returned,
+                this, &map_viewer::on_global_map_service_returned);
+
+    for(int i = 0; i < 4; i++)
+    {
+        for(int j = 0; j<3; j++)
+        {
+            startPlatformPositionsPixels[i][j] = QPointF(0,0);
+        }
+    }
+
     ui->setupUi(this);
 
     QPixmapCache::setCacheLimit(102400);
@@ -19,11 +32,24 @@ map_viewer::map_viewer(QWidget *parent, int startIndex) :
     ui->fieldDisplay->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     scene[0].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/pattern_test.jpg",   0,          true, this, rosWorker));
-    scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 3.584058,   true, this, rosWorker));
+    scene[1].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/institute_park.jpg", 3.584058,   true, this, rosWorker, true));
+    startPlatformPositionsPixels[1][0]+=QPointF(453,456);
+    startPlatformPositionsPixels[1][1]+=QPointF(472,430);
+    startPlatformPositionsPixels[1][2]+=QPointF(491,407);
+
+    for(int i = 0; i < 4; i++)
+    {
+        for(int j = 0; j<3; j++)
+        {
+            ROS_DEBUG("X: %d Y: %d", startPlatformPositionsPixels[i][j].x(), startPlatformPositionsPixels[i][j].y());
+        }
+    }
+
     scene[2].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/esb.jpg",            4.52580645, true, this, rosWorker));
     scene[3].reset(new QGraphicsSceneMapViewer(":/field_pictures/resources/wpi_practice.jpg",   4.65,       true, this, rosWorker));
 
-    on_fieldSelector_currentIndexChanged(startIndex);
+    ui->fieldSelector->setCurrentIndex(startIndex);
+    //on_fieldSelector_currentIndexChanged(startIndex);
 }
 
 map_viewer::~map_viewer()
@@ -66,6 +92,7 @@ void map_viewer::on_fieldSelector_currentIndexChanged(int index)
 
     ui->fieldDisplay->setScene(scene[index].get());
     ui->fieldDisplay->show();
+
     ROS_DEBUG("MAP:: is the view active windows? %d", (int)ui->fieldDisplay->isActiveWindow());
     ROS_DEBUG("MAP:: Is current map active %d", scene[index]->isActive());
 }
@@ -109,19 +136,36 @@ void map_viewer::on_keyframeMapLayerButton_clicked(bool checked)
     emit set_map_layer_visibility(map_viewer_enums::keyframeDrive, checked);
 }
 
-void map_viewer::on_initMapButton_clicked()
+void map_viewer::on_global_map_service_returned(messages::GlobalMapFull gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer,
+                                                bool wasSucessful)
 {
     generic_ack_dialog dialog("Click the starting point of the robot.");
-    int returnVal = dialog.bringUpDialogModal();
-    ROS_DEBUG("MAP:: init dialog return val %d: ", returnVal);
-    ui->fieldDisplay->activateWindow();
-    ROS_DEBUG("MAP:: is the view active windows? %d", (int)ui->fieldDisplay->isActiveWindow());
-    if(returnVal == QDialog::Accepted)
+
+    if(!((QGraphicsSceneMapViewer*)ui->fieldDisplay->scene())->hasPredefinedStartingPositions || !wasSucessful)
     {
-        ROS_DEBUG("MAP:: Dialog accepted, sending scene setup alert");
-        ui->fieldDisplay->setCursor(Qt::CrossCursor);
-        emit set_scene_setup_alert(false);
+        int returnVal = dialog.bringUpDialogModal();
+        ROS_DEBUG("MAP:: init dialog return val %d: ", returnVal);
+        ui->fieldDisplay->activateWindow();
+        ROS_DEBUG("MAP:: is the view active windows? %d", (int)ui->fieldDisplay->isActiveWindow());
+        if(returnVal == QDialog::Accepted)
+        {
+            ROS_DEBUG("MAP:: Dialog accepted, sending scene setup alert");
+            ui->fieldDisplay->setCursor(Qt::CrossCursor);
+            emit set_scene_setup_alert(false);
+        }
     }
+    else
+    {
+        ROS_DEBUG("Current Index %d", ui->fieldSelector->currentIndex());
+        ROS_DEBUG("Starting Platform Num: %d", gridMapFull.response.startingPlatformNum);
+        //ROS_DEBUG("X %d, Y %d", startPlatformPositionsPixels
+        ((QGraphicsSceneMapViewer*)ui->fieldDisplay->scene())->setupMap(startPlatformPositionsPixels[ui->fieldSelector->currentIndex()][gridMapFull.response.startingPlatformNum-1]);
+    }
+}
+
+void map_viewer::on_initMapButton_clicked()
+{
+    emit run_global_map_request(map_viewer_enums::PATH);
 }
 
 void map_viewer::on_satDriveMapLayerButton_clicked(bool checked)

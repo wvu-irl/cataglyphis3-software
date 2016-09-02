@@ -21,6 +21,8 @@
 
 #include <ros_workers.h>
 
+#include <QTime>
+
 #define BOOL_CHECKER
 #define I_AM_DEFINED
 #define MOVE_DATA_1_2(arg1, arg2) {arg1 = arg2;}
@@ -58,7 +60,7 @@ class mission_planning : public QWidget
     Q_OBJECT
 
 signals:
-    void update_mission_timer();
+    void update_mission_timer(double time);
     void add_wait_to_exec(float seconds);
     void modify_mission_planning_request(messages::MissionPlanningControl info);
     void start_mission_planning_callback();
@@ -108,6 +110,8 @@ private:
     messages::MissionPlanningInfo stagedInfo;
 
     boost::scoped_ptr<mission_planning_proc_model> tableModel;
+
+    double missionTime;
 
 };
 
