@@ -58,7 +58,7 @@ bool DepositSample::runProc()
             confirmedPossession = true;
             atHome = true;
             inDepositPosition = false;
-            startSLAM = false;
+            //startSLAM = false;
         }
         else
         {
@@ -71,7 +71,7 @@ bool DepositSample::runProc()
             definiteSample = false;
             sampleDataActedUpon = false;
             sampleInCollectPosition = false;
-            startSLAM = true;
+            //startSLAM = true;
         }
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;

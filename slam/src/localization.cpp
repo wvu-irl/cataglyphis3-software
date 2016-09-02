@@ -300,16 +300,16 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 {	
 
 	//debug, for testing
-	Position position;
+	// Position position;
 	
 	messages::SLAMPoseOut slamposeout;
 	//check if the keyframe updated or not
 	if(pre_x != x || pre_y != y || pre_heading != heading)
 	{
-		if(homing_updated)
- 		{
- 			addition = 0;
- 		}
+		// if(homing_updated)
+ 	// 	{
+ 	// 		addition = 0;
+ 	// 	}
 
 		Navfilterout_All_s[ref_index].x_filter = x_filter_sub;
 		Navfilterout_All_s[ref_index].y_filter = y_filter_sub;
@@ -317,17 +317,17 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 
 		//use the navfilterout of the keyframe as the reference
 		//range of globalHeading should from -inf to inf
-		slamposeout.globalX = x_filter_sub;
-		slamposeout.globalY = y_filter_sub;
-		slamposeout.globalHeading = heading_filter_sub * 180 / PI;
+		slamposeout.globalX = x;
+		slamposeout.globalY = y;
+		slamposeout.globalHeading = NavFilterOutMsgIn.heading * PI / 180;
 
 		PositionPub.publish(slamposeout);
 		
 		//debug, for testing
-		position.x = x_filter_sub;
-		position.y = y_filter_sub;
-		position.heading = heading_filter_sub;
-		position_data.push_back(position);
+		// position.x = x_filter_sub;
+		// position.y = y_filter_sub;
+		// position.heading = heading_filter_sub;
+		// position_data.push_back(position);
 
 		// ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
 		// ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
@@ -382,16 +382,16 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	// ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
 	// ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
 	
-	position.x = TreadTomap(0,3);
-	position.y = TreadTomap(1,3);
-	position.heading = TransformationMatrix_to_angle(TreadTomap);	//radian
-	position_data.push_back(position);
+	// position.x = TreadTomap(0,3);
+	// position.y = TreadTomap(1,3);
+	// position.heading = TransformationMatrix_to_angle(TreadTomap);	//radian
+	// position_data.push_back(position);
 		
-	Position position_IMU;
-	position_IMU.x = Navfilterout_All_s[read_index].x_filter;
-	position_IMU.y = Navfilterout_All_s[read_index].y_filter;
-	position_IMU.heading = Navfilterout_All_s[read_index].heading_filter;
-	position_data_IMU.push_back(position_IMU);
+	// Position position_IMU;
+	// position_IMU.x = Navfilterout_All_s[read_index].x_filter;
+	// position_IMU.y = Navfilterout_All_s[read_index].y_filter;
+	// position_IMU.heading = Navfilterout_All_s[read_index].heading_filter;
+	// position_data_IMU.push_back(position_IMU);
 
 	//output position data to txt file
 	// if(position_data.size() > 1300)
