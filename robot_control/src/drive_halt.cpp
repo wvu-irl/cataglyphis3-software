@@ -15,7 +15,7 @@ void DriveHalt::init()
     posError_ = 0.0;
     vPrev_ = robotStatus.velocity;
     prevTime_ = ros::Time::now().toSec();
-    if(fabs(robotStatus.pitchAngle)>minTiltForHold_) state_ = _waitingForStop;
+    if(fabs(robotStatus.pitchAngle)>minTiltForHold_) {state_ = _waitingForStop; ROS_WARN("tilt at halt = %f",robotStatus.pitchAngle);}
     else state_ = _noHold;
 }
 
@@ -24,6 +24,7 @@ int DriveHalt::run()
     switch(state_)
     {
     case _noHold:
+    	ROS_INFO("_noHold");
         robotOutputs.flMotorSpeed = 0;
         robotOutputs.mlMotorSpeed = 0;
         robotOutputs.blMotorSpeed = 0;
@@ -35,6 +36,7 @@ int DriveHalt::run()
         state_ = _noHold;
         break;
     case _waitingForStop:
+    	ROS_INFO("_waitingForStop");
         robotOutputs.flMotorSpeed = 0;
         robotOutputs.mlMotorSpeed = 0;
         robotOutputs.blMotorSpeed = 0;
@@ -47,8 +49,11 @@ int DriveHalt::run()
         else stopCounts_ = 0;
         if(stopCounts_>=stopCountsThreshold_) state_ = _holding;
         else state_ = _waitingForStop;
+        prevTime_ = ros::Time::now().toSec();
+        vPrev_ = robotStatus.velocity;
         break;
     case _holding:
+    	ROS_INFO("_holding");
         if(fabs(posError_>=maxErrorThreshold_))
         {
             posError_ = 0.0;
@@ -80,5 +85,6 @@ int DriveHalt::run()
         state_ = _holding;
         break;
     }
+    ROS_INFO("posError_ = %f",posError_);
 	return 1;
 }

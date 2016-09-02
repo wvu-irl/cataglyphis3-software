@@ -81,6 +81,7 @@ public:
 	void calculateGlobalMapSize();
 	void initializeGlobalMap();
 	void cutOutGlobalSubMap();
+	void computeROIEastSouth();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;

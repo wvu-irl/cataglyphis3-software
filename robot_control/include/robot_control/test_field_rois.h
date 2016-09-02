@@ -1,13 +1,13 @@
 #ifndef TEST_FIELD_ROIS_H
 #define TEST_FIELD_ROIS_H
 
-ROI.e = 105.0 - satMapStartE; // precached (0)
-ROI.s = 35.0 - satMapStartS;
+ROI.eMap = 105.0; // precached (0)
+ROI.sMap = 35.0;
 ROI.sampleProb = 1.0;
 ROI.sampleSig = 10.0;
-ROI.radialAxis = 9.5;
-ROI.tangentialAxis = 9.5;
-ROI.allocatedTime = 600.0;
+ROI.radialAxis = 7.5;
+ROI.tangentialAxis = 7.5;
+ROI.allocatedTime = 210.0;
 ROI.highRisk = 0;
 ROI.hardLockout = false;
 ROI.roiGroup = 0;
@@ -19,12 +19,12 @@ ROI.redProb = 0.0;
 ROI.orangeProb = 0.0;
 ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
-ROI.e = 95.0 - satMapStartE; // 1
-ROI.s = 90.0 - satMapStartS;
+ROI.eMap = 95.0; // 1
+ROI.sMap = 90.0;
 ROI.sampleProb = 0.5;
 ROI.sampleSig = 1.0;
-ROI.radialAxis = 9.5;
-ROI.tangentialAxis = 9.5;
+ROI.radialAxis = 5.5;
+ROI.tangentialAxis = 5.5;
 ROI.allocatedTime = 210.0;
 ROI.highRisk = 0;
 ROI.hardLockout = false;

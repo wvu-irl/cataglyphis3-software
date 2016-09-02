@@ -65,6 +65,8 @@ MapManager::MapManager()
 #include <robot_control/chestnut_ridge_rois.h>
 #endif // CHESTNUT_RIDGE
 
+    computeROIEastSouth();
+
 	// ***********************************
     /*globalMapPub = nh.advertise<grid_map_msgs::GridMap>("control/mapmanager/globalmap",1);
     globalMap.setFrameId("map");
@@ -521,6 +523,7 @@ bool MapManager::setStartingPlatformCallback(messages::SetStartingPlatform::Requ
         setStartingPlatform();
         calculateGlobalMapSize();
         initializeGlobalMap();
+        computeROIEastSouth();
         writeSatMapIntoGlobalMap();
         writeKeyframesIntoGlobalMap();
     }
@@ -1049,4 +1052,13 @@ void MapManager::initializeGlobalMap()
 void MapManager::cutOutGlobalSubMap()
 {
 
+}
+
+void MapManager::computeROIEastSouth()
+{
+	for(int i=0; i<regionsOfInterest.size(); i++)
+	{
+		regionsOfInterest.at(i).e = regionsOfInterest.at(i).eMap - satMapStartE;
+		regionsOfInterest.at(i).s = regionsOfInterest.at(i).sMap - satMapStartS;
+	}
 }

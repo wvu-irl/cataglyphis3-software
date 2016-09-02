@@ -4,12 +4,12 @@
 const int driveabilityNumRows = 144;
 const int driveabilityNumCols = 139;
 const float driveabilityMapRes = 1.0; // m
-const float satMapStartE1 = 95.0; // m
-const float satMapStartS1 = 75.0; // m
+const float satMapStartE1 = 92.0; // m
+const float satMapStartS1 = 57.0; // m
 const float satMapStartE2 = 95.0; // m
 const float satMapStartS2 = 75.0; // m
-const float satMapStartE3 = 95.0; // m
-const float satMapStartS3 = 75.0; // m
+const float satMapStartE3 = 92.0; // m
+const float satMapStartS3 = 57.0; // m
 float driveabilityMap[driveabilityNumRows][driveabilityNumCols] =
 {
 {100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100},
