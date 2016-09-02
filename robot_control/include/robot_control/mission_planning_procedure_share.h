@@ -87,7 +87,7 @@ public:
 	static ros::Subscriber cvSamplesSub;
 	static messages::CVSamplesFound cvSamplesFoundMsg;
 	const float distanceToGrabber = 0.86;
-	const float distanceToBlindDriveLocation = 0.88; // m
+	const float distanceToBlindDriveLocation = 0.91; // m
 	const float blindDriveDistance = 0.35; // m (0.39)
 	const float sideGrabAngleOffset = 15.0; // deg
 	const float initGrabberDistanceTolerance = 0.17; // m
