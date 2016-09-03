@@ -14,7 +14,7 @@
 #include <messages/NavFilterOut.h>
 #include <messages/NavFilterControl.h>
 
-#include <messages/HSMSetNorthAngle.h>
+//
 #include <messages/RobotPose.h>
 #include <messages/GlobalMapFull.h>
 
@@ -117,7 +117,7 @@ private:
     ros::ServiceClient navControlClient;
 
     ros::ServiceClient hsmNAControlClient;
-    messages::HSMSetNorthAngle lastHSMNAMsg;
+    //messages::HSMSetNorthAngle lastHSMNAMsg;
 
     ros::ServiceClient mapManagerROIClient;
     robot_control::RegionsOfInterest lastROIMsg;
