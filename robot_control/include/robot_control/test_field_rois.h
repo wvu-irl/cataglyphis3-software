@@ -1,8 +1,8 @@
 #ifndef TEST_FIELD_ROIS_H
 #define TEST_FIELD_ROIS_H
 
-ROI.eMap = 95.0; // precached (0)
-ROI.sMap = 45.0;
+/*ROI.eMap = 100.0; // precached (0)
+ROI.sMap = 35.0;
 ROI.sampleProb = 1.0;
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 7.5;
@@ -18,7 +18,7 @@ ROI.pinkProb = 0.0;
 ROI.redProb = 0.0;
 ROI.orangeProb = 0.0;
 ROI.yellowProb = 0.0;
-regionsOfInterest.push_back(ROI);
+regionsOfInterest.push_back(ROI);*/
 ROI.eMap = 120.0; // 1
 ROI.sMap = 70.0;
 ROI.sampleProb = 0.5;

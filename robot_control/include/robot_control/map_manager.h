@@ -27,8 +27,8 @@
 #define RAD2DEG 180.0/PI
 
 //#define EVANSDALE
-//#define WPI
-#define TEST_FIELD
+#define WPI
+//#define TEST_FIELD
 //#define CHESTNUT_RIDGE
 
 #ifdef EVANSDALE
