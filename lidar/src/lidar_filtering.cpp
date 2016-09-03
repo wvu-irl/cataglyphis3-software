@@ -1270,72 +1270,72 @@ void LidarFilter::fitCylinderLong()
 		_homing_found = false;
 	}
 	
-	if(_homing_found==true && (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14))
-	{
-		std::ofstream outputFile;
-		static bool openFileForFirstTime = false;
-		if(openFileForFirstTime == false)
-		{
-			openFileForFirstTime = true;
-			outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::out | ofstream::trunc);
-		}
-		else
-		{
-			outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::app);
-		}
-		for (int i=0; i<_potential_cylinders_nonintensity.size(); i++)
-		{
-			for (int jj=0; jj<_potential_cylinders_nonintensity[i].points.n_cols; jj++)
-			{
+	// if(_homing_found==true && (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14))
+	// {
+	// 	std::ofstream outputFile;
+	// 	static bool openFileForFirstTime = false;
+	// 	if(openFileForFirstTime == false)
+	// 	{
+	// 		openFileForFirstTime = true;
+	// 		outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::out | ofstream::trunc);
+	// 	}
+	// 	else
+	// 	{
+	// 		outputFile.open("/media/data/data_logs/bad_point_cloud.txt", ofstream::app);
+	// 	}
+	// 	for (int i=0; i<_potential_cylinders_nonintensity.size(); i++)
+	// 	{
+	// 		for (int jj=0; jj<_potential_cylinders_nonintensity[i].points.n_cols; jj++)
+	// 		{
 
-				outputFile << _potential_cylinders_nonintensity[i].points(0,jj) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].points(1,jj) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].points(2,jj) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].points(3,jj) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].point_in_space(0,0) << ",";
-				outputFile << _potential_cylinders_nonintensity[i].point_in_space(1,0) << ",";
-				outputFile << X(0) << ",";
-				outputFile << X(1) << ",";
-				outputFile << X(2) << ",";
-				outputFile << X(3) << ",";
-				outputFile << i << ","; //cylinder number
-				outputFile << 1 << ","; //nonintensity = 1
-				outputFile << _stack_counter << ",";
-				outputFile << keep_nonintensity << ","; 
-				outputFile << diff1 << ","; 
-				outputFile << diff2 << ","; 
-				outputFile << explode; 
-				outputFile << std::endl; 	
-			}
-		}
+	// 			outputFile << _potential_cylinders_nonintensity[i].points(0,jj) << ",";
+	// 			outputFile << _potential_cylinders_nonintensity[i].points(1,jj) << ",";
+	// 			outputFile << _potential_cylinders_nonintensity[i].points(2,jj) << ",";
+	// 			outputFile << _potential_cylinders_nonintensity[i].points(3,jj) << ",";
+	// 			outputFile << _potential_cylinders_nonintensity[i].point_in_space(0,0) << ",";
+	// 			outputFile << _potential_cylinders_nonintensity[i].point_in_space(1,0) << ",";
+	// 			outputFile << X(0) << ",";
+	// 			outputFile << X(1) << ",";
+	// 			outputFile << X(2) << ",";
+	// 			outputFile << X(3) << ",";
+	// 			outputFile << i << ","; //cylinder number
+	// 			outputFile << 1 << ","; //nonintensity = 1
+	// 			outputFile << _stack_counter << ",";
+	// 			outputFile << keep_nonintensity << ","; 
+	// 			outputFile << diff1 << ","; 
+	// 			outputFile << diff2 << ","; 
+	// 			outputFile << explode; 
+	// 			outputFile << std::endl; 	
+	// 		}
+	// 	}
 
-		for (int i=0; i<_potential_cylinders_intensity.size(); i++)
-		{
-			for (int jj=0; jj<_potential_cylinders_intensity[i].points.n_cols; jj++)
-			{
+	// 	for (int i=0; i<_potential_cylinders_intensity.size(); i++)
+	// 	{
+	// 		for (int jj=0; jj<_potential_cylinders_intensity[i].points.n_cols; jj++)
+	// 		{
 
-				outputFile << _potential_cylinders_intensity[i].points(0,jj) << ",";
-				outputFile << _potential_cylinders_intensity[i].points(1,jj) << ",";
-				outputFile << _potential_cylinders_intensity[i].points(2,jj) << ",";
-				outputFile << _potential_cylinders_intensity[i].points(3,jj) << ",";
-				outputFile << _potential_cylinders_intensity[i].point_in_space(0,0) << ",";
-				outputFile << _potential_cylinders_intensity[i].point_in_space(1,0) << ",";
-				outputFile << X(0) << ",";
-				outputFile << X(1) << ",";
-				outputFile << X(2) << ",";
-				outputFile << X(3) << ",";
-				outputFile << i << ","; //cylinder number
-				outputFile << 2 << ","; //intensity = 2
-				outputFile << _stack_counter << ","; 
-				outputFile << keep_intensity << ",";
-				outputFile << diff1 << ","; 
-				outputFile << diff2 << ","; 
-				outputFile << explode; 
-				outputFile << std::endl; 	
-			}
-		}
-		outputFile.close();
-	} 	//end log data
+	// 			outputFile << _potential_cylinders_intensity[i].points(0,jj) << ",";
+	// 			outputFile << _potential_cylinders_intensity[i].points(1,jj) << ",";
+	// 			outputFile << _potential_cylinders_intensity[i].points(2,jj) << ",";
+	// 			outputFile << _potential_cylinders_intensity[i].points(3,jj) << ",";
+	// 			outputFile << _potential_cylinders_intensity[i].point_in_space(0,0) << ",";
+	// 			outputFile << _potential_cylinders_intensity[i].point_in_space(1,0) << ",";
+	// 			outputFile << X(0) << ",";
+	// 			outputFile << X(1) << ",";
+	// 			outputFile << X(2) << ",";
+	// 			outputFile << X(3) << ",";
+	// 			outputFile << i << ","; //cylinder number
+	// 			outputFile << 2 << ","; //intensity = 2
+	// 			outputFile << _stack_counter << ","; 
+	// 			outputFile << keep_intensity << ",";
+	// 			outputFile << diff1 << ","; 
+	// 			outputFile << diff2 << ","; 
+	// 			outputFile << explode; 
+	// 			outputFile << std::endl; 	
+	// 		}
+	// 	}
+	// 	outputFile.close();
+	// } 	//end log data
 
 }
 

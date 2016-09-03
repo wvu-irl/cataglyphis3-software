@@ -35,7 +35,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 
 #endif // TEST_FIELD_ROIS_H
