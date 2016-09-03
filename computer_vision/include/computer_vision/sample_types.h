@@ -77,7 +77,7 @@ std::vector<int> map_enum_to_color(SAMPLE_TYPE_T type)
 			break;
 		case _whiteBlueOrPurple_t:
 			scalar_values.push_back(255);
-			scalar_values.push_back(0);
+			scalar_values.push_back(100);
 			scalar_values.push_back(0);
 			return scalar_values;
 			break;
@@ -212,8 +212,8 @@ std::vector<SAMPLE_TYPE_T> map_to_simple_color(SAMPLE_TYPE_T type)
 			possible_types.push_back(_yellow_t);
 			break;
 		case _blueOrPurple_t:
-			// possible_types.push_back(_white_t);
-			// possible_types.push_back(_silver_t);
+			possible_types.push_back(_white_t);
+			possible_types.push_back(_silver_t);
 			possible_types.push_back(_blueOrPurple_t);
 			break;
 		case _pink_t:

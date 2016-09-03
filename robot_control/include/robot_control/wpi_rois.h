@@ -13,7 +13,7 @@ ROI.hardLockout = false;
 ROI.roiGroup = 0;
 ROI.whiteProb = 1.0;
 ROI.silverProb = 1.0;
-ROI.blueOrPurpleProb = 0.0;
+ROI.blueOrPurpleProb = 1.0;
 ROI.pinkProb = 0.0;
 ROI.redProb = 0.0;
 ROI.orangeProb = 0.0;
@@ -35,7 +35,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 16.9; // 2
 ROI.sMap = 49.2;
@@ -53,7 +53,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 39.8; // 3
 ROI.sMap = 16.4;
@@ -71,7 +71,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 75.9; // 4
 ROI.sMap = 20.9;
@@ -89,7 +89,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 95.3; // 5
 ROI.sMap = 53.8;
@@ -125,7 +125,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 138.5; // 7
 ROI.sMap = 51.6;
@@ -143,7 +143,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 160.9; // 8
 ROI.sMap = 83.2;
@@ -161,7 +161,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 154.8; // 9
 ROI.sMap = 106.8;
@@ -179,7 +179,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 191.2; // 10
 ROI.sMap = 115.7;
@@ -197,7 +197,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 197.1; // 11
 ROI.sMap = 142.3;
@@ -215,7 +215,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 229.6; // 12
 ROI.sMap = 105.9;
@@ -233,7 +233,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 258.2; // 13
 ROI.sMap = 71.9;
@@ -251,7 +251,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 265.4; // 14
 ROI.sMap = 52.2;
@@ -269,7 +269,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 288.3; // 15
 ROI.sMap = 39.0;
@@ -287,7 +287,7 @@ ROI.blueOrPurpleProb = 0.2;
 ROI.pinkProb = 0.07;
 ROI.redProb = 0.07;
 ROI.orangeProb = 0.07;
-ROI.yellowProb = 0.07;
+ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 
 #endif // WPI_ROIS_H

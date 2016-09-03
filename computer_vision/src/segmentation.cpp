@@ -224,7 +224,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
 
         if(distanceFromCenterOfImageInPixels < 5792/4)
         {
-            if((boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) < 50 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) < 50)
+            if((boundingBoxonBlob.br().x - boundingBoxonBlob.tl().x) < 75 || (boundingBoxonBlob.br().y - boundingBoxonBlob.tl().y) < 75)
             {
                 //ignore blob
                 ROS_INFO("ignoring (far area thresh) %i",i);
@@ -247,7 +247,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
             minDimension = axis2;
             maxDimension = axis1;
         }
-        if(maxDimension < 25 || minDimension < 20)
+        if(maxDimension < 40 || minDimension < 30)
         {
             ROS_INFO("ignoring (min/max size thresh) %i",i);
             continue;              

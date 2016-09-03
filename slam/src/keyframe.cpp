@@ -731,7 +731,7 @@ void Keyframe::getlocalmapcallback(const messages::LocalMap& LocalMapMsgIn)
 			// 	// ROS_INFO_STREAM("x_key of keyframe:  \n" << KeyframeMap_s[KeyframeMap_s.size()-1].x_key);
 			// }
 
-			ROS_INFO_STREAM("use_ICP_counter: " << use_ICP_counter << " use_IMU_counter: " << use_IMU_counter << " use_g2o_counter: " << use_g2o_counter);
+			// ROS_INFO_STREAM("use_ICP_counter: " << use_ICP_counter << " use_IMU_counter: " << use_IMU_counter << " use_g2o_counter: " << use_g2o_counter);
 
 
 		}

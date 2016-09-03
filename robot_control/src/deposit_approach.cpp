@@ -42,7 +42,7 @@ bool DepositApproach::runProc()
 	{
 	case _init_:
 		avoidLockout = true;
-		startSLAM = false;
+		//startSLAM = false;
 		procsBeingExecuted[procType] = true;
         procsToExecute[procType] = false;
         procsToResume[procType] = false;
