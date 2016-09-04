@@ -133,6 +133,33 @@ void QGraphicsSceneMapViewer::on_discard_map_changes()
     emit discard_roi_changes();
 }
 
+void QGraphicsSceneMapViewer::on_slam_info_callback(const messages::SLAMPoseOut slamInfo)
+{
+    QVector3D newPoint(slamInfo.globalX, slamInfo.globalY, 0);
+    float deltaDistance = lastSlamPointPlotted.distanceToPoint(newPoint);
+    ROS_DEBUG("SLAM CALLBACK");
+    if(deltaDistance > .5)
+    {
+
+        pathLayer.itemList->append(this->addLine(lastSlamPointPlotted.x(), lastSlamPointPlotted.y(), newPoint.x(), newPoint.y(), QPen(Qt::red, .3)));
+        (pathLayer.itemList->last())->setParentItem(startingPlatform);
+        lastSlamPointPlotted = newPoint;
+    }
+}
+
+void QGraphicsSceneMapViewer::on_nav_info_callback(const messages::NavFilterOut navInfo)
+{
+    QVector3D newPoint(navInfo.x_position, navInfo.y_position, 0);
+    float deltaDistance = lastNavPointPlotted.distanceToPoint(newPoint);
+    if(deltaDistance > .5)
+    {
+        ROS_DEBUG("Nav CALLBACK");
+        pathLayer.itemList->append(this->addLine(lastNavPointPlotted.x(), lastNavPointPlotted.y(), newPoint.x(), newPoint.y(), QPen(Qt::black, .3)));
+        (pathLayer.itemList->last())->setParentItem(startingPlatform);
+        lastNavPointPlotted = newPoint;
+    }
+}
+
 void QGraphicsSceneMapViewer::on_map_manager_roi_service_returned(const robot_control::RegionsOfInterest mapManagerResponse, bool wasSucessful)
 {
     ROS_DEBUG("SCENE:: ROI service returned");
@@ -313,6 +340,11 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
             ROS_DEBUG("SCENE::Requesting ROIs");
             emit request_roi();
             break;
+        case map_viewer_enums::PATH:
+            ROS_DEBUG("SCENE::Activating NAV Info");
+            emit start_nav_info_sub();
+            emit start_slam_info_sub();
+            break;
         default:
             ROS_WARN("Layer drawing not implemented yet");
         }
@@ -335,6 +367,11 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
                     roiLayer.itemList->value(i)->setVisible(visibility);
                 }
                 break;
+            case map_viewer_enums::PATH:
+                for(int i = 0; i < pathLayer.itemList->size(); i++)
+                {
+                    roiLayer.itemList->value(i)->setVisible(visibility);
+                }
             default:
                 layer->properties.isLayerVisible = visibility;
                 layer->items->setVisible(visibility);
@@ -435,6 +472,17 @@ void QGraphicsSceneMapViewer::_implConnectSignals()
 
     connect(worker.get(), &ros_workers::map_manager_ROI_service_returned,
                 this, &QGraphicsSceneMapViewer::on_map_manager_roi_service_returned);
+
+    connect(this, &QGraphicsSceneMapViewer::start_nav_info_sub,
+                worker.get(), &ros_workers::on_run_nav_info_subscriber_start);
+
+    connect(this, &QGraphicsSceneMapViewer::start_slam_info_sub,
+                worker.get(), &ros_workers::on_run_slam_info_subscriber_start);
+
+    connect(worker.get(), &ros_workers::nav_info_callback,
+                this, &QGraphicsSceneMapViewer::on_nav_info_callback);
+    connect(worker.get(), &ros_workers::slam_info_callback,
+                this, &QGraphicsSceneMapViewer::on_slam_info_callback);
 
     worker->on_run_hsm_global_pose_subscriber_start();
 }

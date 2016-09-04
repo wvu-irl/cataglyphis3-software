@@ -19,6 +19,7 @@
 #include <QLinearGradient>
 #include <QWidget>
 #include <QPaintDevice>
+#include <QVector3D>
 
 #include <map_viewer_rect.h>
 
@@ -37,6 +38,7 @@
 
 #include <messages/RobotPose.h>
 #include <messages/GlobalMapFull.h>
+#include <messages/SLAMPoseOut.h>
 
 #include <robot_control/RegionsOfInterest.h>
 #include <robot_control/ROI.h>
@@ -55,6 +57,8 @@ class QGraphicsSceneMapViewer : public QGraphicsScene
 signals:
     void request_global_map(map_viewer_enums::mapViewerLayers_t requestedLayer);
     void map_viewer_scene_init(bool reInit);
+    void start_nav_info_sub();
+    void start_slam_info_sub();
     void request_roi();
     void confirm_roi_changes();
     void discard_roi_changes();
@@ -65,6 +69,8 @@ public slots:
     void on_set_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
     void on_hsm_global_pose_callback(const messages::RobotPose navInfo);
     void on_map_manager_roi_service_returned(const robot_control::RegionsOfInterest mapManagerResponse, bool wasSucessful);
+    void on_nav_info_callback(const messages::NavFilterOut navInfo);
+    void on_slam_info_callback(const messages::SLAMPoseOut slamInfo);
 
     void on_confirm_map_changes();
     void on_discard_map_changes();
@@ -135,6 +141,9 @@ public:
     mapLayer_t gridMapLayer;
     mapLayer_t satDriveabilityLayer;
 
+    QVector3D lastNavPointPlotted;
+    QVector3D lastSlamPointPlotted;
+
     void connectSignals(){ ROS_DEBUG("SCENE:: Connect signals"); _implConnectSignals(); }
     void disconnectSignals(){ ROS_DEBUG("SCENE:: Disconnect signals"); _implDisconnectSignals(); }
 
@@ -189,6 +198,12 @@ private:
         cataglyphis = 0;
         startingPlatform = 0;
         requestedMap = false;
+        lastNavPointPlotted.setX(0);
+        lastNavPointPlotted.setY(0);
+        lastNavPointPlotted.setZ(0);
+        lastSlamPointPlotted.setX(0);
+        lastSlamPointPlotted.setY(0);
+        lastSlamPointPlotted.setZ(0);
     }
 
 };
