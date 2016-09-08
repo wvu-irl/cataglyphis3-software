@@ -140,8 +140,7 @@ void QGraphicsSceneMapViewer::on_slam_info_callback(const messages::SLAMPoseOut 
     ROS_DEBUG("SLAM CALLBACK");
     if(deltaDistance > .5)
     {
-
-        pathLayer.itemList->append(this->addLine(lastSlamPointPlotted.x(), lastSlamPointPlotted.y(), newPoint.x(), newPoint.y(), QPen(Qt::red, .3)));
+        pathLayer.itemList->append(this->addLine(lastSlamPointPlotted.x()+pixelsPerDistance/4, lastSlamPointPlotted.y()+pixelsPerDistance/4, newPoint.x()+pixelsPerDistance/4, newPoint.y()+pixelsPerDistance/4, QPen(Qt::red, .3)));
         (pathLayer.itemList->last())->setParentItem(startingPlatform);
         lastSlamPointPlotted = newPoint;
     }
@@ -154,7 +153,7 @@ void QGraphicsSceneMapViewer::on_nav_info_callback(const messages::NavFilterOut 
     if(deltaDistance > .5)
     {
         ROS_DEBUG("Nav CALLBACK");
-        pathLayer.itemList->append(this->addLine(lastNavPointPlotted.x(), lastNavPointPlotted.y(), newPoint.x(), newPoint.y(), QPen(Qt::black, .3)));
+        pathLayer.itemList->append(this->addLine(lastNavPointPlotted.x()+pixelsPerDistance/4, lastNavPointPlotted.y()+pixelsPerDistance/4, newPoint.x()+pixelsPerDistance/4, newPoint.y()+pixelsPerDistance/4, QPen(Qt::black, .3)));
         (pathLayer.itemList->last())->setParentItem(startingPlatform);
         lastNavPointPlotted = newPoint;
     }
@@ -202,7 +201,7 @@ bool QGraphicsSceneMapViewer::drawRobot(QPointF position, qreal heading)
     {
 //        ROS_DEBUG("SCENE:: robot obj at: %2.3f %2.3f", cataglyphis->x(), cataglyphis->y());
 //        ROS_DEBUG("SCENE:: robot obj at: %2.3f %2.3f", cataglyphis->scenePos().x(), cataglyphis->scenePos().y());
-        cataglyphis->setPos(position);
+        cataglyphis->setPos(position.x(), position.y()-pixelsPerDistance/4);
         cataglyphis->setRotation(heading);
     }
     return true;
@@ -260,9 +259,13 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         startPlatformCenter.setY(scenePos.y());
         robotToObjTransform.reset();
 
-        robotToObjTransform = robotToObjTransform.translate(startPlatformCenter.x()+pixelsPerDistance, startPlatformCenter.y()-pixelsPerDistance);
+        robotToObjTransform = robotToObjTransform.translate(startPlatformCenter.x()/*+pixelsPerDistance/2*/, startPlatformCenter.y()/*-pixelsPerDistance/2*/);
         robotToObjTransform = robotToObjTransform.scale(pixelsPerDistance,pixelsPerDistance);
         robotToObjTransform = robotToObjTransform.rotate(lastRobotPose.northAngle-90);
+        QTransform cataglyphisTransform;
+        cataglyphisTransform = cataglyphisTransform.translate(startPlatformCenter.x()+pixelsPerDistance/2, startPlatformCenter.y()-pixelsPerDistance/2);
+        cataglyphisTransform = cataglyphisTransform.scale(pixelsPerDistance,pixelsPerDistance);
+        cataglyphisTransform = cataglyphisTransform.rotate(lastRobotPose.northAngle-90);
 
         this->setItemIndexMethod(QGraphicsScene::NoIndex);
 
@@ -281,19 +284,23 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
 
         startingPlatform->setTransformOriginPoint(1, 1);
         startingPlatform->setTransform(robotToObjTransform);
-        startingPlatform->setPos(0,-0);
+        startingPlatform->setZValue(99);
+        startingPlatform->setPos(0+pixelsPerDistance/2,-0+pixelsPerDistance/2);
         startingPlatform->setBrush(QBrush(QColor::fromRgb(0,0,255)));
         startingPlatform->setPen(QPen(QColor::fromRgb(0,0,0),0.25));
         this->addItem(startingPlatform);
 
         cataglyphis->setTransformOriginPoint(circleRadius/2, circleRadius/2);
-        //cataglyphis->setTransform(robotToObjTransform);
+        cataglyphis->setZValue(100);
+//        cataglyphis->resetTransform();
+//        cataglyphis->setTransform();
         cataglyphis->setBrush(QBrush(QColor::fromRgb(0,255,0)));
         cataglyphis->setPen(QPen(QColor::fromRgb(0,0,0),0.5));
 
         QGraphicsLineItem *cataglyphisHeadingLine = new QGraphicsLineItem(0,0,0,4);
 //        cataglyphisHeadingLine->setTransform(robotToObjTransform);
         cataglyphisHeadingLine->setPen(QPen(QColor::fromRgb(0,255,0),1));
+        cataglyphisHeadingLine->setZValue(100.1);
         cataglyphisHeadingLine->setLine(circleRadius/2,circleRadius/2, circleRadius+1, circleRadius/2);
         cataglyphisHeadingLine->setParentItem(cataglyphis);
 
@@ -368,10 +375,7 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
                 }
                 break;
             case map_viewer_enums::PATH:
-                for(int i = 0; i < pathLayer.itemList->size(); i++)
-                {
-                    roiLayer.itemList->value(i)->setVisible(visibility);
-                }
+                this->clear();
             default:
                 layer->properties.isLayerVisible = visibility;
                 layer->items->setVisible(visibility);
