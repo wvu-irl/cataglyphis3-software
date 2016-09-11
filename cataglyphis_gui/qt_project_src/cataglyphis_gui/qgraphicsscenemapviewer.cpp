@@ -133,16 +133,42 @@ void QGraphicsSceneMapViewer::on_discard_map_changes()
     emit discard_roi_changes();
 }
 
+void QGraphicsSceneMapViewer::on_set_cataglyphis_path_length(int length)
+{
+    cataglyphisPathLength = length;
+    ROS_DEBUG("SCENE:: Path Length = %2d", cataglyphisPathLength);
+}
+
+void QGraphicsSceneMapViewer::on_set_cataglyphis_path_step_size(double stepSize)
+{
+    cataglyphisPathStepSize = stepSize;
+    ROS_DEBUG("SCENE:: Step Size = %2.3f", cataglyphisPathStepSize);
+}
+
 void QGraphicsSceneMapViewer::on_slam_info_callback(const messages::SLAMPoseOut slamInfo)
 {
     QVector3D newPoint(slamInfo.globalX, slamInfo.globalY, 0);
     float deltaDistance = lastSlamPointPlotted.distanceToPoint(newPoint);
-    ROS_DEBUG("SLAM CALLBACK");
-    if(deltaDistance > .5)
+    if(deltaDistance >= cataglyphisPathStepSize)
     {
+        ROS_DEBUG("SLAM CALLBACK");
         pathLayer.itemList->append(this->addLine(lastSlamPointPlotted.x()+pixelsPerDistance/4, lastSlamPointPlotted.y()+pixelsPerDistance/4, newPoint.x()+pixelsPerDistance/4, newPoint.y()+pixelsPerDistance/4, QPen(Qt::red, .3)));
-        (pathLayer.itemList->last())->setParentItem(startingPlatform);
+        //(pathLayer.itemList->last())->setParentItem(startingPlatform);
+        (pathLayer.itemList->last())->setTransform(robotToObjTransform);
+        (pathLayer.itemList->last())->setZValue(SLAM_PATH_Z_VAL);
+        (pathLayer.itemList->last())->setGroup(pathLayer.items);
         lastSlamPointPlotted = newPoint;
+    }
+    if(pathLayer.itemList->size() > 2*cataglyphisPathLength*(1/cataglyphisPathStepSize))
+    {
+        ROS_DEBUG("SLAM REMOVING OLD Path item");
+        if(pathLayer.itemList->first()->zValue() == SLAM_PATH_Z_VAL)
+        {
+            pathLayer.items->removeFromGroup(pathLayer.itemList->first());
+            this->removeItem(pathLayer.itemList->first());
+            delete pathLayer.itemList->first();
+            pathLayer.itemList->removeFirst();
+        }
     }
 }
 
@@ -150,12 +176,26 @@ void QGraphicsSceneMapViewer::on_nav_info_callback(const messages::NavFilterOut 
 {
     QVector3D newPoint(navInfo.x_position, navInfo.y_position, 0);
     float deltaDistance = lastNavPointPlotted.distanceToPoint(newPoint);
-    if(deltaDistance > .5)
+    if(deltaDistance >= cataglyphisPathStepSize)
     {
         ROS_DEBUG("Nav CALLBACK");
         pathLayer.itemList->append(this->addLine(lastNavPointPlotted.x()+pixelsPerDistance/4, lastNavPointPlotted.y()+pixelsPerDistance/4, newPoint.x()+pixelsPerDistance/4, newPoint.y()+pixelsPerDistance/4, QPen(Qt::black, .3)));
-        (pathLayer.itemList->last())->setParentItem(startingPlatform);
+        //(pathLayer.itemList->last())->setParentItem(startingPlatform);
+        (pathLayer.itemList->last())->setTransform(robotToObjTransform);
+        (pathLayer.itemList->last())->setZValue(NAV_PATH_Z_VAL);
+        (pathLayer.itemList->last())->setGroup(pathLayer.items);
         lastNavPointPlotted = newPoint;
+    }
+    if(pathLayer.itemList->size() > 2*cataglyphisPathLength*(1/cataglyphisPathStepSize))
+    {
+        ROS_DEBUG("NAV REMOVING OLD Path Item");
+        if(pathLayer.itemList->first()->zValue() == NAV_PATH_Z_VAL)
+        {
+            pathLayer.items->removeFromGroup(pathLayer.itemList->first());
+            this->removeItem(pathLayer.itemList->first());
+            delete pathLayer.itemList->first();
+            pathLayer.itemList->removeFirst();
+        }
     }
 }
 
@@ -201,10 +241,20 @@ bool QGraphicsSceneMapViewer::drawRobot(QPointF position, qreal heading)
     {
 //        ROS_DEBUG("SCENE:: robot obj at: %2.3f %2.3f", cataglyphis->x(), cataglyphis->y());
 //        ROS_DEBUG("SCENE:: robot obj at: %2.3f %2.3f", cataglyphis->scenePos().x(), cataglyphis->scenePos().y());
-        cataglyphis->setPos(position.x(), position.y()-pixelsPerDistance/4);
-        cataglyphis->setRotation(heading);
+        cataglyphisGroup->setPos(position.x()-cataglyphisGroup->boundingRect().width()/4, position.y()-cataglyphis->boundingRect().height()/4);
+        cataglyphisGroup->setRotation(heading);
+        if(centerOnCataglyphis)
+        {
+            this->views().first()->centerOn(cataglyphisGroup);
+        }
     }
     return true;
+}
+
+void QGraphicsSceneMapViewer::on_center_on_cataglyphis(bool status)
+{
+    centerOnCataglyphis = status;
+    on_hsm_global_pose_callback(lastRobotPose);
 }
 
 bool QGraphicsSceneMapViewer::_implGenericGridMapLayerDisplay()
@@ -259,13 +309,9 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         startPlatformCenter.setY(scenePos.y());
         robotToObjTransform.reset();
 
-        robotToObjTransform = robotToObjTransform.translate(startPlatformCenter.x()/*+pixelsPerDistance/2*/, startPlatformCenter.y()/*-pixelsPerDistance/2*/);
+        robotToObjTransform = robotToObjTransform.translate(startPlatformCenter.x()+cos(lastRobotPose.northAngle*DEG_2_RAD)*pixelsPerDistance/2, startPlatformCenter.y()-sin(lastRobotPose.northAngle*DEG_2_RAD)*pixelsPerDistance/2);
         robotToObjTransform = robotToObjTransform.scale(pixelsPerDistance,pixelsPerDistance);
         robotToObjTransform = robotToObjTransform.rotate(lastRobotPose.northAngle-90);
-        QTransform cataglyphisTransform;
-        cataglyphisTransform = cataglyphisTransform.translate(startPlatformCenter.x()+pixelsPerDistance/2, startPlatformCenter.y()-pixelsPerDistance/2);
-        cataglyphisTransform = cataglyphisTransform.scale(pixelsPerDistance,pixelsPerDistance);
-        cataglyphisTransform = cataglyphisTransform.rotate(lastRobotPose.northAngle-90);
 
         this->setItemIndexMethod(QGraphicsScene::NoIndex);
 
@@ -277,18 +323,28 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         {
             delete startingPlatform;
         }
+        if(cataglyphisGroup)
+        {
+            delete cataglyphisGroup;
+        }
 
         const double circleRadius = pixelsPerDistance;
         startingPlatform = new QGraphicsRectItem(0,0,2,2);
-        cataglyphis = new QGraphicsEllipseItem(0,0,circleRadius,circleRadius, startingPlatform);
+        cataglyphis = new QGraphicsEllipseItem(0,0,circleRadius,circleRadius,startingPlatform);
+
 
         startingPlatform->setTransformOriginPoint(1, 1);
         startingPlatform->setTransform(robotToObjTransform);
         startingPlatform->setZValue(99);
-        startingPlatform->setPos(0+pixelsPerDistance/2,-0+pixelsPerDistance/2);
+        //startingPlatform->setPos(0+pixelsPerDistance/2,-0+pixelsPerDistance/2);
         startingPlatform->setBrush(QBrush(QColor::fromRgb(0,0,255)));
         startingPlatform->setPen(QPen(QColor::fromRgb(0,0,0),0.25));
         this->addItem(startingPlatform);
+
+        cataglyphisGroup = new QGraphicsItemGroup(startingPlatform);
+        //cataglyphisGroup->setParentItem(startingPlatform);
+        cataglyphisGroup->resetTransform();
+        //cataglyphisGroup->setTransform(robotToObjTransform);
 
         cataglyphis->setTransformOriginPoint(circleRadius/2, circleRadius/2);
         cataglyphis->setZValue(100);
@@ -304,7 +360,11 @@ bool QGraphicsSceneMapViewer::setupMap(QPointF scenePos)
         cataglyphisHeadingLine->setLine(circleRadius/2,circleRadius/2, circleRadius+1, circleRadius/2);
         cataglyphisHeadingLine->setParentItem(cataglyphis);
 
-        cataglyphis->show();
+        cataglyphisGroup->addToGroup(cataglyphis);
+        cataglyphisGroup->setPos(0,0);
+        ROS_WARN("RectF %2.4f, %2.4f",cataglyphisGroup->boundingRect().width(), cataglyphisGroup->boundingRect().height());
+        cataglyphisGroup->setTransformOriginPoint(circleRadius/2,circleRadius/2/*cataglyphisGroup->boundingRect().width()/2, cataglyphisGroup->boundingRect().height()/2*/);
+        cataglyphisGroup->show();
     }
    // else
     {
@@ -351,6 +411,10 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
             ROS_DEBUG("SCENE::Activating NAV Info");
             emit start_nav_info_sub();
             emit start_slam_info_sub();
+            layer->items->setParentItem(startingPlatform);
+            layer->items->show();
+            layer->properties.isLayerVisible = visibility;
+            layer->properties.isLayerSetup=true;
             break;
         default:
             ROS_WARN("Layer drawing not implemented yet");
@@ -360,24 +424,26 @@ void QGraphicsSceneMapViewer::_implSetupLayer(map_viewer_enums::mapViewerLayers_
     {
         if(layer->properties.isLayerSetup)
         {
+            layer->properties.isLayerVisible = visibility;
             switch(mapLayer)
             {
             case map_viewer_enums::keyframeDrive:
             case map_viewer_enums::SatDriveability:
-                layer->properties.isLayerVisible = visibility;
+
                 //layer->items->setVisible(visibility);
                 layer->pixmapItem->setVisible(visibility);
                 break;
             case map_viewer_enums::ROI:
                 for(int i = 0; i < roiLayer.itemList->size(); i++)
                 {
-                    roiLayer.itemList->value(i)->setVisible(visibility);
+                    layer->itemList->value(i)->setVisible(visibility);
                 }
                 break;
             case map_viewer_enums::PATH:
-                this->clear();
+                //layer->properties.isLayerVisible = visibility;
+                layer->items->setVisible(visibility);
+                break;
             default:
-                layer->properties.isLayerVisible = visibility;
                 layer->items->setVisible(visibility);
                 //layer->pixmapItem->setVisible(visibility);
             }
@@ -438,7 +504,15 @@ void QGraphicsSceneMapViewer::_implInitLayer(mapLayer_t *layer, bool reInit)
     ROS_DEBUG("Init Layer");
     if(reInit)
     {
-        this->clear();
+        layer->items->hide();
+        this->removeItem(layer->items);
+        while(!layer->itemList->isEmpty())
+        {
+            layer->items->removeFromGroup(layer->itemList->first());
+            delete layer->itemList->first();
+            layer->itemList->removeFirst();
+        }
+        delete layer->items;
     }
 
 
@@ -449,6 +523,7 @@ void QGraphicsSceneMapViewer::_implInitLayer(mapLayer_t *layer, bool reInit)
     layer->gridPixmap.reset(new QPixmap());
     layer->itemList.reset(new QList<QGraphicsItem*>());
     layer->items = new QGraphicsItemGroup();
+    layer->items->setParentItem(startingPlatform);
     layer->items->hide();
 
 }

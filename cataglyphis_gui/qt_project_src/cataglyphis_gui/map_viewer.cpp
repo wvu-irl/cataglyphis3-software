@@ -72,6 +72,8 @@ void map_viewer::on_fieldSelector_currentIndexChanged(int index)
 
     disconnect(this, &map_viewer::set_map_layer_visibility,0,0);
     disconnect(this, &map_viewer::set_scene_setup_alert,0,0);
+    disconnect(this, &map_viewer::center_on_cataglyphis,0,0);
+    disconnect(this, &map_viewer::new_path_step_size,0,0);
 
     connect(this, &map_viewer::set_map_layer_visibility,
                 scene[index].get(), &QGraphicsSceneMapViewer::on_set_layer_visibility);
@@ -82,6 +84,16 @@ void map_viewer::on_fieldSelector_currentIndexChanged(int index)
                 scene[index].get(), &QGraphicsSceneMapViewer::on_confirm_map_changes);
     connect(this, &map_viewer::discard_map_changes,
                 scene[index].get(), &QGraphicsSceneMapViewer::on_discard_map_changes);
+
+    connect(this, &map_viewer::center_on_cataglyphis,
+                scene[index].get(), &QGraphicsSceneMapViewer::on_center_on_cataglyphis);
+    emit center_on_cataglyphis(ui->center_on_cataglyphis->isChecked());
+    connect(this, &map_viewer::new_path_step_size,
+                scene[index].get(), &QGraphicsSceneMapViewer::on_set_cataglyphis_path_step_size);
+    emit new_path_step_size(ui->doubleSpinBox->value());
+    connect(this, &map_viewer::new_path_length,
+                scene[index].get(), &QGraphicsSceneMapViewer::on_set_cataglyphis_path_length);
+    emit new_path_length(ui->path_length->value());
 
     scene[index]->connectSignals();
 
@@ -187,4 +199,19 @@ void map_viewer::on_commit_changes_button_clicked()
 void map_viewer::on_discard_changes_button_clicked()
 {
     emit discard_map_changes();
+}
+
+void map_viewer::on_center_on_cataglyphis_clicked(bool checked)
+{
+    emit center_on_cataglyphis(checked);
+}
+
+void map_viewer::on_path_length_valueChanged(int arg1)
+{
+    emit new_path_length(arg1);
+}
+
+void map_viewer::on_doubleSpinBox_valueChanged(double arg1)
+{
+    emit new_path_step_size(arg1);
 }

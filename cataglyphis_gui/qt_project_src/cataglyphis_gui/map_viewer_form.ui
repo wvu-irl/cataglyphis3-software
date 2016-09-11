@@ -183,8 +183,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>165</width>
-            <height>167</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -269,34 +269,87 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>176</width>
+            <height>169</height>
            </rect>
           </property>
           <attribute name="label">
            <string>Page 3</string>
           </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_7">
+          <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
-            <widget class="QPushButton" name="pushButton_18">
+            <widget class="QPushButton" name="center_on_cataglyphis">
              <property name="text">
-              <string>PushButton</string>
+              <string>Center on Cataglyphis</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_2">
-             <property name="text">
-              <string>PushButton</string>
-             </property>
-            </widget>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QSpinBox" name="path_length">
+               <property name="maximumSize">
+                <size>
+                 <width>61</width>
+                 <height>26</height>
+                </size>
+               </property>
+               <property name="correctionMode">
+                <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+               </property>
+               <property name="minimum">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <number>99999</number>
+               </property>
+               <property name="value">
+                <number>50</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="maximumSize">
+                <size>
+                 <width>83</width>
+                 <height>17</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Path Length</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_20">
-             <property name="text">
-              <string>PushButton</string>
-             </property>
-            </widget>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox">
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="singleStep">
+                <double>0.100000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Path
+Step Size</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_19">
@@ -312,8 +365,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -355,8 +408,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">
@@ -398,8 +451,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>107</width>
-            <height>136</height>
+            <width>173</width>
+            <height>183</height>
            </rect>
           </property>
           <attribute name="label">

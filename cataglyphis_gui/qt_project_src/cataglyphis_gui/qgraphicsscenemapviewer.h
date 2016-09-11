@@ -50,6 +50,13 @@
 #define MAP_CELL_MIN_VALUE 0.0
 #define MAP_CELL_NOOP_VALUE -5.0
 
+#define SLAM_PATH_Z_VAL 102.9
+#define NAV_PATH_Z_VAL 103.0
+
+const double pi = std::acos(-1);
+#define DEG_2_RAD (pi/180.0)
+#define RAD_2_DEG (180.0/pi)
+
 class QGraphicsSceneMapViewer : public QGraphicsScene
 {
     Q_OBJECT
@@ -71,6 +78,10 @@ public slots:
     void on_map_manager_roi_service_returned(const robot_control::RegionsOfInterest mapManagerResponse, bool wasSucessful);
     void on_nav_info_callback(const messages::NavFilterOut navInfo);
     void on_slam_info_callback(const messages::SLAMPoseOut slamInfo);
+
+    void on_center_on_cataglyphis(bool status);
+    void on_set_cataglyphis_path_length(int length);
+    void on_set_cataglyphis_path_step_size(double stepSize);
 
     void on_confirm_map_changes();
     void on_discard_map_changes();
@@ -170,6 +181,9 @@ private:
     bool mapSetup;
     bool requestedMap;
     float pixelsPerDistance;
+    bool centerOnCataglyphis;
+    int cataglyphisPathLength;
+    double cataglyphisPathStepSize;
 
     boost::shared_ptr<ros_workers> worker;
 
@@ -180,6 +194,7 @@ private:
 
     QGraphicsRectItem *startingPlatform;
     QGraphicsEllipseItem *cataglyphis;
+    QGraphicsItemGroup *cataglyphisGroup;
 
 
     grid_map::GridMap gridMapContainer;
@@ -197,7 +212,11 @@ private:
     {
         cataglyphis = 0;
         startingPlatform = 0;
+        cataglyphisGroup = 0;
         requestedMap = false;
+        centerOnCataglyphis = false;
+        cataglyphisPathLength=0;
+        cataglyphisPathStepSize=0;
         lastNavPointPlotted.setX(0);
         lastNavPointPlotted.setY(0);
         lastNavPointPlotted.setZ(0);

@@ -33,7 +33,9 @@ signals:
     void run_global_map_request(map_viewer_enums::mapViewerLayers_t requestedLayer);
     void set_map_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
     void set_scene_setup_alert(bool status);
-
+    void center_on_cataglyphis(bool status);
+    void new_path_length(int length);
+    void new_path_step_size(double stepSize);
     void confirm_map_changes();
     void discard_map_changes();
 
@@ -70,6 +72,12 @@ private slots:
     void on_commit_changes_button_clicked();
 
     void on_discard_changes_button_clicked();
+
+    void on_center_on_cataglyphis_clicked(bool checked);
+
+    void on_path_length_valueChanged(int arg1);
+
+    void on_doubleSpinBox_valueChanged(double arg1);
 
 private:
     QThread rosWorkerThread;
