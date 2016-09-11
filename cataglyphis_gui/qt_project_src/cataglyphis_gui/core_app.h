@@ -15,6 +15,7 @@
 #include "mission_planning.h"
 
 #include <QTime>
+#include <QVector2D>
 
 #include <messages/RobotPose.h>
 
@@ -44,7 +45,11 @@ public slots:
     void on_update_time(double time);
 private slots:
 
+    void on_reset_distance_travelled_button_clicked();
+
 private:
+
+    messages::RobotPose lastRobotPose;
 
     boost::shared_ptr<manual_control> manualControlFormPtr;
     boost::shared_ptr<init_container> cataglyphisStartupFormPtr;

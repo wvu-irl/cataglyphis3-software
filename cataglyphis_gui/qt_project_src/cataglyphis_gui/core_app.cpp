@@ -75,10 +75,13 @@ core_app::~core_app()
 
 void core_app::on_hsm_global_pose_callback(const messages::RobotPose hsmRobotPose)
 {
-    //ROS_DEBUG("Core:: HSM Callback");
+    ROS_DEBUG("Core:: HSM Callback %2.6f", QVector2D(lastRobotPose.x, lastRobotPose.y).distanceToPoint(QVector2D(hsmRobotPose.x,hsmRobotPose.y)));
+    ui->distance_travelled_spinbox->setValue(ui->distance_travelled_spinbox->value()+
+                                                QVector2D(lastRobotPose.x, lastRobotPose.y).distanceToPoint(QVector2D(hsmRobotPose.x,hsmRobotPose.y)));
     ui->x_spinbox->setValue(hsmRobotPose.x);
     ui->y_spinbox->setValue(hsmRobotPose.y);
     ui->heading_spinbox->setValue(hsmRobotPose.humanHeading);
+    lastRobotPose = hsmRobotPose;
 }
 
 void core_app::on_update_time(double time)
@@ -104,4 +107,9 @@ void core_app::on_update_time(double time)
 
     QTime t(hours, min, seconds);
     ui->mission_time->setTime(t);
+}
+
+void core_app::on_reset_distance_travelled_button_clicked()
+{
+    ui->distance_travelled_spinbox->setValue(0);
 }
