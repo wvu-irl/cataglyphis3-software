@@ -234,12 +234,12 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                 //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 if(searchLocalMap.isInside(searchLocalMapCoord)) searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
             }
-            /*for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
+            for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
                 rotateCoord(searchLocalMapCoord[0], searchLocalMapCoord[1], ROIX, ROIY, searchLocalMapToROIAngle);
                 searchLocalMap.at(layerToString(_sampleProb), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
-            }*/
+            }
             grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
             searchLocalMapPub.publish(searchLocalMapMsg);
         }
@@ -565,7 +565,7 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
     }
     if(searchLocalMapExists && (highestSampleValue < possibleSampleConfThresh))
     {
-        //donutSmash(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY));
+        donutSmash(searchLocalMap ,grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY));
         //addFoundSamples(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
     }
 }
@@ -596,6 +596,13 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
 
 void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
 {
+    float distanceToCell;
+    float tp; // What does this variable mean?
+    float fn; // ^^^
+    float Pn1; // ^^^
+    const float tn = 0.99;
+    float fp = 1.0 - tn;
+    grid_map::Position cellPosition;
     donutSmashVerticies.clear();
     donutSmashVerticies.resize(4);
     donutSmashVerticies.at(0)[0] = pos[0] + donutSmashSearchRadius;
@@ -612,14 +619,26 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     donutSmashPolygon.addVertex(donutSmashVerticies.at(2));
     donutSmashPolygon.addVertex(donutSmashVerticies.at(3));
     searchLocalMap.getIndex(pos, donutSmashRobotPosIndex);
-    for(grid_map::PolygonIterator polyIt(searchLocalMap, donutSmashPolygon); !polyIt.isPastEnd(); ++polyIt)
+    for(grid_map::PolygonIterator donutIt(searchLocalMap, donutSmashPolygon); !donutIt.isPastEnd(); ++donutIt)
     {
-        if((*polyIt)[0] != donutSmashRobotPosIndex[0] && (*polyIt)[1] != donutSmashRobotPosIndex[1])
+        if((*donutIt)[0] != donutSmashRobotPosIndex[0] && (*donutIt)[1] != donutSmashRobotPosIndex[1])
         {
-            //searchLocalMap.at(layerToString(_sampleProb), *polyIt) -= push down
+            searchLocalMap.getPosition(*donutIt, cellPosition);
+            distanceToCell = hypot(cellPosition[0] - pos[0], cellPosition[1] - pos[1]);
+            tp = 0.99 - pow(distanceToCell/5.0, 2.0); // What is 5 and why 0.99?
+            fn = 1.0 - tp;
+            Pn1 = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt) + tn*(1.0 - searchLocalMap.at(layerToString(_sampleProb), *donutIt));
+            searchLocalMap.at(layerToString(_sampleProb), *donutIt) = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt)/Pn1;
+            if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 1.0;
+            else if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 0.0;
             for(grid_map::GridMapIterator wholeIt(searchLocalMap); !wholeIt.isPastEnd(); ++wholeIt)
             {
-                if((*wholeIt)[0] != (*polyIt)[0] && (*wholeIt)[1] != (*polyIt)[1]) ;//searchLocalMap.at(layerToString(_sampleProb), *wholeIt) -= push up
+                if((*wholeIt)[0] != (*donutIt)[0] && (*wholeIt)[1] != (*donutIt)[1])
+                {
+                    searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = tn*searchLocalMap.at(layerToString(_sampleProb), *wholeIt)/Pn1;
+                    if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 1.0;
+                    else if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 0.0;
+                }
             }
         }
     }
