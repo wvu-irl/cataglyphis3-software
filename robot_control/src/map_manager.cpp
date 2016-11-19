@@ -15,6 +15,7 @@ MapManager::MapManager()
     keyframesSub = nh.subscribe<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1, &MapManager::keyframesCallback, this);
     globalPoseSub = nh.subscribe<messages::RobotPose>("/hsm/masterexec/globalpose", 1, &MapManager::globalPoseCallback, this);
     keyframeRelPoseSub = nh.subscribe<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, &MapManager::keyframeRelPoseCallback, this);
+    cvSamplesFoundSub = nh.subscribe<messages::CVSamplesFound>("/vision/samplesearch/samplesearchout", 1, &MapManager::cvSamplesFoundCallback, this);
     currentROIPub = nh.advertise<robot_control::CurrentROI>("/control/mapmanager/currentroi", 1);
     globalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/globalmapviz", 1);
     searchLocalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/searchlocalmapviz", 1);
@@ -219,8 +220,8 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             searchLocalMapExists = true;
             //grid_map::GridMapRosConverter::fromMessage(createROIKeyframeSrv.response.keyframe.map, ROIKeyframe);
             searchLocalMapToROIAngle = RAD2DEG*atan2(regionsOfInterest.at(req.roiIndex).s, regionsOfInterest.at(req.roiIndex).e) - fmod(globalPose.heading, 360.0);
-            //sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
-            //sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
+            sigmaROIX = regionsOfInterest.at(req.roiIndex).radialAxis/2.0/numSigmasROIAxis;
+            sigmaROIY = regionsOfInterest.at(req.roiIndex).tangentialAxis/2.0/numSigmasROIAxis;
             searchLocalMap.setGeometry(grid_map::Length(regionsOfInterest.at(searchLocalMapROINum).radialAxis*2.0, regionsOfInterest.at(searchLocalMapROINum).tangentialAxis*2.0), mapResolution, grid_map::Position(0.0, 0.0));
             searchLocalMap.add(layerToString(_localMapDriveability), 0.0);
             searchLocalMap.add(layerToString(_sampleProb), 1.0);
@@ -566,6 +567,8 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
     if(searchLocalMapExists && (highestSampleValue < possibleSampleConfThresh))
     {
         donutSmash(searchLocalMap ,grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY));
+        grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
+        searchLocalMapPub.publish(searchLocalMapMsg);
         //addFoundSamples(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
     }
 }
@@ -597,11 +600,12 @@ void MapManager::gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_m
 void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
 {
     float distanceToCell;
-    float tp; // What does this variable mean?
-    float fn; // ^^^
-    float Pn1; // ^^^
-    const float tn = 0.99;
-    float fp = 1.0 - tn;
+    float tp; // True positive rate
+    float fn; // False negative rate
+    float Pn1; // intermediate value based on law of total probability
+    const float tn = 0.99; // True negative rate
+    const float tpMaxValue = 0.99;
+    const float tpMaxDistance = 5.0; // m
     grid_map::Position cellPosition;
     donutSmashVerticies.clear();
     donutSmashVerticies.resize(4);
@@ -621,23 +625,28 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     searchLocalMap.getIndex(pos, donutSmashRobotPosIndex);
     for(grid_map::PolygonIterator donutIt(searchLocalMap, donutSmashPolygon); !donutIt.isPastEnd(); ++donutIt)
     {
+        //ROS_INFO("donutIt = [%i,%i]",(*donutIt)[0],(*donutIt)[1]);
         if((*donutIt)[0] != donutSmashRobotPosIndex[0] && (*donutIt)[1] != donutSmashRobotPosIndex[1])
         {
             searchLocalMap.getPosition(*donutIt, cellPosition);
             distanceToCell = hypot(cellPosition[0] - pos[0], cellPosition[1] - pos[1]);
-            tp = 0.99 - pow(distanceToCell/5.0, 2.0); // What is 5 and why 0.99?
+            tp = tpMaxValue - pow(distanceToCell/tpMaxDistance, 2.0);
+            ROS_INFO("tp = %f",tp);
             fn = 1.0 - tp;
             Pn1 = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt) + tn*(1.0 - searchLocalMap.at(layerToString(_sampleProb), *donutIt));
+            ROS_INFO("Pn1 = %f",Pn1);
             searchLocalMap.at(layerToString(_sampleProb), *donutIt) = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt)/Pn1;
             if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 1.0;
             else if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 0.0;
+            ROS_INFO("new donut cell value [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
             for(grid_map::GridMapIterator wholeIt(searchLocalMap); !wholeIt.isPastEnd(); ++wholeIt)
             {
                 if((*wholeIt)[0] != (*donutIt)[0] && (*wholeIt)[1] != (*donutIt)[1])
                 {
                     searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = tn*searchLocalMap.at(layerToString(_sampleProb), *wholeIt)/Pn1;
-                    if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 1.0;
-                    else if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 0.0;
+                    if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 1.0;
+                    else if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 0.0;
+                    ROS_INFO("new other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
                 }
             }
         }

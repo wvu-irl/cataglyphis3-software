@@ -140,7 +140,7 @@ public:
 	grid_map::GridMap ROIKeyframe;
 	float sigmaROIX;
 	float sigmaROIY;
-	const float numSigmasROIAxis = 3.0;
+	const float numSigmasROIAxis = 1.0;
 	float ROIX;
 	float ROIY;
 	float searchLocalMapToROIAngle;
