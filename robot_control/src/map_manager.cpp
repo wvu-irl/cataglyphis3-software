@@ -566,7 +566,8 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
     }
     if(searchLocalMapExists && (highestSampleValue < possibleSampleConfThresh))
     {
-        donutSmash(searchLocalMap ,grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY));
+        rotateCoord(globalPose.x - searchLocalMapXPos, globalPose.y - searchLocalMapYPos, searchLocalMapRelPos[0], searchLocalMapRelPos[1], searchLocalMapHeading);
+        donutSmash(searchLocalMap ,searchLocalMapRelPos);
         grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
         searchLocalMapPub.publish(searchLocalMapMsg);
         //addFoundSamples(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
@@ -605,7 +606,7 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     float Pn1; // intermediate value based on law of total probability
     const float tn = 0.99; // True negative rate
     const float tpMaxValue = 0.99;
-    const float tpMaxDistance = 5.0; // m
+    const float tpMaxDistance = 6.0; // m
     grid_map::Position cellPosition;
     donutSmashVerticies.clear();
     donutSmashVerticies.resize(4);
@@ -617,6 +618,8 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     donutSmashVerticies.at(2)[1] = pos[1] - donutSmashSearchRadius;
     donutSmashVerticies.at(3)[0] = pos[0] + donutSmashSearchRadius;
     donutSmashVerticies.at(3)[1] = pos[1] - donutSmashSearchRadius;
+    //ROS_INFO("robot pos = [%f,%f]",pos[0],pos[1]);
+    //ROS_INFO("donut verticies =\n[%f,%f]\n[%f,%f]\n[%f,%f]\n[%f,%f]",donutSmashVerticies.at(0)[0],donutSmashVerticies.at(0)[1],donutSmashVerticies.at(1)[0],donutSmashVerticies.at(1)[1],donutSmashVerticies.at(2)[0],donutSmashVerticies.at(2)[1],donutSmashVerticies.at(3)[0],donutSmashVerticies.at(3)[1]);
     donutSmashPolygon.removeVertices();
     donutSmashPolygon.addVertex(donutSmashVerticies.at(0));
     donutSmashPolygon.addVertex(donutSmashVerticies.at(1));
@@ -626,27 +629,31 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     for(grid_map::PolygonIterator donutIt(searchLocalMap, donutSmashPolygon); !donutIt.isPastEnd(); ++donutIt)
     {
         //ROS_INFO("donutIt = [%i,%i]",(*donutIt)[0],(*donutIt)[1]);
-        if((*donutIt)[0] != donutSmashRobotPosIndex[0] && (*donutIt)[1] != donutSmashRobotPosIndex[1])
+        if(!((*donutIt)[0] == donutSmashRobotPosIndex[0] && (*donutIt)[1] == donutSmashRobotPosIndex[1]))
         {
             searchLocalMap.getPosition(*donutIt, cellPosition);
             distanceToCell = hypot(cellPosition[0] - pos[0], cellPosition[1] - pos[1]);
+            ROS_INFO("distanceToCell = %f",distanceToCell);
             tp = tpMaxValue - pow(distanceToCell/tpMaxDistance, 2.0);
             ROS_INFO("tp = %f",tp);
             fn = 1.0 - tp;
+            ROS_INFO("fn = %f",fn);
             Pn1 = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt) + tn*(1.0 - searchLocalMap.at(layerToString(_sampleProb), *donutIt));
             ROS_INFO("Pn1 = %f",Pn1);
             searchLocalMap.at(layerToString(_sampleProb), *donutIt) = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt)/Pn1;
+            ROS_INFO("new donut cell value, before coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
             if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 1.0;
             else if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 0.0;
-            ROS_INFO("new donut cell value [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
+            ROS_INFO("new donut cell value, after coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
             for(grid_map::GridMapIterator wholeIt(searchLocalMap); !wholeIt.isPastEnd(); ++wholeIt)
             {
-                if((*wholeIt)[0] != (*donutIt)[0] && (*wholeIt)[1] != (*donutIt)[1])
+                if(!((*wholeIt)[0] == (*donutIt)[0] && (*wholeIt)[1] == (*donutIt)[1]))
                 {
                     searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = tn*searchLocalMap.at(layerToString(_sampleProb), *wholeIt)/Pn1;
+                    ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
                     if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 1.0;
                     else if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 0.0;
-                    ROS_INFO("new other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
+                    ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
                 }
             }
         }

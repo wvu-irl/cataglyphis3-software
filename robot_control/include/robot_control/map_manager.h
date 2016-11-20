@@ -120,6 +120,7 @@ public:
 	float searchLocalMapXPos;
 	float searchLocalMapYPos;
 	float searchLocalMapHeading;
+	grid_map::Position searchLocalMapRelPos;
 	grid_map::Polygon globalMapPathHazardsPolygon;
 	grid_map::Polygon searchLocalMapPathHazardsPolygon;
 	std::vector<grid_map::Position> mapPathHazardsVertices;
