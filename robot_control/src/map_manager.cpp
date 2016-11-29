@@ -640,6 +640,7 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
             ROS_INFO("fn = %f",fn);
             Pn1 = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt) + tn*(1.0 - searchLocalMap.at(layerToString(_sampleProb), *donutIt));
             ROS_INFO("Pn1 = %f",Pn1);
+            ROS_INFO("old donut cell value [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
             searchLocalMap.at(layerToString(_sampleProb), *donutIt) = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt)/Pn1;
             ROS_INFO("new donut cell value, before coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
             if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 1.0;
@@ -649,6 +650,7 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
             {
                 if(!((*wholeIt)[0] == (*donutIt)[0] && (*wholeIt)[1] == (*donutIt)[1]))
                 {
+                    ROS_INFO("old other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
                     searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = tn*searchLocalMap.at(layerToString(_sampleProb), *wholeIt)/Pn1;
                     ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
                     if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 1.0;
