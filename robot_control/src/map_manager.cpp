@@ -606,7 +606,8 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     float Pn1; // intermediate value based on law of total probability
     const float tn = 0.99; // True negative rate
     const float tpMaxValue = 0.99;
-    const float tpMaxDistance = 6.0; // m
+    const float tpMaxDistance = 5.0; // m
+    int temp;
     grid_map::Position cellPosition;
     donutSmashVerticies.clear();
     donutSmashVerticies.resize(4);
@@ -635,6 +636,7 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
             distanceToCell = hypot(cellPosition[0] - pos[0], cellPosition[1] - pos[1]);
             ROS_INFO("distanceToCell = %f",distanceToCell);
             tp = tpMaxValue - pow(distanceToCell/tpMaxDistance, 2.0);
+            if(tp<0.0) tp = 0.0;
             ROS_INFO("tp = %f",tp);
             fn = 1.0 - tp;
             ROS_INFO("fn = %f",fn);
@@ -650,12 +652,14 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
             {
                 if(!((*wholeIt)[0] == (*donutIt)[0] && (*wholeIt)[1] == (*donutIt)[1]))
                 {
-                    ROS_INFO("old other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
+                    //ROS_INFO("old other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
                     searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = tn*searchLocalMap.at(layerToString(_sampleProb), *wholeIt)/Pn1;
-                    ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
+                    //ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
                     if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 1.0;
                     else if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 0.0;
-                    ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
+                    //ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
+                    //std::cout << "enter a character to continue" << std::endl;
+                    //std::cin >> temp;
                 }
             }
         }

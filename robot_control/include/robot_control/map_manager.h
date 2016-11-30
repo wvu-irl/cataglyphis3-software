@@ -141,7 +141,7 @@ public:
 	grid_map::GridMap ROIKeyframe;
 	float sigmaROIX;
 	float sigmaROIY;
-	const float numSigmasROIAxis = 1.0;
+	const float numSigmasROIAxis = 3.0;
 	float ROIX;
 	float ROIY;
 	float searchLocalMapToROIAngle;
@@ -202,7 +202,7 @@ public:
 	const float possibleSampleConfThresh = 0.5; // Change corresponding value in mission planning if ever changed
 	grid_map::Polygon donutSmashPolygon;
 	std::vector<grid_map::Position> donutSmashVerticies;
-	const float donutSmashSearchRadius = 4.0; // m
+	const float donutSmashSearchRadius = 3.0; // m
 	grid_map::Index donutSmashRobotPosIndex;
 };
 
