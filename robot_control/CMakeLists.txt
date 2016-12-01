@@ -56,6 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
    Keys_Pressed.msg
    Waypoint.msg
    ROI.msg
+   ROIList.msg
    CurrentROI.msg
    DriveSpeeds.msg
  )

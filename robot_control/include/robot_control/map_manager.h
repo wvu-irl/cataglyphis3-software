@@ -7,6 +7,7 @@
 #include <robot_control/CurrentROI.h>
 #include <robot_control/SearchMap.h>
 #include <robot_control/RandomSearchWaypoints.h>
+#include <robot_control/ROIList.h>
 #include <messages/KeyframeList.h>
 #include <messages/RobotPose.h>
 #include <messages/SLAMPoseOut.h>
@@ -102,9 +103,11 @@ public:
 	ros::Publisher globalMapPub;
 	ros::Publisher searchLocalMapPub;
 	ros::Publisher globalSubMapPub;
+	ros::Publisher roisModifiedPub;
 	grid_map_msgs::GridMap globalMapMsg;
 	grid_map_msgs::GridMap searchLocalMapMsg;
 	grid_map_msgs::GridMap globalSubMapMsg;
+	robot_control::ROIList roisModifiedListMsg;
 	robot_control::Waypoint waypoint;
 	robot_control::ROI ROI;
 	std::vector<robot_control::ROI> regionsOfInterest;

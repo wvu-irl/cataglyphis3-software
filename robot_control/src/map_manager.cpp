@@ -19,6 +19,7 @@ MapManager::MapManager()
     currentROIPub = nh.advertise<robot_control::CurrentROI>("/control/mapmanager/currentroi", 1);
     globalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/globalmapviz", 1);
     searchLocalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/searchlocalmapviz", 1);
+    roisModifiedPub = nh.advertise<robot_control::ROIList>("/control/mapmanager/roimodifiedlist", 1);
     currentROIMsg.currentROINum = 0; // 0 means in no ROI
     searchLocalMapROINum = 0;
     keyframeWriteIntoGlobalMapSerialNum = 0;
@@ -140,6 +141,8 @@ MapManager::MapManager()
     ROS_DEBUG("after global map toMsssage");
     globalMapPub.publish(globalMapMsg);
     ROS_DEBUG("after global map publish");*/
+    roisModifiedListMsg.ROIList = regionsOfInterest;
+    roisModifiedPub.publish(roisModifiedListMsg);
 }
 
 bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res) // tested
@@ -200,6 +203,8 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
     {
         regionsOfInterest.erase(regionsOfInterest.begin()+req.numDeleteROI);
     }
+    roisModifiedListMsg.ROIList = regionsOfInterest;
+    roisModifiedPub.publish(roisModifiedListMsg);
     ROS_INFO("modified ROI");
     return true;
 }
