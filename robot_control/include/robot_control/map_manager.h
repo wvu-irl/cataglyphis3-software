@@ -141,7 +141,8 @@ public:
 	grid_map::GridMap ROIKeyframe;
 	float sigmaROIX;
 	float sigmaROIY;
-	const float numSigmasROIAxis = 3.0;
+	const float numSigmasROIAxis = 1.0;
+	const float percentSampleProbAreaInROI = 0.683; // 1 sigma --> 68.3%; 2 sigma --> 95.45%; 3 sigma --> 99.73%
 	float ROIX;
 	float ROIY;
 	float searchLocalMapToROIAngle;
@@ -179,7 +180,7 @@ public:
 	const float mapResolution = 1.0; // m
 	const float searchLocalMapLength = 20.0; // m
 	const float searchLocalMapWidth = 20.0; // m
-	const float sampleProbPeak = 1.0;
+	float sampleProbPeak;
 	const int smoothDriveabilityNumNeighborsToChangeValue = 6;
 	const float randomWaypointMinDistance = 4.0; // m
 	const float satDriveabilityInitialValue = 100.0;
@@ -202,7 +203,7 @@ public:
 	const float possibleSampleConfThresh = 0.5; // Change corresponding value in mission planning if ever changed
 	grid_map::Polygon donutSmashPolygon;
 	std::vector<grid_map::Position> donutSmashVerticies;
-	const float donutSmashSearchRadius = 3.0; // m
+	const float donutSmashSearchRadius = 5.0; // m
 	grid_map::Index donutSmashRobotPosIndex;
 };
 

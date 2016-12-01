@@ -235,6 +235,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                 //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 if(searchLocalMap.isInside(searchLocalMapCoord)) searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
             }
+            sampleProbPeak = 1.0/(2.0*PI*sigmaROIX*sigmaROIY*percentSampleProbAreaInROI);
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
@@ -626,38 +627,38 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     donutSmashPolygon.addVertex(donutSmashVerticies.at(1));
     donutSmashPolygon.addVertex(donutSmashVerticies.at(2));
     donutSmashPolygon.addVertex(donutSmashVerticies.at(3));
-    searchLocalMap.getIndex(pos, donutSmashRobotPosIndex);
-    for(grid_map::PolygonIterator donutIt(searchLocalMap, donutSmashPolygon); !donutIt.isPastEnd(); ++donutIt)
+    map.getIndex(pos, donutSmashRobotPosIndex);
+    for(grid_map::PolygonIterator donutIt(map, donutSmashPolygon); !donutIt.isPastEnd(); ++donutIt)
     {
         //ROS_INFO("donutIt = [%i,%i]",(*donutIt)[0],(*donutIt)[1]);
         if(!((*donutIt)[0] == donutSmashRobotPosIndex[0] && (*donutIt)[1] == donutSmashRobotPosIndex[1]))
         {
-            searchLocalMap.getPosition(*donutIt, cellPosition);
+            map.getPosition(*donutIt, cellPosition);
             distanceToCell = hypot(cellPosition[0] - pos[0], cellPosition[1] - pos[1]);
-            ROS_INFO("distanceToCell = %f",distanceToCell);
+            //ROS_INFO("distanceToCell = %f",distanceToCell);
             tp = tpMaxValue - pow(distanceToCell/tpMaxDistance, 2.0);
             if(tp<0.0) tp = 0.0;
-            ROS_INFO("tp = %f",tp);
+            //ROS_INFO("tp = %f",tp);
             fn = 1.0 - tp;
-            ROS_INFO("fn = %f",fn);
-            Pn1 = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt) + tn*(1.0 - searchLocalMap.at(layerToString(_sampleProb), *donutIt));
-            ROS_INFO("Pn1 = %f",Pn1);
-            ROS_INFO("old donut cell value [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
-            searchLocalMap.at(layerToString(_sampleProb), *donutIt) = fn*searchLocalMap.at(layerToString(_sampleProb), *donutIt)/Pn1;
-            ROS_INFO("new donut cell value, before coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
-            if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 1.0;
-            else if(searchLocalMap.at(layerToString(_sampleProb), *donutIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *donutIt) = 0.0;
-            ROS_INFO("new donut cell value, after coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],searchLocalMap.at(layerToString(_sampleProb), *donutIt));
-            for(grid_map::GridMapIterator wholeIt(searchLocalMap); !wholeIt.isPastEnd(); ++wholeIt)
+            //ROS_INFO("fn = %f",fn);
+            Pn1 = fn*map.at(layerToString(_sampleProb), *donutIt) + tn*(1.0 - map.at(layerToString(_sampleProb), *donutIt));
+            //ROS_INFO("Pn1 = %f",Pn1);
+            //ROS_INFO("old donut cell value [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],map.at(layerToString(_sampleProb), *donutIt));
+            map.at(layerToString(_sampleProb), *donutIt) = fn*map.at(layerToString(_sampleProb), *donutIt)/Pn1;
+            //ROS_INFO("new donut cell value, before coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],map.at(layerToString(_sampleProb), *donutIt));
+            if(map.at(layerToString(_sampleProb), *donutIt) > 1.0) map.at(layerToString(_sampleProb), *donutIt) = 1.0;
+            else if(map.at(layerToString(_sampleProb), *donutIt) < 0.0) map.at(layerToString(_sampleProb), *donutIt) = 0.0;
+            //ROS_INFO("new donut cell value, after coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],map.at(layerToString(_sampleProb), *donutIt));
+            for(grid_map::GridMapIterator wholeIt(map); !wholeIt.isPastEnd(); ++wholeIt)
             {
                 if(!((*wholeIt)[0] == (*donutIt)[0] && (*wholeIt)[1] == (*donutIt)[1]))
                 {
-                    //ROS_INFO("old other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
-                    searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = tn*searchLocalMap.at(layerToString(_sampleProb), *wholeIt)/Pn1;
-                    //ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
-                    if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) > 1.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 1.0;
-                    else if(searchLocalMap.at(layerToString(_sampleProb), *wholeIt) < 0.0) searchLocalMap.at(layerToString(_sampleProb), *wholeIt) = 0.0;
-                    //ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],searchLocalMap.at(layerToString(_sampleProb), *wholeIt));
+                    //ROS_INFO("old other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
+                    map.at(layerToString(_sampleProb), *wholeIt) = tn*map.at(layerToString(_sampleProb), *wholeIt)/Pn1;
+                    //ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
+                    if(map.at(layerToString(_sampleProb), *wholeIt) > 1.0) map.at(layerToString(_sampleProb), *wholeIt) = 1.0;
+                    else if(map.at(layerToString(_sampleProb), *wholeIt) < 0.0) map.at(layerToString(_sampleProb), *wholeIt) = 0.0;
+                    //ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
                     //std::cout << "enter a character to continue" << std::endl;
                     //std::cin >> temp;
                 }
