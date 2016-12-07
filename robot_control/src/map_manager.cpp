@@ -141,8 +141,6 @@ MapManager::MapManager()
     ROS_DEBUG("after global map toMsssage");
     globalMapPub.publish(globalMapMsg);
     ROS_DEBUG("after global map publish");*/
-    roisModifiedListMsg.ROIList = regionsOfInterest;
-    roisModifiedPub.publish(roisModifiedListMsg);
 }
 
 bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_control::RegionsOfInterest::Response &res) // tested
@@ -552,6 +550,8 @@ void MapManager::globalPoseCallback(const messages::RobotPose::ConstPtr &msg) //
     {
         updateNorthTransformedMapData();
         previousNorthAngle = globalPose.northAngle;
+        roisModifiedListMsg.ROIList = regionsOfInterest;
+        roisModifiedPub.publish(roisModifiedListMsg);
     }
     currentROIMsg.currentROINum = globalMap.atPosition(layerToString(_roiNum),grid_map::Position(globalPose.x, globalPose.y));
     currentROIPub.publish(currentROIMsg);

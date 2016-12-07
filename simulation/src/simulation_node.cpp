@@ -15,15 +15,23 @@
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <robot_control/map_layers.h>
+#include <robot_control/ROIList.h>
+
+//#define MANUAL_CV_CONTROL
+#define NUM_SAMPLES 10
+bool roisWithSample[15] = {1,1,0,1,1,0,1,0,1,1,1,1,0,0,1};
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
+void roisModifiedCallback(const robot_control::ROIList::ConstPtr& msg);
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res);
 bool createROIHazardMapCallback(messages::CreateROIHazardMap::Request &req, messages::CreateROIHazardMap::Response &res);
 bool navControlCallback(messages::NavFilterControl::Request &req, messages::NavFilterControl::Response &res);
 void gridMapAddLayers(int layerStartIndex, int layerEndIndex, grid_map::GridMap &map);
 void publishKeyframeList();
 void biasRemovalTimerCallback(const ros::TimerEvent &event);
+void setSampleLocations();
+void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 
 ros::Publisher cvSamplesFoundPub;
 messages::ActuatorOut actuatorCmd;
@@ -41,13 +49,18 @@ bool biasRemovalFinished = false;
 bool homingUpdated = false;
 bool navStopRequest = false;
 float northAngle = 90.0;
+bool sampleLocationsInitialized = false;
+robot_control::ROIList roiList;
+std::vector<std::pair<float, float>> sampleLocations;
 
 int main(int argc, char** argv)
 {
+    srand(time(NULL));
     ros::init(argc, argv, "simulation_node");
     ros::NodeHandle nh;
     ros::Subscriber actuatorSub = nh.subscribe<messages::ActuatorOut>("control/actuatorout/all",1,actuatorCallback);
     ros::Subscriber simConSub = nh.subscribe<messages::SimControl>("simulation/simcontrol/simcontrol",1,simControlCallback);
+    ros::Subscriber roisModifiedSub = nh.subscribe<robot_control::ROIList>("/control/mapmanager/roimodifiedlist",1,roisModifiedCallback);
     ros::Publisher navPub = nh.advertise<messages::NavFilterOut>("navigation/navigationfilterout/navigationfilterout",1);
     ros::Publisher slamPosePub = nh.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout",1);
     ros::Publisher grabberPub = nh.advertise<messages::GrabberFeedback>("roboteq/grabberin/grabberin",1);
@@ -151,15 +164,56 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     navStopRequest = msg->navStopRequest;
 }
 
+void roisModifiedCallback(const robot_control::ROIList::ConstPtr &msg)
+{
+    roiList = *msg;
+    if(!sampleLocationsInitialized)
+    {
+        sampleLocations.resize(roiList.ROIList.size());
+        setSampleLocations();
+        sampleLocationsInitialized = true;
+    }
+}
+
 bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
+    float sampleProb;
+    float distanceToSample;
+    float randomValue;
+    float sampleBodyX;
+    float sampleBodyY;
+    const float maxSampleProb = 0.99;
+    const float maxDetectionDist = 5.0; // m
+    const float randomGain = 0.3;
+    const float randomRange = 1.5;
+    const float randomOffset = -1.0;
     cvSamplesFoundMsgOut.procType = req.procType;
     cvSamplesFoundMsgOut.serialNum = req.serialNum;
     cvSamplesFoundMsgOut.sampleList.clear();
+#ifdef MANUAL_CV_CONTROL
     if(cvFindSample)
     {
         cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
     }
+#else
+    for(int i=0; i<NUM_SAMPLES; i++)
+    {
+        distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
+        randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * randomRange + randomOffset;
+        sampleProb = maxSampleProb - pow(distanceToSample/maxDetectionDist,2.0);
+        if(sampleProb>0.0) sampleProb += randomGain*randomValue;
+        if(sampleProb>1.0) sampleProb = 1.0;
+        else if(sampleProb<0.0) sampleProb = 0.0;
+        if(sampleProb>0.0)
+        {
+            cvSampleProps.confidence = sampleProb;
+            cvSampleProps.distance = distanceToSample;
+            rotateCoord(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos, sampleBodyX, sampleBodyY, fmod(robotSim.heading,180.0));
+            cvSampleProps.bearing = RAD2DEG*atan2(sampleBodyY, sampleBodyX);
+            cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
+        }
+    }
+#endif // MANUAL_CV_CONTROL
     cvSamplesFoundPub.publish(cvSamplesFoundMsgOut);
     ros::spinOnce();
     return true;
@@ -228,4 +282,38 @@ void biasRemovalTimerCallback(const ros::TimerEvent &event)
 {
     biasRemovalFinished = true;
     biasRemovalTimer.stop();
+}
+
+void setSampleLocations()
+{
+    float xLocal;
+    float yLocal;
+    float radialDist;
+    float angle;
+    float angleToROI;
+    int roiListLen = roiList.ROIList.size();
+    int j=0;
+    for(int i=0; i<roiListLen; i++)
+    {
+        if(roisWithSample[i])
+        {
+            radialDist = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+            angle = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 2*PI;
+            angleToROI = RAD2DEG*atan2(roiList.ROIList.at(i).y,roiList.ROIList.at(i).x);
+            xLocal = sqrt(radialDist) * cos(angle) * roiList.ROIList.at(i).radialAxis;
+            yLocal = sqrt(radialDist) * sin(angle) * roiList.ROIList.at(i).tangentialAxis;
+            rotateCoord(xLocal, yLocal, sampleLocations.at(j).first, sampleLocations.at(j).second, -angleToROI);
+            sampleLocations.at(j).first += roiList.ROIList.at(i).x;
+            sampleLocations.at(j).second += roiList.ROIList.at(i).y;
+            //ROS_INFO("roi = [%f,%f]",roiList.ROIList.at(i).x,roiList.ROIList.at(i).y);
+            ROS_INFO("sample location %i = [%f,%f]",i,sampleLocations.at(j).first,sampleLocations.at(j).second);
+            j++;
+        }
+    }
+}
+
+void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg)
+{
+    newX = origX*cos(DEG2RAD*angleDeg)+origY*sin(DEG2RAD*angleDeg);
+    newY = -origX*sin(DEG2RAD*angleDeg)+origY*cos(DEG2RAD*angleDeg);
 }
