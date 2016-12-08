@@ -10,6 +10,7 @@ RobotSim::RobotSim(double initX, double initY, double initHeading, double simRat
     dropPosCmdPrev = -1000;
     slideStop = 1;
     dropStop = 1;
+    grabAttempt = false;
 }
 
 void RobotSim::drive(double linV, double angV)
@@ -44,6 +45,7 @@ void RobotSim::runGrabber(int slidePosCmd, int dropPosCmd, int slideStopCmd, int
         else if(dropPosCmd < dropPos) dropPos -= (int)round(dropSpeed_*dt);
         if(dropPos==dropPosCmd || dropStopCmd) dropStop = 1;
     }
+    if(dropPos == GRABBER_DROPPED && slidePos > GRABBER_CLOSED && slidePosCmd == GRABBER_CLOSED) grabAttempt = true;
     if(slideStopCmd) slidePosCmdPrev = slidePos;
     else slidePosCmdPrev = slidePosCmd;
     if(dropStopCmd) dropPosCmdPrev = dropPos;

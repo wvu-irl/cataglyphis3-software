@@ -52,6 +52,9 @@ float northAngle = 90.0;
 bool sampleLocationsInitialized = false;
 robot_control::ROIList roiList;
 std::vector<std::pair<float, float>> sampleLocations;
+bool grabAttemptPrev = false;
+float goodGrabThreshold = 0.2;
+bool sampleGrabbed = false;
 
 int main(int argc, char** argv)
 {
@@ -103,6 +106,14 @@ int main(int argc, char** argv)
         //ROS_DEBUG("angV: %f",angV);
         robotSim.drive(linV, angV);
         robotSim.runGrabber(actuatorCmd.slide_pos_cmd, actuatorCmd.drop_pos_cmd, actuatorCmd.grabber_stop_cmd, actuatorCmd.grabber_stop_cmd);
+        if(robotSim.grabAttempt && !grabAttemptPrev)
+        {
+            if(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) > goodGrabThreshold)
+            {
+                sampleGrabbed = true;
+                robotSim.grabAttempt = false;
+            }
+        }
         navMsgOut.x_position = robotSim.xPos;
         navMsgOut.y_position = robotSim.yPos;
         navMsgOut.velocity = linV;
@@ -196,6 +207,7 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
         cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
     }
 #else
+
     for(int i=0; i<NUM_SAMPLES; i++)
     {
         distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);

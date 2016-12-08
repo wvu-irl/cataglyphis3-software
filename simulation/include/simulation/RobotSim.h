@@ -7,6 +7,11 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
+#define GRABBER_OPEN 1000
+#define GRABBER_CLOSED -900
+#define GRABBER_DROPPED 1000
+#define GRABBER_RAISED -1000
+
 class RobotSim
 {
 public:
@@ -22,6 +27,7 @@ public:
 	int dropPosCmdPrev;
 	int slideStop;
 	int dropStop;
+	bool grabAttempt;
 	// Netburner
 	uint8_t nb1PauseSwitch = 255;
 	// Sim
