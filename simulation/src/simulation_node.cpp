@@ -55,7 +55,7 @@ robot_control::ROIList roiList;
 std::vector<std::pair<float, float>> sampleLocations;
 bool samplesGrabbed[NUM_SAMPLES] = {false};
 bool grabAttemptPrev = false;
-float goodGrabThreshold = 0.2;
+float goodGrabThreshold = -0.2; // 0.2
 
 int main(int argc, char** argv)
 {
@@ -114,8 +114,10 @@ int main(int argc, char** argv)
         robotSim.runGrabber(actuatorCmd.slide_pos_cmd, actuatorCmd.drop_pos_cmd, actuatorCmd.grabber_stop_cmd, actuatorCmd.grabber_stop_cmd);
         if(robotSim.grabAttempt && !grabAttemptPrev)
         {
+            ROS_INFO("grab attempt");
             if(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) > goodGrabThreshold)
             {
+                ROS_INFO("good grab");
                 minDistanceToSample = 10000.0;
                 minDistanceToSampleIndex = 0;
                 for(int i=0; i<NUM_SAMPLES; i++)
@@ -123,7 +125,7 @@ int main(int argc, char** argv)
                     distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
                     if(distanceToSample<minDistanceToSample) {minDistanceToSample = distanceToSample; minDistanceToSampleIndex = i;}
                 }
-                if(!samplesGrabbed[minDistanceToSampleIndex]) samplesGrabbed[minDistanceToSampleIndex] = true;
+                if(!samplesGrabbed[minDistanceToSampleIndex]) {samplesGrabbed[minDistanceToSampleIndex] = true; ROS_INFO("sample %i grabbed",minDistanceToSampleIndex);}
             }
         }
         grabAttemptPrev = robotSim.grabAttempt;
@@ -232,20 +234,21 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
             distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
             randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * randomRange + randomOffset;
             sampleProb = maxSampleProb - pow(distanceToSample/maxDetectionDist,2.0);
-            if(sampleProb>0.0) sampleProb += randomGain*randomValue;
+            //if(sampleProb>0.0) sampleProb += randomGain*randomValue;
             if(sampleProb>1.0) sampleProb = 1.0;
             else if(sampleProb<0.0) sampleProb = 0.0;
             if(sampleProb>0.0)
             {
                 cvSampleProps.confidence = sampleProb;
                 cvSampleProps.distance = distanceToSample;
-                rotateCoord(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos, sampleBodyX, sampleBodyY, fmod(robotSim.heading,180.0));
+                rotateCoord(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos, sampleBodyX, sampleBodyY, fmod(robotSim.heading,360.0));
                 cvSampleProps.bearing = RAD2DEG*atan2(sampleBodyY, sampleBodyX);
                 cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
             }
         }
     }
 #endif // MANUAL_CV_CONTROL
+    if(robotSim.grabAttempt) robotSim.grabAttempt = false;
     cvSamplesFoundPub.publish(cvSamplesFoundMsgOut);
     ros::spinOnce();
     return true;

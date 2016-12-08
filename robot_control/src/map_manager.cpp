@@ -613,7 +613,7 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     const float tn = 0.99; // True negative rate
     const float tpMaxValue = 0.99;
     const float tpMaxDistance = 5.0; // m
-    int temp;
+    //int temp;
     grid_map::Position cellPosition;
     donutSmashVerticies.clear();
     donutSmashVerticies.resize(4);
