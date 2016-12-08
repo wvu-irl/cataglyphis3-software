@@ -6,6 +6,7 @@
 #include <messages/GrabberFeedback.h>
 #include <messages/SimControl.h>
 #include <messages/nb1_to_i7_msg.h>
+#include <messages/nb2_3_to_i7_msg.h>
 #include <messages/CollisionOut.h>
 #include <messages/CVSearchCmd.h>
 #include <messages/CVSamplesFound.h>
@@ -52,9 +53,9 @@ float northAngle = 90.0;
 bool sampleLocationsInitialized = false;
 robot_control::ROIList roiList;
 std::vector<std::pair<float, float>> sampleLocations;
+bool samplesGrabbed[NUM_SAMPLES] = {false};
 bool grabAttemptPrev = false;
 float goodGrabThreshold = 0.2;
-bool sampleGrabbed = false;
 
 int main(int argc, char** argv)
 {
@@ -68,6 +69,7 @@ int main(int argc, char** argv)
     ros::Publisher slamPosePub = nh.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout",1);
     ros::Publisher grabberPub = nh.advertise<messages::GrabberFeedback>("roboteq/grabberin/grabberin",1);
     ros::Publisher nb1Pub = nh.advertise<messages::nb1_to_i7_msg>("hw_interface/nb1in/nb1in",1);
+    ros::Publisher nb2Pub = nh.advertise<messages::nb2_3_to_i7_msg>("hw_interface/nb2in/nb2in",1);
     ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
     keyframeListPub = nh.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1);
@@ -80,12 +82,16 @@ int main(int argc, char** argv)
     messages::SLAMPoseOut slamPoseMsgOut;
     messages::GrabberFeedback grabberMsgOut;
     messages::nb1_to_i7_msg nb1MsgOut;
+    messages::nb2_3_to_i7_msg nb2MsgOut;
 
 
     double linV; // m/s
     double angV; // deg/s
     const double linVGain = 1.4/900.0/6.0; // m/s per speed cmd
     const double angVGain = 45.0/2650.0; // deg/s per speec cmd
+    float distanceToSample;
+    float minDistanceToSample;
+    int minDistanceToSampleIndex;
     actuatorCmd.grabber_stop_cmd = 0;
     actuatorCmd.slide_pos_cmd = 1000;
     actuatorCmd.drop_pos_cmd = -1000;
@@ -110,10 +116,17 @@ int main(int argc, char** argv)
         {
             if(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) > goodGrabThreshold)
             {
-                sampleGrabbed = true;
-                robotSim.grabAttempt = false;
+                minDistanceToSample = 10000.0;
+                minDistanceToSampleIndex = 0;
+                for(int i=0; i<NUM_SAMPLES; i++)
+                {
+                    distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
+                    if(distanceToSample<minDistanceToSample) {minDistanceToSample = distanceToSample; minDistanceToSampleIndex = i;}
+                }
+                if(!samplesGrabbed[minDistanceToSampleIndex]) samplesGrabbed[minDistanceToSampleIndex] = true;
             }
         }
+        grabAttemptPrev = robotSim.grabAttempt;
         navMsgOut.x_position = robotSim.xPos;
         navMsgOut.y_position = robotSim.yPos;
         navMsgOut.velocity = linV;
@@ -125,6 +138,8 @@ int main(int argc, char** argv)
         navMsgOut.nav_status = biasRemovalFinished;
         navMsgOut.homing_updated = homingUpdated;
         navMsgOut.stop_request = navStopRequest;
+        navMsgOut.nb1_good = 1;
+        navMsgOut.nb2_good = 1;
         slamPoseMsgOut.globalX = robotSim.xPos;
         slamPoseMsgOut.globalY = robotSim.yPos;
         slamPoseMsgOut.globalHeading = robotSim.heading;
@@ -133,10 +148,12 @@ int main(int argc, char** argv)
         grabberMsgOut.slideStatus = robotSim.slideStop;
         grabberMsgOut.dropStatus = robotSim.dropStop;
         nb1MsgOut.pause_switch = robotSim.nb1PauseSwitch;
+        nb2MsgOut.pause_switch = robotSim.nb2PauseSwitch;
         navPub.publish(navMsgOut);
         slamPosePub.publish(slamPoseMsgOut);
         grabberPub.publish(grabberMsgOut);
         nb1Pub.publish(nb1MsgOut);
+        nb2Pub.publish(nb2MsgOut);
         collisionPub.publish(collisionMsgOut);
         biasRemovalFinished = false;
         loopRate.sleep();
@@ -160,8 +177,8 @@ void simControlCallback(const messages::SimControl::ConstPtr& msg)
     {
         if(msg->simSpeed>0.0) robotSim.dt = robotSim.normalSpeedDT*msg->simSpeed;
     }
-    if(msg->pauseSwitch) robotSim.nb1PauseSwitch = 255;
-    else robotSim.nb1PauseSwitch = 0;
+    if(msg->pauseSwitch) {robotSim.nb1PauseSwitch = 255; robotSim.nb2PauseSwitch = 255;}
+    else {robotSim.nb1PauseSwitch = 0; robotSim.nb2PauseSwitch = 0;}
     collisionMsgOut.collision = msg->collision;
     collisionMsgOut.distance_to_drive = msg->avoidDriveDistance;
     collisionMsgOut.angle_to_drive = msg->avoidDriveAngle;
@@ -210,19 +227,22 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
 
     for(int i=0; i<NUM_SAMPLES; i++)
     {
-        distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
-        randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * randomRange + randomOffset;
-        sampleProb = maxSampleProb - pow(distanceToSample/maxDetectionDist,2.0);
-        if(sampleProb>0.0) sampleProb += randomGain*randomValue;
-        if(sampleProb>1.0) sampleProb = 1.0;
-        else if(sampleProb<0.0) sampleProb = 0.0;
-        if(sampleProb>0.0)
+        if(!samplesGrabbed[i])
         {
-            cvSampleProps.confidence = sampleProb;
-            cvSampleProps.distance = distanceToSample;
-            rotateCoord(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos, sampleBodyX, sampleBodyY, fmod(robotSim.heading,180.0));
-            cvSampleProps.bearing = RAD2DEG*atan2(sampleBodyY, sampleBodyX);
-            cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
+            distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
+            randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * randomRange + randomOffset;
+            sampleProb = maxSampleProb - pow(distanceToSample/maxDetectionDist,2.0);
+            if(sampleProb>0.0) sampleProb += randomGain*randomValue;
+            if(sampleProb>1.0) sampleProb = 1.0;
+            else if(sampleProb<0.0) sampleProb = 0.0;
+            if(sampleProb>0.0)
+            {
+                cvSampleProps.confidence = sampleProb;
+                cvSampleProps.distance = distanceToSample;
+                rotateCoord(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos, sampleBodyX, sampleBodyY, fmod(robotSim.heading,180.0));
+                cvSampleProps.bearing = RAD2DEG*atan2(sampleBodyY, sampleBodyX);
+                cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
+            }
         }
     }
 #endif // MANUAL_CV_CONTROL

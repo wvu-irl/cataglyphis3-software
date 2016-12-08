@@ -30,6 +30,7 @@ public:
 	bool grabAttempt;
 	// Netburner
 	uint8_t nb1PauseSwitch = 255;
+	uint8_t nb2PauseSwitch = 255;
 	// Sim
 	const double normalSpeedDT = 0.05;  // Default of 20 Hz, resulting in 1x speed
 	double dt = normalSpeedDT;
