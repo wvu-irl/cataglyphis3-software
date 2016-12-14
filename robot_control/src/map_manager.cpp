@@ -209,6 +209,7 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
 
 bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot_control::SearchMap::Response &res) // tested
 {
+    float overallROIProb = 0.0;
     if(req.createMap && !req.deleteMap)
     {
         if(searchLocalMapExists) ROS_WARN("MAP MANAGER: tried to create searchLocalMap when it already exists");
@@ -238,13 +239,16 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                 //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 if(searchLocalMap.isInside(searchLocalMapCoord)) searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
             }
-            sampleProbPeak = 1.0/(2.0*PI*sigmaROIX*sigmaROIY*percentSampleProbAreaInROI);
+            sampleProbPeak = 1.0*percentSampleProbAreaInROI/(2.0*PI*sigmaROIX*sigmaROIY);
+            //ROS_INFO("sampleProbPeak = %f",sampleProbPeak);
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
                 rotateCoord(searchLocalMapCoord[0], searchLocalMapCoord[1], ROIX, ROIY, searchLocalMapToROIAngle);
                 searchLocalMap.at(layerToString(_sampleProb), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
+                overallROIProb += searchLocalMap.at(layerToString(_sampleProb), *it);
             }
+            //ROS_INFO("initial overall ROI %i prob = %f",searchLocalMapROINum,overallROIProb);
             grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
             searchLocalMapPub.publish(searchLocalMapMsg);
         }
@@ -613,7 +617,8 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     const float tn = 0.99; // True negative rate
     const float tpMaxValue = 0.99;
     const float tpMaxDistance = 5.0; // m
-    //int temp;
+    float overallROIProb = 0.0;
+    int temp;
     grid_map::Position cellPosition;
     donutSmashVerticies.clear();
     donutSmashVerticies.resize(4);
@@ -654,22 +659,34 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
             if(map.at(layerToString(_sampleProb), *donutIt) > 1.0) map.at(layerToString(_sampleProb), *donutIt) = 1.0;
             else if(map.at(layerToString(_sampleProb), *donutIt) < 0.0) map.at(layerToString(_sampleProb), *donutIt) = 0.0;
             //ROS_INFO("new donut cell value, after coersion [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],map.at(layerToString(_sampleProb), *donutIt));
+            overallROIProb = 0.0;
             for(grid_map::GridMapIterator wholeIt(map); !wholeIt.isPastEnd(); ++wholeIt)
             {
                 if(!((*wholeIt)[0] == (*donutIt)[0] && (*wholeIt)[1] == (*donutIt)[1]))
                 {
                     //ROS_INFO("old other cell value [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
                     map.at(layerToString(_sampleProb), *wholeIt) = tn*map.at(layerToString(_sampleProb), *wholeIt)/Pn1;
-                    //ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
-                    if(map.at(layerToString(_sampleProb), *wholeIt) > 1.0) map.at(layerToString(_sampleProb), *wholeIt) = 1.0;
+
+                    if(map.at(layerToString(_sampleProb), *wholeIt) >= 1.0)
+                    {
+                        //ROS_WARN("CELL SET TO >= 1");
+                        //ROS_INFO("new other cell value before coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
+                        //ROS_INFO("distanceToCell = %f",distanceToCell);
+                        //ROS_INFO("tp = %f",tp);
+                        //ROS_INFO("fn = %f",fn);
+                        //ROS_INFO("Pn1 = %f",Pn1);
+                        map.at(layerToString(_sampleProb), *wholeIt) = 1.0;
+                        //std::cout << "enter a character to continue" << std::endl;
+                        //std::cin >> temp;
+                    }
                     else if(map.at(layerToString(_sampleProb), *wholeIt) < 0.0) map.at(layerToString(_sampleProb), *wholeIt) = 0.0;
                     //ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
-                    //std::cout << "enter a character to continue" << std::endl;
-                    //std::cin >> temp;
                 }
+                overallROIProb += map.at(layerToString(_sampleProb), *wholeIt);
             }
         }
     }
+    //ROS_INFO("overall ROI prob after smash = %f",overallROIProb);
 }
 
 void MapManager::rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg)

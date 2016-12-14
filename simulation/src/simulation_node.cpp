@@ -18,7 +18,7 @@
 #include <robot_control/map_layers.h>
 #include <robot_control/ROIList.h>
 
-//#define MANUAL_CV_CONTROL
+#define MANUAL_CV_CONTROL
 #define NUM_SAMPLES 10
 bool roisWithSample[15] = {1,1,0,1,1,0,1,0,1,1,1,1,0,0,1};
 
