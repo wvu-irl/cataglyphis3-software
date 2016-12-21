@@ -83,6 +83,7 @@ find_package(catkin REQUIRED COMPONENTS
    NextWaypointOut.msg
    ZedCollisionOut.msg
    ExecGrabberStatus.msg
+   SimSampleLocations.msg
  )
 
 ## Generate services in the 'srv' folder

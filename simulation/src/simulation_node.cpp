@@ -13,12 +13,13 @@
 #include <messages/KeyframeList.h>
 #include <messages/CreateROIHazardMap.h>
 #include <messages/NavFilterControl.h>
+#include <messages/SimSampleLocations.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <robot_control/map_layers.h>
 #include <robot_control/ROIList.h>
 
-#define MANUAL_CV_CONTROL
+//#define MANUAL_CV_CONTROL
 #define NUM_SAMPLES 10
 bool roisWithSample[15] = {1,1,0,1,1,0,1,0,1,1,1,1,0,0,1};
 
@@ -56,6 +57,8 @@ std::vector<std::pair<float, float>> sampleLocations;
 bool samplesGrabbed[NUM_SAMPLES] = {false};
 bool grabAttemptPrev = false;
 float goodGrabThreshold = -0.2; // 0.2
+ros::Publisher sampleLocationsPub;
+messages::SimSampleLocations sampleLocationsMsg;
 
 int main(int argc, char** argv)
 {
@@ -73,6 +76,7 @@ int main(int argc, char** argv)
     ros::Publisher collisionPub = nh.advertise<messages::CollisionOut>("lidar/collisiondetectionout/collisiondetectionout", 1);
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
     keyframeListPub = nh.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1);
+    sampleLocationsPub = nh.advertise<messages::SimSampleLocations>("/simulation/simulator/sampletruthlocations", 1);
     ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
     ros::ServiceServer createROIHazardMapServ = nh.advertiseService("/lidar/collisiondetection/createroihazardmap", createROIHazardMapCallback);
     ros::ServiceServer navControlCallbackServ = nh.advertiseService("/navigation/navigationfilter/control", navControlCallback);
@@ -200,6 +204,9 @@ void roisModifiedCallback(const robot_control::ROIList::ConstPtr &msg)
     if(!sampleLocationsInitialized)
     {
         sampleLocations.resize(roiList.ROIList.size());
+        sampleLocationsMsg.sampleX.resize(roiList.ROIList.size(),0.0);
+        sampleLocationsMsg.sampleY.resize(roiList.ROIList.size(),0.0);
+        sampleLocationsMsg.sampleInROI.resize(roiList.ROIList.size(),false);
         setSampleLocations();
         sampleLocationsInitialized = true;
     }
@@ -328,6 +335,7 @@ void setSampleLocations()
     float angleToROI;
     int roiListLen = roiList.ROIList.size();
     int j=0;
+
     for(int i=0; i<roiListLen; i++)
     {
         if(roisWithSample[i])
@@ -341,10 +349,14 @@ void setSampleLocations()
             sampleLocations.at(j).first += roiList.ROIList.at(i).x;
             sampleLocations.at(j).second += roiList.ROIList.at(i).y;
             //ROS_INFO("roi = [%f,%f]",roiList.ROIList.at(i).x,roiList.ROIList.at(i).y);
-            ROS_INFO("sample location %i = [%f,%f]",i,sampleLocations.at(j).first,sampleLocations.at(j).second);
+            //ROS_INFO("sample location %i = [%f,%f]",i,sampleLocations.at(j).first,sampleLocations.at(j).second);
+            sampleLocationsMsg.sampleX.at(i) = sampleLocations.at(j).first;
+            sampleLocationsMsg.sampleY.at(i) = sampleLocations.at(j).second;
+            sampleLocationsMsg.sampleInROI.at(i) = true;
             j++;
         }
     }
+    sampleLocationsPub.publish(sampleLocationsMsg);
 }
 
 void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg)

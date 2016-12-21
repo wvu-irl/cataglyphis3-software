@@ -683,6 +683,8 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
                     //ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
                 }
                 overallROIProb += map.at(layerToString(_sampleProb), *wholeIt);
+                // *** Need to modify ROI's overall probability and those of all the other ROIs as well.
+                // *** Also need a termination condition for when the ROI probability gets too low
             }
         }
     }
