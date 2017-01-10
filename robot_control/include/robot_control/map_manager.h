@@ -50,6 +50,8 @@
 
 //#include other maps...
 
+//#define USE_DONUT_SMASH
+
 class MapManager
 {
 public:

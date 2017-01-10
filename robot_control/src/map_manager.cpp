@@ -241,13 +241,15 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
             }
             sampleProbPeak = 1.0*percentSampleProbAreaInROI/(2.0*PI*sigmaROIX*sigmaROIY);
             //ROS_INFO("sampleProbPeak = %f",sampleProbPeak);
+#ifdef USE_DONUT_SMASH
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
             {
                 searchLocalMap.getPosition(*it, searchLocalMapCoord);
                 rotateCoord(searchLocalMapCoord[0], searchLocalMapCoord[1], ROIX, ROIY, searchLocalMapToROIAngle);
-                searchLocalMap.at(layerToString(_sampleProb), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));
+                searchLocalMap.at(layerToString(_sampleProb), *it) = sampleProbPeak*exp(-(pow(ROIX,2.0)/(2.0*pow(sigmaROIX,2.0))+pow(ROIY,2.0)/(2.0*pow(sigmaROIY,2.0))));                
                 overallROIProb += searchLocalMap.at(layerToString(_sampleProb), *it);
             }
+#endif // USE_DONUT_SMASH
             //ROS_INFO("initial overall ROI %i prob = %f",searchLocalMapROINum,overallROIProb);
             grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
             searchLocalMapPub.publish(searchLocalMapMsg);
@@ -577,7 +579,9 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
     if(searchLocalMapExists && (highestSampleValue < possibleSampleConfThresh))
     {
         rotateCoord(globalPose.x - searchLocalMapXPos, globalPose.y - searchLocalMapYPos, searchLocalMapRelPos[0], searchLocalMapRelPos[1], searchLocalMapHeading);
+#ifdef USE_DONUT_SMASH
         donutSmash(searchLocalMap ,searchLocalMapRelPos);
+#endif // USE_DONUT_SMASH
         grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
         searchLocalMapPub.publish(searchLocalMapMsg);
         //addFoundSamples(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
