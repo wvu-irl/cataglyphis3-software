@@ -18,6 +18,8 @@
 #include <grid_map_msgs/GridMap.h>
 #include <robot_control/map_layers.h>
 #include <robot_control/ROIList.h>
+#include <chrono>
+#include <random>
 
 //#define MANUAL_CV_CONTROL
 #define NUM_SAMPLES 10
@@ -220,7 +222,7 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
     float sampleBodyX;
     float sampleBodyY;
     const float maxSampleProb = 0.99;
-    const float maxDetectionDist = 5.0; // m
+    const float maxDetectionDist = 3.0; // m
     const float randomGain = 0.3;
     const float randomRange = 1.5;
     const float randomOffset = -1.0;
@@ -335,9 +337,35 @@ void setSampleLocations()
     float angleToROI;
     int roiListLen = roiList.ROIList.size();
     int j=0;
+    const float biasStdDev = 2.0; // m
+    const float biasMaxDist = 5.0; // m
+    float biasXLocal;
+    float biasYLocal;
+    unsigned biasSeed = std::chrono::system_clock::now().time_since_epoch().count();
+    bool keepFindingRandomBias = true;
+    std::default_random_engine gen(biasSeed);
 
     for(int i=0; i<roiListLen; i++)
     {
+        std::normal_distribution<float> biasDist(biasStdDev,biasMaxDist);
+        for(int j=0; j<2; j++)
+        {
+            while(keepFindingRandomBias)
+            {
+                if(j==0)
+                {
+                    biasXLocal = fabs(biasDist(gen));
+                    if(biasXLocal>biasMaxDist) keepFindingRandomBias = true;
+                    else keepFindingRandomBias = false;
+                }
+                else
+                {
+                    biasYLocal = fabs(biasDist(gen));
+                    if(biasYLocal>biasMaxDist) keepFindingRandomBias = true;
+                    else keepFindingRandomBias = false;
+                }
+            }
+        }
         if(roisWithSample[i])
         {
             radialDist = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
