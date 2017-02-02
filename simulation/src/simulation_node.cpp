@@ -337,47 +337,66 @@ void setSampleLocations()
     float angleToROI;
     int roiListLen = roiList.ROIList.size();
     int j=0;
-    const float biasStdDev = 2.0; // m
+    const float biasStdDev = 3.0; // m
     const float biasMaxDist = 5.0; // m
     float biasXLocal;
     float biasYLocal;
+    const float samplePlacementStdDev = 10.0;
     unsigned biasSeed = std::chrono::system_clock::now().time_since_epoch().count();
     bool keepFindingRandomBias = true;
+    bool keepFindingSamplePos = true;
     std::default_random_engine gen(biasSeed);
 
     for(int i=0; i<roiListLen; i++)
     {
-        std::normal_distribution<float> biasDist(biasStdDev,biasMaxDist);
-        for(int j=0; j<2; j++)
-        {
-            while(keepFindingRandomBias)
-            {
-                if(j==0)
-                {
-                    biasXLocal = fabs(biasDist(gen));
-                    if(biasXLocal>biasMaxDist) keepFindingRandomBias = true;
-                    else keepFindingRandomBias = false;
-                }
-                else
-                {
-                    biasYLocal = fabs(biasDist(gen));
-                    if(biasYLocal>biasMaxDist) keepFindingRandomBias = true;
-                    else keepFindingRandomBias = false;
-                }
-            }
-        }
         if(roisWithSample[i])
         {
-            radialDist = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-            angle = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 2*PI;
-            angleToROI = RAD2DEG*atan2(roiList.ROIList.at(i).y,roiList.ROIList.at(i).x);
-            xLocal = sqrt(radialDist) * cos(angle) * roiList.ROIList.at(i).radialAxis;
-            yLocal = sqrt(radialDist) * sin(angle) * roiList.ROIList.at(i).tangentialAxis;
+            std::normal_distribution<float> biasDist(0.0,biasStdDev);
+            for(int j=0; j<2; j++)
+            {
+                keepFindingRandomBias = true;
+                while(keepFindingRandomBias)
+                {
+                    if(j==0)
+                    {
+                        biasXLocal = biasDist(gen);
+                        if(fabs(biasXLocal)>biasMaxDist) keepFindingRandomBias = true;
+                        else keepFindingRandomBias = false;
+                    }
+                    else
+                    {
+                        biasYLocal = biasDist(gen);
+                        if(fabs(biasYLocal)>biasMaxDist) keepFindingRandomBias = true;
+                        else keepFindingRandomBias = false;
+                    }
+                }
+            }
+            std::normal_distribution<float> sampleXDist(biasXLocal,samplePlacementStdDev);
+            std::normal_distribution<float> sampleYDist(biasYLocal,samplePlacementStdDev);
+            for(int j=0; j<2; j++)
+            {
+                keepFindingSamplePos = true;
+                while(keepFindingSamplePos)
+                {
+                    if(j==0)
+                    {
+                        xLocal = sampleXDist(gen);
+                        if(fabs(xLocal)>std::min(roiList.ROIList.at(i).radialAxis,roiList.ROIList.at(i).tangentialAxis)) keepFindingSamplePos = true;
+                        else keepFindingSamplePos = false;
+                    }
+                    else
+                    {
+                        yLocal = sampleYDist(gen);
+                        if(fabs(yLocal)>std::min(roiList.ROIList.at(i).radialAxis,roiList.ROIList.at(i).tangentialAxis)) keepFindingSamplePos = true;
+                        else keepFindingSamplePos = false;
+                    }
+                }
+            }
             rotateCoord(xLocal, yLocal, sampleLocations.at(j).first, sampleLocations.at(j).second, -angleToROI);
             sampleLocations.at(j).first += roiList.ROIList.at(i).x;
             sampleLocations.at(j).second += roiList.ROIList.at(i).y;
-            //ROS_INFO("roi = [%f,%f]",roiList.ROIList.at(i).x,roiList.ROIList.at(i).y);
-            //ROS_INFO("sample location %i = [%f,%f]",i,sampleLocations.at(j).first,sampleLocations.at(j).second);
+            ROS_INFO("roi = [%f,%f]",roiList.ROIList.at(i).x,roiList.ROIList.at(i).y);
+            ROS_INFO("sample location %i = [%f,%f]",i,sampleLocations.at(j).first,sampleLocations.at(j).second);
             sampleLocationsMsg.sampleX.at(i) = sampleLocations.at(j).first;
             sampleLocationsMsg.sampleY.at(i) = sampleLocations.at(j).second;
             sampleLocationsMsg.sampleInROI.at(i) = true;
