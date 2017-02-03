@@ -98,10 +98,11 @@ bool NextBestRegion::runProc()
             sendWait(10.0, false);*/
 
             ROS_INFO("NEXT BEST REGION: bestROINum = %i",bestROINum);
-            numWaypointsToTravel = 2;
+            //numWaypointsToTravel = 2;
+            numWaypointsToTravel = 1;
             clearAndResizeWTT();
             angleToROI = atan2(regionsOfInterestSrv.response.ROIList.at(bestROINum).y - robotStatus.yPos, regionsOfInterestSrv.response.ROIList.at(bestROINum).x - robotStatus.xPos); // Radians
-            waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x - distanceShortOfROI*cos(angleToROI);
+            /*waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x - distanceShortOfROI*cos(angleToROI);
             waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y - distanceShortOfROI*sin(angleToROI);
             waypointsToTravel.at(0).searchable = true; // !!!!! NEEDS TO BE TRUE to search
             waypointsToTravel.at(0).unskippable = false;
@@ -126,9 +127,23 @@ bool NextBestRegion::runProc()
             waypointsToTravel.at(1).pinkProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).pinkProb;
             waypointsToTravel.at(1).redProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).redProb;
             waypointsToTravel.at(1).orangeProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).orangeProb;
-            waypointsToTravel.at(1).yellowProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).yellowProb;
+            waypointsToTravel.at(1).yellowProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).yellowProb;*/
+            waypointsToTravel.at(0).x = regionsOfInterestSrv.response.ROIList.at(bestROINum).x;
+            waypointsToTravel.at(0).y = regionsOfInterestSrv.response.ROIList.at(bestROINum).y;
+            waypointsToTravel.at(0).searchable = true; // !!!!! NEEDS TO BE TRUE to search
+            waypointsToTravel.at(0).unskippable = false;
+            waypointsToTravel.at(0).roiWaypoint = true;
+            waypointsToTravel.at(0).maxAvoids = maxROIWaypointAvoidCount;
+            waypointsToTravel.at(0).whiteProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).whiteProb;
+            waypointsToTravel.at(0).silverProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).silverProb;
+            waypointsToTravel.at(0).blueOrPurpleProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).blueOrPurpleProb;
+            waypointsToTravel.at(0).pinkProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).pinkProb;
+            waypointsToTravel.at(0).redProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).redProb;
+            waypointsToTravel.at(0).orangeProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).orangeProb;
+            waypointsToTravel.at(0).yellowProb = regionsOfInterestSrv.response.ROIList.at(bestROINum).yellowProb;
             callIntermediateWaypoints();
-            sendDriveAndSearch();
+            //sendDriveAndSearch();
+            sendDriveGlobal(false, false, 0.0);
             //sendWait(10.0, false);
 
             currentROIIndex = bestROINum;
@@ -170,7 +185,8 @@ bool NextBestRegion::runProc()
         procsToResume[procType] = false;
         computeDriveSpeeds();
         serviceAvoidCounterDecrement();
-        if(searchEnded() || possibleSample || definiteSample || giveUpROI || queueEmptyTimedOut) state = _finish_;
+        //if(searchEnded() || possibleSample || definiteSample || giveUpROI || queueEmptyTimedOut) state = _finish_;
+        if((execLastProcType == procType && execLastSerialNum == serialNum) || queueEmptyTimedOut) state = _finish_;
         else state = _exec_;
         serviceQueueEmptyCondition();
         break;

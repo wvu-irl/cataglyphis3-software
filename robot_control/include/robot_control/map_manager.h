@@ -148,7 +148,7 @@ public:
 	float sigmaROIX;
 	float sigmaROIY;
 	const float numSigmasROIAxis = 1.0;
-	const float percentSampleProbAreaInROI = 0.683; // 1 sigma --> 68.3%; 2 sigma --> 95.45%; 3 sigma --> 99.73%
+	const float percentSampleProbAreaInROI = 1.0; // 1 sigma --> 68.3%; 2 sigma --> 95.45%; 3 sigma --> 99.73%
 	float ROIX;
 	float ROIY;
 	float searchLocalMapToROIAngle;
@@ -211,7 +211,7 @@ public:
 	std::vector<grid_map::Position> donutSmashVerticies;
 	grid_map::Polygon convolutionPolygon;
 	std::vector<grid_map::Position> convolutionVerticies;
-	const float donutSmashSearchRadius = 3.0; // m
+	const float donutSmashSearchRadius = 5.0; // m
 	grid_map::Index donutSmashRobotPosIndex;
 };
 

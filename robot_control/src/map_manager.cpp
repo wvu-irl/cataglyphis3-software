@@ -239,7 +239,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
                 //ROS_INFO("ROIX = %f; ROIY = %f",ROIX, ROIY);
                 if(searchLocalMap.isInside(searchLocalMapCoord)) searchLocalMap.atPosition(layerToString(_localMapDriveability), searchLocalMapCoord) = 10.0;
             }
-            sampleProbPeak = 1.0*percentSampleProbAreaInROI/(2.0*PI*sigmaROIX*sigmaROIY);
+            sampleProbPeak = regionsOfInterest.at(searchLocalMapROINum).sampleProb*percentSampleProbAreaInROI/(2.0*PI*sigmaROIX*sigmaROIY);
             //ROS_INFO("sampleProbPeak = %f",sampleProbPeak);
 #ifdef USE_DONUT_SMASH
             for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
@@ -373,10 +373,15 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         rotateCoord(globalPose.x-searchLocalMapXPos, globalPose.y-searchLocalMapYPos, globalPoseToSearchLocalMapPosition[0], globalPoseToSearchLocalMapPosition[1], searchLocalMapHeading);
 #ifdef GREEDY_SEARCH_WAYPOINT_SELECTION
         grid_map::Position cellPosition;
+        grid_map::Position convolutionCellPosition;
         grid_map::Index bestSearchLocationIndex;
         grid_map::Position bestSearchLocationPosition;
         float maxConvolutionValue = 0.0;
         float convolutionValue;
+        float distanceToConvolutionCell;
+        unsigned int convolutionNumCells;
+        const float tpMaxValue = 0.99;
+        const float tpMaxDistance = 5.0; // m
         searchLocalMap.getIndex(grid_map::Position(0.0,0.0), bestSearchLocationIndex); // default to center of ROI if no other best choice found
         for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
         {
@@ -397,13 +402,18 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             convolutionPolygon.addVertex(convolutionVerticies.at(2));
             convolutionPolygon.addVertex(convolutionVerticies.at(3));
             convolutionValue = 0.0;
+            convolutionNumCells = 0;
             for(grid_map::PolygonIterator convolutionIt(searchLocalMap, convolutionPolygon); !convolutionIt.isPastEnd(); ++convolutionIt)
             {
                 if(!((*convolutionIt)[0] == (*it)[0] && (*convolutionIt)[1] == (*it)[1]))
                 {
-                    convolutionValue += searchLocalMap.at(layerToString(_sampleProb),*convolutionIt);
+                    convolutionNumCells++;
+                    searchLocalMap.getPosition(*convolutionIt,convolutionCellPosition);
+                    distanceToConvolutionCell = hypot(convolutionCellPosition[0]-cellPosition[0],convolutionCellPosition[1]-cellPosition[1]);
+                    convolutionValue += searchLocalMap.at(layerToString(_sampleProb),*convolutionIt)*(tpMaxValue - pow(distanceToConvolutionCell/tpMaxDistance, 2.0));
                 }
             }
+            //convolutionValue /= convolutionNumCells;
             if(convolutionValue > maxConvolutionValue)
             {
                 maxConvolutionValue = convolutionValue;
@@ -746,12 +756,13 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
                     //ROS_INFO("new other cell value after coersion [%i,%i] = %f",(*wholeIt)[0],(*wholeIt)[1],map.at(layerToString(_sampleProb), *wholeIt));
                 }
                 overallROIProb += map.at(layerToString(_sampleProb), *wholeIt);
-                // *** Need to modify ROI's overall probability and those of all the other ROIs as well.
-                // *** Also need a termination condition for when the ROI probability gets too low
             }
         }
     }
-    //ROS_INFO("overall ROI prob after smash = %f",overallROIProb);
+    regionsOfInterest.at(searchLocalMapROINum).sampleProb = overallROIProb;
+    roisModifiedListMsg.ROIList = regionsOfInterest;
+    roisModifiedPub.publish(roisModifiedListMsg);
+    ROS_INFO("overall ROI prob after smash = %f",overallROIProb);
 }
 
 void MapManager::rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg)

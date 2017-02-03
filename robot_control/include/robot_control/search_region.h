@@ -2,13 +2,19 @@
 #define SEARCH_REGION_H
 #include "procedure.h"
 
+#define USE_DONUT_SMASH
+
 class SearchRegion : public Procedure
 {
 public:
 	// Members
 	ros::NodeHandle nh;
 	bool allWaypointsVisited;
+#ifdef USE_DONUT_SMASH
 	const int numRandomWaypoints = 1;
+#else
+	const int numRandomWaypoints = 5;
+#endif // USE_DONUT_SMASH
 	// Methods
 	bool runProc();
 private:

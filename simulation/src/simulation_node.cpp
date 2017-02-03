@@ -218,11 +218,11 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
 {
     float sampleProb;
     float distanceToSample;
-    float randomValue;
+    float randomProbNoise;
     float sampleBodyX;
     float sampleBodyY;
     const float maxSampleProb = 0.99;
-    const float maxDetectionDist = 3.0; // m
+    const float maxDetectionDist = 5.0; // m
     const float randomGain = 0.3;
     const float randomRange = 1.5;
     const float randomOffset = -1.0;
@@ -241,14 +241,15 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
         if(!samplesGrabbed[i])
         {
             distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
-            randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * randomRange + randomOffset;
+            randomProbNoise = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * randomRange + randomOffset;
             sampleProb = maxSampleProb - pow(distanceToSample/maxDetectionDist,2.0);
-            //if(sampleProb>0.0) sampleProb += randomGain*randomValue;
+            //if(sampleProb>0.0) sampleProb += randomGain*randomProbNoise;
             if(sampleProb>1.0) sampleProb = 1.0;
             else if(sampleProb<0.0) sampleProb = 0.0;
             if(sampleProb>0.0)
             {
-                cvSampleProps.confidence = sampleProb;
+                if((static_cast<float>(rand()) / static_cast<float>(RAND_MAX))<=sampleProb) cvSampleProps.confidence = 0.9;
+                else cvSampleProps.confidence = 0.0;
                 cvSampleProps.distance = distanceToSample;
                 rotateCoord(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos, sampleBodyX, sampleBodyY, fmod(robotSim.heading,360.0));
                 cvSampleProps.bearing = RAD2DEG*atan2(sampleBodyY, sampleBodyX);
@@ -338,7 +339,7 @@ void setSampleLocations()
     int roiListLen = roiList.ROIList.size();
     int j=0;
     const float biasStdDev = 3.0; // m
-    const float biasMaxDist = 5.0; // m
+    const float biasMaxDist = 4.0; // m
     float biasXLocal;
     float biasYLocal;
     const float samplePlacementStdDev = 10.0;
@@ -381,13 +382,13 @@ void setSampleLocations()
                     if(j==0)
                     {
                         xLocal = sampleXDist(gen);
-                        if(fabs(xLocal)>std::min(roiList.ROIList.at(i).radialAxis,roiList.ROIList.at(i).tangentialAxis)) keepFindingSamplePos = true;
+                        if(fabs(xLocal)>(std::min(roiList.ROIList.at(i).radialAxis,roiList.ROIList.at(i).tangentialAxis)-fabs(biasXLocal))) keepFindingSamplePos = true;
                         else keepFindingSamplePos = false;
                     }
                     else
                     {
                         yLocal = sampleYDist(gen);
-                        if(fabs(yLocal)>std::min(roiList.ROIList.at(i).radialAxis,roiList.ROIList.at(i).tangentialAxis)) keepFindingSamplePos = true;
+                        if(fabs(yLocal)>(std::min(roiList.ROIList.at(i).radialAxis,roiList.ROIList.at(i).tangentialAxis)-fabs(biasYLocal))) keepFindingSamplePos = true;
                         else keepFindingSamplePos = false;
                     }
                 }

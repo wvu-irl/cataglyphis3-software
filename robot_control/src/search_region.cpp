@@ -29,7 +29,9 @@ bool SearchRegion::runProc()
 			// start timer based on allocated time
             if(!timers[_roiTimer_]->running) {timers[_roiTimer_]->setPeriod(allocatedROITime); timers[_roiTimer_]->start();}
 		}
-		if(roiTimeExpired)
+        if(reqROIClient.call(regionsOfInterestSrv)) ROS_DEBUG("regionsOfInterest service call successful");
+        else ROS_ERROR("regionsOfInterest service call unsuccessful");
+        if(roiTimeExpired || (regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb < giveUpROIDonutSmashProbThresh))
 		{
 			roiTimeExpired = false;
 			timers[_roiTimer_]->stop();
@@ -38,8 +40,13 @@ bool SearchRegion::runProc()
             modROISrv.request.hardLockoutROIState = false;
             modROISrv.request.modROIIndex = currentROIIndex;
             modROISrv.request.setSampleProps = true;
-            if(currentROIIndex == 0) modROISrv.request.sampleProb = 0.0;
-            else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
+            //if(currentROIIndex == 0) modROISrv.request.sampleProb = 0.0;
+            /*else */
+#ifdef USE_DONUT_SMASH
+            modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb;
+#else
+            modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
+#endif // USE_DONUT_SMASH
             modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
             modROISrv.request.whiteProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb;
             modROISrv.request.silverProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb;
@@ -59,7 +66,8 @@ bool SearchRegion::runProc()
 			if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
 			else ROS_ERROR("searchMap service call unsuccessful");
 			roiKeyframed = false;
-			ROS_WARN("roiTimeExpired........");
+            if(roiTimeExpired) ROS_WARN("roiTimeExpired........");
+            if((regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb < giveUpROIDonutSmashProbThresh)) ROS_WARN("roi sample prob below threshold");
 			state = _finish_;
 		}
 		else
