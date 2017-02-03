@@ -8,7 +8,7 @@ public:
 	// Members
 	ros::NodeHandle nh;
 	bool allWaypointsVisited;
-	const int numRandomWaypoints = 5;
+	const int numRandomWaypoints = 1;
 	// Methods
 	bool runProc();
 private:

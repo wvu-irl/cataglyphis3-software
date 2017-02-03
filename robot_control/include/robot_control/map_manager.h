@@ -50,7 +50,8 @@
 
 //#include other maps...
 
-//#define USE_DONUT_SMASH // If no donut smash, set numRandomWaypoints in search_region.h to 5. Otherwise, 1.
+#define USE_DONUT_SMASH // If no donut smash, set numRandomWaypoints in search_region.h to 5. Otherwise, 1.
+#define GREEDY_SEARCH_WAYPOINT_SELECTION
 
 class MapManager
 {
@@ -208,6 +209,8 @@ public:
 	const float possibleSampleConfThresh = 0.5; // Change corresponding value in mission planning if ever changed
 	grid_map::Polygon donutSmashPolygon;
 	std::vector<grid_map::Position> donutSmashVerticies;
+	grid_map::Polygon convolutionPolygon;
+	std::vector<grid_map::Position> convolutionVerticies;
 	const float donutSmashSearchRadius = 3.0; // m
 	grid_map::Index donutSmashRobotPosIndex;
 };

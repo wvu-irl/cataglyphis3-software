@@ -371,6 +371,64 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         numRandomWaypointsToSelect = req.numSearchWaypoints;
         res.waypointList.resize(numRandomWaypointsToSelect);
         rotateCoord(globalPose.x-searchLocalMapXPos, globalPose.y-searchLocalMapYPos, globalPoseToSearchLocalMapPosition[0], globalPoseToSearchLocalMapPosition[1], -searchLocalMapHeading);
+#ifdef GREEDY_SEARCH_WAYPOINT_SELECTION
+        grid_map::Position cellPosition;
+        grid_map::Index bestSearchLocationIndex;
+        grid_map::Position bestSearchLocationPosition;
+        float maxConvolutionValue = 0.0;
+        float convolutionValue;
+        searchLocalMap.getIndex(grid_map::Position(0.0,0.0), bestSearchLocationIndex); // default to center of ROI if no other best choice found
+        for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
+        {
+            searchLocalMap.getPosition(*it, cellPosition);
+            convolutionVerticies.clear();
+            convolutionVerticies.resize(4);
+            convolutionVerticies.at(0)[0] = cellPosition[0] + donutSmashSearchRadius;
+            convolutionVerticies.at(0)[1] = cellPosition[1] + donutSmashSearchRadius;
+            convolutionVerticies.at(1)[0] = cellPosition[0] - donutSmashSearchRadius;
+            convolutionVerticies.at(1)[1] = cellPosition[1] + donutSmashSearchRadius;
+            convolutionVerticies.at(2)[0] = cellPosition[0] - donutSmashSearchRadius;
+            convolutionVerticies.at(2)[1] = cellPosition[1] - donutSmashSearchRadius;
+            convolutionVerticies.at(3)[0] = cellPosition[0] + donutSmashSearchRadius;
+            convolutionVerticies.at(3)[1] = cellPosition[1] - donutSmashSearchRadius;
+            convolutionPolygon.removeVertices();
+            convolutionPolygon.addVertex(convolutionVerticies.at(0));
+            convolutionPolygon.addVertex(convolutionVerticies.at(1));
+            convolutionPolygon.addVertex(convolutionVerticies.at(2));
+            convolutionPolygon.addVertex(convolutionVerticies.at(3));
+            convolutionValue = 0.0;
+            for(grid_map::PolygonIterator convolutionIt(searchLocalMap, convolutionPolygon); !convolutionIt.isPastEnd(); ++convolutionIt)
+            {
+                if(!((*convolutionIt)[0] == (*it)[0] && (*convolutionIt)[1] == (*it)[1]))
+                    convolutionValue += searchLocalMap.at(layerToString(_sampleProb),*convolutionIt);
+            }
+            //ROS_INFO("convolution value[%i,%i] = %f",(*it)[0],(*it)[1],convolutionValue);
+            if(convolutionValue > maxConvolutionValue)
+            {
+                maxConvolutionValue = convolutionValue;
+                bestSearchLocationIndex[0] = (*it)[0];
+                bestSearchLocationIndex[1] = (*it)[1];
+            }
+        }
+        ROS_INFO("best search location[%i,%i] value = %f",bestSearchLocationIndex[0],bestSearchLocationIndex[1],maxConvolutionValue);
+        searchLocalMap.getPosition(bestSearchLocationIndex,bestSearchLocationPosition);
+        res.waypointList.at(0).x = bestSearchLocationPosition[0];
+        res.waypointList.at(0).y = bestSearchLocationPosition[1];
+        res.waypointList.at(0).sampleProb = searchLocalMap.at(layerToString(_sampleProb), bestSearchLocationIndex);
+        res.waypointList.at(0).searchable = true;
+        res.waypointList.at(0).unskippable = false;
+        res.waypointList.at(0).maxAvoids = maxNormalWaypointAvoidCount;
+        res.waypointList.at(0).whiteProb = regionsOfInterest.at(searchLocalMapROINum).whiteProb;
+        res.waypointList.at(0).silverProb = regionsOfInterest.at(searchLocalMapROINum).silverProb;
+        res.waypointList.at(0).blueOrPurpleProb = regionsOfInterest.at(searchLocalMapROINum).blueOrPurpleProb;
+        res.waypointList.at(0).pinkProb = regionsOfInterest.at(searchLocalMapROINum).pinkProb;
+        res.waypointList.at(0).redProb = regionsOfInterest.at(searchLocalMapROINum).redProb;
+        res.waypointList.at(0).orangeProb = regionsOfInterest.at(searchLocalMapROINum).orangeProb;
+        res.waypointList.at(0).yellowProb = regionsOfInterest.at(searchLocalMapROINum).yellowProb;
+        rotateCoord(res.waypointList.at(0).x, res.waypointList.at(0).y, res.waypointList.at(0).x, res.waypointList.at(0).y, searchLocalMapHeading);
+        res.waypointList.at(0).x += searchLocalMapXPos;
+        res.waypointList.at(0).y += searchLocalMapYPos;
+#else
         possibleRandomWaypointValuesSum = 0.0;
         //ROS_INFO("after initial setup");
         for(grid_map::GridMapIterator it(searchLocalMap); !it.isPastEnd(); ++it)
@@ -470,6 +528,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 distanceMat(i,j) = hypot(res.waypointList.at(i).x-res.waypointList.at(j).x, res.waypointList.at(i).y-res.waypointList.at(j).y);
         //ROS_INFO("distances:");
         //distanceMat.print();
+#endif // GREEDY_SEARCH_WAYPOINT_SELECTION
     }
     else return false;
     return true;
