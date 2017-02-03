@@ -370,7 +370,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         possibleRandomWaypointValuesNormalized.resize(searchLocalMapNumPoints);
         numRandomWaypointsToSelect = req.numSearchWaypoints;
         res.waypointList.resize(numRandomWaypointsToSelect);
-        rotateCoord(globalPose.x-searchLocalMapXPos, globalPose.y-searchLocalMapYPos, globalPoseToSearchLocalMapPosition[0], globalPoseToSearchLocalMapPosition[1], -searchLocalMapHeading);
+        rotateCoord(globalPose.x-searchLocalMapXPos, globalPose.y-searchLocalMapYPos, globalPoseToSearchLocalMapPosition[0], globalPoseToSearchLocalMapPosition[1], searchLocalMapHeading);
 #ifdef GREEDY_SEARCH_WAYPOINT_SELECTION
         grid_map::Position cellPosition;
         grid_map::Index bestSearchLocationIndex;
@@ -400,9 +400,10 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
             for(grid_map::PolygonIterator convolutionIt(searchLocalMap, convolutionPolygon); !convolutionIt.isPastEnd(); ++convolutionIt)
             {
                 if(!((*convolutionIt)[0] == (*it)[0] && (*convolutionIt)[1] == (*it)[1]))
+                {
                     convolutionValue += searchLocalMap.at(layerToString(_sampleProb),*convolutionIt);
+                }
             }
-            //ROS_INFO("convolution value[%i,%i] = %f",(*it)[0],(*it)[1],convolutionValue);
             if(convolutionValue > maxConvolutionValue)
             {
                 maxConvolutionValue = convolutionValue;
@@ -410,7 +411,6 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
                 bestSearchLocationIndex[1] = (*it)[1];
             }
         }
-        ROS_INFO("best search location[%i,%i] value = %f",bestSearchLocationIndex[0],bestSearchLocationIndex[1],maxConvolutionValue);
         searchLocalMap.getPosition(bestSearchLocationIndex,bestSearchLocationPosition);
         res.waypointList.at(0).x = bestSearchLocationPosition[0];
         res.waypointList.at(0).y = bestSearchLocationPosition[1];
@@ -425,7 +425,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         res.waypointList.at(0).redProb = regionsOfInterest.at(searchLocalMapROINum).redProb;
         res.waypointList.at(0).orangeProb = regionsOfInterest.at(searchLocalMapROINum).orangeProb;
         res.waypointList.at(0).yellowProb = regionsOfInterest.at(searchLocalMapROINum).yellowProb;
-        rotateCoord(res.waypointList.at(0).x, res.waypointList.at(0).y, res.waypointList.at(0).x, res.waypointList.at(0).y, searchLocalMapHeading);
+        rotateCoord(res.waypointList.at(0).x, res.waypointList.at(0).y, res.waypointList.at(0).x, res.waypointList.at(0).y, -searchLocalMapHeading);
         res.waypointList.at(0).x += searchLocalMapXPos;
         res.waypointList.at(0).y += searchLocalMapYPos;
 #else
@@ -518,7 +518,7 @@ bool MapManager::randomSearchWaypointsCallback(robot_control::RandomSearchWaypoi
         //ROS_INFO("after selecting waypoints, vector size = %u",res.waypointList.size());
         for(int i=0; i<res.waypointList.size(); i++) // Transform random waypoint coordinates into global map coordinates
         {
-            rotateCoord(res.waypointList.at(i).x, res.waypointList.at(i).y, res.waypointList.at(i).x, res.waypointList.at(i).y, searchLocalMapHeading);
+            rotateCoord(res.waypointList.at(i).x, res.waypointList.at(i).y, res.waypointList.at(i).x, res.waypointList.at(i).y, -searchLocalMapHeading);
             res.waypointList.at(i).x += searchLocalMapXPos;
             res.waypointList.at(i).y += searchLocalMapYPos;
         }
