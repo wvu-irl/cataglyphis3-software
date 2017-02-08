@@ -17,6 +17,7 @@
 #include <messages/SearchLocalMapInfo.h>
 #include <messages/GlobalMapFull.h>
 #include <messages/SetStartingPlatform.h>
+#include <messages/ROIMapInfo.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
@@ -28,7 +29,8 @@
 #define RAD2DEG 180.0/PI
 
 //#define EVANSDALE
-#define WPI
+//#define WPI
+#define WPI_BIG
 //#define TEST_FIELD
 //#define CHESTNUT_RIDGE
 
@@ -40,6 +42,10 @@
 #include "wpi_map.h"
 #endif // WPI
 
+#ifdef WPI_BIG
+#include "wpi_map.h"
+#endif // WPI_BIG
+
 #ifdef TEST_FIELD
 #include "test_field_map.h"
 #endif // TEST_FIELD
@@ -50,8 +56,8 @@
 
 //#include other maps...
 
-#define USE_DONUT_SMASH // If no donut smash, set numRandomWaypoints in search_region.h to 5. Otherwise, 1.
-#define GREEDY_SEARCH_WAYPOINT_SELECTION
+//#define USE_DONUT_SMASH
+//#define GREEDY_SEARCH_WAYPOINT_SELECTION
 
 class MapManager
 {
@@ -86,6 +92,7 @@ public:
 	void initializeGlobalMap();
 	void cutOutGlobalSubMap();
 	void computeROIEastSouth();
+	void packAndPubROIMapInfo();
 	// Members
 	ros::NodeHandle nh;
 	ros::ServiceServer roiServ;
@@ -107,6 +114,7 @@ public:
 	ros::Publisher searchLocalMapPub;
 	ros::Publisher globalSubMapPub;
 	ros::Publisher roisModifiedPub;
+	ros::Publisher roiMapInfoPub;
 	grid_map_msgs::GridMap globalMapMsg;
 	grid_map_msgs::GridMap searchLocalMapMsg;
 	grid_map_msgs::GridMap globalSubMapMsg;
@@ -213,6 +221,7 @@ public:
 	std::vector<grid_map::Position> convolutionVerticies;
 	const float donutSmashSearchRadius = 5.0; // m
 	grid_map::Index donutSmashRobotPosIndex;
+	messages::ROIMapInfo roiMapInfoMsg;
 };
 
 #endif // MAP_MANAGER_H

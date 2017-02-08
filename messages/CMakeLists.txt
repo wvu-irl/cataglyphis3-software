@@ -84,6 +84,7 @@ find_package(catkin REQUIRED COMPONENTS
    ZedCollisionOut.msg
    ExecGrabberStatus.msg
    SimSampleLocations.msg
+   ROIMapInfo.msg
  )
 
 ## Generate services in the 'srv' folder

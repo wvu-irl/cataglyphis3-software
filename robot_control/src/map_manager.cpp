@@ -20,6 +20,7 @@ MapManager::MapManager()
     globalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/globalmapviz", 1);
     searchLocalMapPub = nh.advertise<grid_map_msgs::GridMap>("/control/mapmanager/searchlocalmapviz", 1);
     roisModifiedPub = nh.advertise<robot_control::ROIList>("/control/mapmanager/roimodifiedlist", 1);
+    roiMapInfoPub = nh.advertise<messages::ROIMapInfo>("/control/mapmanager/roimapinfo", 1);
     currentROIMsg.currentROINum = 0; // 0 means in no ROI
     searchLocalMapROINum = 0;
     keyframeWriteIntoGlobalMapSerialNum = 0;
@@ -56,6 +57,10 @@ MapManager::MapManager()
 // WPI Institute Park ROIs
 #include <robot_control/wpi_rois.h>
 #endif // WPI
+
+#ifdef WPI_BIG
+#include <robot_control/wpi_big_rois.h>
+#endif // WPI_BIG
 
 #ifdef TEST_FIELD
 // Test field at WPI ROIs
@@ -252,6 +257,7 @@ bool MapManager::searchMapCallback(robot_control::SearchMap::Request &req, robot
 #endif // USE_DONUT_SMASH
             //ROS_INFO("initial overall ROI %i prob = %f",searchLocalMapROINum,overallROIProb);
             grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
+            packAndPubROIMapInfo();
             searchLocalMapPub.publish(searchLocalMapMsg);
         }
     }
@@ -652,6 +658,7 @@ void MapManager::cvSamplesFoundCallback(const messages::CVSamplesFound::ConstPtr
         donutSmash(searchLocalMap ,searchLocalMapRelPos);
 #endif // USE_DONUT_SMASH
         grid_map::GridMapRosConverter::toMessage(searchLocalMap, searchLocalMapMsg);
+        packAndPubROIMapInfo();
         searchLocalMapPub.publish(searchLocalMapMsg);
         //addFoundSamples(grid_map::Position(keyframeRelPose.keyframeRelX, keyframeRelPose.keyframeRelY), keyframeRelPose.keyframeRelHeading);
     }
@@ -1201,4 +1208,14 @@ void MapManager::computeROIEastSouth()
 		regionsOfInterest.at(i).e = regionsOfInterest.at(i).eMap - satMapStartE;
 		regionsOfInterest.at(i).s = regionsOfInterest.at(i).sMap - satMapStartS;
 	}
+}
+
+void MapManager::packAndPubROIMapInfo()
+{
+    grid_map::GridMapRosConverter::toMessage(searchLocalMap, roiMapInfoMsg.roiMap);
+    roiMapInfoMsg.roiIndex = searchLocalMapROINum;
+    roiMapInfoMsg.x = searchLocalMapXPos;
+    roiMapInfoMsg.y = searchLocalMapYPos;
+    roiMapInfoMsg.heading = searchLocalMapHeading;
+    roiMapInfoPub.publish(roiMapInfoMsg);
 }

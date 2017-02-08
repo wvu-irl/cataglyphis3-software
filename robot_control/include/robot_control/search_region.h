@@ -2,7 +2,7 @@
 #define SEARCH_REGION_H
 #include "procedure.h"
 
-#define USE_DONUT_SMASH
+//#define USE_DONUT_SMASH
 
 class SearchRegion : public Procedure
 {
