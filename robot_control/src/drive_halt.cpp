@@ -24,7 +24,7 @@ int DriveHalt::run()
     switch(state_)
     {
     case _noHold:
-    	ROS_INFO("_noHold");
+        //ROS_INFO("_noHold");
         robotOutputs.flMotorSpeed = 0;
         robotOutputs.mlMotorSpeed = 0;
         robotOutputs.blMotorSpeed = 0;
@@ -36,7 +36,7 @@ int DriveHalt::run()
         state_ = _noHold;
         break;
     case _waitingForStop:
-    	ROS_INFO("_waitingForStop");
+        //ROS_INFO("_waitingForStop");
         robotOutputs.flMotorSpeed = 0;
         robotOutputs.mlMotorSpeed = 0;
         robotOutputs.blMotorSpeed = 0;
@@ -53,7 +53,7 @@ int DriveHalt::run()
         vPrev_ = robotStatus.velocity;
         break;
     case _holding:
-    	ROS_INFO("_holding");
+        //ROS_INFO("_holding");
         if(fabs(posError_>=maxErrorThreshold_))
         {
             posError_ = 0.0;
@@ -85,6 +85,6 @@ int DriveHalt::run()
         state_ = _holding;
         break;
     }
-    ROS_INFO("posError_ = %f",posError_);
+    //ROS_INFO("posError_ = %f",posError_);
 	return 1;
 }

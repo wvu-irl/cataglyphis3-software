@@ -1,0 +1,5 @@
+float64 elapsedTime
+float32 distanceDriven
+float32 angleTurned
+uint32 searchesPerformed
+uint8 samplesFound

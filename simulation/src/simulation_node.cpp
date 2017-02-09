@@ -14,6 +14,7 @@
 #include <messages/CreateROIHazardMap.h>
 #include <messages/NavFilterControl.h>
 #include <messages/SimSampleLocations.h>
+#include <messages/SimInfo.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <robot_control/map_layers.h>
@@ -24,7 +25,7 @@
 //#define MANUAL_CV_CONTROL
 #define NUM_SAMPLES 4
 //bool roisWithSample[15] = {1,1,0,1,1,0,1,0,1,1,1,1,0,0,1};
-bool roisWithSample[7] = {1,1,0,0,1,0,1};
+bool roisWithSample[7] = {1,1,0,1,1,0,0};
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
@@ -38,11 +39,14 @@ void biasRemovalTimerCallback(const ros::TimerEvent &event);
 void setSampleLocations();
 void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 
+const double simRate = 600.0; // Hz
+const double publishPeriod = 0.02; // sec
+const double cvDeltaTime = 2.0; // sec
 ros::Publisher cvSamplesFoundPub;
 messages::ActuatorOut actuatorCmd;
 messages::CollisionOut collisionMsgOut;
 messages::CVSamplesFound cvSamplesFoundMsgOut;
-RobotSim robotSim(0.0, 0.0, 0.0,20);
+RobotSim robotSim(0.0, 0.0, 0.0,simRate);
 bool cvFindSample = false;
 messages::CVSampleProps cvSampleProps;
 messages::KeyframeList keyframeListMsg;
@@ -62,6 +66,8 @@ bool grabAttemptPrev = false;
 float goodGrabThreshold = -0.2; // 0.2
 ros::Publisher sampleLocationsPub;
 messages::SimSampleLocations sampleLocationsMsg;
+ros::Publisher simInfoPub;
+messages::SimInfo simInfoMsg;
 
 int main(int argc, char** argv)
 {
@@ -80,6 +86,7 @@ int main(int argc, char** argv)
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
     keyframeListPub = nh.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1);
     sampleLocationsPub = nh.advertise<messages::SimSampleLocations>("/simulation/simulator/sampletruthlocations", 1);
+    simInfoPub = nh.advertise<messages::SimInfo>("/simulation/simulation/siminfo", 1);
     ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
     ros::ServiceServer createROIHazardMapServ = nh.advertiseService("/lidar/collisiondetection/createroihazardmap", createROIHazardMapCallback);
     ros::ServiceServer navControlCallbackServ = nh.advertiseService("/navigation/navigationfilter/control", navControlCallback);
@@ -94,11 +101,15 @@ int main(int argc, char** argv)
 
     double linV; // m/s
     double angV; // deg/s
-    const double linVGain = 1.4/900.0/6.0; // m/s per speed cmd
+    const double linVGain = 1.2/900.0/6.0; // m/s per speed cmd
     const double angVGain = 45.0/2650.0; // deg/s per speec cmd
     float distanceToSample;
     float minDistanceToSample;
     int minDistanceToSampleIndex;
+    double prevPubTime = 0.0;
+    double prevLoopTime;
+    double currentLoopTime;
+    double deltaLoopTime;
     actuatorCmd.grabber_stop_cmd = 0;
     actuatorCmd.slide_pos_cmd = 1000;
     actuatorCmd.drop_pos_cmd = -1000;
@@ -110,13 +121,23 @@ int main(int argc, char** argv)
     keyframe.setGeometry(grid_map::Length(150.0, 150.0), 1.0, grid_map::Position(0.0, 0.0));
     gridMapAddLayers(MAP_KEYFRAME_LAYERS_START_INDEX, MAP_KEYFRAME_LAYERS_END_INDEX, keyframe);
 
-    ros::Rate loopRate(20);
+    ros::Rate loopRate(simRate);
+    simInfoMsg.elapsedTime = 0.0;
+    simInfoMsg.distanceDriven = 0.0;
+    simInfoMsg.angleTurned = 0.0;
+    simInfoMsg.searchesPerformed = 0;
+    simInfoMsg.samplesFound = 0;
+    prevLoopTime = ros::Time::now().toSec();
     while(ros::ok())
     {
+        currentLoopTime = ros::Time::now().toSec();
+        deltaLoopTime = currentLoopTime - prevLoopTime;
+        prevLoopTime = currentLoopTime;
+        ROS_INFO_THROTTLE(1.0,"deltaLoopTime = %f",deltaLoopTime);
         linV = linVGain*(actuatorCmd.fl_speed_cmd + actuatorCmd.fr_speed_cmd + actuatorCmd.ml_speed_cmd + actuatorCmd.mr_speed_cmd + actuatorCmd.bl_speed_cmd + actuatorCmd.br_speed_cmd);
         angV = angVGain*(actuatorCmd.fl_speed_cmd - actuatorCmd.fr_speed_cmd + actuatorCmd.ml_speed_cmd - actuatorCmd.mr_speed_cmd + actuatorCmd.bl_speed_cmd - actuatorCmd.br_speed_cmd);
-        //ROS_DEBUG("linV: %f",linV);
-        //ROS_DEBUG("angV: %f",angV);
+        ROS_INFO("linV: %f",linV);
+        ROS_INFO("angV: %f",angV);
         robotSim.drive(linV, angV);
         robotSim.runGrabber(actuatorCmd.slide_pos_cmd, actuatorCmd.drop_pos_cmd, actuatorCmd.grabber_stop_cmd, actuatorCmd.grabber_stop_cmd);
         if(robotSim.grabAttempt && !grabAttemptPrev)
@@ -132,8 +153,18 @@ int main(int argc, char** argv)
                     distanceToSample = hypot(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos);
                     if(distanceToSample<minDistanceToSample) {minDistanceToSample = distanceToSample; minDistanceToSampleIndex = i;}
                 }
-                if(!samplesGrabbed[minDistanceToSampleIndex]) {samplesGrabbed[minDistanceToSampleIndex] = true; ROS_INFO("sample %i grabbed",minDistanceToSampleIndex);}
+                if(!samplesGrabbed[minDistanceToSampleIndex])
+                {
+                    samplesGrabbed[minDistanceToSampleIndex] = true;
+                    ROS_INFO("sample %i grabbed",minDistanceToSampleIndex);
+                }
             }
+        }
+        if(!robotSim.dropStop || !robotSim.slideStop || linV!=0.0 || angV!=0.0)
+        {
+            simInfoMsg.elapsedTime += deltaLoopTime;
+            if(linV!=0.0) simInfoMsg.distanceDriven += fabs(linV)*deltaLoopTime;
+            if(angV!=0.0) simInfoMsg.angleTurned += fabs(angV)*deltaLoopTime;
         }
         grabAttemptPrev = robotSim.grabAttempt;
         navMsgOut.x_position = robotSim.xPos;
@@ -236,7 +267,8 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
         cvSamplesFoundMsgOut.sampleList.push_back(cvSampleProps);
     }
 #else
-
+    simInfoMsg.searchesPerformed++;
+    simInfoMsg.elapsedTime += cvDeltaTime;
     for(int i=0; i<NUM_SAMPLES; i++)
     {
         if(!samplesGrabbed[i])
@@ -249,7 +281,11 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
             else if(sampleProb<0.0) sampleProb = 0.0;
             if(sampleProb>0.0)
             {
-                if((static_cast<float>(rand()) / static_cast<float>(RAND_MAX))<=sampleProb) cvSampleProps.confidence = 0.9;
+                if((static_cast<float>(rand()) / static_cast<float>(RAND_MAX))<=sampleProb)
+                {
+                    cvSampleProps.confidence = 0.9;
+                    simInfoMsg.samplesFound++;
+                }
                 else cvSampleProps.confidence = 0.0;
                 cvSampleProps.distance = distanceToSample;
                 rotateCoord(sampleLocations.at(i).first - robotSim.xPos, sampleLocations.at(i).second - robotSim.yPos, sampleBodyX, sampleBodyY, fmod(robotSim.heading,360.0));

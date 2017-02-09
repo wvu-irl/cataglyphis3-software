@@ -71,9 +71,9 @@ void Exec::run()
         if(abs(robotStatus.grabberDropPos - robotOutputs.dropPosCmd) <= dropTol_) dropEnded_ = true;
         if(abs(robotStatus.grabberSlidePos - robotOutputs.slidePosCmd) <= slideTol_) slidesEnded_ = true;
     }
-    ROS_INFO("========== ============== ===========");
-    ROS_INFO("dropEnded_ = %i",dropEnded_);
-    ROS_INFO("slidesEnded_ = %i",slidesEnded_);
+    //ROS_INFO("========== ============== ===========");
+    //ROS_INFO("dropEnded_ = %i",dropEnded_);
+    //ROS_INFO("slidesEnded_ = %i",slidesEnded_);
     if(clearDequeFlag_) {actionDeque_.clear(); pauseIdle_.clearDeques();} // Clear deques
     if(clearFrontFlag_) currentActionDone_ = 1;
     if(newActionFlag_) // New action to be added to deque
@@ -94,13 +94,13 @@ void Exec::run()
     if(pause_==true && pausePrev_==false) pauseIdle_.driveHalt.init(); // Call init on driveHalt to begin possible drive hold
 	if(pause_)
 	{
-		ROS_INFO("exec pause");
+        //ROS_INFO("exec pause");
 		pauseIdle_.run(); // If pause switch is true, run pause action
 		if(pushToFrontFlag_ || (newActionFlag_ && actionDeque_.size()==1)) actionDeque_.front()->init();
 	}
     else // Else, run actions from deque
     {
-    	ROS_INFO("currentActionDone_ = %i",currentActionDone_);
+        //ROS_INFO("currentActionDone_ = %i",currentActionDone_);
         //if(actionDeque_.empty() && !actionDequeEmptyPrev_) pauseIdle_.init();
         if(actionDeque_.empty()) // Check if deque is empty
         {
@@ -143,7 +143,7 @@ void Exec::run()
     }
     nextWaypointOutPub.publish(nextWaypointMsgOut_);
     grabberStatusPub.publish(grabberStatusMsgOut_);
-    std::printf("\n");
+    //std::printf("\n");
     /*execElapsedTime_ = ros::Time::now().toSec() - execStartTime_;
     ROS_INFO("*******\nexecElapsedTime = %f",execElapsedTime_);
     for(int i=0; i<NUM_ACTIONS; i++) ROS_INFO("actionPoolIndex[%i] = %i",i,actionPoolIndex_[i]);

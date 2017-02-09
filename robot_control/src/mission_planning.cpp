@@ -161,7 +161,7 @@ void MissionPlanning::run()
 	else robotStatus.pauseSwitch = true;
     ROS_INFO_THROTTLE(3,"Mission Planning running...");
     evalConditions_();
-    ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
+    //ROS_DEBUG("robotStatus.pauseSwitch = %i",robotStatus.pauseSwitch);
     if(robotStatus.pauseSwitch || navStopRequest) runPause_();
     else runProcedures_();
     packAndPubInfoMsg_();

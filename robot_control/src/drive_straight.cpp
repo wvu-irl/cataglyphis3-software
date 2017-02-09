@@ -18,7 +18,7 @@ void DriveStraight::init()
 int DriveStraight::run()
 {
     //int temp;
-    ROS_INFO_THROTTLE(1, "drive straight running");
+    //ROS_INFO_THROTTLE(1, "drive straight running");
     //ROS_INFO("============================");
     robotOutputs.stopFlag = false;
     robotOutputs.turnFlag = false;

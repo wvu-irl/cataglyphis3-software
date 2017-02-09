@@ -85,6 +85,7 @@ find_package(catkin REQUIRED COMPONENTS
    ExecGrabberStatus.msg
    SimSampleLocations.msg
    ROIMapInfo.msg
+   SimInfo.msg
  )
 
 ## Generate services in the 'srv' folder

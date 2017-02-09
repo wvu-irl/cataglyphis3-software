@@ -24,13 +24,13 @@ void DrivePivot::init()
     yawRatePrev_ = 0.0;
     dogLegState = _monitoring;
     dogLegDetectTimeStarted_ = false;
-    ROS_DEBUG("drivePivot init");
+    //ROS_DEBUG("drivePivot init");
 }
 
 int DrivePivot::run()
 {
     //int temp;
-    ROS_INFO_THROTTLE(1,"drive pivot running");
+    //ROS_INFO_THROTTLE(1,"drive pivot running");
     //ROS_INFO("======================");
     robotOutputs.stopFlag = false;
     robotOutputs.turnFlag = true;
@@ -160,8 +160,8 @@ void DrivePivot::dogLeg_()
         else leftDeltaAverage_ = 1;
         if(rightDeltaVector_.size()>=rollingAverageSize_) rightDeltaAverage_ /= rightDeltaVector_.size();
         else rightDeltaAverage_ = 1;
-        ROS_INFO_THROTTLE(1,"left dog leg delta average = %i",leftDeltaAverage_);
-        ROS_INFO_THROTTLE(1,"right dog leg delta average = %i",rightDeltaAverage_);
+        //ROS_INFO_THROTTLE(1,"left dog leg delta average = %i",leftDeltaAverage_);
+        //ROS_INFO_THROTTLE(1,"right dog leg delta average = %i",rightDeltaAverage_);
         if((leftDeltaAverage_ > encoderDogLegTriggerValue_ || rightDeltaAverage_ > encoderDogLegTriggerValue_)
                 && !dogLegDetectTimeStarted_) {dogLegDetectTimeStarted_ = true; dogLegDetectTime_ = ros::Time::now().toSec();}
         else if((leftDeltaAverage_ <= encoderDogLegTriggerValue_ && rightDeltaAverage_ <= encoderDogLegTriggerValue_)
@@ -170,7 +170,7 @@ void DrivePivot::dogLeg_()
         else dogLegState = _monitoring;
         break;
     case _stoppingFirst:
-        ROS_INFO("dog leg detected, first stopping");
+        //ROS_INFO("dog leg detected, first stopping");
         if((ros::Time::now().toSec() - dogLegStopTime_) > dogLegStopDuration_)
         {
         	rSpeedI_ = 0.0;
@@ -184,7 +184,7 @@ void DrivePivot::dogLeg_()
         rDes_ = 0.0;
         break;
     case _recovering:
-    	ROS_INFO("dog leg recovering");
+        //ROS_INFO("dog leg recovering");
         if((ros::Time::now().toSec() - dogLegRecoverStartTime_) > dogLegRecoverDuration_)
         {
             dogLegStopTime_ = ros::Time::now().toSec();
@@ -199,7 +199,7 @@ void DrivePivot::dogLeg_()
         }
         break;
     case _stoppingSecond:
-        ROS_INFO("dog leg, second stopping");
+        //ROS_INFO("dog leg, second stopping");
     	if((ros::Time::now().toSec() - dogLegStopTime_) > dogLegStopDuration_)
     	{
     		rSpeedI_ = 0.0;

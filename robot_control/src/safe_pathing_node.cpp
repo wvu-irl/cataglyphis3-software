@@ -6,7 +6,7 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "safe_pathing_node");
 	ros::NodeHandle nh;
-	ros::Rate loop_rate(50);
+    ros::Rate loop_rate(600);
 	SafePathing safePathing;
 
 	ROS_INFO("safe_pathing_node running...");
