@@ -101,6 +101,7 @@ int main(int argc, char** argv)
         navMsgOut.nav_status = biasRemovalFinished;
         navMsgOut.homing_updated = homingUpdated;
         navMsgOut.stop_request = navStopRequest;
+        navMsgOut.nb1_good = true;
         slamPoseMsgOut.globalX = robotSim.xPos;
         slamPoseMsgOut.globalY = robotSim.yPos;
         slamPoseMsgOut.globalHeading = robotSim.heading;

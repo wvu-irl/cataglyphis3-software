@@ -18,13 +18,13 @@ public:
 
     void wheelEvent(QWheelEvent *event)
     {
-//        QPoint numDegrees = event->angleDelta();
-//        if (!numDegrees.isNull()) {
-//            QPointF numSteps = (QPointF)numDegrees / 1200.0;
-//            scale((numSteps.y()<1)?numSteps.y()+1:numSteps.y(), (numSteps.y()<1)?numSteps.y()+1:numSteps.y());
-//        }
-//        event->accept();
-        event->ignore();
+        QPoint numDegrees = event->angleDelta();
+        if (!numDegrees.isNull()) {
+            QPointF numSteps = (QPointF)numDegrees / 1200.0;
+            scale((numSteps.y()<1)?numSteps.y()+1:numSteps.y(), (numSteps.y()<1)?numSteps.y()+1:numSteps.y());
+        }
+        event->accept();
+        //event->ignore();
     }
 
 protected:

@@ -19,6 +19,7 @@ void ros_workers::_implSetup()
     qRegisterMetaType<robot_control::RegionsOfInterest>("robot_control::RegionsOfInterest");
     qRegisterMetaType<messages::GlobalMapFull>("messages::GlobalMapFull");
     qRegisterMetaType<messages::NavFilterOut>("messages::NavFilterOut");
+    qRegisterMetaType<messages::SLAMPoseOut>("messages::SLAMPoseOut");
     qRegisterMetaType<messages::RobotPose>("messages::RobotPose");
     qRegisterMetaType<map_viewer_enums::mapViewerLayers_t>("map_viewer_enums::mapViewerLayers_t");
     qRegisterMetaType<messages::SetStartingPlatform>("messages::SetStartingPlatform");
@@ -37,6 +38,10 @@ void ros_workers::_implSetup()
     navInfoTime = ros::Time::now();
     navInfoSubStarted = false;
     navInfoSub = ros::Subscriber();
+
+    slamInfoTime = ros::Time::now();
+    slamInfoSubStarted = false;
+    slamInfoSub = ros::Subscriber();
 
     hsmGlobalPoseTime = ros::Time::now();
     hsmGlobalPoseSubStarted = false;
@@ -314,6 +319,16 @@ void ros_workers::getNavInfoCallback(const messages::NavFilterOut::ConstPtr &msg
     }
 }
 
+void ros_workers::getSlamInfoCallback(const messages::SLAMPoseOut::ConstPtr &msg)
+{
+    this->lastSlamMsg = *msg;
+    if(ros::Time::now().toSec() - slamInfoTime.toSec() > SLAM_INFO_MIN_PUB_TIME)
+    {
+        slamInfoTime = ros::Time::now();
+        emit slam_info_callback(this->lastSlamMsg);
+    }
+}
+
 void ros_workers::getHSMGlobalPoseCallback(const messages::RobotPose::ConstPtr &msg)
 {
     this->lastHSMGlobalPoseMsg = *msg;
@@ -410,6 +425,29 @@ void ros_workers::on_run_nav_info_subscriber_stop()
         ROS_DEBUG("ros_workers::Stopping Nav Info subscriber");
         navInfoSubStarted = false;
         this->navInfoSub.shutdown();
+    }
+}
+
+void ros_workers::on_run_slam_info_subscriber_start()
+{
+    ROS_DEBUG("ros_workers:: Entered slam info subscriber start");
+    if(!slamInfoSubStarted)
+    {
+        slamInfoSubStarted = true;
+        ROS_DEBUG("ros_workers::Starting New subscriber");
+        this->slamInfoSub = nh->subscribe("/slam/localizationnode/slamposeout", 1,
+                                                        &ros_workers::getSlamInfoCallback, this);
+    }
+}
+
+void ros_workers::on_run_slam_info_subscriber_stop()
+{
+    ROS_DEBUG("ros_workers:: Entered slam info subscriber stop");
+    if(slamInfoSubStarted)
+    {
+        ROS_DEBUG("ros_workers::Stopping slam Info subscriber");
+        slamInfoSubStarted = false;
+        this->slamInfoSub.shutdown();
     }
 }
 

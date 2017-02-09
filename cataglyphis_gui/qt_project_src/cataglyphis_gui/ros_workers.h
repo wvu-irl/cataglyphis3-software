@@ -14,9 +14,10 @@
 #include <messages/NavFilterOut.h>
 #include <messages/NavFilterControl.h>
 
-#include <messages/HSMSetNorthAngle.h>
+//
 #include <messages/RobotPose.h>
 #include <messages/GlobalMapFull.h>
+#include <messages/SLAMPoseOut.h>
 
 #include <messages/ExecInfo.h>
 #include <messages/ExecAction.h>
@@ -35,8 +36,9 @@
 #include <exec_action_enums.h>
 
 #define ON_SERIVCE_FAILURE_RETURN_PAUSE 3
-#define NAV_INFO_MIN_PUB_TIME 1.00
-#define HSM_POSE_MIN_PUB_TIME 0.25
+#define NAV_INFO_MIN_PUB_TIME 0.01
+#define SLAM_INFO_MIN_PUB_TIME 0.01
+#define HSM_POSE_MIN_PUB_TIME 0.05
 #define EXEC_INFO_MIN_PUB_TIME 0.24
 #define MISSION_PLANNING_INFO_MIN_PUB_TIME 0.50
 #define DEFAULT_ACTION_WAIT_TIME 0.5 //seconds
@@ -68,6 +70,7 @@ signals:
                                             bool wasSucessful);
 
     void nav_info_callback(const messages::NavFilterOut navInfo);
+    void slam_info_callback(const messages::SLAMPoseOut slamInfo);
 
     void hsm_global_pose_callback(const messages::RobotPose hsmRobotPose);
 
@@ -103,6 +106,9 @@ public slots:
     void on_run_nav_info_subscriber_start();
     void on_run_nav_info_subscriber_stop();
 
+    void on_run_slam_info_subscriber_start();
+    void on_run_slam_info_subscriber_stop();
+
     void on_run_hsm_global_pose_subscriber_start();
     void on_run_hsm_global_pose_subscriber_stop();
 
@@ -117,7 +123,7 @@ private:
     ros::ServiceClient navControlClient;
 
     ros::ServiceClient hsmNAControlClient;
-    messages::HSMSetNorthAngle lastHSMNAMsg;
+    //messages::HSMSetNorthAngle lastHSMNAMsg;
 
     ros::ServiceClient mapManagerROIClient;
     robot_control::RegionsOfInterest lastROIMsg;
@@ -130,6 +136,12 @@ private:
     ros::Subscriber navInfoSub;
     messages::NavFilterOut lastNavMsg;
     void getNavInfoCallback(const messages::NavFilterOut::ConstPtr &msg);
+
+    ros::Time slamInfoTime;
+    bool slamInfoSubStarted;
+    ros::Subscriber slamInfoSub;
+    messages::SLAMPoseOut lastSlamMsg;
+    void getSlamInfoCallback(const messages::SLAMPoseOut::ConstPtr &msg);
 
     ros::Time hsmGlobalPoseTime;
     bool hsmGlobalPoseSubStarted;

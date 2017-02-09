@@ -38,6 +38,7 @@ void shift_map::on_submit_map_shift_button_clicked()
     {
         if(ui->set_platform_checkbox->isChecked())
         {
+            startingPlatformServiceRequestPtr->request.responseOnly = false;
             startingPlatformServiceRequestPtr->request.startingPlatformNum = ui->platform_button_group->checkedId();
             navControlMsg.request.setPlatform = true;
             navControlMsg.request.platformNum = ui->platform_button_group->checkedId();
