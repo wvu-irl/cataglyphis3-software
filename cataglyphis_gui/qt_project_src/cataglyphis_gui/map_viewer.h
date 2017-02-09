@@ -30,11 +30,18 @@ class map_viewer : public QWidget
 
 signals:
     void request_map_manager_ROI();
+    void run_global_map_request(map_viewer_enums::mapViewerLayers_t requestedLayer);
     void set_map_layer_visibility(map_viewer_enums::mapViewerLayers_t mapLayer, bool visibility);
     void set_scene_setup_alert(bool status);
-
+    void center_on_cataglyphis(bool status);
+    void new_path_length(int length);
+    void new_path_step_size(double stepSize);
     void confirm_map_changes();
     void discard_map_changes();
+
+public slots:
+    void on_global_map_service_returned(messages::GlobalMapFull gridMapFull, map_viewer_enums::mapViewerLayers_t requestedLayer,
+                                        bool wasSucessful);
 
 public:
     explicit map_viewer(QWidget *parent = 0, int startIndex = 0);
@@ -66,10 +73,18 @@ private slots:
 
     void on_discard_changes_button_clicked();
 
+    void on_center_on_cataglyphis_clicked(bool checked);
+
+    void on_path_length_valueChanged(int arg1);
+
+    void on_doubleSpinBox_valueChanged(double arg1);
+
 private:
     QThread rosWorkerThread;
     boost::shared_ptr<ros_workers> rosWorker;
     boost::shared_ptr<ros::NodeHandle> nh;
+
+    QPointF startPlatformPositionsPixels[10][3];
 
     const QColor defaultCircleFill;
     const QColor fullTransparentColor;

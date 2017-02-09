@@ -13,9 +13,9 @@
 
 int main(int argc, char **argv)
 {
-    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
-       ros::console::notifyLoggerLevelsChanged();
-    }
+//    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info) ) {
+//       ros::console::notifyLoggerLevelsChanged();
+//    }
     Q_INIT_RESOURCE(resources);
     ros::init(argc, argv, "GUI_Node", ros::init_options::AnonymousName);
     ROS_INFO("GUI_Node - ros::init complete");

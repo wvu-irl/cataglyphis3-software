@@ -14,6 +14,9 @@
 #include "exec_info_queue.h"
 #include "mission_planning.h"
 
+#include <QTime>
+#include <QVector2D>
+
 #include <messages/RobotPose.h>
 
 #include <ros_workers.h>
@@ -39,9 +42,14 @@ public:
 
 public slots:
     void on_hsm_global_pose_callback(const messages::RobotPose hsmRobotPose);
+    void on_update_time(double time);
 private slots:
 
+    void on_reset_distance_travelled_button_clicked();
+
 private:
+
+    messages::RobotPose lastRobotPose;
 
     boost::shared_ptr<manual_control> manualControlFormPtr;
     boost::shared_ptr<init_container> cataglyphisStartupFormPtr;

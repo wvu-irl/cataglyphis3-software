@@ -7,7 +7,7 @@ QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
     const QModelIndex &/* index */) const
 {
     ROS_DEBUG("Ading editor");
-    std::cout << "Adding editor \r\n";
+    //std::cout << "Adding editor \r\n";
     QComboBox *editor = new QComboBox(parent);
     editor->setEditable(false);
     for(int i = 0; i < comboOptions.length(); i++)
@@ -23,12 +23,12 @@ void ComboBoxDelegate::setEditorData(QWidget *editor,
                     const QModelIndex &index) const
 {
     QComboBox *comboBox = static_cast<QComboBox*>(editor);
-    std::printf("SeteditorData %d\r\n", index.data(QT_MISSION_DATA_ROLE).toInt());
+    //std::printf("SeteditorData %d\r\n", index.data(QT_MISSION_DATA_ROLE).toInt());
     comboBox->setCurrentIndex(index.data(QT_MISSION_DATA_ROLE).toInt());
     if(comboBox->currentIndex()!=0)
     {
-        std::printf("SeteditorData2 %d\r\n", index.data(QT_READ_ONLY_ROLE).toBool());
-        std::printf("SeteditorData3 %d\r\n", index.data(QT_READ_ONLY_ROLE+1).toBool());
+//        std::printf("SeteditorData2 %d\r\n", index.data(QT_READ_ONLY_ROLE).toBool());
+//        std::printf("SeteditorData3 %d\r\n", index.data(QT_READ_ONLY_ROLE+1).toBool());
         if(!index.data(QT_READ_ONLY_ROLE).toBool() && !comboBox->itemData(0,QT_READ_ONLY_ROLE+1).toBool())
         {
             comboBox->setPalette(QPalette(Qt::red));
@@ -51,9 +51,9 @@ void ComboBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
                                    const QModelIndex &index) const
 {
     QComboBox *comboBox = static_cast<QComboBox*>(editor);
-    std::printf("SetModelData %d\r\n", comboBox->currentIndex());
+    //std::printf("SetModelData %d\r\n", comboBox->currentIndex());
     model->setData(index, comboBox->currentIndex(), QT_MISSION_DATA_ROLE);
-    std::printf("SetModelData2 %d\r\n", comboBox->currentIndex());
+    //std::printf("SetModelData2 %d\r\n", comboBox->currentIndex());
     model->setData(index, comboBox->currentText(), Qt::EditRole);
 }
 

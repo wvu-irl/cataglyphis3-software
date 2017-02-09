@@ -51,7 +51,7 @@ void mission_planning_proc_model::addProcBoolColumn(std::vector<uint8_t> *data, 
 
 void mission_planning_proc_model::addProcStateColumn(messages::MissionPlanningInfo *info)
 {
-    ROS_WARN("Adding new states");
+    //ROS_WARN("Adding new states");
     for(unsigned int row = 0; row < info->procStates.size(); row++)
     {
         QModelIndex index = this->index(row, 0, QModelIndex());
