@@ -41,6 +41,7 @@ void rotateCoord(float origX, float origY, float &newX, float &newY, float angle
 
 const double simRate = 1000.0; // Hz
 const double cvDeltaTime = 2.0; // sec
+const double simInfoPubDeltaTime = 0.01; // sec
 ros::Publisher cvSamplesFoundPub;
 messages::ActuatorOut actuatorCmd;
 messages::CollisionOut collisionMsgOut;
@@ -85,7 +86,7 @@ int main(int argc, char** argv)
     cvSamplesFoundPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout", 1);
     keyframeListPub = nh.advertise<messages::KeyframeList>("/slam/keyframesnode/keyframelist", 1);
     sampleLocationsPub = nh.advertise<messages::SimSampleLocations>("/simulation/simulator/sampletruthlocations", 1);
-    simInfoPub = nh.advertise<messages::SimInfo>("/simulation/simulation/siminfo", 1);
+    simInfoPub = nh.advertise<messages::SimInfo>("/simulation/simulator/siminfo", 1);
     ros::ServiceServer cvSearchCmdServ = nh.advertiseService("/vision/samplesearch/searchforsamples", cvSearchCmdCallback);
     ros::ServiceServer createROIHazardMapServ = nh.advertiseService("/lidar/collisiondetection/createroihazardmap", createROIHazardMapCallback);
     ros::ServiceServer navControlCallbackServ = nh.advertiseService("/navigation/navigationfilter/control", navControlCallback);
@@ -127,6 +128,7 @@ int main(int argc, char** argv)
     simInfoMsg.searchesPerformed = 0;
     simInfoMsg.samplesFound = 0;
     prevLoopTime = ros::Time::now().toSec();
+
     while(ros::ok())
     {
         currentLoopTime = ros::Time::now().toSec();
@@ -155,15 +157,16 @@ int main(int argc, char** argv)
                 if(!samplesGrabbed[minDistanceToSampleIndex])
                 {
                     samplesGrabbed[minDistanceToSampleIndex] = true;
+                    simInfoMsg.samplesFound++;
                     ROS_INFO("sample %i grabbed",minDistanceToSampleIndex);
                 }
             }
         }
         if(!robotSim.dropStop || !robotSim.slideStop || linV!=0.0 || angV!=0.0)
         {
-            simInfoMsg.elapsedTime += deltaLoopTime;
-            if(linV!=0.0) simInfoMsg.distanceDriven += fabs(linV)*deltaLoopTime;
-            if(angV!=0.0) simInfoMsg.angleTurned += fabs(angV)*deltaLoopTime;
+            simInfoMsg.elapsedTime += robotSim.dt;
+            if(linV!=0.0) simInfoMsg.distanceDriven += fabs(linV)*robotSim.dt;
+            if(angV!=0.0) simInfoMsg.angleTurned += fabs(angV)*robotSim.dt;
         }
         grabAttemptPrev = robotSim.grabAttempt;
         navMsgOut.x_position = robotSim.xPos;
@@ -188,13 +191,20 @@ int main(int argc, char** argv)
         grabberMsgOut.dropStatus = robotSim.dropStop;
         nb1MsgOut.pause_switch = robotSim.nb1PauseSwitch;
         nb2MsgOut.pause_switch = robotSim.nb2PauseSwitch;
+        simInfoMsg.x = robotSim.xPos;
+        simInfoMsg.y = robotSim.yPos;
+        simInfoMsg.heading = robotSim.heading;
         navPub.publish(navMsgOut);
         slamPosePub.publish(slamPoseMsgOut);
         grabberPub.publish(grabberMsgOut);
         nb1Pub.publish(nb1MsgOut);
         nb2Pub.publish(nb2MsgOut);
         collisionPub.publish(collisionMsgOut);
-        simInfoPub.publish(simInfoMsg);
+        if((currentLoopTime - prevPubTime) >= simInfoPubDeltaTime)
+        {
+            simInfoPub.publish(simInfoMsg);
+            prevPubTime = currentLoopTime;
+        }
         biasRemovalFinished = false;
         loopRate.sleep();
         ros::spinOnce();
@@ -284,7 +294,6 @@ bool cvSearchCmdCallback(messages::CVSearchCmd::Request &req, messages::CVSearch
                 if((static_cast<float>(rand()) / static_cast<float>(RAND_MAX))<=sampleProb)
                 {
                     cvSampleProps.confidence = 0.9;
-                    simInfoMsg.samplesFound++;
                 }
                 else cvSampleProps.confidence = 0.0;
                 cvSampleProps.distance = distanceToSample;
