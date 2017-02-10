@@ -48,7 +48,7 @@ public:
 	ros::Subscriber leftRoboteqSub;
 	ros::Subscriber rightRoboteqSub;
 
-	const int loopRate = 600; // Hz
+	const int loopRate = 1000; // Hz
 	// Methods
 	Exec(); // Constructor
 	void run(); // Main run method for exec

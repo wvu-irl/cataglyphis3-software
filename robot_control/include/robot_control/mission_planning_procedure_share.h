@@ -195,7 +195,7 @@ public:
 	const float shortRecomputeActionWaitTime = 0.1; // sec
 	const float queueEmptyTimerPeriod = 30.0; // sec
 	const float roiOvertimePeriod = 120.0; // sec
-	const float giveUpROIDonutSmashProbThresh = 0.05;
+	const float giveUpROIDonutSmashProbThresh = 0.05; // Change corresponding value in map_manager.h
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;

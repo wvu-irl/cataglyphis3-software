@@ -157,6 +157,7 @@ bool MapManager::listROI(robot_control::RegionsOfInterest::Request &req, robot_c
 
 bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::ModifyROI::Response &res) // need to add more features
 {
+    bool resetROIProbs = false;
     if(req.setHardLockoutROI) regionsOfInterest.at(req.modROIIndex).hardLockout = req.hardLockoutROIState;
     if(req.setPosES && !req.setPosXY)
     {
@@ -192,6 +193,19 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
             {
                 if(regionsOfInterest.at(i).roiGroup == regionsOfInterest.at(req.modROIIndex).roiGroup) regionsOfInterest.at(i).sampleProb = req.sampleProb;
             }
+        }
+        for(int i=0; i<regionsOfInterest.size(); i++)
+        {
+            if(regionsOfInterest.at(i).sampleProb < giveUpROIDonutSmashProbThresh) resetROIProbs = true;
+            else
+            {
+                resetROIProbs = false;
+                break;
+            }
+        }
+        if(resetROIProbs)
+        {
+            for(int i=0; i<regionsOfInterest.size(); i++) regionsOfInterest.at(i).sampleProb = roiResetProbability;
         }
     }
     if(req.addNewROI)

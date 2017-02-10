@@ -3,7 +3,8 @@
 RobotSim::RobotSim(double initX, double initY, double initHeading, double simRate)
 {
 	teleport(initX, initY, initHeading);
-    dt = 1.0/simRate;
+    normalSpeedDT = 1.0/simRate;
+    dt = normalSpeedDT;
     slidePos = 1000;
     dropPos = -1000;
     slidePosCmdPrev = 1000;

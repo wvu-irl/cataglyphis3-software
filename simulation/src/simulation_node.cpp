@@ -39,8 +39,7 @@ void biasRemovalTimerCallback(const ros::TimerEvent &event);
 void setSampleLocations();
 void rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg);
 
-const double simRate = 600.0; // Hz
-const double publishPeriod = 0.02; // sec
+const double simRate = 1000.0; // Hz
 const double cvDeltaTime = 2.0; // sec
 ros::Publisher cvSamplesFoundPub;
 messages::ActuatorOut actuatorCmd;
@@ -195,6 +194,7 @@ int main(int argc, char** argv)
         nb1Pub.publish(nb1MsgOut);
         nb2Pub.publish(nb2MsgOut);
         collisionPub.publish(collisionMsgOut);
+        simInfoPub.publish(simInfoMsg);
         biasRemovalFinished = false;
         loopRate.sleep();
         ros::spinOnce();

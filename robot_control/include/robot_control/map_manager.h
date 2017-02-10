@@ -56,7 +56,7 @@
 
 //#include other maps...
 
-//#define USE_DONUT_SMASH
+#define USE_DONUT_SMASH
 //#define GREEDY_SEARCH_WAYPOINT_SELECTION
 
 class MapManager
@@ -222,6 +222,8 @@ public:
 	const float donutSmashSearchRadius = 5.0; // m
 	grid_map::Index donutSmashRobotPosIndex;
 	messages::ROIMapInfo roiMapInfoMsg;
+	const float giveUpROIDonutSmashProbThresh = 0.05; // Change corresponding value in mission_planning_procedure_share.h
+	const float roiResetProbability = 0.5;
 };
 
 #endif // MAP_MANAGER_H

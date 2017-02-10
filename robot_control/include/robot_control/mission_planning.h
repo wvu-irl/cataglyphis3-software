@@ -49,7 +49,7 @@ public:
 	ros::ServiceServer controlServ;
 	messages::MissionPlanningInfo infoMsg;
     messages::nb1_to_i7_msg nb1Msg;
-	const int loopRate = 600; // Hz
+	const int loopRate = 1000; // Hz
 	Initialize initialize;
 	EmergencyEscape emergencyEscape;
 	Avoid avoid;
