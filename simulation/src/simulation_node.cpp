@@ -23,7 +23,7 @@
 #include <random>
 
 //#define MANUAL_CV_CONTROL
-#define NUM_SAMPLES 4
+#define NUM_SAMPLES 4 // Change corresponding number in map_manager.h
 //bool roisWithSample[15] = {1,1,0,1,1,0,1,0,1,1,1,1,0,0,1};
 bool roisWithSample[7] = {1,1,0,1,1,0,0};
 
@@ -134,11 +134,11 @@ int main(int argc, char** argv)
         currentLoopTime = ros::Time::now().toSec();
         deltaLoopTime = currentLoopTime - prevLoopTime;
         prevLoopTime = currentLoopTime;
-        ROS_INFO_THROTTLE(1.0,"deltaLoopTime = %f",deltaLoopTime);
+        //ROS_INFO_THROTTLE(1.0,"deltaLoopTime = %f",deltaLoopTime);
         linV = linVGain*(actuatorCmd.fl_speed_cmd + actuatorCmd.fr_speed_cmd + actuatorCmd.ml_speed_cmd + actuatorCmd.mr_speed_cmd + actuatorCmd.bl_speed_cmd + actuatorCmd.br_speed_cmd);
         angV = angVGain*(actuatorCmd.fl_speed_cmd - actuatorCmd.fr_speed_cmd + actuatorCmd.ml_speed_cmd - actuatorCmd.mr_speed_cmd + actuatorCmd.bl_speed_cmd - actuatorCmd.br_speed_cmd);
-        ROS_INFO("linV: %f",linV);
-        ROS_INFO("angV: %f",angV);
+        //ROS_INFO("linV: %f",linV);
+        //ROS_INFO("angV: %f",angV);
         robotSim.drive(linV, angV);
         robotSim.runGrabber(actuatorCmd.slide_pos_cmd, actuatorCmd.drop_pos_cmd, actuatorCmd.grabber_stop_cmd, actuatorCmd.grabber_stop_cmd);
         if(robotSim.grabAttempt && !grabAttemptPrev)

@@ -18,6 +18,7 @@
 #include <messages/GlobalMapFull.h>
 #include <messages/SetStartingPlatform.h>
 #include <messages/ROIMapInfo.h>
+#include <messages/MissionPlanningInfo.h>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include "map_layers.h"
@@ -27,6 +28,8 @@
 #define PI 3.14159265359
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
+
+#define NUM_SAMPLES 4
 
 //#define EVANSDALE
 //#define WPI
@@ -109,6 +112,7 @@ public:
 	ros::Subscriber globalPoseSub;
 	ros::Subscriber keyframeRelPoseSub;
 	ros::Subscriber cvSamplesFoundSub;
+	ros::Subscriber missionPlanningInfoSub;
 	ros::Publisher currentROIPub;
 	ros::Publisher globalMapPub;
 	ros::Publisher searchLocalMapPub;
@@ -224,6 +228,7 @@ public:
 	messages::ROIMapInfo roiMapInfoMsg;
 	const float giveUpROIDonutSmashProbThresh = 0.05; // Change corresponding value in mission_planning_procedure_share.h
 	const float roiResetProbability = 0.5;
+	unsigned int samplesCollected = 0;
 };
 
 #endif // MAP_MANAGER_H

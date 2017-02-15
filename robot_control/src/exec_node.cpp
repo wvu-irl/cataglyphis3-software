@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 		loopRate.sleep();
         currentTime = ros::Time::now().toSec();
         deltaTime = currentTime - prevTime;
-        ROS_INFO_THROTTLE(1,"deltaTime = %f",deltaTime);
+        //ROS_INFO_THROTTLE(1,"deltaTime = %f",deltaTime);
         prevTime = currentTime;
 	}
 	return 0;

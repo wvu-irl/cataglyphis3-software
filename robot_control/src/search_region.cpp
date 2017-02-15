@@ -42,11 +42,8 @@ bool SearchRegion::runProc()
             modROISrv.request.setSampleProps = true;
             //if(currentROIIndex == 0) modROISrv.request.sampleProb = 0.0;
             /*else */
-#ifdef USE_DONUT_SMASH
-            modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb;
-#else
-            modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
-#endif // USE_DONUT_SMASH
+            //if(roiTimeExpired) modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*roiTimeExpiredNewSampleProbMultiplier;
+            /*else */modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb;
             modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
             modROISrv.request.whiteProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb;
             modROISrv.request.silverProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb;

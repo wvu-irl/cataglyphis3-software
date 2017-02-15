@@ -61,8 +61,9 @@ bool ConfirmCollect::runProc()
                 modROISrv.request.addNewROI = false;
                 modROISrv.request.deleteROI = false;
                 modROISrv.request.setSampleProps = true;
-                if(currentROIIndex==0) modROISrv.request.sampleProb = 0.0;
-                else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*sampleFoundNewROIProbMultiplier;
+                modROISrv.request.sampleProb = 0.0;
+                //if(currentROIIndex==0) modROISrv.request.sampleProb = 0.0;
+                //else modROISrv.request.sampleProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb*sampleFoundNewROIProbMultiplier;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
                 modROISrv.request.sampleSig = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleSig;
                 modROISrv.request.whiteProb = regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb;

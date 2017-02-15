@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 
 	const unsigned int endConditionNumSamples = 4;
 	const double endConditionElapsedTime = 2.0*3600.0; // 2 hr
-	const unsigned int endConditionNumRuns = 10;
+	const unsigned int endConditionNumRuns = 200;
 
 	unsigned int numRunsCompleted = 0;
 	bool continueRuns = true;
@@ -73,6 +73,7 @@ int main(int argc, char** argv)
 			break;
 		}
 		ros::spinOnce();
+		loopRate.sleep();
 	}
 	ROS_INFO("all runs complete");
 
