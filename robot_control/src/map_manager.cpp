@@ -160,6 +160,7 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
     bool resetROIProbs = false;
     float singleSampleProb;
     float singleSampleModROIProb;
+    unsigned int samplesCollectedPrev = samplesCollected;
     if(req.setHardLockoutROI) regionsOfInterest.at(req.modROIIndex).hardLockout = req.hardLockoutROIState;
     if(req.setPosES && !req.setPosXY)
     {
@@ -187,13 +188,15 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
             {
                 if(i!=req.modROIIndex)
                 {
-                    ROS_INFO("set to 0, ROI[%i] prob before = %f",i,regionsOfInterest.at(i).sampleProb);
-                    singleSampleProb = 1.0 - pow(1.0 - regionsOfInterest.at(i).sampleProb, 1.0/(NUM_SAMPLES-samplesCollected));
-                    singleSampleModROIProb = 1.0 - pow(1.0 - regionsOfInterest.at(req.modROIIndex).sampleProb, 1.0/(NUM_SAMPLES-samplesCollected));
+                    //ROS_INFO("set to 0, ROI[%i] prob before = %f",i,regionsOfInterest.at(i).sampleProb);
+                    singleSampleProb = 1.0 - pow(1.0 - regionsOfInterest.at(i).sampleProb, 1.0/(NUM_SAMPLES-samplesCollectedPrev));
+                    singleSampleModROIProb = 1.0 - pow(1.0 - regionsOfInterest.at(req.modROIIndex).sampleProb, 1.0/(NUM_SAMPLES-samplesCollectedPrev));
                     singleSampleProb = singleSampleProb/(1.0 - singleSampleModROIProb);
                     regionsOfInterest.at(i).sampleProb = 1.0 - pow(1.0 - singleSampleProb, NUM_SAMPLES-samplesCollected);
-                    ROS_INFO("set to 0, ROI[%i] prob after = %f",i,regionsOfInterest.at(i).sampleProb);
+                    //ROS_INFO("set to 0, ROI[%i] prob after = %f",i,regionsOfInterest.at(i).sampleProb);
                 }
+                //if(i==req.modROIIndex) ROS_INFO("set to 0, ROI[%i] prob after = %f ***",i,0.0);
+                //else ROS_INFO("set to 0, ROI[%i] prob after = %f",i,regionsOfInterest.at(i).sampleProb);
             }
         }
         regionsOfInterest.at(req.modROIIndex).sampleProb = req.sampleProb;
@@ -776,11 +779,23 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
             {
                 if(i!=searchLocalMapROINum)
                 {
-                    ROS_INFO("donut smash, ROI[%i] prob before = %f",i,regionsOfInterest.at(i).sampleProb);
+                    //ROS_INFO("donut smash, ROI[%i] prob before = %f",i,regionsOfInterest.at(i).sampleProb);
                     singleSampleProb = 1.0 - pow(1.0 - regionsOfInterest.at(i).sampleProb, 1.0/(NUM_SAMPLES-samplesCollected));
                     singleSampleProb = tn*singleSampleProb/Pn1;
                     regionsOfInterest.at(i).sampleProb = 1.0 - pow(1.0 - singleSampleProb, NUM_SAMPLES-samplesCollected);
-                    ROS_INFO("donut smash, ROI[%i] prob after = %f",i,regionsOfInterest.at(i).sampleProb);
+                    /*if(regionsOfInterest.at(i).sampleProb > 1.0)
+                    {
+                        ROS_ERROR("i = %i",i);
+                        ROS_ERROR("P($ in Ri) = %f",regionsOfInterest.at(i).sampleProb);
+                        ROS_ERROR("P(s in r) = %f",map.at(layerToString(_sampleProb), *donutIt));
+                        ROS_ERROR("fn = %f",fn);
+                        ROS_ERROR("tn = %f",tn);
+                        ROS_ERROR("Pn1 = %f",Pn1);
+                        ROS_ERROR("P(s in Ri) = %f",singleSampleProb);
+                        ROS_ERROR("n = %u",NUM_SAMPLES);
+                        ROS_ERROR("f = %u",samplesCollected);
+                    }*/
+                    //ROS_INFO("donut smash, ROI[%i] prob after = %f",i,regionsOfInterest.at(i).sampleProb);
                 }
             }
             //ROS_INFO("old donut cell value [%i,%i] = %f",(*donutIt)[0],(*donutIt)[1],map.at(layerToString(_sampleProb), *donutIt));
@@ -819,7 +834,14 @@ void MapManager::donutSmash(grid_map::GridMap &map, grid_map::Position pos)
     regionsOfInterest.at(searchLocalMapROINum).sampleProb = 1.0 - pow(1.0 - overallROIProb, NUM_SAMPLES-samplesCollected);
     roisModifiedListMsg.ROIList = regionsOfInterest;
     roisModifiedPub.publish(roisModifiedListMsg);
-    ROS_INFO("overall ROI prob after smash = %f",regionsOfInterest.at(searchLocalMapROINum).sampleProb);
+    //ROS_INFO("overall ROI prob after smash = %f",regionsOfInterest.at(searchLocalMapROINum).sampleProb);
+    /*ROS_INFO("+++++++++++");
+    for(int j=0; j<regionsOfInterest.size(); j++)
+    {
+        if(j==searchLocalMapROINum) ROS_INFO("donut smash, ROI[%i] prob = %f ***",j,regionsOfInterest.at(j).sampleProb);
+        else ROS_INFO("donut smash, ROI[%i] prob = %f",j,regionsOfInterest.at(j).sampleProb);
+    }
+    ROS_INFO("-----------");*/
 }
 
 void MapManager::rotateCoord(float origX, float origY, float &newX, float &newY, float angleDeg)

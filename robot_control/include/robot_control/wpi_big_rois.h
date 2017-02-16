@@ -3,7 +3,7 @@
 
 ROI.eMap = 86.9; // precached (0)
 ROI.sMap = 36.4;
-ROI.sampleProb = 4.0/7.0;
+ROI.sampleProb = 1.0 - pow(6.0/7.0,4.0);
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 20.0;
 ROI.tangentialAxis = 20.0;
@@ -21,7 +21,7 @@ ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 28.5; // 1
 ROI.sMap = 35.0;
-ROI.sampleProb = 4.0/7.0;
+ROI.sampleProb = 1.0 - pow(6.0/7.0,4.0);
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 20.0;
 ROI.tangentialAxis = 20.0;
@@ -39,7 +39,7 @@ ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 101.6; // 2 (6)
 ROI.sMap = 90.6;
-ROI.sampleProb = 4.0/7.0;
+ROI.sampleProb = 1.0 - pow(6.0/7.0,4.0);
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 10.0;
 ROI.tangentialAxis = 10.0;
@@ -57,7 +57,7 @@ ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 162.8; // 3 (9)
 ROI.sMap = 98.8;
-ROI.sampleProb = 4.0/7.0;
+ROI.sampleProb = 1.0 - pow(6.0/7.0,4.0);
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 15.0;
 ROI.tangentialAxis = 15.0;
@@ -75,7 +75,7 @@ ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 200.2; // 4 (10)
 ROI.sMap = 125.7;
-ROI.sampleProb = 4.0/7.0;
+ROI.sampleProb = 1.0 - pow(6.0/7.0,4.0);
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 20.0;
 ROI.tangentialAxis = 20.0;
@@ -93,7 +93,7 @@ ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 266.2; // 5 (13)
 ROI.sMap = 79.9;
-ROI.sampleProb = 4.0/7.0;
+ROI.sampleProb = 1.0 - pow(6.0/7.0,4.0);
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 15.0;
 ROI.tangentialAxis = 15.0;
@@ -111,7 +111,7 @@ ROI.yellowProb = 0.0;
 regionsOfInterest.push_back(ROI);
 ROI.eMap = 280.3; // 6 (15)
 ROI.sMap = 48.0;
-ROI.sampleProb = 4.0/7.0;
+ROI.sampleProb = 1.0 - pow(6.0/7.0,4.0);
 ROI.sampleSig = 10.0;
 ROI.radialAxis = 12.0;
 ROI.tangentialAxis = 12.0;
