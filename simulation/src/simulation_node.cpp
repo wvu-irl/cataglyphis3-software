@@ -23,9 +23,9 @@
 #include <random>
 
 //#define MANUAL_CV_CONTROL
-#define NUM_SAMPLES 4 // Change corresponding number in map_manager.h
+#define NUM_SAMPLES 5 // Change corresponding number in map_manager.h
 //bool roisWithSample[15] = {1,1,0,1,1,0,1,0,1,1,1,1,0,0,1};
-bool roisWithSample[7] = {1,1,0,1,1,0,0};
+bool roisWithSample[10] = {1,0,0,0,0,1,1,1,1,0};
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);
@@ -384,11 +384,14 @@ void setSampleLocations()
     float angleToROI;
     int roiListLen = roiList.ROIList.size();
     int j=0;
-    const float biasStdDev = 6.0; // m
-    const float biasMaxDist = 8.0; // m
+    //const float biasStdDev = 6.0; // m
+    const float biasStdDev = 3.0; // m
+    //const float biasMaxDist = 8.0; // m
+    const float biasMaxDist = 4.0; // m
     float biasXLocal;
     float biasYLocal;
-    const float samplePlacementStdDev = 12.0;
+    //const float samplePlacementStdDev = 12.0;
+    const float samplePlacementStdDev = 4.0;
     unsigned biasSeed = std::chrono::system_clock::now().time_since_epoch().count();
     bool keepFindingRandomBias = true;
     bool keepFindingSamplePos = true;

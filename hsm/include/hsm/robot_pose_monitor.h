@@ -17,7 +17,8 @@ public:
 	messages::NavFilterOut navMsg;
 	messages::SLAMPoseOut slamMsg;
 	ros::Timer poseMonitorTimer;
-	const float poseMonitorPeriod = 0.001; // 1000 Hz
+    //const float poseMonitorPeriod = 0.001; // 1000 Hz
+    const float poseMonitorPeriod = 0.05; // 20 Hz
 	float navFilterConf;
 	float slamConf;
 	float navSolutionError;

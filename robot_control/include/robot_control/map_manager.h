@@ -29,11 +29,11 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#define NUM_SAMPLES 4
+#define NUM_SAMPLES 6
 
-//#define EVANSDALE
+#define EVANSDALE
 //#define WPI
-#define WPI_BIG
+//#define WPI_BIG
 //#define TEST_FIELD
 //#define CHESTNUT_RIDGE
 
@@ -60,7 +60,7 @@
 //#include other maps...
 
 #define USE_DONUT_SMASH
-//#define GREEDY_SEARCH_WAYPOINT_SELECTION
+#define GREEDY_SEARCH_WAYPOINT_SELECTION
 
 class MapManager
 {

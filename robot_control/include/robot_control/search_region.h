@@ -2,7 +2,7 @@
 #define SEARCH_REGION_H
 #include "procedure.h"
 
-//#define SINGLE_SEARCH_WAYPOINT
+#define SINGLE_SEARCH_WAYPOINT
 
 class SearchRegion : public Procedure
 {

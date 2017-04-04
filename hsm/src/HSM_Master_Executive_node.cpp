@@ -12,7 +12,8 @@ int main(int argc, char **argv)
 	ros::Publisher master_status_pub = nh.advertise<messages::MasterStatus>("hsm/masterexecutive/masterstatus",1);
 	messages::MasterStatus master_status_msg;
 	
-    ros::Rate loop_rate(1000);
+    //ros::Rate loop_rate(1000);
+    ros::Rate loop_rate(50);
 
     //Comm_Monitor_class comm_monitor;
 	Escape_Monitor_class escape_monitor;
