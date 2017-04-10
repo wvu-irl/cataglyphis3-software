@@ -29,7 +29,7 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 
-#define NUM_SAMPLES 6
+#define NUM_SAMPLES 10
 
 #define EVANSDALE
 //#define WPI
