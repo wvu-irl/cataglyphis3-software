@@ -50,7 +50,10 @@ MapManager::MapManager()
 //#include <robot_control/evansdale_library_rois.h>
 
 // Full set of ROIs covering Evansdale in front of library and engineering
-#include <robot_control/evansdale_full_rois.h>
+//#include <robot_control/evansdale_full_rois.h>
+
+// Repeated ROIS from ERB to library area for Easter Egg Hunt
+#include <robot_control/evansdale_easter_rois.h>
 #endif // EVANSDALE
 
 #ifdef WPI
