@@ -75,6 +75,10 @@ MapManager::MapManager()
 #include <robot_control/chestnut_ridge_rois.h>
 #endif // CHESTNUT_RIDGE
 
+#ifdef FAIRMONT_ISR
+#include <robot_control/fairmont_isr_rois.h>
+#endif // FAIRMONT_ISR
+
     computeROIEastSouth();
 
 	// ***********************************

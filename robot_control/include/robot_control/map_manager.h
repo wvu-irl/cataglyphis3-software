@@ -31,11 +31,12 @@
 
 #define NUM_SAMPLES 10
 
-#define EVANSDALE
+//#define EVANSDALE
 //#define WPI
 //#define WPI_BIG
 //#define TEST_FIELD
 //#define CHESTNUT_RIDGE
+#define FAIRMONT_ISR
 
 #ifdef EVANSDALE
 #include "evansdale_map.h"
@@ -56,6 +57,10 @@
 #ifdef CHESTNUT_RIDGE
 #include "chestnut_ridge_map.h"
 #endif // CHESTNUT_RIDGE
+
+#ifdef FAIRMONT_ISR
+#include "fairmont_isr_map.h"
+#endif // FAIRMONT_ISR
 
 //#include other maps...
 
