@@ -186,7 +186,7 @@ bool MapManager::modROI(robot_control::ModifyROI::Request &req, robot_control::M
         regionsOfInterest.at(req.modROIIndex).radialAxis = req.radialAxis;
         regionsOfInterest.at(req.modROIIndex).tangentialAxis = req.tangentialAxis;
     }
-    if(req.setSampleProps)
+    if(/*req.setSampleProps*/0) // TODO: remove this; temporary addition for only going to one ROI at a time
     {
         if(req.sampleProb == 0.0)
         {
