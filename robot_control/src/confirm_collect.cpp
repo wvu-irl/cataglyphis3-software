@@ -54,6 +54,10 @@ bool ConfirmCollect::runProc()
                 searchMapSrv.request.deleteMap = true;
                 if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
                 else ROS_ERROR("searchMap service call unsuccessful");
+#ifdef DONUT_SMASHING_V2
+                // TODO: somehow set observedSampleXPos and observedSampleYPos in map coordinates, not homing beacon coordinates
+                mapManager.setSampleFoundCells(observedSampleXPos, observedSampleYPos, samplesCollected+1);
+#else
                 // Set ROI to searched
                 modROISrv.request.setHardLockoutROI = false;
                 modROISrv.request.hardLockoutROIState = false;
@@ -77,6 +81,7 @@ bool ConfirmCollect::runProc()
                 if(modROIClient.call(modROISrv)) ROS_DEBUG("modify ROI service call successful");
                 else ROS_ERROR("modify ROI service call unsuccessful");
                 roiKeyframed = false;
+#endif // DONUT_SMASHING_V2
 				state = _finish_;
 			}
 			else

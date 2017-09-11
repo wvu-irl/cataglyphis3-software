@@ -151,10 +151,99 @@ MissionPlanning::MissionPlanning()
         //ROS_INFO("procsToInterrupt.at(i) = %d",procsToInterrupt.at(i));
         //ROS_INFO("procsBeingExecuted.at(i) = %d",procsBeingExecuted.at(i));
     }
+#ifdef DONUT_SMASHING_V2
+    int roiNum;
+    float cellXPos;
+    float cellYPos;
+    double computedProb;
+    double totalProb = 0.0;
+    float bestROIMaxDiameter = 0.0;
+    chooseAnotherROI = false;
+    CELL_DATA_T roiCellToPushBack;
+    numROIVisits.resize(NUM_ROIS, 0);
+    // Initialize ROI locations
+    roiLocations.push_back(ROI_DATA_T{38.0, 43.0, 30.0}); // ROI 0
+    roiLocations.push_back(ROI_DATA_T{138.0, 69.0, 30.0}); // ROI 1
+    roiLocations.push_back(ROI_DATA_T{167.0, 140.0, 30.0}); // ROI 2
+    roiLocations.push_back(ROI_DATA_T{215.0, 130.0, 30.0}); // ROI 3
+    // Compute ROI areas
+    for(int i=0; i<NUM_ROIS; i++)
+    {
+        roiLocations.at(i).area = PI*pow(roiLocations.at(i).diameter/2.0, 2.0);
+    }
+    // Compute max diameter squared and max map distance for use in utility functions later
+    maxMapDistance = hypot(MAP_X_LENGTH, MAP_Y_LENGTH);
+    for(int i=0; i<roiLocations.size(); i++)
+    {
+        if(roiLocations.at(i).diameter > bestROIMaxDiameter)
+        {
+            bestROIMaxDiameter = roiLocations.at(i).diameter;
+        }
+    }
+    maxROIDiameterSquared = pow(bestROIMaxDiameter, 2.0);
+    // Label cells in map according to the ROI they belong to, and store indices of ROI cells for faster use in later computations
+    roiCells.resize(NUM_ROIS);
+    for(int i=0; i<mapManager.map.xSize; i++)
+    {
+        for(int j=0; j<mapManager.map.ySize; j++)
+        {
+            mapManager.map.getPos(cellXPos, cellYPos, i, j);
+            mapManager.map.atIndex(i,j).roiNum = -1; // Initially assume that cell is in no ROI. If it is, this will get overwritten in the following loop
+            for(int k=0; k<NUM_ROIS; k++)
+            {
+                // If the cell is inside the ROI, label it as that ROI. Otherwise, let it remain labeled as -1, indicating no ROI
+                if(hypot(cellXPos - roiLocations.at(k).xPos, cellYPos - roiLocations.at(k).yPos) <= (roiLocations.at(k).diameter/2.0))
+                {
+                    mapManager.map.atIndex(i,j).roiNum = k;
+                    roiCellToPushBack.xIndex = i;
+                    roiCellToPushBack.yIndex = j;
+                    roiCellToPushBack.xPos = cellXPos;
+                    roiCellToPushBack.yPos = cellYPos;
+                    roiCells.at(k).push_back(roiCellToPushBack);
+                }
+            }
+        }
+    }
+    // Populate cells in map with initial probability distributions based on ROI locations.
+    for(int i=0; i<mapManager.map.xSize; i++)
+    {
+        for(int j=0; j<mapManager.map.ySize; j++)
+        {
+            if(mapManager.map.atIndex(i,j).roiNum >= 0) // If cell is in an ROI, compute any sample prob value based on cell's position
+            {
+                mapManager.map.getPos(cellXPos, cellYPos, i, j);
+                roiNum = mapManager.map.atIndex(i,j).roiNum;
+                computedProb = exp(-(pow(cellXPos - roiLocations.at(roiNum).xPos, 2.0)/(2.0*pow(SAMPLE_PLACEMENT_STD_DEV_PERCENT_DIAMETER*roiLocations.at(roiNum).diameter, 2.0)) + pow(cellYPos - roiLocations.at(roiNum).yPos, 2.0)/(2.0*pow(SAMPLE_PLACEMENT_STD_DEV_PERCENT_DIAMETER*roiLocations.at(roiNum).diameter, 2.0))));
+            }
+            else // If it is outside an ROI, set the probability to zero
+            {
+                computedProb = 0.0;
+            }
+            mapManager.setSSProb(i, j, computedProb, global.results.numSamplesFound);
+            totalProb += computedProb; // Increment total probability in map so that the entire map can be normalized in the next step
+        }
+    }
+    // Normalize the any sample probability values so that the entire map adds up to a probability of one
+    for(int i=0; i<mapManager.map.xSize; i++)
+    {
+        for(int j=0; j<mapManager.map.ySize; j++)
+        {
+            if(mapManager.getSSProb(i,j) > 0.0) // Only bother doing this operation if the cell has non-zero probability. Most in the map won't
+            {
+                computedProb = mapManager.getSSProb(i,j)/totalProb;
+                mapManager.setSSProb(i, j, computedProb, global.results.numSamplesFound);
+            }
+        }
+    }
+#endif // DONUT_SMASHING_V2
 }
 
 void MissionPlanning::run()
 {
+    // TODO: transform this pose based on north angle and map offset
+    global.xPos = robotStatus.xPos;
+    global.yPos = robotStatus.yPos;
+    global.heading = robotStatus.heading*DEG2RAD;
 	if(nb1Good && nb2Good) robotStatus.pauseSwitch = nb1Pause || nb2Pause;
 	else if(nb1Good && !nb2Good) robotStatus.pauseSwitch = nb1Pause;
 	else if(!nb1Good && nb2Good) robotStatus.pauseSwitch = nb2Pause;
@@ -687,6 +776,7 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
     cvSamplesFoundMsg = *msg;
     ROS_INFO("+++cvSamplesCallback_+++");
     ROS_INFO("sampleList size = %u",cvSamplesFoundMsg.sampleList.size());
+    cvObservation.resize(cvSamplesFoundMsg.sampleList.size());
     if(cvSamplesFoundMsg.sampleList.size()>0)
     {
         for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
@@ -702,8 +792,19 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
             ROS_INFO("red = %i",cvSamplesFoundMsg.sampleList.at(i).red);
             ROS_INFO("oragne = %i",cvSamplesFoundMsg.sampleList.at(i).orange);
             ROS_INFO("yellow = %i",cvSamplesFoundMsg.sampleList.at(i).yellow);
+#ifdef DONUT_SMASHING_V2
+            cvObservation.at(i).distance = cvSamplesFoundMsg.sampleList.at(i).distance;
+            cvObservation.at(i).bearing = cvSamplesFoundMsg.sampleList.at(i).bearing*DEG2RAD;
+#endif // DONUT_SMASHING_V2
         }
     }
+#ifdef DONUT_SMASHING_V2
+    if(!procsBeingExecuted[__confirmCollect__])
+    {
+        mapManager.selectDonutCells(cvObservation);
+        mapManager.donutSmash(samplesCollected);
+    }
+#endif // DONUT_SMASHING_V2
     initialize.findHighestConfSample();
     if(sampleHistoryActive) initialize.sampleHistoryNewData(highestConfSample.confidence, highestConfSample.types);
     else initialize.startSampleHistory(highestConfSample.confidence, highestConfSample.types);

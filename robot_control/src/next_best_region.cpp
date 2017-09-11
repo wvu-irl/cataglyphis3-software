@@ -61,8 +61,43 @@ bool NextBestRegion::runProc()
             }
         }
         roiHardLockoutSum = 0;
-		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
+#ifdef DONUT_SMASHING_V2
+        double roiOverallProb[NUM_ROIS] = {0.0};
+        double roiValue[NUM_ROIS];
+        double bestROIValue = 0.0;
+        int bestROIIndex = 0;
+        // Compute ROI overall probabilities
+        // Loop over all cells and add up probabilities in each ROI
+        for(int i=0; i<NUM_ROIS; i++)
         {
+            for(int j=0; j<roiCells.at(i).size(); j++)
+            {
+                // Add this cell's value to that ROI's overall probability
+                roiOverallProb[i] += mapManager.getASProb(roiCells.at(i).at(j));
+            }
+        }
+        // Compute the value of each ROI. Choose to go to the one with the highest value, that isn't the one that was just searched. Trying to maximize the expected number of samples collected per time
+        for(int i=0; i<NUM_ROIS; i++)
+        {
+            computeDriveManeuver(roiLocations.at(i).xPos, roiLocations.at(i).yPos);
+            #ifdef PERFORM_DONUT_SMASH
+            roiValue[i] = roiOverallProb[i]/(roiLocations.at(i).area/(global.searchRadius*2.0)/driveSpeed + hypot(roiLocations.at(i).xPos - global.xPos, roiLocations.at(i).yPos - global.yPos)/driveSpeed + angleToTurn_/turnSpeed);
+            #else
+            roiValue[i] = ((double)(MAX_EXPECTED_ROI_VISITS - numROIVisits.at(i)))*roiOverallProb[i]/(roiLocations.at(i).area/(global.searchRadius*2.0)/driveSpeed + hypot(roiLocations.at(i).xPos - global.xPos, roiLocations.at(i).yPos - global.yPos)/driveSpeed + angleToTurn_/turnSpeed);
+            #endif
+            if(roiValue[i] > bestROIValue && i!=roiToVisit)
+            {
+                bestROIValue = roiValue[i];
+                bestROIIndex = i;
+            }
+        }
+        // Set the driving location goal to the center of the best ROI
+        roiToVisit = bestROIIndex;
+        bestROINum = bestROIIndex;
+        numROIVisits.at(roiToVisit)++;
+#else
+		for(int i=0; i < regionsOfInterestSrv.response.ROIList.size(); i++)
+        {    
             roiValue = sampleProbGain*regionsOfInterestSrv.response.ROIList.at(i).sampleProb +
                         sampleSigGain*regionsOfInterestSrv.response.ROIList.at(i).sampleSig -
                         distanceGain*(hypot(regionsOfInterestSrv.response.ROIList.at(i).x - robotStatus.xPos,
@@ -84,6 +119,7 @@ bool NextBestRegion::runProc()
             if(roiValue > bestROIValue) {bestROINum = i; bestROIValue = roiValue;}
             roiHardLockoutSum += regionsOfInterestSrv.response.ROIList.at(i).hardLockout;
         }
+#endif // DONUT_SMASHING_V2
         if(roiHardLockoutSum < regionsOfInterestSrv.response.ROIList.size())
         {
             // Call service to drive to center of the chosen region

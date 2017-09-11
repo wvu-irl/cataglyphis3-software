@@ -17,6 +17,226 @@ bool SearchRegion::runProc()
 		prevAvoidCountDecYPos = robotStatus.yPos;
 		examineCount = 0;
 		confirmCollectFailedCount = 0;
+#ifdef DONUT_SMASHING_V2
+        double roiOverallProb[NUM_ROIS] = {0.0};
+        double roiValue[NUM_ROIS];
+        double bestROIValue = 0.0;
+        int bestROIIndex = 0;
+        // Compute ROI overall probabilities
+        // Loop over all cells and add up probabilities in each ROI
+        for(int i=0; i<NUM_ROIS; i++)
+        {
+            for(int j=0; j<roiCells.at(i).size(); j++)
+            {
+                // Add this cell's value to that ROI's overall probability
+                roiOverallProb[i] += mapManager.getASProb(roiCells.at(i).at(j));
+            }
+        }
+    #ifdef USE_EXPECTED_SAMPLES_PER_TIME_ROI_TERMINATION_COND
+        // Compute the value of each ROI. Trying to maximize the expected number of samples collected per time
+        for(int i=0; i<NUM_ROIS; i++)
+        {
+            if(i==roiToVisit) // If ROI is the current ROI, use the value function that doesn't incorporate driving distance
+            {
+                roiValue[i] = roiOverallProb[i]/(roiLocations.at(i).area/(global.searchRadius*2.0)/driveSpeed);
+            }
+            else // If it is one of the others, use the value function that incorporates the driving distance and turning angle
+            {
+                computeDriveManeuver(roiLocations.at(i).xPos, roiLocations.at(i).yPos);
+                roiValue[i] = roiOverallProb[i]/(roiLocations.at(i).area/(global.searchRadius*2.0)/driveSpeed + hypot(roiLocations.at(i).xPos - global.xPos, roiLocations.at(i).yPos - global.yPos)/driveSpeed + angleToTurn_/turnSpeed);
+            }
+            if(roiValue[i] > bestROIValue && i!=roiToVisit)
+            {
+                bestROIValue = roiValue[i];
+                bestROIIndex = i;
+            }
+            irlPrint("roiValue[%i] = %f, current ROI = %i\n",i,roiValue[i],roiToVisit);
+            irlPrint("roiOverallProb[%i] = %f, search time = %f, distance time = %f\n",i,roiOverallProb[i],roiLocations.at(i).area/(global.searchRadius*2.0)/driveSpeed,hypot(roiLocations.at(i).xPos - global.xPos, roiLocations.at(i).yPos - global.yPos)/driveSpeed);
+        }
+        // If the current ROI is not the one with the highest value, indicate that another one should be chosen
+        if(bestROIIndex != roiToVisit)
+        {
+            chooseAnotherROI = true;
+        }
+        else
+        {
+            chooseAnotherROI = false;
+        }
+    #endif
+    #ifdef USE_PROB_REMAINING_IN_ROI_TERMINATION_COND
+        if(roiOverallProb[roiToVisit] < MIN_PROB_REMAINING_IN_ROI)
+        {
+            chooseAnotherROI = true;
+        }
+        else
+        {
+            chooseAnotherROI = false;
+        }
+    #endif
+    #ifdef USE_FIXED_TIME_ROI_TERMINATION_COND
+        // TODO: record time in different way. Also update other places where time like this is used
+        if(global.results.timeElapsed - roiStartTime > ROI_MAX_SEARCH_TIME)
+        {
+            chooseAnotherROI = true;
+        }
+        else
+        {
+            chooseAnotherROI = false;
+        }
+    #endif // USE_FIXED_TIME_ROI_TERMINATION_COND
+    if(chooseAnotherROI)
+    {
+        roiTimeExpired = false;
+        timers[_roiTimer_]->stop();
+        inSearchableRegion = false;
+        // Delete searchLocalMap
+        searchMapSrv.request.createMap = false;
+        searchMapSrv.request.deleteMap = true;
+        if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
+        else ROS_ERROR("searchMap service call unsuccessful");
+        roiKeyframed = false;
+        if(roiTimeExpired) ROS_WARN("roiTimeExpired........");
+        if((regionsOfInterestSrv.response.ROIList.at(currentROIIndex).sampleProb < giveUpROIDonutSmashProbThresh)) ROS_WARN("roi sample prob below threshold");
+        state = _finish_;
+    }
+    #ifdef GREEDY_SEARCH
+    size_t bestCellXIndex = 0;
+    size_t bestCellYIndex = 0;
+    float bestCellXPos;
+    float bestCellYPos;
+    double bestCellValue = 0.0;
+    double cellValue;
+    float cellXPos;
+    float cellYPos;
+    float contributingCellXPos;
+    float contributingCellYPos;
+    float distanceToContributingCell;
+    // Find cell with max weighted sum of of the probabilities visible cells around it
+    // Loop over all cells in the current ROI to find cells visible by computer vision search
+    for(int i=0; i<roiCells.at(roiToVisit).size(); i++)
+    {
+        cellXPos = roiCells.at(roiToVisit).at(i).xPos;
+        cellYPos = roiCells.at(roiToVisit).at(i).yPos;
+        // Loop over all other cells in ROI to compute value of current cell
+        cellValue = 0.0;
+        for(int j=0; j<roiCells.at(roiToVisit).size(); j++)
+        {
+            // Only adds value if inside the visible search radius and is not the same cell being evaluated
+            if(j!=i)
+            {
+                contributingCellXPos = roiCells.at(roiToVisit).at(j).xPos;
+                contributingCellYPos = roiCells.at(roiToVisit).at(j).yPos;
+                distanceToContributingCell = hypot(cellXPos - contributingCellXPos, cellYPos - contributingCellYPos);
+                if(distanceToContributingCell <= global.searchRadius)
+                {
+                    cellValue += mapManager.getASProb(contributingCellXPos,contributingCellYPos)*global.tpMax*(1.0 - pow(distanceToContributingCell/global.searchRadius, 2.0));
+                }
+            }
+        }
+        // If this cell is has a higher value than the best cell found so far, update this cell to be the new best
+        if(cellValue > bestCellValue)
+        {
+            bestCellValue = cellValue;
+            bestCellXIndex = roiCells.at(roiToVisit).at(i).xIndex;
+            bestCellYIndex = roiCells.at(roiToVisit).at(i).yIndex;
+        }
+    }
+    // After considering all cells, choose the one with the highest value as the next one to drive to
+    mapManager.map.getPos(bestCellXPos, bestCellYPos, bestCellXIndex, bestCellYIndex);
+    // TODO: convert bestCellXPos and bestCellYPos into homing beacon centered coordinates and put into waypointsToTravel
+    sendDriveAndSearch();
+    state = _exec_;
+    #endif // GREEDY_SEARCH
+    #ifdef WEIGHTED_RANDOM_SEARCH
+    size_t chosenCellXIndex = 0;
+    size_t chosenCellYIndex = 0;
+    size_t cellToVisitXIndex = roiCells.at(roiToVisit).at(0).xIndex;
+    size_t cellToVisitYIndex = roiCells.at(roiToVisit).at(0).yIndex;
+    size_t numCellsInROI = roiCells.at(roiToVisit).size();
+    double singleCellValue;
+    double cellValues[numCellsInROI] = {0.0};
+    double totalCellValues = 0.0;
+    double randomValue;
+    double lowerValue;
+    double upperValue;
+    size_t robotCellXIndex;
+    size_t robotCellYIndex;
+    float cellXPos;
+    float cellYPos;
+    float contributingCellXPos;
+    float contributingCellYPos;
+    float distanceToContributingCell;
+    mapManager.map.getIndex(robotCellXIndex, robotCellYIndex, global.xPos, global.yPos);
+    // Compute cell values
+    for(int i=0; i<numCellsInROI; i++)
+    {
+        cellXPos = roiCells.at(roiToVisit).at(i).xPos;
+        cellYPos = roiCells.at(roiToVisit).at(i).yPos;
+        singleCellValue = 0.0;
+        for(int j=0; j<roiCells.at(roiToVisit).size(); j++)
+        {
+            // Only adds value if inside the visible search radius and is not the same cell being evaluated
+            if(j!=i)
+            {
+                contributingCellXPos = roiCells.at(roiToVisit).at(j).xPos;
+                contributingCellYPos = roiCells.at(roiToVisit).at(j).yPos;
+                distanceToContributingCell = hypot(cellXPos - contributingCellXPos, cellYPos - contributingCellYPos);
+                if(distanceToContributingCell <= global.searchRadius)
+                {
+                    singleCellValue += mapManager.getASProb(contributingCellXPos,contributingCellYPos)*global.tpMax*(1.0 - pow(distanceToContributingCell/global.searchRadius, 2.0));
+                }
+            }
+        }
+        if(i<1)
+        {
+            if(roiCells.at(roiToVisit).at(i).xIndex != robotCellXIndex || roiCells.at(roiToVisit).at(i).yIndex != robotCellYIndex)
+            {
+                cellValues[i] = singleCellValue;
+                totalCellValues += singleCellValue;
+            }
+            else
+            {
+                cellValues[i] = 0.0;
+            }
+        }
+        else
+        {
+            if(roiCells.at(roiToVisit).at(i).xIndex != robotCellXIndex || roiCells.at(roiToVisit).at(i).yIndex != robotCellYIndex)
+            {
+                cellValues[i] = singleCellValue + cellValues[i-1];
+                totalCellValues += singleCellValue;
+            }
+            else
+            {
+                cellValues[i] = cellValues[i-1];
+            }
+        }
+    }
+    // Normalize cell values
+    for(int i=0; i<numCellsInROI; i++)
+    {
+        cellValues[i] /= totalCellValues;
+    }
+    // Choose a random number from 0 to 1 and see which range of values it lands between to determine which grid cell to visit next
+    randomValue = zeroToOneUniformDistribution(randGenerator);
+    for(int i=0; i<numCellsInROI; i++)
+    {
+        if(i<1) lowerValue = -0.01;
+        else lowerValue = cellValues[i-1];
+        upperValue = cellValues[i];
+        if(randomValue > lowerValue && randomValue <= upperValue)
+        {
+            cellToVisitXIndex = roiCells.at(roiToVisit).at(i).xIndex;
+            cellToVisitYIndex = roiCells.at(roiToVisit).at(i).yIndex;
+            break;
+        }
+    }
+    mapManager.map.getPos(bestCellXPos, bestCellYPos, cellToVisitXIndex, cellToVisitYIndex);
+    // TODO: convert bestCellXPos and bestCellYPos into homing beacon centered coordinates and put into waypointsToTravel
+    sendDriveAndSearch();
+    state = _exec_;
+    #endif // WEIGHTED_RANDOM_SEARCH
+#else
 		if(!roiKeyframed) // check if ROI is not yet keyframed
 		{
 			ROS_INFO("ROI not keyframed");
@@ -87,6 +307,7 @@ bool SearchRegion::runProc()
             sendDriveAndSearch();
 			state = _exec_;
 		}
+#endif // DONUT_SMASHING_V2
 		computeDriveSpeeds();
         resetQueueEmptyCondition();
 		break;

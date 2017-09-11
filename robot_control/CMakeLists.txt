@@ -160,6 +160,7 @@ include_directories(
  add_library(deposit_sample src/deposit_sample.cpp)
  add_library(safe_mode src/safe_mode.cpp)
  add_library(sos_mode src/sos_mode.cpp)
+ add_library(donut_map_manager src/donut_map_manager.cpp)
  
  add_library(safe_pathing src/safe_pathing.cpp)
 
@@ -219,6 +220,7 @@ include_directories(
  
  target_link_libraries(mission_planning_node
    ${catkin_LIBRARIES}
+   donut_map_manager
    mission_planning
    pause
    initialize

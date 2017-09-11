@@ -45,14 +45,31 @@ int DriveGlobal::run()
 
 void DriveGlobal::calculatePath_()
 {
+    double cross_, dot_;
 	xErr_ = desiredX_-robotStatus.xPos;
 	yErr_ = desiredY_-robotStatus.yPos;
 	uXDes_ = xErr_/hypot(xErr_,yErr_);
 	uYDes_ = yErr_/hypot(xErr_,yErr_);
 	uXAct_ = cos(robotStatus.heading*PI/180.0);
 	uYAct_ = sin(robotStatus.heading*PI/180.0);
-	if(asin(uXAct_*uYDes_-uXDes_*uYAct_)>=0) newHeadingSign_ = 1.0;
-	else newHeadingSign_ = -1.0;
-	angleToTurn_ = (180.0/PI)*(newHeadingSign_)*acos(uXAct_*uXDes_+uYAct_*uYDes_);
-	distanceToDrive_ = hypot(xErr_,yErr_);
+    if(fabs(xErr_) <= 0.01 && fabs(yErr_) <= 0.01)
+    {
+        angleToTurn_ = 0.0;
+        assert(!isnanf(angleToTurn_));
+    }
+    else
+    {
+        cross_ = uXAct_*uYDes_-uXDes_*uYAct_;
+        if(cross_>1.0) cross_ = 1.0;
+        else if(cross_<-1.0) cross_ = -1.0;
+        if(asin(cross_)>=0) newHeadingSign_ = 1.0;
+        else newHeadingSign_ = -1.0;
+        dot_ = uXAct_*uXDes_+uYAct_*uYDes_;
+        if(dot_>1.0) dot_ = 1.0;
+        else if(dot_<-1.0) dot_ = -1.0;
+        angleToTurn_ = (newHeadingSign_)*acos(dot_)*180.0/PI;
+        assert(!isnanf(angleToTurn_));
+    }
+    assert(!isnanf(angleToTurn_));
+    distanceToDrive_ = hypot(xErr_,yErr_);
 }

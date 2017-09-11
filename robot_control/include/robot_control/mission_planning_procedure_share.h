@@ -27,6 +27,53 @@
 #include <math.h>
 #include <time.h>
 #include "mission_planning_types_defines.h"
+#include "donut_map_manager.hpp"
+#include "global_vars.hpp"
+
+#define DONUT_SMASHING_V2
+
+#ifdef DONUT_SMASHING_V2
+
+	#define NUM_ROIS 4
+	#define TOTAL_NUM_SAMPLES 7
+	#define SAMPLE_PLACEMENT_STD_DEV_PERCENT_DIAMETER 0.5
+	#define SAMPLE_PLACEMENT_MIN_DISTANCE 2.0 // m
+	#define POSITIVE_SAMPLE_FOUND_THRESHOLD 0.95
+	#define MIN_PROB_REMAINING_IN_ROI 0.05
+	#define MAX_EXPECTED_ROI_VISITS 10
+
+	// Choose the search location planning heuristic. Only enable one of these at a time.
+	#define GREEDY_SEARCH
+	//#define WEIGHTED_RANDOM_SEARCH
+
+	// Choose to use the donut smash update or not
+	#define PERFORM_DONUT_SMASH
+
+	// Use highest probability left in ROI termination condition or time based termination condtion for choosing to give up an ROI
+	#ifdef PERFORM_DONUT_SMASH
+	//#define USE_EXPECTED_SAMPLES_PER_TIME_ROI_TERMINATION_COND
+	#define USE_PROB_REMAINING_IN_ROI_TERMINATION_COND
+	#else
+	#define USE_FIXED_TIME_ROI_TERMINATION_COND
+	#endif // PERFORM_DONUT_SMASH
+
+	// Set the maximum time to stay in an ROI if using the fixed time termination condition
+	#define ROI_MAX_SEARCH_TIME 600.0 // sec = 10 mins
+
+	// Set map dimensions and resolution
+	#define MAP_X_LENGTH 250.0 // m
+	#define MAP_Y_LENGTH 163.0 // m
+	#define MAP_RESOLUTION 1.0 // m/cell
+
+	struct ROI_DATA_T
+	{
+		float xPos;
+		float yPos;
+		float diameter;
+		float area;
+	};
+
+#endif // DONUT_SMASHING_V2
 
 class MissionPlanningProcedureShare
 {
@@ -196,6 +243,25 @@ public:
 	const float queueEmptyTimerPeriod = 30.0; // sec
 	const float roiOvertimePeriod = 120.0; // sec
 	const float giveUpROIDonutSmashProbThresh = 0.05; // Change corresponding value in map_manager.h
+#ifdef DONUT_SMASHING_V2
+	static global_vars::GLOBAL_VARS_T global;
+	static MapManager mapManager;
+	static std::vector<CV_OBSERVATION_DATA_T> cvObservation;
+	static std::vector<std::pair<float, float>> positiveSamplePositions;
+	static std::random_device randGenerator;
+	static std::uniform_real_distribution<float> zeroToOneUniformDistribution;
+	static std::uniform_int_distribution<int> roiNumUniformIntDistribution;
+	//static std::normal_distribution<float> samplePlacementNormalDistribution;
+	static std::vector<ROI_DATA_T> roiLocations;
+	static std::vector<std::vector<CELL_DATA_T>> roiCells;
+	static std::vector<int> numROIVisits;
+	static int roiToVisit;
+	static float maxROIDiameterSquared;
+	static float maxMapDistance;
+	const float driveSpeed = 1.0; // m/s
+	const float turnSpeed = PI/2.0; // rad/s
+	static bool chooseAnotherROI;
+#endif // DONUT_SMASHING_V2
 };
 
 //std::vector<bool> MissionPlanningProcedureShare::procsToExecute;
@@ -319,5 +385,22 @@ unsigned int MissionPlanningProcedureShare::navStatus;
 double MissionPlanningProcedureShare::missionTime;
 double MissionPlanningProcedureShare::prevTime;
 bool MissionPlanningProcedureShare::missionStarted;
+#ifdef DONUT_SMASHING_V2
+global_vars::GLOBAL_VARS_T MissionPlanningProcedureShare::global;
+MapManager MissionPlanningProcedureShare::mapManager(global, roiCells, MAP_RESOLUTION, MAP_X_LENGTH, MAP_Y_LENGTH, TOTAL_NUM_SAMPLES, NUM_ROIS);
+std::vector<CV_OBSERVATION_DATA_T> MissionPlanningProcedureShare::cvObservation;
+std::vector<std::pair<float, float>> MissionPlanningProcedureShare::positiveSamplePositions;
+std::random_device MissionPlanningProcedureShare::randGenerator;
+std::uniform_real_distribution<float> MissionPlanningProcedureShare::zeroToOneUniformDistribution(0.0, 1.0);
+std::uniform_int_distribution<int> MissionPlanningProcedureShare::roiNumUniformIntDistribution(0, NUM_ROIS-1);
+//std::normal_distribution<float> MissionPlanningProcedureShare::samplePlacementNormalDistribution;
+std::vector<ROI_DATA_T> MissionPlanningProcedureShare::roiLocations;
+std::vector<std::vector<CELL_DATA_T>> MissionPlanningProcedureShare::roiCells;
+std::vector<int> MissionPlanningProcedureShare::numROIVisits;
+int MissionPlanningProcedureShare::roiToVisit;
+float MissionPlanningProcedureShare::maxROIDiameterSquared;
+float MissionPlanningProcedureShare::maxMapDistance;
+bool MissionPlanningProcedureShare::chooseAnotherROI;
+#endif // DONUT_SMASHING_V2
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

@@ -31,12 +31,12 @@
 
 #define NUM_SAMPLES 10
 
-//#define EVANSDALE
+#define EVANSDALE
 //#define WPI
 //#define WPI_BIG
 //#define TEST_FIELD
 //#define CHESTNUT_RIDGE
-#define FAIRMONT_ISR
+//#define FAIRMONT_ISR
 
 #ifdef EVANSDALE
 #include "evansdale_map.h"
@@ -64,8 +64,8 @@
 
 //#include other maps...
 
-#define USE_DONUT_SMASH
-#define GREEDY_SEARCH_WAYPOINT_SELECTION
+//#define USE_DONUT_SMASH
+//#define GREEDY_SEARCH_WAYPOINT_SELECTION
 
 class MapManager
 {
