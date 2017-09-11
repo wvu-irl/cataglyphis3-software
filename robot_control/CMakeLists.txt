@@ -189,6 +189,7 @@ include_directories(
  
  target_link_libraries(exec_node
    ${catkin_LIBRARIES}
+   donut_map_manager
    exec
    action
    idle
