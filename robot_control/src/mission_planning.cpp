@@ -158,6 +158,7 @@ MissionPlanning::MissionPlanning()
     double computedProb;
     double totalProb = 0.0;
     float bestROIMaxDiameter = 0.0;
+    roiStartTime = ros::Time::now().toSec();
     chooseAnotherROI = false;
     CELL_DATA_T roiCellToPushBack;
     numROIVisits.resize(NUM_ROIS, 0);
@@ -240,10 +241,6 @@ MissionPlanning::MissionPlanning()
 
 void MissionPlanning::run()
 {
-    // TODO: transform this pose based on north angle and map offset
-    global.xPos = robotStatus.xPos;
-    global.yPos = robotStatus.yPos;
-    global.heading = robotStatus.heading*DEG2RAD;
 	if(nb1Good && nb2Good) robotStatus.pauseSwitch = nb1Pause || nb2Pause;
 	else if(nb1Good && !nb2Good) robotStatus.pauseSwitch = nb1Pause;
 	else if(!nb1Good && nb2Good) robotStatus.pauseSwitch = nb2Pause;
@@ -715,6 +712,10 @@ void MissionPlanning::poseCallback_(const messages::RobotPose::ConstPtr& msg)
         //possiblyLost = false;
         //homingUpdateFailed = false;
     }
+    robotStatus.northAngle = msg->northAngle;
+    robotStatus.platformNum = msg->platformNumber;
+    convertXY2ES(global.xPos, global.yPos, robotStatus.xPos, robotStatus.yPos, robotStatus.northAngle);
+    global.heading = DEG2RAD*(robotStatus.heading + robotStatus.northAngle - 90.0);
 }
 
 void MissionPlanning::ExecActionEndedCallback_(const messages::ExecActionEnded::ConstPtr &msg)

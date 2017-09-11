@@ -1,4 +1,4 @@
-#include <map_manager.hpp>
+#include <robot_control/donut_map_manager.hpp>
 
 MapManager::MapManager(global_vars::GLOBAL_VARS_T& globalIn, std::vector<std::vector<CELL_DATA_T> > &roiCellsIn, float mapRes, float mapXDim, float mapYDim, int totalNumSamplesIn, int numROIsIn)
     : map(mapRes, mapXDim, mapYDim),

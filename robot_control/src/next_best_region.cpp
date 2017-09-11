@@ -2,6 +2,12 @@
 
 bool NextBestRegion::runProc()
 {
+#ifdef DONUT_SMASHING_V2
+    double roiOverallProb[NUM_ROIS] = {0.0};
+    double roiValue[NUM_ROIS];
+    double bestROIValue = 0.0;
+    int bestROIIndex = 0;
+#endif // DONUT_SMASHING_V2
     //ROS_INFO("nextBestRegion state = %i",state);
     //ROS_INFO_THROTTLE(1, "executing nextBestRegion");
     switch(state)
@@ -62,10 +68,6 @@ bool NextBestRegion::runProc()
         }
         roiHardLockoutSum = 0;
 #ifdef DONUT_SMASHING_V2
-        double roiOverallProb[NUM_ROIS] = {0.0};
-        double roiValue[NUM_ROIS];
-        double bestROIValue = 0.0;
-        int bestROIIndex = 0;
         // Compute ROI overall probabilities
         // Loop over all cells and add up probabilities in each ROI
         for(int i=0; i<NUM_ROIS; i++)
@@ -79,7 +81,7 @@ bool NextBestRegion::runProc()
         // Compute the value of each ROI. Choose to go to the one with the highest value, that isn't the one that was just searched. Trying to maximize the expected number of samples collected per time
         for(int i=0; i<NUM_ROIS; i++)
         {
-            computeDriveManeuver(roiLocations.at(i).xPos, roiLocations.at(i).yPos);
+            computeDriveManeuver(global, roiLocations.at(i).xPos, roiLocations.at(i).yPos);
             #ifdef PERFORM_DONUT_SMASH
             roiValue[i] = roiOverallProb[i]/(roiLocations.at(i).area/(global.searchRadius*2.0)/driveSpeed + hypot(roiLocations.at(i).xPos - global.xPos, roiLocations.at(i).yPos - global.yPos)/driveSpeed + angleToTurn_/turnSpeed);
             #else
@@ -236,7 +238,7 @@ bool NextBestRegion::runProc()
         distanceToRegion = hypot(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).x - robotStatus.xPos,
                                  regionsOfInterestSrv.response.ROIList.at(currentROIIndex).y - robotStatus.yPos);
         if(giveUpROI || (distanceToRegion > maxDistanceToSearchRegion)) inSearchableRegion = false;
-        else inSearchableRegion = true;
+        else {inSearchableRegion = true; roiStartTime = ros::Time::now().toSec();}
         if(distanceToRegion > maxDistanceToSearchRegion) prevROIIndex = 99;
         else prevROIIndex = currentROIIndex;
         giveUpROI = false;

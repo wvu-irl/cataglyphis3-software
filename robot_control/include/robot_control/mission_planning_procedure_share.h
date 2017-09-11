@@ -64,6 +64,8 @@
 	#define MAP_X_LENGTH 250.0 // m
 	#define MAP_Y_LENGTH 163.0 // m
 	#define MAP_RESOLUTION 1.0 // m/cell
+    #define STARTING_PLATFORM_E 123.2 // m
+    #define STARTING_PLATFORM_S 115.2 // m
 
 	struct ROI_DATA_T
 	{
@@ -72,6 +74,60 @@
 		float diameter;
 		float area;
 	};
+
+    void convertES2XY(float& x, float& y, float e, float s, float northAngle)
+    {
+        float eOffset, sOffset;
+        eOffset = e - STARTING_PLATFORM_E;
+        sOffset = s - STARTING_PLATFORM_S;
+        x = eOffset*cos(DEG2RAD*(northAngle - 90.0)) + sOffset*sin(DEG2RAD*(northAngle - 90.0));
+        y = -eOffset*sin(DEG2RAD*(northAngle - 90.0)) + sOffset*cos(DEG2RAD*(northAngle - 90.0));
+    }
+
+    void convertXY2ES(float& e, float& s, float x, float y, float northAngle)
+    {
+        float eOffset, sOffset;
+        eOffset = x*cos(DEG2RAD*(-northAngle + 90.0)) + y*sin(DEG2RAD*(-northAngle + 90.0));
+        sOffset = -x*sin(DEG2RAD*(-northAngle + 90.0)) + y*cos(DEG2RAD*(-northAngle + 90.0));
+        e = eOffset + STARTING_PLATFORM_E;
+        s = sOffset + STARTING_PLATFORM_S;
+    }
+
+    float distanceToDrive_;
+    float angleToTurn_;
+
+    void computeDriveManeuver(global_vars::GLOBAL_VARS_T global, double xGoal, double yGoal)
+    {
+        double xErr_, yErr_, uXDes_, uYDes_, uXAct_, uYAct_, cross_, dot_;
+        double newHeadingSign_;
+        xErr_ = xGoal-global.xPos;
+        yErr_ = yGoal-global.yPos;
+        uXDes_ = xErr_/hypot(xErr_,yErr_);
+        uYDes_ = yErr_/hypot(xErr_,yErr_);
+        uXAct_ = cos(global.heading);
+        uYAct_ = sin(global.heading);
+        assert(!isnanf(angleToTurn_));
+        if(fabs(xErr_) <= 0.01 && fabs(yErr_) <= 0.01)
+        {
+            angleToTurn_ = 0.0;
+            assert(!isnanf(angleToTurn_));
+        }
+        else
+        {
+            cross_ = uXAct_*uYDes_-uXDes_*uYAct_;
+            if(cross_>1.0) cross_ = 1.0;
+            else if(cross_<-1.0) cross_ = -1.0;
+            if(asin(cross_)>=0) newHeadingSign_ = 1.0;
+            else newHeadingSign_ = -1.0;
+            dot_ = uXAct_*uXDes_+uYAct_*uYDes_;
+            if(dot_>1.0) dot_ = 1.0;
+            else if(dot_<-1.0) dot_ = -1.0;
+            angleToTurn_ = (newHeadingSign_)*acos(dot_);
+            assert(!isnanf(angleToTurn_));
+        }
+        assert(!isnanf(angleToTurn_));
+        distanceToDrive_ = hypot(xErr_,yErr_);
+    }
 
 #endif // DONUT_SMASHING_V2
 
@@ -244,8 +300,8 @@ public:
 	const float roiOvertimePeriod = 120.0; // sec
 	const float giveUpROIDonutSmashProbThresh = 0.05; // Change corresponding value in map_manager.h
 #ifdef DONUT_SMASHING_V2
-	static global_vars::GLOBAL_VARS_T global;
-	static MapManager mapManager;
+    static global_vars::GLOBAL_VARS_T global;
+    static MapManager mapManager;
 	static std::vector<CV_OBSERVATION_DATA_T> cvObservation;
 	static std::vector<std::pair<float, float>> positiveSamplePositions;
 	static std::random_device randGenerator;
@@ -253,7 +309,7 @@ public:
 	static std::uniform_int_distribution<int> roiNumUniformIntDistribution;
 	//static std::normal_distribution<float> samplePlacementNormalDistribution;
 	static std::vector<ROI_DATA_T> roiLocations;
-	static std::vector<std::vector<CELL_DATA_T>> roiCells;
+    static std::vector<std::vector<CELL_DATA_T>> roiCells;
 	static std::vector<int> numROIVisits;
 	static int roiToVisit;
 	static float maxROIDiameterSquared;
@@ -261,6 +317,7 @@ public:
 	const float driveSpeed = 1.0; // m/s
 	const float turnSpeed = PI/2.0; // rad/s
 	static bool chooseAnotherROI;
+    static double roiStartTime;
 #endif // DONUT_SMASHING_V2
 };
 
@@ -401,6 +458,7 @@ int MissionPlanningProcedureShare::roiToVisit;
 float MissionPlanningProcedureShare::maxROIDiameterSquared;
 float MissionPlanningProcedureShare::maxMapDistance;
 bool MissionPlanningProcedureShare::chooseAnotherROI;
+double MissionPlanningProcedureShare::roiStartTime;
 #endif // DONUT_SMASHING_V2
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H

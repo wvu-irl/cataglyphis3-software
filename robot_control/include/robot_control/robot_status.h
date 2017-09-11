@@ -24,6 +24,8 @@ public:
 	long int frEncoder = 0;
 	long int mrEncoder = 0;
 	long int brEncoder = 0;
+    float northAngle = 90.0; // deg
+    int platformNum = 2;
 	// Grabber data
 	int grabberSlideStatus = 0;
 	int grabberDropStatus = 0;

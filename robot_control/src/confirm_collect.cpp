@@ -2,6 +2,8 @@
 
 bool ConfirmCollect::runProc()
 {
+    float expectedSampleXPos, expectedSampleYPos;
+    float observedSampleEPos, observedSampleSPos;
     //ROS_INFO("confirmCollectState = %i", state);
 	switch(state)
 	{
@@ -16,6 +18,9 @@ bool ConfirmCollect::runProc()
 		//sendSearch(sampleTypeMux);
 		expectedSampleAngle = 0.0;
 		expectedSampleDistance = distanceToGrabber - backUpDistance;
+        expectedSampleXPos = robotStatus.xPos + expectedSampleDistance*cos(DEG2RAD*(expectedSampleAngle + robotStatus.heading));
+        expectedSampleXPos = robotStatus.yPos + expectedSampleDistance*sin(DEG2RAD*(expectedSampleAngle + robotStatus.heading));
+        convertXY2ES(observedSampleEPos, observedSampleSPos, expectedSampleXPos, expectedSampleYPos, robotStatus.northAngle);
         sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
         sendSearch(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb,
                    regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb,
@@ -55,8 +60,7 @@ bool ConfirmCollect::runProc()
                 if(searchMapClient.call(searchMapSrv)) ROS_DEBUG("searchMap service call successful");
                 else ROS_ERROR("searchMap service call unsuccessful");
 #ifdef DONUT_SMASHING_V2
-                // TODO: somehow set observedSampleXPos and observedSampleYPos in map coordinates, not homing beacon coordinates
-                mapManager.setSampleFoundCells(observedSampleXPos, observedSampleYPos, samplesCollected+1);
+                mapManager.setSampleFoundCells(observedSampleEPos, observedSampleSPos, samplesCollected+1);
 #else
                 // Set ROI to searched
                 modROISrv.request.setHardLockoutROI = false;
