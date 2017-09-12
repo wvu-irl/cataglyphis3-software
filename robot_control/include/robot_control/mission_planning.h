@@ -35,6 +35,7 @@ class MissionPlanning : public MissionPlanningProcedureShare
 public:
 	// Methods
 	MissionPlanning();
+    ~MissionPlanning();
 	void run();
 	// Members
 	ros::NodeHandle nh;

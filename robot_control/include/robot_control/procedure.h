@@ -45,6 +45,7 @@ public:
 	bool searchEnded();
 	void resetQueueEmptyCondition();
 	void serviceQueueEmptyCondition();
+    void writeMapDataFile();
 };
 
 void Procedure::reg(PROC_TYPES_T procTypeIn)
@@ -809,6 +810,19 @@ void Procedure::serviceQueueEmptyCondition()
 {
 	if(execInfoMsg.actionDequeSize==0 && !timers[_queueEmptyTimer_]->running && !queueEmptyTimedOut) {timers[_queueEmptyTimer_]->start(); ROS_WARN("start queue empty timer");}
 	else if(execInfoMsg.actionDequeSize>0 && timers[_queueEmptyTimer_]->running) {timers[_queueEmptyTimer_]->stop(); queueEmptyTimedOut = false; ROS_INFO("stop queue empty timer");}
+}
+
+void Procedure::writeMapDataFile()
+{
+    mapManager.map.robotXPos = robotStatus.xPos;
+    mapManager.map.robotYPos = robotStatus.yPos;
+    mapManager.map.robotHeading = robotStatus.heading*DEG2RAD;
+    mapManager.map.numFalseSamplesFound = 0;
+    mapManager.map.elapsedTime = missionTime;
+    size_t mapSize = mapManager.map.getTotalObjectSizeBytes();
+    char buffer[mapSize];
+    mapManager.map.serializeObject(buffer, mapManager.map);
+    fwrite(buffer , sizeof(char), sizeof(buffer), mapDataFile);
 }
 
 #endif // PROCEDURE_H

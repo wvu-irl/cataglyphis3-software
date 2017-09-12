@@ -57,6 +57,7 @@ bool SearchRegion::runProc()
 		examineCount = 0;
 		confirmCollectFailedCount = 0;
         ROS_INFO("search region init");
+        writeMapDataFile();
 #ifdef DONUT_SMASHING_V2
         // Compute ROI overall probabilities
         // Loop over all cells and add up probabilities in each ROI
@@ -350,7 +351,8 @@ bool SearchRegion::runProc()
 		state = _exec_;
 		break;
 	case _finish_:
-		avoidLockout = false;
+        writeMapDataFile();
+        avoidLockout = false;
 		procsBeingExecuted[procType] = false;
 		procsToExecute[procType] = false;
         procsToResume[procType] = false;

@@ -52,6 +52,7 @@ bool Approach::runProc()
 		switch(step)
 		{
 		case _computeManeuver:
+            writeMapDataFile();
             resetQueueEmptyCondition();
 			sampleTypeMux = 0;
 			computeSampleValuesWithExpectedDistance(true);

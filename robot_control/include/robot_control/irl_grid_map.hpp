@@ -12,6 +12,14 @@ public:
     // Members
     size_t xSize;
     size_t ySize;
+    // For data logging
+    float robotXPos; // m
+    float robotYPos; // m
+    float robotHeading; // rad
+    double elapsedTime; // sec
+    int32_t numSamplesFound;
+    int32_t numFalseSamplesFound;
+    double timeWhenSamplesFound[7] = {NAN,NAN,NAN,NAN,NAN,NAN,NAN};
     // Methods
 	IRLGridMap(float res, float xDim, float yDim);
 	T& atPos(float xPos, float yPos);
@@ -33,10 +41,11 @@ public:
     }
     
     //this will not own the new object pointer. malloc in mem. reinit object from buf
-    IRLGridMap<T> * unserializeObject(char *buf)
+    static IRLGridMap<T> * unserializeObject(char *buf)
     {
         IRLGridMap<T> *newMap=(IRLGridMap<T>*)buf;
-        newMap->array_=buf+sizeof(IRLGridMap<T>);
+        newMap->array_=(T*)(buf+sizeof(IRLGridMap<T>));
+        newMap->mapFromUnserialize=true;
         return newMap;
     }
     
@@ -44,9 +53,10 @@ public:
 	~IRLGridMap();
 private:
     // Members
-        T (*array_);
-	std::string exceptionString_;
+    T (*array_);
+    std::string exceptionString_;
     float mapRes_;
+    bool mapFromUnserialize;
     // Methods
     void throwOutOfBoundsException_(size_t xIndex, size_t yIndex);
 };
@@ -58,6 +68,7 @@ IRLGridMap<T>::IRLGridMap(float res, float xDim, float yDim)
     xSize = (size_t)ceil(xDim/res);
     ySize = (size_t)ceil(yDim/res);
     array_ = (T*) std::malloc(xSize*ySize*sizeof(T));
+    mapFromUnserialize=false;
 }
 
 template<class T>
@@ -75,10 +86,10 @@ T& IRLGridMap<T>::atIndex(size_t xIndex, size_t yIndex)
 	{
         return array_[xIndex*ySize+yIndex];
 	}
-	else
-	{
+    else
+    {
         throwOutOfBoundsException_(xIndex, yIndex);
-	}
+    }
 }
 
 template<class T>
@@ -116,7 +127,10 @@ IRLGridMap<T>::~IRLGridMap()
 //         delete[] array_[i];
 //    }
 //	delete[] array_;
-    delete array_;
+    if(!mapFromUnserialize)
+    {
+        delete array_;
+    }
 }
 
 template<class T>

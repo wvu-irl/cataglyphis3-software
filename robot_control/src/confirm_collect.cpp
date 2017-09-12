@@ -48,6 +48,9 @@ bool ConfirmCollect::runProc()
 			if(noSampleOnGround)
 			{
                 ROS_INFO("confirmCollect success, no sample on ground");
+                mapManager.map.numSamplesFound = samplesCollected + 1;
+                mapManager.map.timeWhenSamplesFound[samplesCollected + 1] = missionTime;
+                writeMapDataFile();
 				confirmedPossession = true;
                 inSearchableRegion = false;
                 possibleSample = false;

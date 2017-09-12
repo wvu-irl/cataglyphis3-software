@@ -6,6 +6,7 @@ bool Examine::runProc()
 	switch(state)
 	{
 	case _init_:
+        writeMapDataFile();
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;

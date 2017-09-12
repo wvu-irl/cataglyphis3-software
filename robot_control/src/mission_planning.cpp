@@ -234,6 +234,9 @@ MissionPlanning::MissionPlanning()
             }
         }
     }
+    mapDataFile = fopen("cataglyphisMapDataFile.bin","wb");
+    mapManager.map.numSamplesFound = 0;
+    initialize.writeMapDataFile();
 #endif // DONUT_SMASHING_V2
 }
 
@@ -976,4 +979,10 @@ void MissionPlanning::roiOvertimeTimerCallback_(const ros::TimerEvent &event)
     roiOvertimeExpired = true;
     ROS_WARN("roi overtime expired");
     voiceSay->call("r o i overtime expired");
+}
+
+MissionPlanning::~MissionPlanning()
+{
+    fwrite(&numMapsWrittenToFile, sizeof(uint32_t), 1, mapDataFile);
+    fclose(mapDataFile);
 }

@@ -318,6 +318,8 @@ public:
 	const float turnSpeed = PI/2.0; // rad/s
 	static bool chooseAnotherROI;
     static double roiStartTime;
+    static FILE* mapDataFile;
+    static uint32_t numMapsWrittenToFile;
 #endif // DONUT_SMASHING_V2
 };
 
@@ -459,6 +461,8 @@ float MissionPlanningProcedureShare::maxROIDiameterSquared;
 float MissionPlanningProcedureShare::maxMapDistance;
 bool MissionPlanningProcedureShare::chooseAnotherROI;
 double MissionPlanningProcedureShare::roiStartTime;
+FILE* MissionPlanningProcedureShare::mapDataFile;
+uint32_t MissionPlanningProcedureShare::numMapsWrittenToFile;
 #endif // DONUT_SMASHING_V2
 
 #endif // MISSION_PLANNING_PROCESS_SHARE_H
