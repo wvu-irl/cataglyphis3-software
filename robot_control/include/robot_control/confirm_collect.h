@@ -6,6 +6,8 @@ class ConfirmCollect : public Procedure
 {
 public:
 	// Members
+	float expectedSampleXPos, expectedSampleYPos;
+    float observedSampleEPos, observedSampleSPos;
 	uint8_t sampleTypeMux;
 	const float backUpDistance = -1.0; // m
 	const float confirmCollectValueThreshold = 0.3;

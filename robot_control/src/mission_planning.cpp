@@ -163,10 +163,8 @@ MissionPlanning::MissionPlanning()
     CELL_DATA_T roiCellToPushBack;
     numROIVisits.resize(NUM_ROIS, 0);
     // Initialize ROI locations
-    roiLocations.push_back(ROI_DATA_T{38.0, 43.0, 30.0}); // ROI 0
-    roiLocations.push_back(ROI_DATA_T{138.0, 69.0, 30.0}); // ROI 1
-    roiLocations.push_back(ROI_DATA_T{167.0, 140.0, 30.0}); // ROI 2
-    roiLocations.push_back(ROI_DATA_T{215.0, 130.0, 30.0}); // ROI 3
+    roiLocations.push_back(ROI_DATA_T{170.5, 138.4, 20.0}); // ROI 0
+    roiLocations.push_back(ROI_DATA_T{136.7, 135.3, 20.0}); // ROI 1
     // Compute ROI areas
     for(int i=0; i<NUM_ROIS; i++)
     {

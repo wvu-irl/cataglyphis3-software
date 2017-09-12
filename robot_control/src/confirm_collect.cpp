@@ -2,8 +2,6 @@
 
 bool ConfirmCollect::runProc()
 {
-    float expectedSampleXPos, expectedSampleYPos;
-    float observedSampleEPos, observedSampleSPos;
     //ROS_INFO("confirmCollectState = %i", state);
 	switch(state)
 	{
@@ -19,8 +17,11 @@ bool ConfirmCollect::runProc()
 		expectedSampleAngle = 0.0;
 		expectedSampleDistance = distanceToGrabber - backUpDistance;
         expectedSampleXPos = robotStatus.xPos + expectedSampleDistance*cos(DEG2RAD*(expectedSampleAngle + robotStatus.heading));
-        expectedSampleXPos = robotStatus.yPos + expectedSampleDistance*sin(DEG2RAD*(expectedSampleAngle + robotStatus.heading));
+        expectedSampleYPos = robotStatus.yPos + expectedSampleDistance*sin(DEG2RAD*(expectedSampleAngle + robotStatus.heading));
         convertXY2ES(observedSampleEPos, observedSampleSPos, expectedSampleXPos, expectedSampleYPos, robotStatus.northAngle);
+        ROS_INFO("expectedSampleDistance = %f, expectedSampleAngle = %f, expectedSampleXPos = %f, expectedSampleYPos = %f",expectedSampleDistance, expectedSampleAngle, expectedSampleXPos, expectedSampleYPos);
+        ROS_INFO("robot pose = [%f,%f,%f]",robotStatus.xPos, robotStatus.yPos, robotStatus.heading);
+        ROS_INFO("observedSampleEPos = %f, observedSampleSPos = %f",observedSampleEPos, observedSampleSPos);
         sendDriveRel(backUpDistance, 0.0, false, 0.0, false, false);
         sendSearch(regionsOfInterestSrv.response.ROIList.at(currentROIIndex).whiteProb,
                    regionsOfInterestSrv.response.ROIList.at(currentROIIndex).silverProb,

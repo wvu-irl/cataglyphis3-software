@@ -23,9 +23,9 @@
 #include <random>
 
 //#define MANUAL_CV_CONTROL
-#define NUM_SAMPLES 5 // Change corresponding number in map_manager.h
+#define NUM_SAMPLES 2 // Change corresponding number in map_manager.h
 //bool roisWithSample[15] = {1,1,0,1,1,0,1,0,1,1,1,1,0,0,1};
-bool roisWithSample[10] = {1,0,0,0,0,1,1,1,1,0};
+bool roisWithSample[2] = {1,1};
 
 void actuatorCallback(const messages::ActuatorOut::ConstPtr& msg);
 void simControlCallback(const messages::SimControl::ConstPtr& msg);

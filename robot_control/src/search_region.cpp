@@ -56,6 +56,7 @@ bool SearchRegion::runProc()
 		prevAvoidCountDecYPos = robotStatus.yPos;
 		examineCount = 0;
 		confirmCollectFailedCount = 0;
+        ROS_INFO("search region init");
 #ifdef DONUT_SMASHING_V2
         // Compute ROI overall probabilities
         // Loop over all cells and add up probabilities in each ROI
@@ -172,6 +173,7 @@ bool SearchRegion::runProc()
         numWaypointsToTravel = 1;
         clearAndResizeWTT();
         convertES2XY(waypointsToTravel.at(0).x, waypointsToTravel.at(0).y, bestCellXPos, bestCellYPos, robotStatus.northAngle);
+        waypointsToTravel.at(0).searchable = true;
         sendDriveAndSearch();
         state = _exec_;
         #endif // GREEDY_SEARCH
@@ -245,6 +247,7 @@ bool SearchRegion::runProc()
         numWaypointsToTravel = 1;
         clearAndResizeWTT();
         convertES2XY(waypointsToTravel.at(0).x, waypointsToTravel.at(0).y, bestCellXPos, bestCellYPos, robotStatus.northAngle);
+        waypointsToTravel.at(0).searchable = true;
         sendDriveAndSearch();
         state = _exec_;
         #endif // WEIGHTED_RANDOM_SEARCH
@@ -325,6 +328,7 @@ bool SearchRegion::runProc()
         resetQueueEmptyCondition();
 		break;
 	case _exec_:
+    ROS_INFO("search region exec");
 		avoidLockout = false;
 		procsBeingExecuted[procType] = true;
 		procsToExecute[procType] = false;

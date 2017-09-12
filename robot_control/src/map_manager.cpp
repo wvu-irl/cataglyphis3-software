@@ -53,7 +53,9 @@ MapManager::MapManager()
 //#include <robot_control/evansdale_full_rois.h>
 
 // Repeated ROIS from ERB to library area for Easter Egg Hunt
-#include <robot_control/evansdale_easter_rois.h>
+//#include <robot_control/evansdale_easter_rois.h>
+
+#include <robot_control/evansdale_donut_rois.h>
 #endif // EVANSDALE
 
 #ifdef WPI
