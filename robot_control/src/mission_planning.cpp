@@ -983,6 +983,7 @@ void MissionPlanning::roiOvertimeTimerCallback_(const ros::TimerEvent &event)
 
 MissionPlanning::~MissionPlanning()
 {
+    initialize.writeMapDataFile();
     fwrite(&numMapsWrittenToFile, sizeof(uint32_t), 1, mapDataFile);
     fclose(mapDataFile);
 }

@@ -823,6 +823,7 @@ void Procedure::writeMapDataFile()
     char buffer[mapSize];
     mapManager.map.serializeObject(buffer, mapManager.map);
     fwrite(buffer , sizeof(char), sizeof(buffer), mapDataFile);
+    numMapsWrittenToFile++;
 }
 
 #endif // PROCEDURE_H
