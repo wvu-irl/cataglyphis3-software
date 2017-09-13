@@ -775,10 +775,11 @@ void MissionPlanning::hsmMasterStatusCallback_(const messages::MasterStatus::Con
 
 void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPtr &msg)
 {
+    CV_OBSERVATION_DATA_T cvObservationToPushBack;
     cvSamplesFoundMsg = *msg;
     ROS_INFO("+++cvSamplesCallback_+++");
     ROS_INFO("sampleList size = %u",cvSamplesFoundMsg.sampleList.size());
-    cvObservation.resize(cvSamplesFoundMsg.sampleList.size());
+    cvObservation.resize(0);
     if(cvSamplesFoundMsg.sampleList.size()>0)
     {
         for(int i=0; i<cvSamplesFoundMsg.sampleList.size(); i++)
@@ -795,8 +796,12 @@ void MissionPlanning::cvSamplesCallback_(const messages::CVSamplesFound::ConstPt
             ROS_INFO("oragne = %i",cvSamplesFoundMsg.sampleList.at(i).orange);
             ROS_INFO("yellow = %i",cvSamplesFoundMsg.sampleList.at(i).yellow);
 #ifdef DONUT_SMASHING_V2
-            cvObservation.at(i).distance = cvSamplesFoundMsg.sampleList.at(i).distance;
-            cvObservation.at(i).bearing = cvSamplesFoundMsg.sampleList.at(i).bearing*DEG2RAD;
+            if(cvSamplesFoundMsg.sampleList.at(i).confidence>possibleSampleConfThresh)
+            {
+                cvObservationToPushBack.distance = cvSamplesFoundMsg.sampleList.at(i).distance;
+                cvObservationToPushBack.bearing = cvSamplesFoundMsg.sampleList.at(i).bearing*DEG2RAD;
+                cvObservation.push_back(cvObservationToPushBack);
+            }
 #endif // DONUT_SMASHING_V2
         }
     }

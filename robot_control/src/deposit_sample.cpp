@@ -17,7 +17,7 @@ bool DepositSample::runProc()
         driveSpeedsMsgPrev.rMax = defaultRMax;
         driveSpeedsPub.publish(driveSpeedsMsg);
 		samplesCollected++;
-		if(samplesCollected<MAX_SAMPLES)
+		if(samplesCollected<4)
 		{
 			sendDrop();
             sendDriveRel(-3.0, 0.0, false, 0.0, false, false);
