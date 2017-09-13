@@ -5,7 +5,7 @@
 #define DEG2RAD PI/180.0
 #define RAD2DEG 180.0/PI
 #define NUM_PROC_TYPES 17
-#define MAX_SAMPLES 4
+#define MAX_SAMPLES 10
 #define NUM_TIMERS 7
 #define NUM_SAMPLE_TYPES 7 // !!! Change switch case in findHighestConfSample() if this number is ever changed
 // !!! If PROC_TYPES_T is ever edited, edit controlCallback_ in MissionPlanning as well
