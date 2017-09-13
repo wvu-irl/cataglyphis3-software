@@ -54,7 +54,6 @@ public:
 private:
     // Members
     T (*array_);
-    std::string exceptionString_;
     float mapRes_;
     bool mapFromUnserialize;
     // Methods
@@ -136,8 +135,7 @@ IRLGridMap<T>::~IRLGridMap()
 template<class T>
 void IRLGridMap<T>::throwOutOfBoundsException_(size_t xIndex, size_t yIndex)
 {
-    exceptionString_ = "IRLGridMap: tried to access outside array bounds. Index [" + std::to_string(xIndex) + "," + std::to_string(yIndex) + "]";
-    throw std::out_of_range(exceptionString_.c_str());
+    throw std::out_of_range("IRLGridMap: tried to access outside array bounds.");
 }
 
 #endif // IRL_GRID_MAP_HPP
