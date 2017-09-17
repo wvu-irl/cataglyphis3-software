@@ -23,6 +23,8 @@ void MapManager::selectDonutCells(std::vector<CV_OBSERVATION_DATA_T> positiveSam
     bool addCellToPosList;
     bool addCellToNegList;
     CELL_DATA_T cellToPushBack;
+    // Get robot cell indices
+    map.getIndex(robotCellXIndex, robotCellYIndex, global.xPos, global.yPos);
     // Clear and cellsToPosSmash_ vector for new entries
     cellsToPosSmash_.clear();
     // Populate cellsToPosSmash_ with cell indices of locations with positive observations
