@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include "sun_sensor/sun.hpp"
 
 Sun::Sun()
@@ -46,7 +81,7 @@ void Sun::get_calendar()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
-    
+
     calendar.year = 1900 + ltm->tm_year;
     calendar.month = 1 + ltm->tm_mon;
     calendar.day = ltm->tm_mday;
@@ -60,12 +95,12 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	// This .cpp function was converted from the matlab script sun = sun_position(time, location), which had the following description:
 	//
 	// This function compute the sun position (zenith and azimuth angle at the observer
-	// location) as a function of the observer local time and position. 
+	// location) as a function of the observer local time and position.
 	//
 	// It is an implementation of the algorithm presented by Reda et Andreas in:
 	//   Reda, I., Andreas, A. (2003) Solar position algorithm for solar
 	//   radiation application. National Renewable Energy Laboratory (NREL)
-	//   Technical report NREL/TP-560-34302. 
+	//   Technical report NREL/TP-560-34302.
 	// This document is avalaible at www.osti.gov/bridge
 	//
 	// This algorithm is based on numerical approximation of the exact equations.
@@ -74,17 +109,17 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	// (http://www.srrb.noaa.gov/highlights/sunrise/azel.html) and to USNO solar
 	// table (http://aa.usno.navy.mil/data/docs/AltAz.html) and found very good
 	// correspondance (up to the precision of those tables), except for large
-	// zenith angle, where the refraction by the atmosphere is significant 
-	// (difference of about 1 degree). Note that in this code the correction 
-	// for refraction in the atmosphere as been implemented for a temperature 
-	// of 10C (283 kelvins) and a pressure of 1010 mbar. See the subfunction 
-	// «sun_topocentric_zenith_angle_calculation» for a possible modification 
+	// zenith angle, where the refraction by the atmosphere is significant
+	// (difference of about 1 degree). Note that in this code the correction
+	// for refraction in the atmosphere as been implemented for a temperature
+	// of 10C (283 kelvins) and a pressure of 1010 mbar. See the subfunction
+	// «sun_topocentric_zenith_angle_calculation» for a possible modification
 	// to explicitely model the effect of temperature and pressure as describe
-	// in Reda & Andreas (2003). 
+	// in Reda & Andreas (2003).
 	//
 	// Input parameters:
 	//   time: a structure that specify the time when the sun position is
-	//   calculated. 
+	//   calculated.
 	//       time.year: year. Valid for [-2000, 6000]
 	//       time.month: month [1-12]
 	//       time.day: calendar day [1-31]
@@ -92,7 +127,7 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	//       time.min: minute [0-59]
 	//       time.sec: second [0-59]
 	//       time.UTC: offset hour from UTC. Local time = Greenwich time + time.UTC
-	//   This input can also be passed using the Matlab time format ('dd-mmm-yyyy HH:MM:SS'). 
+	//   This input can also be passed using the Matlab time format ('dd-mmm-yyyy HH:MM:SS').
 	//   In that case, the time has to be specified as UTC time (time.UTC = 0)
 	//
 	//   location: a structure that specify the location of the observer
@@ -100,24 +135,24 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	//       positive)
 	//       location.longitude: longitude (in degrees, positive for east of
 	//       Greenwich)
-	//       location.altitude: altitude above mean sea level (in meters) 
-	// 
+	//       location.altitude: altitude above mean sea level (in meters)
+	//
 	// Output parameters
 	//   sun: a structure with the calculated sun position
 	//       sun.zenith = zenith angle in degrees (angle from the vertical)
-	//       sun.azimuth = azimuth angle in degrees, eastward from the north. 
+	//       sun.azimuth = azimuth angle in degrees, eastward from the north.
 	// Only the sun zenith and azimuth angles are returned as output, but a lot
 	// of other parameters are calculated that could also extracted as output of
-	// this function. 
+	// this function.
 	//
 	// Exemple of use
 	//
-	// location.longitude = -105.1786; 
-	// location.latitude = 39.742476; 
+	// location.longitude = -105.1786;
+	// location.latitude = 39.742476;
 	// location.altitude = 1830.14;
 	// time.year = 2003;
 	// time.month = 10;
-	// time.day = 17;  
+	// time.day = 17;
 	// time.hour = 12;
 	// time.min = 30;
 	// time.sec = 30;
@@ -125,8 +160,8 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	//
 	// sun = sun_position(time, location);
 	//
-	// sun = 
-	// 
+	// sun =
+	//
 	//      zenith: 50.1080438859849
 	//      azimuth: 194.341174010338
 	//
@@ -138,13 +173,13 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	//               the code. (changed the «elevation» field in «location» structure
 	//               information to «altitude»), Vincent Roy
 	//   13/04/2004  Following a suggestion from Jody Klymak (jklymak@ucsd.edu),
-	//               allowed the 'time' input to be passed as a Matlab time string. 
+	//               allowed the 'time' input to be passed as a Matlab time string.
 	//   22/08/2005  Following a bug report from Bruce Bowler
 	//               (bbowler@bigelow.org), modified the julian_calculation function. Bug
-	//               was 'MATLAB has allowed structure assignment  to a non-empty non-structure 
-	//               to overwrite the previous value.  This behavior will continue in this release, 
-	//               but will be an error in a  future version of MATLAB.  For advice on how to 
-	//               write code that  will both avoid this warning and work in future versions of 
+	//               was 'MATLAB has allowed structure assignment  to a non-empty non-structure
+	//               to overwrite the previous value.  This behavior will continue in this release,
+	//               but will be an error in a  future version of MATLAB.  For advice on how to
+	//               write code that  will both avoid this warning and work in future versions of
 	//               MATLAB,  see R14SP2 Release Notes'. Script should now be
 	//               compliant with futher release of Matlab...
 	time_year=calendar.year;
@@ -159,7 +194,7 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	location_altitude=altitude;
 
 	// 1. Calculate the Julian Day, and Century. Julian Ephemeris day, century
-	// and millenium are calculated using a mean delta_t of 33.184 seconds.  
+	// and millenium are calculated using a mean delta_t of 33.184 seconds.
 	julian_calculation();
 
 	// 2. Calculate the Earth heliocentric longitude, latitude, and radius
@@ -169,10 +204,10 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	// 3. Calculate the geocentric longitude and latitude
 	sun_geocentric_position_calculation();
 
-	// 4. Calculate the nutation in longitude and obliquity (in degrees). 
+	// 4. Calculate the nutation in longitude and obliquity (in degrees).
 	nutation_calculation();
 
-	// 5. Calculate the true obliquity of the ecliptic (in degrees). 
+	// 5. Calculate the true obliquity of the ecliptic (in degrees).
 	true_obliquity_calculation();
 
 	// 6. Calculate the aberration correction (in degrees)
@@ -188,7 +223,7 @@ void Sun::sun_position(double UTC, double latitude, double longitude, double alt
 	sun_rigth_ascension_calculation();
 
 	// 10. Calculate the geocentric sun declination (in degrees). Positive or
-	// negative if the sun is north or south of the celestial equator. 
+	// negative if the sun is north or south of the celestial equator.
 	sun_geocentric_declination_calculation();
 
 	// 11. Calculate the observer local hour angle (in degrees, westward from south).
@@ -219,7 +254,7 @@ void Sun::julian_calculation()
 {
 	// This function compute the julian day and julian century from the local
 	// time and timezone information. Ephemeris are calculated with a delta_t=0
-	// seconds. 
+	// seconds.
 
 	// If time input is a Matlab time string, extract the information from
 	// this string and create the structure as defined in the main header of
@@ -234,9 +269,9 @@ void Sun::julian_calculation()
 	else
 	{
 		Y = time_year;
-		M = time_month; 
+		M = time_month;
 	}
-	double ut_time = ((time_hour - time_UTC)/24) + (time_min/(60*24)) + (time_sec/(60*60*24)); // time of day in UT time. 
+	double ut_time = ((time_hour - time_UTC)/24) + (time_min/(60*24)) + (time_sec/(60*60*24)); // time of day in UT time.
 	double D = time_day + ut_time; // Day of month in decimal time, ex. 2sd day of month at 12:30:30UT, D=2.521180556
 
 	double A = 0;
@@ -248,21 +283,21 @@ void Sun::julian_calculation()
 		{
 			if(time_day <= 4) // The Julian calendar ended on October 4, 1582
 			{
-				B = 0;    
+				B = 0;
 			}
 			else if(time_day >= 15) // The Gregorian calendar started on October 15, 1582
 			{
 				A = floor(Y/100);
-				B = 2 - A + floor(A/4);    
+				B = 2 - A + floor(A/4);
 			}
 			else
 			{
 				time_month = 10;
-				time_day = 4; 
+				time_day = 4;
 				B = 0;
 			}
 		}
-		else if(time_month<10) // Julian calendar 
+		else if(time_month<10) // Julian calendar
 		{
 			B = 0;
 		}
@@ -287,20 +322,20 @@ void Sun::julian_calculation()
 	double delta_t = 0; // 33.184;
 	julian_ephemeris_day = julian_day + (delta_t/86400);
 
-	julian_century = (julian_day - 2451545) / 36525; 
+	julian_century = (julian_day - 2451545) / 36525;
 
 	julian_ephemeris_century = (julian_ephemeris_day - 2451545) / 36525;
 
-	julian_ephemeris_millenium = julian_ephemeris_century / 10; 
+	julian_ephemeris_millenium = julian_ephemeris_century / 10;
 }
 
 void Sun::earth_heliocentric_position_calculation()
 {
 	// This function compute the earth position relative to the sun, using
-	// tabulated values. 
+	// tabulated values.
 
 	// Tabulated values for the longitude calculation
-	// L terms  from the original code. 
+	// L terms  from the original code.
 	arma::mat L0_terms(64,3);
 	L0_terms(0, 0) = 175347046.000000;
 	L0_terms(0, 1) = 0.000000;
@@ -725,7 +760,7 @@ void Sun::earth_heliocentric_position_calculation()
 	arma::mat C5 = L5_terms.col(2);
 
 	double JME = julian_ephemeris_millenium;
-	// Compute the Earth Heliochentric longitude from the tabulated values. 
+	// Compute the Earth Heliochentric longitude from the tabulated values.
 	double L0 = arma::sum(arma::sum(A0 % arma::cos(B0 + (C0 * JME))));
 	double L1 = arma::sum(arma::sum(A1 % arma::cos(B1 + (C1 * JME))));
 	double L2 = arma::sum(arma::sum(A2 % arma::cos(B2 + (C2 * JME))));
@@ -734,8 +769,8 @@ void Sun::earth_heliocentric_position_calculation()
 	arma::mat L5_mat = A5 % arma::cos(B5 + (C5 * JME));
 	double L5 = L5_mat(0,0);
 
-	earth_heliocentric_position_longitude = (L0 + (L1 * JME) + (L2 * JME*JME) + (L3 * JME*JME*JME) + (L4 * JME*JME*JME*JME) + (L5 * JME*JME*JME*JME*JME)) / 1e8; 
-	// Convert the longitude to degrees. 
+	earth_heliocentric_position_longitude = (L0 + (L1 * JME) + (L2 * JME*JME) + (L3 * JME*JME*JME) + (L4 * JME*JME*JME*JME) + (L5 * JME*JME*JME*JME*JME)) / 1e8;
+	// Convert the longitude to degrees.
 	earth_heliocentric_position_longitude = earth_heliocentric_position_longitude * 180/pi;
 	// Limit the range to [0,360[;
 	earth_heliocentric_position_longitude = fmod(earth_heliocentric_position_longitude, 360.0);
@@ -744,8 +779,8 @@ void Sun::earth_heliocentric_position_calculation()
 		earth_heliocentric_position_longitude=earth_heliocentric_position_longitude+360.0;
 	}
 
-	// Tabulated values for the earth heliocentric latitude. 
-	// B terms  from the original code. 
+	// Tabulated values for the earth heliocentric latitude.
+	// B terms  from the original code.
 	arma::mat B0_terms(5, 3);
 	B0_terms(0, 0) = 280.000000;
 	B0_terms(0, 1) = 3.199000;
@@ -790,8 +825,8 @@ void Sun::earth_heliocentric_position_calculation()
 	L0 = arma::sum(arma::sum(A0 % arma::cos(B0 + (C0 * JME))));
 	L1 = arma::sum(arma::sum(A1 % arma::cos(B1 + (C1 * JME))));
 
-	earth_heliocentric_position_latitude = (L0 + (L1 * JME)) / 1e8; 
-	// Convert the latitude to degrees. 
+	earth_heliocentric_position_latitude = (L0 + (L1 * JME)) / 1e8;
+	// Convert the latitude to degrees.
 	earth_heliocentric_position_latitude = earth_heliocentric_position_latitude * 180/pi;
 	// Limit the range to [0,360];
 	earth_heliocentric_position_latitude = fmod(earth_heliocentric_position_latitude, 360.0);
@@ -799,8 +834,8 @@ void Sun::earth_heliocentric_position_calculation()
 	{
 		earth_heliocentric_position_latitude = earth_heliocentric_position_latitude+360.0;
 	}
-	
-	// Tabulated values for radius vector. 
+
+	// Tabulated values for radius vector.
 	// R terms from the original code
 	arma::mat R0_terms(40, 3);
 	R0_terms(0, 0) = 100013989.000000;
@@ -1038,12 +1073,12 @@ void Sun::earth_heliocentric_position_calculation()
 	L4 = L4_mat(0,0);
 
 	// Units are in AU
-	earth_heliocentric_position_radius = (L0 + (L1 * JME) + (L2 * JME*JME) + (L3 * JME*JME*JME) + (L4 * JME*JME*JME*JME)) / 1e8; 
+	earth_heliocentric_position_radius = (L0 + (L1 * JME) + (L2 * JME*JME) + (L3 * JME*JME*JME) + (L4 * JME*JME*JME*JME)) / 1e8;
 }
 
 void Sun::sun_geocentric_position_calculation()
 {
-	// This function compute the sun position relative to the earth. 
+	// This function compute the sun position relative to the earth.
 
 	sun_geocentric_position_longitude = earth_heliocentric_position_longitude + 180;
 	// Limit the range to [0,360];
@@ -1052,7 +1087,7 @@ void Sun::sun_geocentric_position_calculation()
 	{
 		sun_geocentric_position_longitude = sun_geocentric_position_longitude+360.0;
 	}
-	
+
 	sun_geocentric_position_latitude = -earth_heliocentric_position_latitude;
 	// Limit the range to [0,360]
 	sun_geocentric_position_latitude = fmod(sun_geocentric_position_latitude, 360.0);
@@ -1065,13 +1100,13 @@ void Sun::sun_geocentric_position_calculation()
 void Sun::nutation_calculation()
 {
 	// This function compute the nutation in longtitude and in obliquity, in
-	// degrees. 
+	// degrees.
 
-	// All Xi are in degrees. 
+	// All Xi are in degrees.
 	double JCE = julian_ephemeris_century;
 
-	// 1. Mean elongation of the moon from the sun 
-	double p1 = (1/189474); 
+	// 1. Mean elongation of the moon from the sun
+	double p1 = (1/189474);
 	double p2 = -0.0019142;
 	double p3 = 445267.11148;
 	double p4 = 297.85036;
@@ -1697,7 +1732,7 @@ void Sun::nutation_calculation()
 
 void Sun::true_obliquity_calculation()
 {
-	// This function compute the true obliquity of the ecliptic. 
+	// This function compute the true obliquity of the ecliptic.
 
 	double p1 = 2.45;
 	double p2 = 5.79;
@@ -1720,7 +1755,7 @@ void Sun::true_obliquity_calculation()
 void Sun::abberation_correction_calculation()
 {
 	// This function compute the abberation_correction, as a function of the
-	// earth-sun distance. 
+	// earth-sun distance.
 
 	abberation_correction = -20.4898/(3600*earth_heliocentric_position_radius);
 }
@@ -1734,7 +1769,7 @@ void Sun::apparent_sun_longitude_calculation()
 
 void Sun::apparent_stime_at_greenwich_calculation()
 {
-	// This function compute the apparent sideral time at Greenwich. 
+	// This function compute the apparent sideral time at Greenwich.
 
 	double JD = julian_day;
 	double JC = julian_century;
@@ -1754,7 +1789,7 @@ void Sun::apparent_stime_at_greenwich_calculation()
 
 void Sun::sun_rigth_ascension_calculation()
 {
-	// This function compute the sun rigth ascension. 
+	// This function compute the sun rigth ascension.
 
 	double argument_numerator = (sin(apparent_sun_longitude * pi/180) * cos(true_obliquity * pi/180)) - (tan(sun_geocentric_position_latitude * pi/180) * sin(true_obliquity * pi/180));
 	double argument_denominator = cos(apparent_sun_longitude * pi/180);
@@ -1789,7 +1824,7 @@ void Sun::observer_local_hour_calculation()
 void Sun::topocentric_sun_position_calculate()
 {
 	// This function compute the sun position (rigth ascension and declination)
-	// with respect to the observer local position at the Earth surface. 
+	// with respect to the observer local position at the Earth surface.
 
 	// Equatorial horizontal parallax of the sun in degrees
 	double eq_horizontal_parallax = 8.794 / (3600 * earth_heliocentric_position_radius);
@@ -1807,7 +1842,7 @@ void Sun::topocentric_sun_position_calculate()
 	double nominator = -x * sin(eq_horizontal_parallax * pi/180) * sin(observer_local_hour * pi/180);
 	double denominator = cos(sun_geocentric_declination * pi/180) - (x * sin(eq_horizontal_parallax * pi/180) * cos(observer_local_hour * pi/180));
 	double sun_rigth_ascension_parallax = atan2(nominator, denominator);
-	// Conversion to degrees. 
+	// Conversion to degrees.
 	topocentric_sun_position_rigth_ascension_parallax = sun_rigth_ascension_parallax * 180/pi;
 
 	// Topocentric sun rigth ascension (in degrees)
@@ -1830,7 +1865,7 @@ void Sun::sun_topocentric_zenith_angle_calculate()
 {
 	// This function compute the sun zenith angle, taking into account the
 	// atmospheric refraction. A default temperature of 283K and a
-	// default pressure of 1010 mbar are used. 
+	// default pressure of 1010 mbar are used.
 
 	// Topocentric elevation, without atmospheric refraction
 	double argument = (sin(location_latitude * pi/180) * sin(topocentric_sun_position_declination * pi/180)) + (cos(location_latitude * pi/180) * cos(topocentric_sun_position_declination * pi/180) * cos(topocentric_local_hour * pi/180));
@@ -1840,7 +1875,7 @@ void Sun::sun_topocentric_zenith_angle_calculate()
 	argument = true_elevation + (10.3/(true_elevation + 5.11));
 	double refraction_corr = 1.02 / (60 * tan(argument * pi/180));
 
-	// For exact pressure and temperature correction, use this, 
+	// For exact pressure and temperature correction, use this,
 	// with P the pressure in mbar amd T the temperature in Kelvins:
 	// refraction_corr = (P/1010) * (283/T) * 1.02 / (60 * tan(argument * pi/180));
 

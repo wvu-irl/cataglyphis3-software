@@ -1,5 +1,41 @@
 #!/usr/bin/python
 '''
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+'''
+'''
 AUTHOR: Rahul Kavi
 Feature Vector generator/classifier for FishEye images for CATAGLYPHIS
 '''
@@ -121,7 +157,7 @@ if __name__ == "__main__":
 
 	# # imgSize
 	# imgSize = 150
-	
+
 	# dictionary to store classifier parameters
 	classifierDict = {}
 
@@ -130,7 +166,7 @@ if __name__ == "__main__":
 	# # meanData150Path = cvModulePath+ "/data/mean_file/50_x_50_mean/allData_150_lmdb.npy"
 	# meanData150 = np.load(meanData150Path)
 	# meanData150 = np.reshape(meanData150, (1, 3, imgSize, imgSize))
-	
+
 	# # read the classifier
 	# # classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
 	# classifier150Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/best_9epoch_'+str(imgSize)+'.npz'
@@ -139,20 +175,20 @@ if __name__ == "__main__":
 	# dropoutParams150 = {}
 	# dropoutParams150['conv'] = 0.5
 	# dropoutParams150['fc'] = 0.5
-	
+
 	# # initialize DeepFishNet150
 	# # myClassifier = DeepFishNet(mode='Test', modelToLoad = classifier150Path, dropout_params = dropoutParams150)
 	# myClassifier150 = DeepFishNet150(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams150, mode='Test', modelToLoad = classifier150Path)
-	
+
 	# # store 150 x 150 classifier details
 	# classifierDict[imgSize] = {}
 	# classifierDict[imgSize]['classifier'] = myClassifier150
 	# classifierDict[imgSize]['mean'] = meanData150
 	# classifierDict[imgSize]['modulePath'] = cvModulePath
-	
+
 	# imgSize
 	imgSize = 50
-	
+
 	# classifier version
 	classifierVersion = '8-20-16'
 
@@ -161,16 +197,16 @@ if __name__ == "__main__":
 	meanData50Path = cvModulePath+"/data/mean_file/50_x_50_mean/"+classifierVersion+"/allData_50_lmdb.npy"
 	meanData50 = np.load(meanData50Path)
 	meanData50 = np.reshape(meanData50, (1, 3, imgSize, imgSize))
-	
+
 	# read the classifier
 	# classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/DeepFishNet'+str(imgSize)+'.npz'
 	classifier50Path = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_ALL.npz'
-	
+
 	# set dropout parameters for better performance
 	dropoutParams50 = {}
 	dropoutParams50['conv'] = 0.5
 	dropoutParams50['fc'] = 0.5
-	
+
 	# initialize DeepFishNet50
 	myClassifier50 = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50, mode='Test', modelToLoad = classifier50Path)
 

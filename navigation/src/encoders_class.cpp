@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <navigation/encoders_class.hpp>
 
 Encoders::Encoders()
@@ -138,30 +173,29 @@ void Encoders::calculateDeltaDistance6Wheels(int turnFlag, int stopFlag)
 	if ((ml_dist>=fl_dist && ml_dist<=bl_dist)||(ml_dist<=fl_dist && ml_dist>=bl_dist))
 	{
 		med_left = ml_dist;
-	} 
+	}
 	else if ((fl_dist>=ml_dist && fl_dist<=bl_dist)||(fl_dist<=ml_dist && fl_dist>=bl_dist))
 	{
 		med_left = fl_dist;
-	} 
+	}
 	else
 	{
 		med_left = bl_dist;
-	} 
-	
+	}
+
 	if ((mr_dist>=fr_dist && mr_dist<=br_dist)||(mr_dist<=fr_dist && mr_dist>=br_dist))
 	{
 		med_right = mr_dist;
-	} 
+	}
 	else if ((fr_dist>=mr_dist && fr_dist<=br_dist)||(fr_dist<=mr_dist && fr_dist>=br_dist))
 	{
 		med_right = fr_dist;
-	} 
+	}
 	else
 	{
 		med_right = br_dist;
-	} 
-	
+	}
+
 	short int logical = (1-stopFlag)*(1-turnFlag);
 	delta_distance  = (double)logical*(0.5)*(med_left + med_right);
 }
-

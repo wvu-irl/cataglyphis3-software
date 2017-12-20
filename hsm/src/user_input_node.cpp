@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <ros/ros.h>
 #include <hsm/UserInputInitStartup.h>
 #include <hsm/UserInputReboot.h>
@@ -122,9 +157,9 @@ int main(int argc, char** argv)
 		else if(user_input.input_type==2) user_input.runReboot(); // Run reboot
 		else if(user_input.input_type==3) user_input.runLost(); // Run robot lost
                 else std::cout << "Input type selection not valid. Please try again. Choose 1 for initial startup, 2 for reboot, or 3 for robot lost." << std::endl; // Undefined input type
-		
+
 		user_input.printCurrentStatus();
-		
+
                 std::cout << std::endl << "Perform user input again (0) or end program (1)?" << std::endl;
                 std::cin >> user_input.end_program; std::cout << std::endl;
 		if(user_input.end_program) break;
@@ -249,7 +284,7 @@ void User_Input::runReboot()
         std::cin >> possessing_sample; std::cout << std::endl;
         std::cout << "What position should the grabber slides be set to? (1000 = open, -900 = closed)" << std::endl;
         std::cin >> slide_pos_out; std::cout << std::endl;
-	
+
 	reboot_msg_out.x_position = distance*cos(bearing*PI/180.0);
 	reboot_msg_out.y_position = distance*sin(bearing*PI/180.0);
 	arc_unc = (distance+distance_unc)*bearing_unc*PI/180.0;

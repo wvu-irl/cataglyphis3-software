@@ -1,3 +1,37 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
 #include <computer_vision/segmentation.hpp>
 
 Segmentation::Segmentation()
@@ -47,14 +81,14 @@ int Segmentation::loadLookupTable(std::string filename)
 {
 	//allocate memory for lookup table
 	G_lookup_table = new unsigned char**[256];
-	for (int i = 0; i < 256; ++i) 
+	for (int i = 0; i < 256; ++i)
 	{
 		G_lookup_table[i] = new unsigned char*[256];
 		for (int j = 0; j < 256; ++j)
 		{
 			G_lookup_table[i][j] = new unsigned char[256];
 		}
-	}	
+	}
 
 	//open file containing lookup table
 	std::ifstream inputFile;
@@ -81,7 +115,7 @@ int Segmentation::loadLookupTable(std::string filename)
 				else
 				{
 					inputFile >> element;
-					G_lookup_table[i][j][k] = element;	
+					G_lookup_table[i][j][k] = element;
 				}
 			}
 		}
@@ -94,7 +128,7 @@ int Segmentation::loadLookupTable(std::string filename)
 }
 
 //assign colors from lookup table (recommended method by opencv for scanning image)
-void Segmentation::assign_colors(cv::Mat& I, uchar*** &lut) 
+void Segmentation::assign_colors(cv::Mat& I, uchar*** &lut)
 {
     CV_Assert(I.depth() == CV_8U);
 
@@ -123,13 +157,13 @@ void Segmentation::assign_colors(cv::Mat& I, uchar*** &lut)
     }
 }
 
-//find rectangles for blobs in segmented image 
+//find rectangles for blobs in segmented image
 //TODO: this function definitely doesn't work right, needs fixed/recoded.
 std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
 {
     // takes in a masked image (black and white) and returns a list of possible objects (blobs) in the scene
     cv::Mat copy = segmented.clone();
-    
+
     assert(segmented.empty() != true);
     segmented.convertTo(segmented, CV_8U);
 
@@ -142,17 +176,17 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     const int max_area = (max_width+10) * (max_height+10);
 
     cv::SimpleBlobDetector::Params params;
-    
+
     params.minDistBetweenBlobs = 100.0f;
     params.maxThreshold = 255;
     params.minThreshold = 200;
-    
+
     params.filterByConvexity = false;
     params.filterByColor = false;
     params.filterByInertia = false;
     params.filterByCircularity = false;
     params.filterByArea = true;
-    
+
     params.minArea = (float) min_area;
     params.maxArea = (float) max_area;
 
@@ -166,14 +200,14 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
     std::vector<std::vector<cv::Point> > contourPoints;
     findContours(segmented, contourPoints, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
     cv::Mat contouredImage(segmented.size(),CV_8U,cv::Scalar(255));
-    
+
     // maximum contour length
-    const int maxContourLength = 2250; 
+    const int maxContourLength = 2250;
     // minimum contour length
     const int minContourLength = 15;
 
     std::vector<std::vector<cv::Point> >:: iterator itContours = contourPoints.begin();
-    
+
     while (itContours!=contourPoints.end())
     {
         if (itContours->size() < minContourLength || itContours->size() > maxContourLength)
@@ -228,7 +262,7 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
             {
                 //ignore blob
                 ROS_INFO("ignoring (far area thresh) %i",i);
-                continue;              
+                continue;
             }
         }
 
@@ -250,12 +284,12 @@ std::vector<cv::Rect> Segmentation::getIndividualBlobs(const cv::Mat& segmented)
         if(maxDimension < 40 || minDimension < 30)
         {
             ROS_INFO("ignoring (min/max size thresh) %i",i);
-            continue;              
+            continue;
         }
 
         blob_list.push_back(boundingBoxonBlob);
     }
-    
+
     keyPoints.clear();
 
     return blob_list;
@@ -284,7 +318,7 @@ std::vector<int> Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectang
         if(tl_x < 0) tl_x = 0;
         if(tl_y < 0) tl_y = 0;
         if(br_x > origional.cols) br_x = origional.cols;
-        if(br_y > origional.rows) br_y = origional.rows; 
+        if(br_y > origional.rows) br_y = origional.rows;
         cv::Rect extended_rect = cv::Rect( cv::Point(tl_x,tl_y), cv::Point(br_x,br_y) );
 
         //get centers of blob in image
@@ -293,7 +327,7 @@ std::vector<int> Segmentation::writeSegmentsToFile(std::vector<cv::Rect> rectang
 
         //move the coordinate of the object to intersection point of the line passing through
         //the center of the image and the center of the rectangle. we are assuming that
-        //the point cx,cy (as well as tx,ty) is inside the rectangle, and the center of the image 
+        //the point cx,cy (as well as tx,ty) is inside the rectangle, and the center of the image
         //which is (0,0) in the t coordinate frame is outside of the rectangle
         float tx = cx - 5792/2; //transform to standard coordinate system
         float ty = -(cy - 5792/2); //transform to standard coordinate system
@@ -378,7 +412,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
         // {
         //     ROS_ERROR("Error! The image must have 5792 rows and 5792 columns for (image) segmentation. The current image has %i rows and %i columns.",image_file.cols,image_file.rows);
         //     return false;
-        // }   
+        // }
 	}
 	else
 	{
@@ -428,7 +462,7 @@ bool Segmentation::segmentImage(computer_vision::SegmentImage::Request &req, com
     else
     {
         //cv::multiply(channels[0],calibrationMask,channels[0]);
-        cv::multiply(channels[0],cv::Scalar(255),channels[0]);  
+        cv::multiply(channels[0],cv::Scalar(255),channels[0]);
     }
 
     #if defined(SAVE_SEGMENTED_IMAGE)
@@ -493,7 +527,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         //load image
         boost::filesystem::path file_name(P.string() + "/data/blobs/blob" + patch::to_string(req.blobsOfInterest[i]) + ".jpg");
         cv::Mat blob = cv::imread(file_name.string());
-        
+
         //assign colors to pixels
         assign_colors(blob, G_lookup_table); //replace blue channel with integer value representing the color
 
@@ -502,7 +536,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         split(blob, channels);
 
         //erode image
-        cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(8, 8)); 
+        cv::Mat erodeElement = getStructuringElement(cv::MORPH_CROSS, cv::Size(8, 8));
 
         erode(channels[0], channels[0], erodeElement);
         erode(channels[0], channels[0], erodeElement);
@@ -511,7 +545,7 @@ bool Segmentation::extractColor(computer_vision::ExtractColor::Request &req, com
         cv::Mat thresh;
         int maxPixels = 0;
         int bestColor = 0;
-        for(int j=(int)SAMPLE_TYPE_T::_unknown_t; j<(int)SAMPLE_TYPE_T::_N_SAMPLE_TYPE_T-1; j++) 
+        for(int j=(int)SAMPLE_TYPE_T::_unknown_t; j<(int)SAMPLE_TYPE_T::_N_SAMPLE_TYPE_T-1; j++)
         {
             inRange(channels[0], j+1, j+1, thresh); //use CAUTION when looping through enums, these are defined in sample_types.h
             int pixels = countNonZero(thresh);

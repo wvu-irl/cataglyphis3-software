@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <lidar/collision_detection.hpp>
 
 CollisionDetection::CollisionDetection()
@@ -27,7 +62,7 @@ CollisionDetection::CollisionDetection()
 
 	//predictive avoidance service
 	returnHazardMapServ = _nh.advertiseService("/lidar/collisiondetection/createroihazardmap", &CollisionDetection::returnHazardMap, this);
-	
+
 	//collision output
 	_collision_status = 0;
 
@@ -48,7 +83,7 @@ void CollisionDetection::Initializations()
 	threshold_min_angle = 45; //degree, min angle to turn, avoid tan 90 happens, choose 44 not 45
 
 	threshold_counter_lidar = 2;	//counter should be bigger than threshold, than do something
-	// threshold_counter_zed = 5; 
+	// threshold_counter_zed = 5;
 	threshold_counter_ransac = 2;
 	threshold_counter_ransac_avoid = 1;
 
@@ -189,7 +224,7 @@ void CollisionDetection::missionCallback(messages::MissionPlanningInfo const &ms
 {
 	if(msg.procsBeingExecuted.at(__approach__)==true) _doingApproach = true;
 	else _doingApproach = false;
-	
+
 	if(msg.procsBeingExecuted.at(__examine__)==true) _doingExamine = true;
 	else _doingExamine = false;
 
@@ -225,7 +260,7 @@ bool CollisionDetection::newPointCloudAvailable()
 }
 
 void CollisionDetection::packCollisionMessage(messages::CollisionOut &msg)
-{	
+{
 	msg.collision = _collision_status;
 	msg.distance_to_drive = _distance_to_drive;
 	msg.angle_to_drive = _angle_to_drive;
@@ -247,7 +282,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	//angle for robot to turn
 	// std::vector<double> angle;
 	// angle.clear();
-	
+
 
 	for(int i=0; i<cloud->points.size(); i++)
 	{
@@ -261,15 +296,15 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 				{
 					//check if point in corridor (slow down length check)
 					if(cloud->points[i].x > 0 && cloud->points[i].x < _CORRIDOR_LENGTH_SLOWDOWN)
-					{						
+					{
 						//increment collision counter
 						collision_point_counter_slowdown++;
-											
+
 					}
-					
+
 					//check if point in corridor (avoid length check)
 					if(cloud->points[i].x > 0 && cloud->points[i].x < _CORRIDOR_LENGTH_AVOID)
-					{						
+					{
 						//increment collision counter
 						collision_point_counter_avoid++;
 
@@ -280,9 +315,9 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 						else
 						{
 							collision_left_counter++; //left point counter
-						}						
+						}
 					}
-				}	
+				}
 			}
 		}
 	}
@@ -295,7 +330,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	else	//report should be continue
 	{
 		_collision_counter_lidar_slowdown = 0;
-	}	
+	}
 
 	//count how many time the lidar report collision
 	if(collision_point_counter_avoid > _TRIGGER_POINT_THRESHOLD)
@@ -321,7 +356,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	int ransacCollisionStatus = 0;
 	// if(_collision_counter_lidar_avoid == 0)
 	//if the robot do slow down, that means it detects an obstacle, otherwise, we need use RANSAC to confirm
-	if(_collision_counter_lidar_avoid < threshold_counter_lidar && _collision_counter_ransac_switch)	
+	if(_collision_counter_lidar_avoid < threshold_counter_lidar && _collision_counter_ransac_switch)
 	{
 		ransacCollisionStatus = doMathRANSAC();
 	}
@@ -334,7 +369,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	{
 		_collision_counter_ransac=0;
 	}
-	
+
 	if(_collision_counter_ransac >= threshold_counter_ransac && _collision_counter_ransac_slowdown < 2)
 	{
 		_collision_counter_ransac_slowdown = 2;
@@ -372,14 +407,14 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 	// if(collision_point_counter > _TRIGGER_POINT_THRESHOLD)
 	// if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_zed >= threshold_counter_zed || _collision_counter_ransac >= threshold_counter_ransac)
 	if(_collision_counter_lidar_avoid >= threshold_counter_lidar || _collision_counter_ransac_avoid >= threshold_counter_ransac_avoid)
-	{	
+	{
 		_collision_status = 1;	//detected a obstacle
 
 		//for test
 		_hazard_x.clear();
 		_hazard_y.clear();
 
-		
+
 
 		if(_input_cloud.size() > 0)	//check if there is point cloud input from lidar
 		{
@@ -429,7 +464,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			{
 				_angle_to_drive = left_angle_final * 180 / PI;
 
-				_distance_to_drive = short_distance - _CORRIDOR_LENGTH_AVOID;			
+				_distance_to_drive = short_distance - _CORRIDOR_LENGTH_AVOID;
 			}
 			else if(choice == 30)	//small short
 			{
@@ -463,12 +498,12 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 				_distance_to_drive = 5; //no option, turn 100 degree near to the waypoint and drive 5 m
 
 				ROS_INFO_STREAM("No good options");
-				
+
 			}
 
 			ROS_INFO_STREAM("Turn " << _angle_to_drive << " degree and drive " << _distance_to_drive << " m");
-			
-		}		
+
+		}
 		else	//no obstacle on avoidance map
 		{
 			// if(_collision_counter_zed >= threshold_counter_zed)
@@ -499,11 +534,11 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 			{
 				_angle_to_drive = -threshold_min_angle;
 			}
-			
+
 			_distance_to_drive = short_distance - _CORRIDOR_LENGTH_AVOID;
 
 			ROS_INFO_STREAM("there is no obstacle on hazard map, turn " << _angle_to_drive << " degree and 3 m");
-			// }	
+			// }
 		}
 
 		//clean counter
@@ -530,7 +565,7 @@ int CollisionDetection::doMathSafeEnvelope() // FIRST LAYER: SAFE ENVELOPE
 		_distance_to_drive = 0;
 		_angle_to_drive = 0;
 		// ROS_INFO("No Collision...");
-		
+
 	}
 
 	return 0;
@@ -567,7 +602,7 @@ int CollisionDetection::doMathRANSAC() // FIRST LAYER: SAFE ENVELOPE
     T_temporary(3,1) = 0;
     T_temporary(3,2) = 0;
     T_temporary(3,3) = 1;
-	
+
 	pcl::transformPointCloud(_input_cloud, temp_cloud, T_temporary);
 
 	*cloud = temp_cloud;
@@ -626,7 +661,7 @@ int CollisionDetection::doMathRANSAC() // FIRST LAYER: SAFE ENVELOPE
 			return 1;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -638,7 +673,7 @@ void CollisionDetection::generateAvoidancemap()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_cloud (new pcl::PointCloud<pcl::PointXYZI>);
     *hazard_cloud = _input_cloud;
 
-    int hazard_map_size_x_pos = 17; 
+    int hazard_map_size_x_pos = 17;
     int hazard_map_size_x_neg = 5;
     int hazard_map_size_y = 10;	// 2 * 10 both sides
 
@@ -656,7 +691,7 @@ void CollisionDetection::generateAvoidancemap()
 	pass.filter(*hazard_cloud);
 
 	//******************************
-	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put 
+	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put
 	//more points to the ground, therefore the object cluster (hazard cluster) only has real hazarad, therefore, the false alarm rate will reduce
 	//In other words, hazard map and path planning only consider real big hazard while small obstacle should be leave to the pure reactive layer
 	//******************************
@@ -670,11 +705,11 @@ void CollisionDetection::generateAvoidancemap()
 	seg_plane.setDistanceThreshold (0.75); //ground detection threshold parameter
 	seg_plane.setInputCloud (hazard_cloud); //was raw_cloud
 
-	pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ()); 
-	pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ()); 
+	pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ());
+	pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ());
 	seg_plane.segment (*inliers_hazard, *coefficients_hazard);
 
-	
+
 	//seperate the ground points and the points above the ground (object points)
 	pcl::ExtractIndices<pcl::PointXYZI> extract;
 	extract.setInputCloud (hazard_cloud);
@@ -696,7 +731,7 @@ void CollisionDetection::generateAvoidancemap()
 	    point.push_back(hazard_filtered->points[i].y);
 	    point.push_back(hazard_filtered->points[i].z);
 
-	    //the index checks which gird a point belongs to 
+	    //the index checks which gird a point belongs to
 
 	    index = floor(hazard_filtered->points[i].x + hazard_map_size_x_neg) * (2 * hazard_map_size_y) + floor(hazard_filtered->points[i].y + hazard_map_size_y);
 
@@ -743,10 +778,10 @@ void CollisionDetection::generateAvoidancemap()
 	    // if ((total_x || total_y || total_z) && variance_z > 0.3) //this is strange, what is this supposed to do?
 	    if (total_x || total_y || total_z)
 	    {
-	 
+
 	        _hazard_x.push_back(average_x);
 			_hazard_y.push_back(average_y);
-		  
+
 	    }
 	}
 
@@ -769,7 +804,7 @@ void CollisionDetection::generateHazardmap()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr hazard_cloud (new pcl::PointCloud<pcl::PointXYZI>);
     *hazard_cloud = _input_cloud;
 
-    int hazard_map_size = 30; //so each side is 30*2 = 60 
+    int hazard_map_size = 30; //so each side is 30*2 = 60
 
 	//remove points based on hard thresholds (too far, too high, too low)
 	pcl::PassThrough<pcl::PointXYZI> pass;
@@ -787,7 +822,7 @@ void CollisionDetection::generateHazardmap()
 	//create segmentation object for fitting a plane to points in the full cloud using RANSAC (assuming the fit plane represents the ground)
 
 	//******************************
-	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put 
+	//the general idea of this part is similar as local map generation, the difference is that the RANSAC fitting is more loose which will put
 	//more points to the ground, therefore the object cluster (hazard cluster) only has real hazarad, therefore, the false alarm rate will reduce
 	//In other words, hazard map and path planning only consider real big hazard while small obstacle should be leave to the pure reactive layer
 	//******************************
@@ -800,8 +835,8 @@ void CollisionDetection::generateHazardmap()
 	seg_plane.setMaxIterations (1000); //max iterations for RANSAC
 	seg_plane.setDistanceThreshold (0.75); //ground detection threshold parameter
 	seg_plane.setInputCloud (hazard_cloud); //was raw_cloud
-	pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ()); 
-	pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ()); 
+	pcl::ModelCoefficients::Ptr coefficients_hazard (new pcl::ModelCoefficients ());
+	pcl::PointIndices::Ptr inliers_hazard (new pcl::PointIndices ());
 	seg_plane.segment (*inliers_hazard, *coefficients_hazard);
 
 	//seperate the ground points and the points above the ground (object points)
@@ -825,7 +860,7 @@ void CollisionDetection::generateHazardmap()
 	    point.push_back(hazard_filtered->points[i].y);
 	    point.push_back(hazard_filtered->points[i].z);
 
-	    //the index checks which gird a point belongs to 
+	    //the index checks which gird a point belongs to
 	    index = floor(hazard_filtered->points[i].x + hazard_map_size)*(2*hazard_map_size) + floor(hazard_filtered->points[i].y + hazard_map_size);
 
 	    hazard_map_cells[index].push_back(point);
@@ -910,7 +945,7 @@ int CollisionDetection::firstChoice(double angle, double distance)
 			{
 				count++;
 			}
-		}			
+		}
 	}
 
 	return count;
@@ -934,7 +969,7 @@ int CollisionDetection::secondChoice(double angle, double distance, double xg, d
 				}
 			}
 		}
-		
+
 	}
 	else
 	{
@@ -949,7 +984,7 @@ int CollisionDetection::secondChoice(double angle, double distance, double xg, d
 				}
 			}
 		}
-		
+
 	}
 
 	// ROS_INFO_STREAM("count: " <<count);
@@ -984,7 +1019,7 @@ int CollisionDetection::finalChoice(double left_angle, double right_angle, int c
 	if(count_big_long_first <= threshold_obstacle_number && count_big_long_first >= 0)	//seq: long_first -> short_second -> long_second
 	{
 		count_big_short_second = secondChoice(left_angle, short_distance - _CORRIDOR_LENGTH_AVOID, xg_local, yg_local);
-		
+
 		if(count_big_short_second <= threshold_obstacle_number && count_big_short_second >= 0)
 		{
 			choice_big_short = 1;
@@ -1018,7 +1053,7 @@ int CollisionDetection::finalChoice(double left_angle, double right_angle, int c
 	if(count_small_long_first <= threshold_obstacle_number && count_small_long_first >= 0)	//seq: long_first -> short_second -> long_second
 	{
 		count_small_short_second = secondChoice(right_angle, short_distance - _CORRIDOR_LENGTH_AVOID, xg_local, yg_local);
-		
+
 		if(count_small_short_second <= threshold_obstacle_number && count_small_short_second >= 0)
 		{
 			choice_small_short = 1;
@@ -1031,7 +1066,7 @@ int CollisionDetection::finalChoice(double left_angle, double right_angle, int c
 			{
 				choice_small_long = 1;
 			}
-		}				
+		}
 	}
 	else if(count_small_long_first > threshold_obstacle_number)	//seq: short_first -> short_second
 	{

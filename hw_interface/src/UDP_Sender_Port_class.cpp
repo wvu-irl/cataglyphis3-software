@@ -1,6 +1,41 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 /**
  * UDP_Sender_Port_class.cpp
- * Implements UDP port_open (via constructor), port_close (via destructor), port_read (erroneous call), and port_write methods 
+ * Implements UDP port_open (via constructor), port_close (via destructor), port_read (erroneous call), and port_write methods
  */
 #include "UDP_Sender_Port_class.h"
 
@@ -22,7 +57,7 @@ UDP_Sender_Port::UDP_Sender_Port()
     {
         printf("could not create socket\n");
     }
-    
+
     // Set local address and port
     memset((char *) &si_local, 0, sizeof(si_local));
     si_local.sin_family = AF_INET;
@@ -36,7 +71,7 @@ UDP_Sender_Port::UDP_Sender_Port()
     {
         printf("bind failed\n");
     }
- 
+
  	// Set other address and port
     memset((char *) &si_other, 0, sizeof(si_other));
     si_other.sin_family = AF_INET;
@@ -46,7 +81,7 @@ UDP_Sender_Port::UDP_Sender_Port()
         printf("inet_aton() other failed\n");
     }
 
-}  
+}
 
 bool UDP_Sender_Port::port_read()
 {
@@ -60,15 +95,15 @@ bool UDP_Sender_Port::port_write()
 {
 	bool return_val = true;
 	/**
-	 * Write data to the port - 
+	 * Write data to the port -
 	 */
 	 //hexprint
-	printf(" - - - - - - - write_buffer: "); 
+	printf(" - - - - - - - write_buffer: ");
 	for(int i=0;i<wbuf_size;i++)
 	{
 		printf("%2.2hhX|",write_buffer[i]);
 	}
-	printf("\n"); 
+	printf("\n");
 	//--hexprint
 	printf("before sendto()\n");
 	//send the message
@@ -83,7 +118,7 @@ bool UDP_Sender_Port::port_write()
 UDP_Sender_Port::~UDP_Sender_Port()
 {
 	//
-	// Close UDP port 
+	// Close UDP port
 	//
     close(s);
 }

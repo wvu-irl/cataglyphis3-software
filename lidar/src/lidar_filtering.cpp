@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <lidar/lidar_filtering.hpp>
 
 LidarFilter::LidarFilter()
@@ -222,15 +257,15 @@ void LidarFilter::stackClouds()
         _stack_counter = 0;
 	}
 }
- 
+
 void LidarFilter::packLocalMapMessage(messages::LocalMap &msg)
-{	
+{
 	//clear message
 	msg.x_mean.clear();
 	msg.y_mean.clear();
 	msg.z_mean.clear();
 	msg.var_z.clear();
-	msg.ground_adjacent.clear(); 
+	msg.ground_adjacent.clear();
 
 	//populate local map
 	//for(int i=0; i<_local_grid_map.size(); i++)
@@ -271,24 +306,24 @@ void LidarFilter::packHomingMessage(messages::LidarFilterOut &msg)
 		msg.homing_x = _homing_x;
 		msg.homing_y = _homing_y;
 		msg.homing_heading = _homing_heading;
-		msg.homing_found = _homing_found;	
+		msg.homing_found = _homing_found;
 		msg.dull_x = _dull_x;
 		msg.dull_y = _dull_y;
 		msg.shiny_x = _shiny_x;
-		msg.shiny_y = _shiny_y;	
-		msg.cylinder_std = _cylinder_std;		
+		msg.shiny_y = _shiny_y;
+		msg.cylinder_std = _cylinder_std;
 	}
 	else
 	{
 		msg.homing_x = 0;
 		msg.homing_y = 0;
 		msg.homing_heading = 0;
-		msg.homing_found = _homing_found;	
+		msg.homing_found = _homing_found;
 		msg.dull_x = 0.0;
 		msg.dull_y = 0.0;
 		msg.shiny_x = 0.0;
-		msg.shiny_y = 0.0;	
-		msg.cylinder_std = 100.0;			
+		msg.shiny_y = 0.0;
+		msg.cylinder_std = 100.0;
 	}
 	msg.registration_counter = _registration_counter;
 	msg.terrain_type = 0; // Set this based on terrain classification. 1 means obstacles/sidewalk/anything we need to go slow on, 0 means clear, grassy, go full speed
@@ -324,7 +359,7 @@ void LidarFilter::doMathMapping()
 	ground_point.width  = (2*map_range)*(2*map_range);
 	ground_point.height = 1;
 	ground_point.points.resize (ground_point.width * ground_point.height);
-	
+
 	//remove points based on hard thresholds (too far, too high, too low)
 	pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(cloud);
@@ -400,7 +435,7 @@ void LidarFilter::doMathMapping()
 
 
 	//copy filtered point cloud after hard thresholding and ground removal
-	_object_filtered = *object_filtered; 
+	_object_filtered = *object_filtered;
 
 	//save point cloud after ground removal
 	// std::stringstream ss2;
@@ -421,18 +456,18 @@ void LidarFilter::doMathMapping()
 	// 	//pcl::visualization::PCLVisualizer viewer;
 	//     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> rgb (object_filtered_projection, 255, 0, 0);
 	//     viewer.addPointCloud<pcl::PointXYZI> (object_filtered_projection, rgb, "object_RGB");
-	//     viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB"); 
+	//     viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1.5, "object_RGB");
 	//     viewer.spinOnce(spintime);
 	//     //viewer.removePointCloud("object_RGB");
 	//     visualizerCounter =0;
 	//     //visualization_flag = 2;
 	//     viewer.removePointCloud("object_RGB");
-	// } 
+	// }
 	// else
 	// {
 	// 	visualizerCounter = visualizerCounter + 1;
 	// }
-	
+
 
 	//-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 	//-*-*-*-*-*-*-*-*-*-*--*-*-BUILD LOCAL MAP*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -451,7 +486,7 @@ void LidarFilter::doMathMapping()
 	    point.push_back(object_filtered->points[i].y);
 	    point.push_back(object_filtered->points[i].z);
 
-	    //the index checks which gird a point belongs to 
+	    //the index checks which gird a point belongs to
 	    index = floor(object_filtered->points[i].x + map_range)*(2*map_range) + floor(object_filtered->points[i].y + map_range);
 	    grid_map_cells[index].push_back(point);
 	    point.clear();
@@ -501,7 +536,7 @@ void LidarFilter::doMathMapping()
 	}
 
 	//copy filtered point cloud after hard thresholding and ground removal
-	_object_filtered = *object_filtered; 
+	_object_filtered = *object_filtered;
 }
 
 // void LidarFilter::doMathHoming()
@@ -514,7 +549,7 @@ void LidarFilter::doMathMapping()
 // 	pcl::PassThrough<pcl::PointXYZI> pass;
 // 	pass.setInputCloud(object_filtered);
 //     pass.setFilterFieldName("z");
-//     pass.setFilterLimits(-5,5); 
+//     pass.setFilterLimits(-5,5);
 //     pass.filter(*object_filtered);
 //     pass.setInputCloud(object_filtered);
 //     pass.setFilterFieldName("x");
@@ -522,10 +557,10 @@ void LidarFilter::doMathMapping()
 //     pass.filter(*object_filtered);
 //     pass.setInputCloud(object_filtered);
 //     pass.setFilterFieldName("y");
-//     pass.setFilterLimits(-home_detection_range,home_detection_range); 
+//     pass.setFilterLimits(-home_detection_range,home_detection_range);
 //     pass.filter(*object_filtered);
 //     //ROS_INFO("PassThrough done.");
-	
+
 // 	// std::stringstream ss;
 // 	// ss << "file.pcd";
 // 	// pcl::io::savePCDFile( ss.str(), *object_filtered);
@@ -535,19 +570,19 @@ void LidarFilter::doMathMapping()
 //     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZI> ());
 //     tree->setInputCloud (object_filtered);
 //     //cout << "0" << endl;
-    
+
 //     //use the euclidean clustering method to put points into different clusters based on their relative distance
 //     std::vector<pcl::PointIndices> cluster_indices;
 //     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
 //     ec.setClusterTolerance (0.3); // distance threshold
-//     ec.setMinClusterSize (50); //minial size to generate a cluster 
+//     ec.setMinClusterSize (50); //minial size to generate a cluster
 //     ec.setMaxClusterSize (5000); //max size
 //     ec.setSearchMethod (tree);
-//     ec.setInputCloud (object_filtered); //use the points after ground removal 
+//     ec.setInputCloud (object_filtered); //use the points after ground removal
 //     ec.extract (cluster_indices);
 
 //     //cout << "1" << endl;
-    
+
 //     //generate empty clouds to hold previous cluster
 //     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
 //     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
@@ -556,12 +591,12 @@ void LidarFilter::doMathMapping()
 //     {
 //         points_cluster.push_back(cloud_middle);
 //     }
-    
+
 // 	    //cout << "2" << endl;
-	    
+
 //     //put above clusters into differnt point clouds
 //     int j = 0;
-//     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
+//     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
 //     {
 //         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
 //         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
@@ -575,12 +610,12 @@ void LidarFilter::doMathMapping()
 //         j++;
 //     }
 
-//     //from here is the cylinder detection method 
+//     //from here is the cylinder detection method
 //     //input data is previous clusters
 //     //loop through clusters
 //     //ROS_INFO("%i clusters extracted from scan.", points_cluster.size());
 
-	
+
 // 	//parameters need to run the cylinder detection algorithm
 // 	pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
 // 	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
@@ -685,7 +720,7 @@ void LidarFilter::doMathMapping()
 // 	        extract.setNegative (false);
 // 	        extract.filter (*cloud_cylinder);
 // 	        //cout << cloud_cylinder->points.size() << " points can be fitted into a cylinder model from cluter " << i << "."<<  endl;
-	        
+
 // 	        // IF 80% POINTS IN A CLUSTER CAN BE FITTED INTO A CYLINDER MODEL, THEN HOME CYLINDER IS DETECTED
 // 	        cylinder current_cylinder;
 // 	        if(float(cloud_cylinder->points.size())/float(cloud_normals->points.size()) >= 0.9)
@@ -730,7 +765,7 @@ void LidarFilter::doMathMapping()
 // 					current_cylinder.axis_direction(1,0) = -(double)coefficients_cylinder->values[4];
 // 					current_cylinder.axis_direction(2,0) = -(double)coefficients_cylinder->values[5];
 // 					current_cylinder.raius_estimate(0,0) =  (double)coefficients_cylinder->values[6];
-			    	
+
 // 					current_cylinder.points.zeros(4,cloud_cylinder->points.size());
 // 					for (int jj=0; jj<cloud_cylinder->points.size(); jj++)
 // 					{
@@ -742,11 +777,11 @@ void LidarFilter::doMathMapping()
 // 					_cylinders.push_back(current_cylinder);
 // 				}
 // 	        }
-//     	}   
+//     	}
 //     }
-    
+
 //     //begin homing detection from cylinders
-//     if(_cylinders.size()>=2) 
+//     if(_cylinders.size()>=2)
 //     {
 //     	fitCylinderShort();
 // 	}
@@ -765,7 +800,7 @@ void LidarFilter::doLongDistanceHoming()
 	// pcl::PassThrough<pcl::PointXYZI> pass;
 	// pass.setInputCloud(object_filtered);
  //    pass.setFilterFieldName("z");
- //    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
+ //    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground
  //    pass.filter(*object_filtered);
  //    pass.setInputCloud(object_filtered);
  //    pass.setFilterFieldName("x");
@@ -773,7 +808,7 @@ void LidarFilter::doLongDistanceHoming()
  //    pass.filter(*object_filtered);
  //    pass.setInputCloud(object_filtered);
  //    pass.setFilterFieldName("y");
- //    pass.setFilterLimits(-home_detection_range,home_detection_range); 
+ //    pass.setFilterLimits(-home_detection_range,home_detection_range);
  //    pass.filter(*object_filtered);
  //    //ROS_INFO("PassThrough done.");
 
@@ -785,7 +820,7 @@ void LidarFilter::doLongDistanceHoming()
     pcl::PassThrough<pcl::PointXYZI> pass;
 	pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground 
+    pass.setFilterLimits(-10,10); //long distance detection, may have slanted ground
     pass.filter(*raw_cloud);
     pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("x");
@@ -793,7 +828,7 @@ void LidarFilter::doLongDistanceHoming()
     pass.filter(*raw_cloud);
     pass.setInputCloud(raw_cloud);
     pass.setFilterFieldName("y");
-    pass.setFilterLimits(-home_detection_range,home_detection_range); 
+    pass.setFilterLimits(-home_detection_range,home_detection_range);
     pass.filter(*raw_cloud);
 
     *object_filtered = *raw_cloud;
@@ -814,7 +849,7 @@ void LidarFilter::doLongDistanceHoming()
  //    object_filtered->width = counter;
  //    object_filtered->height = 1;
  //    object_filtered->points.resize (object_filtered->width * object_filtered->height);
-	
+
 	// counter = 0;
 	// for (int i = 0; i < raw_cloud->points.size(); i++)
  //    {
@@ -837,20 +872,20 @@ void LidarFilter::doLongDistanceHoming()
     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>); //for clustering
     tree->setInputCloud (object_filtered);
     //cout << "0" << endl;
-    
+
     //use the euclidean clustering method to put points into different clusters based on their relative distance
     //parameters are different than close ditance detection
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
     ec.setClusterTolerance (1.0); // distance threshold
-    ec.setMinClusterSize (2); //minial size to generate a cluster 
+    ec.setMinClusterSize (2); //minial size to generate a cluster
     ec.setMaxClusterSize (5000); //max size
     ec.setSearchMethod (tree);
-    ec.setInputCloud (object_filtered); //use the points after ground removal 
+    ec.setInputCloud (object_filtered); //use the points after ground removal
     ec.extract (cluster_indices);
 
     //cout << "1" << endl;
-    
+
     //generate empty clouds to hold previous cluster
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_middle (new pcl::PointCloud<pcl::PointXYZI>);
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> points_cluster;
@@ -858,10 +893,10 @@ void LidarFilter::doLongDistanceHoming()
     {
         points_cluster.push_back(cloud_middle);
     }
-	    
+
     //put above clusters into differnt point clouds
     int j = 0;
-    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)   
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
     {
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
@@ -979,7 +1014,7 @@ void LidarFilter::doLongDistanceHoming()
 	            current_potential_cylinder_intensity.points(1,jj)= (double)(points_cluster[i]->points[jj].y); //y
 	            current_potential_cylinder_intensity.points(2,jj)= (double)(points_cluster[i]->points[jj].z); //z
 	            current_potential_cylinder_intensity.points(3,jj)= (double)(points_cluster[i]->points[jj].intensity); //intensity
-	        }	
+	        }
 			_potential_cylinders_intensity.push_back(current_potential_cylinder_intensity);
 			//std::cout << "_potential_cylinders_intensity.size() = " << _potential_cylinders_intensity.size() << std::endl;
     	}
@@ -996,7 +1031,7 @@ void LidarFilter::doLongDistanceHoming()
 				current_potential_cylinder_nonintensity.points(2,jj)= (double)(points_cluster[i]->points[jj].z); //z
 				current_potential_cylinder_nonintensity.points(3,jj)= (double)(points_cluster[i]->points[jj].intensity); //intensity
 	        }
-			_potential_cylinders_nonintensity.push_back(current_potential_cylinder_nonintensity);  
+			_potential_cylinders_nonintensity.push_back(current_potential_cylinder_nonintensity);
 			//std::cout << "_potential_cylinders_nonintensity.size() = " << _potential_cylinders_nonintensity.size() << std::endl;
 		}
     }
@@ -1113,7 +1148,7 @@ void LidarFilter::fitCylinderLong()
 			{
 				x = xs1(0,jj);
 				y = ys1(0,jj);
-				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay1)*(y-ay1))-r; 
+				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay1)*(y-ay1))-r;
 				//std::cout << "sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1)) = " << (x-ax1)*(x-ax1)+(y-ay2)*(y-ay1) << std::endl;
 				J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
 				J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
@@ -1124,7 +1159,7 @@ void LidarFilter::fitCylinderLong()
 			{
 				x = xs2(0,jj-n1);
 				y = ys2(0,jj-n1);
-				FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r; 
+				FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r;
 				//std::cout << "sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2)) = " << (x-ax2)*(x-ax2)+(y-ay2)*(y-ay2) << std::endl;
 				J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
 				J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
@@ -1164,8 +1199,8 @@ void LidarFilter::fitCylinderLong()
 		v2_x = X(0,0)-X(2,0);
 		v2_y = X(1,0)-X(3,0);
 
-		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean);
+		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y);
 		v1_x = x_mean/v1_mag;
 		v1_y = y_mean/v1_mag;
 		v2_x = v2_x/v2_mag;
@@ -1186,7 +1221,7 @@ void LidarFilter::fitCylinderLong()
 			x_est_k = d*cos(bearing);
 			y_est_k = d*sin(bearing);
 		}
-		double b_h_diff_k = atan2(-v1_y,-v1_x); 
+		double b_h_diff_k = atan2(-v1_y,-v1_x);
 		double heading_est_k = -(b_h_diff_k-bearing);
 		std::cout << "x_est_k = " << x_est_k << std::endl;
 		std::cout << "y_est_k = " << y_est_k << std::endl;
@@ -1198,8 +1233,8 @@ void LidarFilter::fitCylinderLong()
 
 		v2_x = cx1-cx2;
 		v2_y = cy1-cy2;
-		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean);
+		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y);
 		v1_x = x_mean/v1_mag;
 		v1_y = y_mean/v1_mag;
 		v2_x = v2_x/v2_mag;
@@ -1218,7 +1253,7 @@ void LidarFilter::fitCylinderLong()
 			x_est = d*cos(bearing);
 			y_est = d*sin(bearing);
 		}
-		double b_h_diff = atan2(-v1_y,-v1_x); 
+		double b_h_diff = atan2(-v1_y,-v1_x);
 		double heading_est = -(b_h_diff-bearing);
 		std::cout << "x_est = " << x_est << std::endl;
 		std::cout << "y_est = " << y_est << std::endl;
@@ -1252,7 +1287,7 @@ void LidarFilter::fitCylinderLong()
 	else
 	{
 		_homing_x=0.0;
-		_homing_y=0.0; 
+		_homing_y=0.0;
 		_homing_heading=0.0;
 		_homing_found=false;
 		_dull_x=0.0;
@@ -1261,7 +1296,7 @@ void LidarFilter::fitCylinderLong()
 		_shiny_y=0.0;
 		_cylinder_std = 100.0;
 	} //end if cylinder found
-	
+
 	double diff1, diff2;
 	diff1 = sqrt((cx1-X(0,0))*(cx1-X(0,0))+(cy1-X(1,0))*(cy1-X(1,0)));
 	diff2 = sqrt((cx2-X(2,0))*(cx2-X(2,0))+(cy2-X(3,0))*(cy2-X(3,0)));
@@ -1269,7 +1304,7 @@ void LidarFilter::fitCylinderLong()
 	{
 		_homing_found = false;
 	}
-	
+
 	// if(_homing_found==true && (sqrt((_homing_x-_navigation_filter_x)*(_homing_x-_navigation_filter_x)+(_homing_y-_navigation_filter_y)*(_homing_y-_navigation_filter_y))>10.0 || fabs(_homing_heading-_navigation_filter_heading)>5.0*180/3.14))
 	// {
 	// 	std::ofstream outputFile;
@@ -1301,11 +1336,11 @@ void LidarFilter::fitCylinderLong()
 	// 			outputFile << i << ","; //cylinder number
 	// 			outputFile << 1 << ","; //nonintensity = 1
 	// 			outputFile << _stack_counter << ",";
-	// 			outputFile << keep_nonintensity << ","; 
-	// 			outputFile << diff1 << ","; 
-	// 			outputFile << diff2 << ","; 
-	// 			outputFile << explode; 
-	// 			outputFile << std::endl; 	
+	// 			outputFile << keep_nonintensity << ",";
+	// 			outputFile << diff1 << ",";
+	// 			outputFile << diff2 << ",";
+	// 			outputFile << explode;
+	// 			outputFile << std::endl;
 	// 		}
 	// 	}
 
@@ -1326,12 +1361,12 @@ void LidarFilter::fitCylinderLong()
 	// 			outputFile << X(3) << ",";
 	// 			outputFile << i << ","; //cylinder number
 	// 			outputFile << 2 << ","; //intensity = 2
-	// 			outputFile << _stack_counter << ","; 
+	// 			outputFile << _stack_counter << ",";
 	// 			outputFile << keep_intensity << ",";
-	// 			outputFile << diff1 << ","; 
-	// 			outputFile << diff2 << ","; 
-	// 			outputFile << explode; 
-	// 			outputFile << std::endl; 	
+	// 			outputFile << diff1 << ",";
+	// 			outputFile << diff2 << ",";
+	// 			outputFile << explode;
+	// 			outputFile << std::endl;
 	// 		}
 	// 	}
 	// 	outputFile.close();
@@ -1466,7 +1501,7 @@ void LidarFilter::fitCylinderLong()
 // 			{
 // 				x = xs1(0,jj);
 // 				y = ys1(0,jj);
-// 				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay1)*(y-ay1))-r; 
+// 				FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay1)*(y-ay1))-r;
 // 				//std::cout << "sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1)) = " << (x-ax1)*(x-ax1)+(y-ay2)*(y-ay1) << std::endl;
 // 				J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
 // 				J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
@@ -1476,7 +1511,7 @@ void LidarFilter::fitCylinderLong()
 // 			{
 // 				x = xs2(0,jj-n1);
 // 				y = ys2(0,jj-n1);
-// 				FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r; 
+// 				FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r;
 // 				//std::cout << "sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2)) = " << (x-ax2)*(x-ax2)+(y-ay2)*(y-ay2) << std::endl;
 // 				J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
 // 				J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
@@ -1515,8 +1550,8 @@ void LidarFilter::fitCylinderLong()
 // 		v2_x = X(0,0)-X(2,0);
 // 		v2_y = X(1,0)-X(3,0);
 
-// 		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-// 		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+// 		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean);
+// 		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y);
 // 		v1_x = x_mean/v1_mag;
 // 		v1_y = y_mean/v1_mag;
 // 		v2_x = v2_x/v2_mag;
@@ -1526,7 +1561,7 @@ void LidarFilter::fitCylinderLong()
 // 		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
 // 		double x_est_k = d*cos(bearing);
 // 		double y_est_k = d*sin(bearing);
-// 		double b_h_diff_k = atan2(-v1_y,-v1_x); 
+// 		double b_h_diff_k = atan2(-v1_y,-v1_x);
 // 		double heading_est_k = -(b_h_diff_k-bearing);
 // 		std::cout << "x_est_k = " << x_est_k << std::endl;
 // 		std::cout << "y_est_k = " << y_est_k << std::endl;
@@ -1538,8 +1573,8 @@ void LidarFilter::fitCylinderLong()
 
 // 		v2_x = cx1-cx2;
 // 		v2_y = cy1-cy2;
-// 		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-// 		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+// 		v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean);
+// 		v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y);
 // 		v1_x = x_mean/v1_mag;
 // 		v1_y = y_mean/v1_mag;
 // 		v2_x = v2_x/v2_mag;
@@ -1549,7 +1584,7 @@ void LidarFilter::fitCylinderLong()
 // 		bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
 // 		double x_est = d*cos(bearing);
 // 		double y_est = d*sin(bearing);
-// 		double b_h_diff = atan2(-v1_y,-v1_x); 
+// 		double b_h_diff = atan2(-v1_y,-v1_x);
 // 		double heading_est = -(b_h_diff-bearing);
 // 		std::cout << "x_est = " << x_est << std::endl;
 // 		std::cout << "y_est = " << y_est << std::endl;
@@ -1605,11 +1640,11 @@ void LidarFilter::fitCylinderLong()
 // 				outputFile << X(1) << ",";
 // 				outputFile << X(2) << ",";
 // 				outputFile << X(3) << ",";
-// 				outputFile << diff1+diff2; 
-// 				outputFile << std::endl; 	
+// 				outputFile << diff1+diff2;
+// 				outputFile << std::endl;
 // 			}
 // 		}
-// 		stopSavingDataToFile=true; 
+// 		stopSavingDataToFile=true;
 // 		outputFile.close();
 // 	}
 // }

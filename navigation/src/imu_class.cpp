@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <navigation/imu_class.hpp>
 
 
@@ -322,7 +357,7 @@ void IMU::calculate_gyro1_offset()
 	arma::mat r_meds;
 	arma::mat m_temp;
 	good_bias1 = true;
-	
+
 	// p_est
 	double m_p = 0;
 	int s_p = 0;
@@ -345,7 +380,7 @@ void IMU::calculate_gyro1_offset()
 				min_index_p = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_p; ii++)
 		{
 			if (ii != min_index_p)
@@ -389,7 +424,7 @@ void IMU::calculate_gyro1_offset()
 				min_index_q = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_q; ii++)
 		{
 			if (ii != min_index_q)
@@ -433,7 +468,7 @@ void IMU::calculate_gyro1_offset()
 				min_index_r = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_r; ii++)
 		{
 			if (ii != min_index_r)
@@ -454,7 +489,7 @@ void IMU::calculate_gyro1_offset()
 	{
 		good_bias1 = false;
 	}
-	
+
 }
 
 void IMU::calculate_gyro2_offset()
@@ -470,7 +505,7 @@ void IMU::calculate_gyro2_offset()
 	arma::mat r_meds;
 	arma::mat m_temp;
 	good_bias2 = true;
-	
+
 	// p_est
 	double m_p = 0;
 	int s_p = 0;
@@ -493,7 +528,7 @@ void IMU::calculate_gyro2_offset()
 				min_index_p = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_p; ii++)
 		{
 			if (ii != min_index_p)
@@ -537,7 +572,7 @@ void IMU::calculate_gyro2_offset()
 				min_index_q = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_q; ii++)
 		{
 			if (ii != min_index_q)
@@ -581,7 +616,7 @@ void IMU::calculate_gyro2_offset()
 				min_index_r = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_r; ii++)
 		{
 			if (ii != min_index_r)
@@ -617,7 +652,7 @@ void IMU::calculate_gyro3_offset()
 	arma::mat r_meds;
 	arma::mat m_temp;
 	good_bias3 = true;
-	
+
 	// p_est
 	double m_p = 0;
 	int s_p = 0;
@@ -640,7 +675,7 @@ void IMU::calculate_gyro3_offset()
 				min_index_p = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_p; ii++)
 		{
 			if (ii != min_index_p)
@@ -684,7 +719,7 @@ void IMU::calculate_gyro3_offset()
 				min_index_q = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_q; ii++)
 		{
 			if (ii != min_index_q)
@@ -728,7 +763,7 @@ void IMU::calculate_gyro3_offset()
 				min_index_r = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_r; ii++)
 		{
 			if (ii != min_index_r)
@@ -765,7 +800,7 @@ void IMU::calculate_gyro4_offset()
 	arma::mat r_meds;
 	arma::mat m_temp;
 	good_bias4 = true;
-	
+
 	// p_est
 	double m_p = 0;
 	int s_p = 0;
@@ -788,7 +823,7 @@ void IMU::calculate_gyro4_offset()
 				min_index_p = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_p; ii++)
 		{
 			if (ii != min_index_p)
@@ -832,7 +867,7 @@ void IMU::calculate_gyro4_offset()
 				min_index_q = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_q; ii++)
 		{
 			if (ii != min_index_q)
@@ -876,7 +911,7 @@ void IMU::calculate_gyro4_offset()
 				min_index_r = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_r; ii++)
 		{
 			if (ii != min_index_r)
@@ -912,7 +947,7 @@ void IMU::calculate_gyro5_offset()
 	arma::mat r_meds;
 	arma::mat m_temp;
 	good_bias5 = true;
-	
+
 	// p_est
 	double m_p = 0;
 	int s_p = 0;
@@ -935,7 +970,7 @@ void IMU::calculate_gyro5_offset()
 				min_index_p = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_p; ii++)
 		{
 			if (ii != min_index_p)
@@ -979,7 +1014,7 @@ void IMU::calculate_gyro5_offset()
 				min_index_q = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_q; ii++)
 		{
 			if (ii != min_index_q)
@@ -1023,7 +1058,7 @@ void IMU::calculate_gyro5_offset()
 				min_index_r = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_r; ii++)
 		{
 			if (ii != min_index_r)
@@ -1059,7 +1094,7 @@ void IMU::calculate_gyro6_offset()
 	arma::mat r_meds;
 	arma::mat m_temp;
 	good_bias6 = true;
-	
+
 	// p_est
 	double m_p = 0;
 	int s_p = 0;
@@ -1082,7 +1117,7 @@ void IMU::calculate_gyro6_offset()
 				min_index_p = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_p; ii++)
 		{
 			if (ii != min_index_p)
@@ -1126,7 +1161,7 @@ void IMU::calculate_gyro6_offset()
 				min_index_q = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_q; ii++)
 		{
 			if (ii != min_index_q)
@@ -1170,7 +1205,7 @@ void IMU::calculate_gyro6_offset()
 				min_index_r = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_r; ii++)
 		{
 			if (ii != min_index_r)
@@ -1206,7 +1241,7 @@ void IMU::calculate_gyroS_offset()
 	arma::mat r_meds;
 	arma::mat m_temp;
 	good_biasS = true;
-	
+
 	// p_est
 	double m_p = 0;
 	int s_p = 0;
@@ -1229,7 +1264,7 @@ void IMU::calculate_gyroS_offset()
 				min_index_p = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_p; ii++)
 		{
 			if (ii != min_index_p)
@@ -1273,7 +1308,7 @@ void IMU::calculate_gyroS_offset()
 				min_index_q = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_q; ii++)
 		{
 			if (ii != min_index_q)
@@ -1317,7 +1352,7 @@ void IMU::calculate_gyroS_offset()
 				min_index_r = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_r; ii++)
 		{
 			if (ii != min_index_r)
@@ -1523,14 +1558,14 @@ void IMU::determine_new_data()
 
 void IMU::filter_imu_values()
 {
-		
+
 	if (new_nb1 == 1)
 	{
 		if (prev_time1!=0)
 		{
 			dt1 = time1 - prev_time1;
 		}
-		else 
+		else
 		{
 			dt1 = 0.0;
 		}
@@ -1598,7 +1633,7 @@ void IMU::filter_imu_values()
 		{
 			dt2 = time2 - prev_time2;
 		}
-		else 
+		else
 		{
 			dt2 = 0.0;
 		}
@@ -1665,7 +1700,7 @@ void IMU::filter_imu_values()
 		{
 			dtS = timeS - prev_timeS;
 		}
-		else 
+		else
 		{
 			dtS = 0.0;
 		}
@@ -1690,7 +1725,7 @@ void IMU::filter_imu_values()
 	}
 
 	if (!nb1_good && !nb2_good)
-	{	
+	{
 		p = nbS_p;
 	    q = nbS_q;
 	    r = nbS_r;

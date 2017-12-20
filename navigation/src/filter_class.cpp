@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include "navigation/filter_class.hpp"
 
 Filter::Filter()
@@ -37,7 +72,7 @@ Filter::Filter()
 	E_north_angle = 111.0*PI/180.0;
 	north_angle_thresh = 75.0*PI/180.0;
 	heading_update = 0.0;
-	b_h_diff_k = 0.0; 
+	b_h_diff_k = 0.0;
 	heading_est_k = 0.0;
 	heading_est_k_prev = 0.0;
 	heading_prev = 0.0;
@@ -68,7 +103,7 @@ void Filter::initialize_variance(int performed_bias_removal, double north_angle_
 		Q_psi = 0.0000036;
 	}
 	P_psi = north_angle_unc*north_angle_unc;
-		
+
 }
 
 void Filter::which_nb_to_keep(int nb1_drive_counter, bool nb1_current, bool nb1_good, bool nb1_good_prev, int nb2_drive_counter, bool nb2_current, bool nb2_good, bool nb2_good_prev, bool nbS_current, bool nbS_good, bool nbS_good_prev)
@@ -85,7 +120,7 @@ void Filter::which_nb_to_keep(int nb1_drive_counter, bool nb1_current, bool nb1_
 			{
 				keep_nb = 26; // keep_nb = 1;
 			}
-		
+
 		}
 		else if (!nb1_good_prev && nb2_good_prev)
 		{
@@ -314,7 +349,7 @@ void Filter::turning(double p, double q, double r, double dt)
 	phi = phi_m+dt*(p+(q)*sin(phi_m)*tan(theta_m)+(r)*cos(phi_m)*tan(theta_m));
 	theta = theta_m+dt*((q)*cos(phi_m)-(r)*sin(phi_m));
 	psi = psi_m+dt*((q)*sin(phi_m)+(r)*cos(phi_m))*(1/cos(theta_m));
-	
+
 	Q_phi = Q_phi+2.2847e-012;
 	Q_theta = Q_theta+2.2847e-012;
 	Q_psi = Q_psi+2.2847e-012;
@@ -372,7 +407,7 @@ void Filter::roll_pitch_G_update()
 				min_index_ax = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_ax; ii++)
 		{
 			if (ii != min_index_ax)
@@ -413,7 +448,7 @@ void Filter::roll_pitch_G_update()
 				min_index_ay = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_ay; ii++)
 		{
 			if (ii != min_index_ay)
@@ -454,7 +489,7 @@ void Filter::roll_pitch_G_update()
 				min_index_az = ii;
 			}
 		}
-		
+
 		for (int ii = 0; ii<s_az; ii++)
 		{
 			if (ii != min_index_az)
@@ -497,7 +532,7 @@ void Filter::roll_pitch_G_update()
 		{
 			phi_est = X(0,0);
 			theta_est = X(1,0);
-			
+
 			F(0,0) = cos(theta_est)*ax_est+sin(theta_est)*sin(phi_est)*ay_est+sin(theta_est)*cos(phi_est)*az_est;
 			F(1,0) = cos(phi_est)*ay_est-sin(phi_est)*az_est;
 			F(2,0) = -sin(theta_est)*ax_est+cos(theta_est)*sin(phi_est)*ay_est+cos(theta_est)*cos(phi_est)*az_est;
@@ -603,8 +638,8 @@ void Filter::homing_update(double homing_heading, double homing_x, double homing
 			v2_x = shiny_x_mean-dull_x_mean;
 			v2_y = shiny_y_mean-dull_y_mean;
 
-			v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-			v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+			v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean);
+			v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y);
 			v1_x = x_mean/v1_mag;
 			v1_y = y_mean/v1_mag;
 			v2_x = v2_x/v2_mag;
@@ -625,7 +660,7 @@ void Filter::homing_update(double homing_heading, double homing_x, double homing
 				x_est_k = d*cos(bearing);
 				y_est_k = d*sin(bearing);
 			}
-			b_h_diff_k = atan2(-v1_y,-v1_x); 
+			b_h_diff_k = atan2(-v1_y,-v1_x);
 			heading_est_k = -(b_h_diff_k-bearing);
 
 			if (heading_est_k<psi)
@@ -739,7 +774,7 @@ void Filter::homing_update(double homing_heading, double homing_x, double homing
 		shiny_x_vec = arma::join_vert(shiny_x_vec,arma::mat(1,1,arma::fill::ones)*shiny_x);
 		shiny_y_vec = arma::join_vert(shiny_y_vec,arma::mat(1,1,arma::fill::ones)*shiny_y);
 	}
-	
+
 
 }
 
@@ -802,5 +837,5 @@ void Filter::check_Kens_north_angle()
 	{
 
 		north_angle = (north_angle+Kens_north_angle)/2.0;
-	} 
+	}
 }

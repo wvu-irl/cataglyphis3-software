@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 /**
  * grabber_packet.h
  * Header file with definition of WVU-NSRR Packet Type #5
@@ -28,10 +63,10 @@ public:
 		uint8_t drop_pos;
 		uint8_t checksum;
 	} __attribute__((packed));
-	
+
 	//Members
 	/**
-	 * union for common memory block for serial comm input buffer 
+	 * union for common memory block for serial comm input buffer
 	 * and the packet structure variables
 	 */
 	union {
@@ -39,14 +74,13 @@ public:
 		grabber_packet_t pkt;
 	};
 	messages::GrabberFeedback msg;
-	
+
 	//Methods
 	Grabber_Packet(buffer_RW_t buffer_RW); //constructor to initialize Buffer_Interface
 	void unpackMsg();
 	void packMsg(const messages::GrabberFeedback::ConstPtr& msg);
 	void subscribeMsg();
 	void publishMsg(ros::Publisher* pub_ptr);
-	void debug_print_packet_data(int res);  
+	void debug_print_packet_data(int res);
 
 };
-

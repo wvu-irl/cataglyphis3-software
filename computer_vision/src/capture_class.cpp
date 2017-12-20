@@ -1,3 +1,37 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
 #include <computer_vision/capture_class.hpp>
 
 Capture::Capture()
@@ -41,7 +75,7 @@ int Capture::capture_image()
 	{
 		return 0;
 	}
-	
+
 	ROS_INFO("Closing camera...");
 	close_camera();
 	return 1;
@@ -69,7 +103,7 @@ int Capture::auto_detect_camera()
 {
 	//This call will autodetect cameras, take the first one from the list and use it
 	retval = gp_camera_init(camera, context);
-	if (retval != GP_OK) 
+	if (retval != GP_OK)
 	{
 		ROS_ERROR_THROTTLE(2,"Error Code: %s. Camera auto detect failure. Is the error code \"Unspecified Error\"? Try inserting a single memory card into the camera.", gp_result_as_string(retval));
 		gp_camera_free(camera);
@@ -87,13 +121,13 @@ int Capture::capture_image_to_buffer()
 {
 	char *data;
 	unsigned long size;
-	
+
 	if(capture_to_memory(camera, context, (const char**)&data, &size) != 1)
 	{
 		ROS_ERROR("Error capturing image to memory!");
 		return 0;
 	}
-	
+
 	std::vector<char> buff(data, data+size);
 	image_UInt8MultiArray.data.clear();
 	for(int i=0; i<buff.size(); i++)
@@ -106,7 +140,7 @@ int Capture::capture_image_to_buffer()
 
 int Capture::decode_image_from_buffer_to_mat()
 {
-	if(image_UInt8MultiArray.data.size()>0) 
+	if(image_UInt8MultiArray.data.size()>0)
 	{
 		image_Mat = imdecode(cv::Mat(image_UInt8MultiArray.data), 1);
 		return 1;
@@ -155,7 +189,7 @@ void Capture::close_camera()
 }
 
 /*
-void Capture::error_func(GPContext *context, const char *format, va_list args, void *data) 
+void Capture::error_func(GPContext *context, const char *format, va_list args, void *data)
 {
 	fprintf  (stderr, "*** Contexterror ***\n");
 	vfprintf (stderr, format, args);
@@ -164,14 +198,14 @@ void Capture::error_func(GPContext *context, const char *format, va_list args, v
 */
 
 /*
-void Capture::message_func(GPContext *context, const char *format, va_list args, void *data) 
+void Capture::message_func(GPContext *context, const char *format, va_list args, void *data)
 {
 	vprintf (format, args);
 	printf ("\n");
 }
 */
 
-int Capture::capture_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned long int *size) 
+int Capture::capture_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned long int *size)
 {
 	int retval;
 	CameraFile *file;
@@ -182,7 +216,7 @@ int Capture::capture_to_memory(Camera *camera, GPContext *context, const char **
 	strcpy(camera_file_path.name, "temp.jpg");
 
 	retval = gp_camera_capture(camera, GP_CAPTURE_IMAGE, &camera_file_path, context);
-	if(retval !=0) 
+	if(retval !=0)
 	{
 		ROS_INFO("gp_camera_capture retval: %d", retval);
 		return 0;
@@ -194,10 +228,10 @@ int Capture::capture_to_memory(Camera *camera, GPContext *context, const char **
 	{
 		ROS_INFO("gp_file_new retval: %d", retval);
 		return 0;
-	}	
+	}
 
 	retval = gp_camera_file_get(camera, camera_file_path.folder, camera_file_path.name, GP_FILE_TYPE_NORMAL, file, context);
-	if(retval !=0) 
+	if(retval !=0)
 	{
 		ROS_INFO("gp_camera_file_get retval: %d", retval);
 		return 0;
@@ -225,7 +259,7 @@ int Capture::capture_to_memory(Camera *camera, GPContext *context, const char **
 
 // 	ROS_INFO("Capturing image to file...");
 
-// 	// NOP: This gets overridden in the library to /capt0000.jpg 
+// 	// NOP: This gets overridden in the library to /capt0000.jpg
 // 	strcpy(camera_file_path.folder, "/");
 // 	strcpy(camera_file_path.name, "temp.jpg");
 

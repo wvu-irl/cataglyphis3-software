@@ -1,3 +1,37 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
 #include <computer_vision/sample_search.hpp>
 
 SampleSearch::SampleSearch()
@@ -8,7 +42,7 @@ SampleSearch::SampleSearch()
 	classifierClient = nh.serviceClient<computer_vision::ImageProbabilities>("/classify_feature_vector_service");
 	extractColorClient = nh.serviceClient<computer_vision::ExtractColor>("/vision/segmentation/extractcolor");
 	searchForSamplesPub = nh.advertise<messages::CVSamplesFound>("vision/samplesearch/samplesearchout",1);
-	
+
 	// //initialize roi information
 	boost::filesystem::path P( ros::package::getPath("computer_vision") );
 	std::string roi_path = P.string() + "/data/roi_images/";
@@ -23,11 +57,11 @@ SampleSearch::SampleSearch()
 		roi.types.push_back(_unknown_t);
 		roi.types.push_back(_unknown_t);
 		roi.types.push_back(_unknown_t);
-		roi.paths.clear(); 
+		roi.paths.clear();
 		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob0.jpg");
 		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob1.jpg");
 		roi.paths.push_back(roi_path + "roi" + patch::to_string(i) + "_" + "blob2.jpg");
-		_rois.push_back(roi);	
+		_rois.push_back(roi);
 	}
 
 	// //initialize coefficients for mapping deep fish net probabilities to actual probabilities based on statistics
@@ -109,27 +143,27 @@ void SampleSearch::loadCalibrationData()
     	ROS_WARN("Could not load calibration parameters for camera. Using identity for camera attitude offset...");
     }
 
-    //rotation from uncalibrated camera to calibrated camera 
-    cv::Mat R1x = (cv::Mat_<double>(3,3) << 1,       0,           0,     
-    										0,       cos(roll),  -sin(roll),     
+    //rotation from uncalibrated camera to calibrated camera
+    cv::Mat R1x = (cv::Mat_<double>(3,3) << 1,       0,           0,
+    										0,       cos(roll),  -sin(roll),
     										0,       sin(roll),   cos(roll));
-    cv::Mat R1y = (cv::Mat_<double>(3,3) << cos(pitch),  0,       sin(pitch),    
-                                            0,           1,       0,     
+    cv::Mat R1y = (cv::Mat_<double>(3,3) << cos(pitch),  0,       sin(pitch),
+                                            0,           1,       0,
                                             -sin(pitch), 0,       cos(pitch));
-    cv::Mat R1z = (cv::Mat_<double>(3,3) << cos(yaw),   -sin(yaw),    0,     
-    	                                    sin(yaw),    cos(yaw),    0,     
+    cv::Mat R1z = (cv::Mat_<double>(3,3) << cos(yaw),   -sin(yaw),    0,
+    	                                    sin(yaw),    cos(yaw),    0,
     	                                    0,           0,           1);
     cv::Mat rotation_uncalibrated_to_calibrated_camera = R1x*R1y*R1z;
 
     //rotation from calibrated camera to robot body frame
-    cv::Mat R2x = (cv::Mat_<double>(3,3) << 1,    0,         0,     
-    										0,    cos(0),   -sin(0),     
+    cv::Mat R2x = (cv::Mat_<double>(3,3) << 1,    0,         0,
+    										0,    cos(0),   -sin(0),
     										0,    sin(0),    cos(0));
-    cv::Mat R2y = (cv::Mat_<double>(3,3) << cos(-3.14159265/2),  0,  sin(-3.14159265/2),    
-                                            0,                   1,  0,     
+    cv::Mat R2y = (cv::Mat_<double>(3,3) << cos(-3.14159265/2),  0,  sin(-3.14159265/2),
+                                            0,                   1,  0,
                                             -sin(-3.14159265/2), 0,  cos(-3.14159265/2));
-    cv::Mat R2z = (cv::Mat_<double>(3,3) << cos(0),   -sin(0),    0,     
-    	                                    sin(0),    cos(0),    0,     
+    cv::Mat R2z = (cv::Mat_<double>(3,3) << cos(0),   -sin(0),    0,
+    	                                    sin(0),    cos(0),    0,
     	                                    0,         0,         1);
     cv::Mat calibrated_camera_to_robot = R2x*R2y*R2z;
 
@@ -139,8 +173,8 @@ void SampleSearch::loadCalibrationData()
 
 std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int v)
 {
-	//NOTE THAT 
-	//X AXIS IS THE OPTICAL AXIS (POSITIVE OUT OF LENS), 
+	//NOTE THAT
+	//X AXIS IS THE OPTICAL AXIS (POSITIVE OUT OF LENS),
 	//Y AXIS IS POSITIVE TO THE RIGHT WRT THE CAMERA,
 	//Z AXIS IS POSITIVE DOWN WRT THE CAMERA
 
@@ -148,7 +182,7 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	u = u - G_IMAGE_WIDTH/2;
 	v = v - G_IMAGE_HEIGHT/2;
 
-	//transform u and v pixels to align with camera z and y 
+	//transform u and v pixels to align with camera z and y
 	double zi = v; //pixels
 	double yi = u; //pixels
 
@@ -156,7 +190,7 @@ std::vector<double> SampleSearch::calculateFlatGroundPositionOfPixel(int u, int 
 	float pixel_distance_from_center = sqrt(zi*zi + yi*yi); //mm
 
 	//convert distance to angle of view (source http://wiki.panotools.org/Fisheye_Projection)
-	//this is the angle between the optical axis and the sample position 
+	//this is the angle between the optical axis and the sample position
 	double angle_between_optical_and_sample = pixel_distance_from_center*G_SIZE_OF_PIXEL/G_FOCAL_LENGTH; //radians
 
 	//calculate distance assuming flat ground tan(angle) = (horizontal distance to sample)/(vertical distance to sample)
@@ -297,9 +331,9 @@ void SampleSearch::saveLowAndHighProbabilityBlobs(const std::vector<float> &prob
 }
 
 void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
-										const std::vector<int> &blobsOfNotInterest, 
-										const std::vector<int> &types, 
-										const std::vector<float> &probabilities, 
+										const std::vector<int> &blobsOfNotInterest,
+										const std::vector<int> &types,
+										const std::vector<float> &probabilities,
 										const int &roi)
 {
 	//filepath for computer vision package
@@ -391,13 +425,13 @@ void SampleSearch::saveTopROICandidates(const std::vector<int> &blobsOfInterest,
 bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, messages::CVSearchCmd::Response &res)
 {
 	gettimeofday(&this->localTimer, NULL);
-	double startSearchTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	double startSearchTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 
 	/*
 		Call segmentation server
 	*/
 	gettimeofday(&this->localTimer, NULL);
-    double startSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    double startSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 
 	segmentImageSrv.request.live = req.live;
 	segmentImageSrv.request.path = req.path;
@@ -416,8 +450,8 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return true;
 	}
 
-	gettimeofday(&this->localTimer, NULL);  
-    double endSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	gettimeofday(&this->localTimer, NULL);
+    double endSegmentationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     ROS_INFO("Time taken in seconds for segmentation service: %f", endSegmentationTime - startSegmentationTime);
 
     //do not call classifier if no blobs or too many  blobs were extracted from segmentation
@@ -436,7 +470,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		Call classifier server
 	*/
 	gettimeofday(&this->localTimer, NULL);
-    double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    double startClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 
     //ALL SAMPLE CLASSIFIER
 	G_sample_probabilities.clear();
@@ -459,15 +493,15 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		return true;
 	}
 
-	gettimeofday(&this->localTimer, NULL);  
-    double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	gettimeofday(&this->localTimer, NULL);
+    double endClassifierTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     ROS_INFO("Time taken in seconds for classifier service: %f", endClassifierTime - startClassifierTime);
 
 	/*
 		Call color extract color service
 	*/
 	gettimeofday(&this->localTimer, NULL);
-    double startColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0); 
+    double startColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 
     //find samples of interest for extracting colors (sample must have at least 0.1 confidence)
 	std::vector<int> blobsOfInterest, blobsOfNotInterest;
@@ -481,7 +515,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		{
 			blobsOfNotInterest.push_back(i);
 		}
-	}	
+	}
 
 	//call service to extract colors from samples (uses look up table)
 	extractColorSrv.request.blobsOfInterest = blobsOfInterest;
@@ -494,39 +528,39 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		ROS_ERROR("Error! Failed to call service ExtractColor!");
 	}
 
-	gettimeofday(&this->localTimer, NULL);  
-    double endColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	gettimeofday(&this->localTimer, NULL);
+    double endColorTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     ROS_INFO("Time taken in seconds for extract color service: %f", endColorTime - startColorTime);
 
 	/*
 		Save image, blobs, and blob info if > 0.2 probability of being a sample
 	*/
 	gettimeofday(&this->localTimer, NULL);
-    double startSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    double startSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     #if defined(SAVE_HIGH_PROBABILITY_BLOBS)
 	saveLowAndHighProbabilityBlobs(G_sample_probabilities, segmentImageSrv.response.coordinates);
 	#endif
-	gettimeofday(&this->localTimer, NULL);  
-    double endSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	gettimeofday(&this->localTimer, NULL);
+    double endSaveBlobsTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     ROS_INFO("Time taken in seconds for saving high probability blobs: %f", endSaveBlobsTime - startSaveBlobsTime);
 
 	/*
 		Draw samples and nonsamples on image (the should always be done, this should not be an option)
 	*/
 	gettimeofday(&this->localTimer, NULL);
-    double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    double startDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     #if defined(SAVE_DETECTION_IMAGE)
 	drawResultsOnImage(blobsOfInterest, blobsOfNotInterest, segmentImageSrv.response.coordinates, extractColorSrv.response.types, G_sample_probabilities);
 	#endif
-	gettimeofday(&this->localTimer, NULL);  
-    double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	gettimeofday(&this->localTimer, NULL);
+    double endDrawTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     ROS_INFO("Time taken in seconds for drawing output image: %f", endDrawTime - startDrawTime);
 
 	/*
 		Calculate the position, analyze type, and publish each sample of the type requested
 	*/
 	gettimeofday(&this->localTimer, NULL);
-    double startSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    double startSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
 
     std::vector<double> position;
 	messages::CVSampleProps sampleProps;
@@ -545,7 +579,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		position = calculateFlatGroundPositionOfPixel(segmentImageSrv.response.coordinates[blobsOfInterest[i]*2], segmentImageSrv.response.coordinates[blobsOfInterest[i]*2+1]);
 		sampleProps.distance = position[0];
 		sampleProps.bearing = position[1];
-		
+
 		//type of sample
 		sampleProps.white = false;
 		sampleProps.silver = false;
@@ -553,7 +587,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		sampleProps.pink = false;
 		sampleProps.red = false;
 		sampleProps.orange = false;
-		sampleProps.yellow = false;	
+		sampleProps.yellow = false;
 		std::vector<SAMPLE_TYPE_T> possibleTypes = map_to_simple_color( static_cast<SAMPLE_TYPE_T>(extractColorSrv.response.types[i]) );
 		for(int j=0; j<possibleTypes.size(); j++) //change each type to true if possible
 		{
@@ -562,12 +596,12 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 				sampleProps.white = true;
 				whiteSampleCounter++;
 			}
-			if(possibleTypes[j] == _silver_t) 
+			if(possibleTypes[j] == _silver_t)
 			{
 				sampleProps.silver = true;
 				silverSampleCounter++;
 			}
-			if(possibleTypes[j] == _blueOrPurple_t) 
+			if(possibleTypes[j] == _blueOrPurple_t)
 			{
 				sampleProps.blueOrPurple = true;
 				blueOrPurpleSampleCounter++;
@@ -608,37 +642,37 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			if(sampleProps.white == true) publish_sample_info = true;
 			lower_request_threshold = false;
 		}
-		
+
 		if(req.silver > 0.6)
 		{
 			if(sampleProps.silver == true) publish_sample_info = true;
 			lower_request_threshold = false;
 		}
-		
+
 		if(req.blueOrPurple > 0.6)
 		{
 			if(sampleProps.blueOrPurple == true) publish_sample_info = true;
 			lower_request_threshold = false;
 		}
-		
+
 		if(req.pink > 0.6 || req.red > 0.6)
 		{
 			if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
 			lower_request_threshold = false;
 		}
-		
+
 		if(req.orange > 0.6)
 		{
 			if(sampleProps.orange == true) publish_sample_info = true;
 			lower_request_threshold = false;
 		}
-		
+
 		if(req.yellow > 0.6)
 		{
-			if(sampleProps.yellow == true) publish_sample_info = true;	
+			if(sampleProps.yellow == true) publish_sample_info = true;
 			lower_request_threshold = false;
 		}
-		
+
 		if(lower_request_threshold == true)
 		{
 			if(req.white > 0.03) if(sampleProps.white == true) publish_sample_info = true;
@@ -646,7 +680,7 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 			if(req.blueOrPurple > 0.03) if(sampleProps.blueOrPurple == true) publish_sample_info = true;
 			if(req.red > 0.03 || req.pink > 0.03) if(sampleProps.red == true || sampleProps.pink == true) publish_sample_info = true;
 			if(req.orange > 0.03) if(sampleProps.orange == true) publish_sample_info = true;
-			if(req.yellow > 0.03) if(sampleProps.yellow == true) publish_sample_info = true;	
+			if(req.yellow > 0.03) if(sampleProps.yellow == true) publish_sample_info = true;
 		}
 
 		//add sample information to message
@@ -661,20 +695,20 @@ bool SampleSearch::searchForSamples(messages::CVSearchCmd::Request &req, message
 		}
 	}
 
-	gettimeofday(&this->localTimer, NULL);  
-    double endSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	gettimeofday(&this->localTimer, NULL);
+    double endSampleLocalizationTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     ROS_INFO("Time taken in seconds for sample localization: %f", endSampleLocalizationTime - startSampleLocalizationTime);
 
 	/*
 		Save top samples in ROI and set parameters with ROI info
 	*/
 	gettimeofday(&this->localTimer, NULL);
-    double startROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+    double startROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     #if defined(SAVE_ROI_BLOBS)
 	saveTopROICandidates(blobsOfInterest, blobsOfNotInterest, extractColorSrv.response.types, G_sample_probabilities, req.roi);
 	#endif
-	gettimeofday(&this->localTimer, NULL);  
-    double endROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);  
+	gettimeofday(&this->localTimer, NULL);
+    double endROICandidatesTime = this->localTimer.tv_sec+(this->localTimer.tv_usec/1000000.0);
     ROS_INFO("Time taken in seconds for adding information to ROIs: %f", endROICandidatesTime - startROICandidatesTime);
 
 	/*

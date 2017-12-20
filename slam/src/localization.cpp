@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 //this programe is doing online localization
 #include "math.h"
 //include ros head file
@@ -53,7 +88,7 @@ protected:
 
 	ros::NodeHandle node;
 
-	//publish 
+	//publish
 	ros::Publisher PositionPub;
 
 	//subscribe
@@ -100,7 +135,7 @@ protected:
 	void getnavfilteroutcallback(const messages::NavFilterOut& NavFilterOutMsgIn);
 	void getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgIn);
 
-	// Transformation_Result Transformation_compute(int ICP_ref_index, int ICP_read_index, int option);	
+	// Transformation_Result Transformation_compute(int ICP_ref_index, int ICP_read_index, int option);
 	Transformation_Result Transformation_compute(int ICP_ref_index, int ICP_read_index);
 	double TransformationMatrix_to_angle(matrix4f matrix);
 	matrix4f angle_to_TransformationMatrix(double diff_x, double diff_y,double theta);
@@ -116,7 +151,7 @@ Localization::Localization()
 	NavfilterSub = node.subscribe("navigation/navigationfilterout/navigationfilterout", 1, &Localization::getnavfilteroutcallback, this);
 	TkeyTomapSub = node.subscribe("/slam/TkeyTomap_msg", 1, &Localization::getTkeyTomapcallback, this);
 
-	PositionPub = node.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, true); 
+	PositionPub = node.advertise<messages::SLAMPoseOut>("/slam/localizationnode/slamposeout", 1, true);
 }
 
 void Localization::Initialization()
@@ -162,13 +197,13 @@ void Localization::Initialization()
 	keyframe_all.heading_filter = heading;
 	Navfilterout_All_s.push_back(keyframe_all);
 
-	Navfilterout_All navfilterout_all; //initialize struct	
+	Navfilterout_All navfilterout_all; //initialize struct
 	navfilterout_all.x_filter = 0;
 	navfilterout_all.y_filter = 0;
 	navfilterout_all.heading_filter = 0;
 
 	Navfilterout_All_s.push_back(navfilterout_all);
-	
+
 
 }
 
@@ -179,7 +214,7 @@ Localization::Transformation_Result Localization::Transformation_compute(int ICP
 	matrix4f guessT;
 
 	guessT = Eigen::Matrix<float, 4, 4>::Identity();
-	
+
 	//local x, y, heading for calculating guessT
 	float x0, y0, heading0;
 	float x1, y1, heading1;
@@ -191,7 +226,7 @@ Localization::Transformation_Result Localization::Transformation_compute(int ICP
 		transformation_result.transformation_matrix = Eigen::Matrix<float, 4, 4>::Identity();
 		return transformation_result;
 	}
-	
+
 	//data from imu for calculate read frame to reference frame
 	x0 = Navfilterout_All_s[ICP_ref_index].x_filter;
 	y0 = Navfilterout_All_s[ICP_ref_index].y_filter;
@@ -216,7 +251,7 @@ Localization::Transformation_Result Localization::Transformation_compute(int ICP
 
 double Localization::TransformationMatrix_to_angle(matrix4f matrix)	//angle in radian
 {
-	double angle = 0.0;	
+	double angle = 0.0;
 
 	angle = atan2(-matrix(0,1), matrix(0,0));
 
@@ -241,7 +276,7 @@ Localization::matrix4f Localization::angle_to_TransformationMatrix(double diff_x
 
 void Localization::Coordinate_Normalize(float x0, float y0, float heading0, float x1, float y1, float heading1, double &theta, double &diff_x, double &diff_y)
 {
-	float _x0, _y0; 
+	float _x0, _y0;
 	float _x1, _y1;
 
 	double cos0 = cos(heading0);
@@ -266,7 +301,7 @@ void Localization::Coordinate_Normalize(float x0, float y0, float heading0, floa
 	matrix2f_point local1;
 	local1 = inverse_T1 * position1;
 
-	theta = heading1 - heading0; 
+	theta = heading1 - heading0;
 	double cos10 = cos(theta);
 	double sin10 = sin(theta);
 	matrix2f transformation10;
@@ -297,11 +332,11 @@ void Localization::getTkeyTomapcallback(const slam::TkeyTomap_msg& TkeyTomapMsgI
 }
 
 void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilterOutMsgIn)
-{	
+{
 
 	//debug, for testing
 	// Position position;
-	
+
 	messages::SLAMPoseOut slamposeout;
 	//check if the keyframe updated or not
 	if(pre_x != x || pre_y != y || pre_heading != heading)
@@ -322,7 +357,7 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 		slamposeout.globalHeading = NavFilterOutMsgIn.heading * PI / 180;
 
 		PositionPub.publish(slamposeout);
-		
+
 		//debug, for testing
 		// position.x = x_filter_sub;
 		// position.y = y_filter_sub;
@@ -341,7 +376,7 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	Navfilterout_All_s[read_index].x_filter = NavFilterOutMsgIn.x_position;
 	Navfilterout_All_s[read_index].y_filter = NavFilterOutMsgIn.y_position;
 	Navfilterout_All_s[read_index].heading_filter = NavFilterOutMsgIn.heading * PI / 180;
-	
+
 	//get transformation matrix from read to reference
 	Transformation_Result transformation_result;
 	transformation_result = Transformation_compute(ref_index, read_index);
@@ -381,12 +416,12 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	//debug, for testing
 	// ROS_INFO_STREAM("Position: x:"<< slamposeout.globalX << " y: "<< slamposeout.globalY << " heading: "<<slamposeout.globalHeading);
 	// ROS_INFO_STREAM("IMU_Position: x:"<< Navfilterout_All_s[read_index].x_filter << " y: "<< Navfilterout_All_s[read_index].y_filter << " heading: "<<Navfilterout_All_s[read_index].heading_filter * 180 / PI);
-	
+
 	// position.x = TreadTomap(0,3);
 	// position.y = TreadTomap(1,3);
 	// position.heading = TransformationMatrix_to_angle(TreadTomap);	//radian
 	// position_data.push_back(position);
-		
+
 	// Position position_IMU;
 	// position_IMU.x = Navfilterout_All_s[read_index].x_filter;
 	// position_IMU.y = Navfilterout_All_s[read_index].y_filter;
@@ -423,7 +458,7 @@ void Localization::getnavfilteroutcallback(const messages::NavFilterOut& NavFilt
 	// }
 
 }
-	
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "localization_node");

@@ -1,5 +1,41 @@
 #!/usr/bin/python
 '''
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+'''
+'''
 AUTHOR: Rahul Kavi
 EDITED BY: Jared Strader
 Feature Vector generator/classifier for FishEye images for CATAGLYPHIS
@@ -130,23 +166,23 @@ if __name__ == "__main__":
 
 	# # imgSize
 	# imgSize = 50
-	
+
 	# # read the mean data
 	# meanData50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
 	# meanData50Cach = np.load(meanData50PathCach)
 	# meanData50Cach = np.reshape(meanData50Cach, (1, 3, imgSize, imgSize))
-	
-	# # read the classifier 
+
+	# # read the classifier
 	# classifier50PathCach = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
 	# # set dropout parameters for better performance
 	# dropoutParams50Cach = {}
 	# dropoutParams50Cach['conv'] = 0.5
 	# dropoutParams50Cach['fc'] = 0.5
-	
+
 	# # initialize DeepFishNet50Cach
 	# myClassifier50Cach = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Cach, mode='Test', modelToLoad = classifier50PathCach)
-	
+
 	# # store 50 x 50 classifier details
 	# classifierDict[classifierType] = {}
 	# classifierDict[classifierType]['classifier'] = myClassifier50Cach
@@ -160,12 +196,12 @@ if __name__ == "__main__":
 
 	# # imgSize
 	# imgSize = 50
-	
+
 	# # read the mean data
 	# meanData50PathHard = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
 	# meanData50Hard = np.load(meanData50PathHard)
 	# meanData50Hard = np.reshape(meanData50Hard, (1, 3, imgSize, imgSize))
-	
+
 	# # read the classifier
 	# classifier50PathHard = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
@@ -173,10 +209,10 @@ if __name__ == "__main__":
 	# dropoutParams50Hard = {}
 	# dropoutParams50Hard['conv'] = 0.5
 	# dropoutParams50Hard['fc'] = 0.5
-	
+
 	# # initialize DeepFishNet50Hard
 	# myClassifier50Hard = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Hard, mode='Test', modelToLoad = classifier50PathHard)
-	
+
 	# # store 50 x 50 classifier details
 	# classifierDict[classifierType] = {}
 	# classifierDict[classifierType]['classifier'] = myClassifier50Hard
@@ -190,12 +226,12 @@ if __name__ == "__main__":
 
 	# # imgSize
 	# imgSize = 50
-	
+
 	# # read the mean data
 	# meanData50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
 	# meanData50Rock = np.load(meanData50PathRock)
 	# meanData50Rock = np.reshape(meanData50Rock, (1, 3, imgSize, imgSize))
-	
+
 	# # read the classifier
 	# classifier50PathRock = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
@@ -203,10 +239,10 @@ if __name__ == "__main__":
 	# dropoutParams50Rock = {}
 	# dropoutParams50Rock['conv'] = 0.5
 	# dropoutParams50Rock['fc'] = 0.5
-	
+
 	# # initialize DeepFishNet50Rock
 	# myClassifier50Rock = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50Rock, mode='Test', modelToLoad = classifier50PathRock)
-	
+
 	# # store 50 x 15 classifier details
 	# classifierDict[classifierType] = {}
 	# classifierDict[classifierType]['classifier'] = myClassifier50Rock
@@ -220,12 +256,12 @@ if __name__ == "__main__":
 
 	# imgSize
 	imgSize = 50
-	
+
 	# read the mean data
 	meanData50PathAll = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+"/allData_50_lmdb_"+classifierSampleType+".npy"
 	meanData50All = np.load(meanData50PathAll)
 	meanData50All = np.reshape(meanData50All, (1, 3, imgSize, imgSize))
-	
+
 	# read the classifier
 	classifier50PathAll = cvModulePath+'/data/classifier/DeepFishNet'+str(imgSize)+'/'+classifierVersion+'/best_9epoch_50_'+classifierSampleType+'.npz'
 
@@ -233,10 +269,10 @@ if __name__ == "__main__":
 	dropoutParams50All = {}
 	dropoutParams50All['conv'] = 0.5
 	dropoutParams50All['fc'] = 0.5
-	
+
 	# initialize DeepFishNet50Rock
 	myClassifier50All = DeepFishNet50(loadData = False, imgSize = imgSize, crossvalidid = 0, dropout_params = dropoutParams50All, mode='Test', modelToLoad = classifier50PathAll)
-	
+
 	# store 50 x 15 classifier details
 	classifierDict[classifierType] = {}
 	classifierDict[classifierType]['classifier'] = myClassifier50All

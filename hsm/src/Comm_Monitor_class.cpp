@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include "Comm_Monitor_class.h"
 
 Comm_Monitor_class::Comm_Monitor_class() //constructor
@@ -8,7 +43,7 @@ Comm_Monitor_class::Comm_Monitor_class() //constructor
 
 	ros::NodeHandle nh;
 	pub = nh.advertise<hsm::HSM_Action>("HSM_Act/port_pub_enabled",1000);
-	serial_hsm_sub = nh.subscribe<hsm::HSM_Detection>("HSM_Det/i7_nb1_serial",1,&Comm_Monitor_class::detectionCallback, this); 
+	serial_hsm_sub = nh.subscribe<hsm::HSM_Detection>("HSM_Det/i7_nb1_serial",1,&Comm_Monitor_class::detectionCallback, this);
 	udp_hsm_sub = nh.subscribe<hsm::HSM_Detection>("HSM_Det/nb1_i7_udp_receiver",1,&Comm_Monitor_class::detectionCallback, this);
 	serial_data_sub = nh.subscribe<messages::nb1_to_i7_msg>("/hw_interface/nb1in/nb1in",1,&Comm_Monitor_class::serialDataCallback,this);
 	udp_data_sub = nh.subscribe<messages::nb1_to_i7_msg>("/hw_interface/nb1in/nb1in",1,&Comm_Monitor_class::udpDataCallback,this);
@@ -42,11 +77,11 @@ void Comm_Monitor_class::service_monitor()
 			msg_out.command = "UDP PUBLISH";
 			pub.publish(msg_out);
 			//std::cout << "Init - UDP PUBLISH " << std::endl;
-			
+
 			init_count++;
 			if(init_count>=3){monitor_state = Monitoring;}
 			else monitor_state = Init_Monitor;
-			
+
 			break;
 		case Monitoring:
 //			timer.stop(); // now stopped in constructor
@@ -72,7 +107,7 @@ void Comm_Monitor_class::service_monitor()
 				detection_data.detector_node = "/i7_nb1_serial"; // *** This is going to change
 				detection_data.message_type = "NO CONTACT";
 				nb1_serial_go = false;
-			} 
+			}
 			if(detection_flag)
 			{
 				if((detection_data.message_type == "BAD PACKET") || (detection_data.message_type == "PORT_READ ERROR") || (detection_data.message_type == "NO CONTACT"))

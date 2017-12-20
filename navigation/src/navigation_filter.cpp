@@ -1,7 +1,42 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <navigation/navigation_filter.hpp>
 
 NavigationFilter::NavigationFilter()
-{ 
+{
 	sub_exec = nh.subscribe("/control/exec/info", 1, &NavigationFilter::getExecInfoCallback, this);
 	pause_switch = false;
 	stopFlag = false;
@@ -391,7 +426,7 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 	}
 
 
-	if(pause_switch==false && !stop_request) 
+	if(pause_switch==false && !stop_request)
 	{
 		if(imu.nb1_current)
 		{
@@ -458,11 +493,11 @@ void NavigationFilter::forklift_drive(User_Input_Nav_Act user_input_nav_act)
 		filter.P_north_angle = init_filter.P_psi;
         filter.check_Kens_north_angle();
 
-		state = _run; 
-		filter.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
-		filter1.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		state = _run;
+		filter.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
+		filter1.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 		filter2.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
-		filterS.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); 
+		filterS.initialize_states(0,0,PI,1,0,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y);
 	}
 	else state = _forklift_drive;
 }
@@ -612,7 +647,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 				do_homing = true;
 			}
 		}
-	
+
 		if ((fabs(sqrt(imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az)-1)< 0.05 && sqrt((imu.p)*(imu.p)+(imu.q)*(imu.q)+(imu.r)*(imu.r))<0.005) && encoders.delta_distance == 0)
 		{
 			if (collecting_accelerometer_data)
@@ -918,7 +953,7 @@ void NavigationFilter::run(User_Input_Nav_Act user_input_nav_act)
 
 
 
-	
+
 
 		if(filter.keep_nb == 3 || filter.keep_nb == 28 || filter.keep_nb == 1 || filter.keep_nb == 5 || filter.keep_nb == 7 || filter.keep_nb == 9 || filter.keep_nb == 11 || filter.keep_nb == 12 || filter.keep_nb == 14 || filter.keep_nb == 20 || filter.keep_nb == 22 || filter.keep_nb == 24 || filter.keep_nb == 26 || filter.keep_nb == 29 || filter.keep_nb == 31 || filter.keep_nb == 33 || filter.keep_nb == 35)
 		{
@@ -1108,7 +1143,7 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
     response.p3Offset = imu.p3_offset;
     response.q3Offset = imu.q3_offset;
     response.r3Offset = imu.r3_offset;
-    
+
     if(request.setInitNorthAngle) init_north_angle = request.initNorthAngle*DEG_2_RAD;
 
     if(request.skipInit) state = _run;
@@ -1137,7 +1172,7 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
 		filter1.initialize_states(filter.phi,filter.theta,request.newHeading*DEG_2_RAD,request.newX,request.newY,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
     	filter2.initialize_states(filter.phi,filter.theta,request.newHeading*DEG_2_RAD,request.newX,request.newY,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
     	filterS.initialize_states(filter.phi,filter.theta,request.newHeading*DEG_2_RAD,request.newX,request.newY,filter.P_phi,filter.P_theta,filter.P_psi,filter.P_x,filter.P_y); //phi,theta,psi,x,y,P_phi,P_theta,P_psi,P_x,P_y
-    	
+
     	homing_updated = true; // to update the SLAM
     }
     if(request.setNorthAngle)
@@ -1149,6 +1184,6 @@ bool NavigationFilter::navFilterControlServiceCallback(messages::NavFilterContro
         filterS.north_angle = request.northAngle * DEG_2_RAD;
 
     }
-    
+
     return true;
 }

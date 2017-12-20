@@ -1,9 +1,44 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 /**
  * i7_to_nb1_packet.cpp
- * Implementation of methods for the WVU-NSRR Packet Structured Serial #4 Class 
+ * Implementation of methods for the WVU-NSRR Packet Structured Serial #4 Class
  * for stuffing topic msg and debug print
  */
-#include "drive_packet.h" 
+#include "drive_packet.h"
 
 Drive_Packet::Drive_Packet(buffer_RW_t buffer_RW)
 {
@@ -38,7 +73,7 @@ Drive_Packet::Drive_Packet(buffer_RW_t buffer_RW)
 	pkt.H3 = H3_def;
 }
 
-void Drive_Packet::unpackMsg() 
+void Drive_Packet::unpackMsg()
 {
     /**
      * Copy packet data into topic msg data structure for ROS publishing
@@ -54,7 +89,7 @@ void Drive_Packet::unpackMsg()
     msg.motor3_amps				= ((pkt.motor3_amps ^ 0xff)-128)/12.0;
 }
 
-void Drive_Packet::packMsg(const messages::encoder_data::ConstPtr& msg) 
+void Drive_Packet::packMsg(const messages::encoder_data::ConstPtr& msg)
 {
     /**
      * Copy topic msg data into packet data structure for writing to the port

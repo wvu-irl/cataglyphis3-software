@@ -1,5 +1,41 @@
 #!/usr/bin/python
 '''
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+'''
+'''
 AUTHOR: Rahul Kavi
 Feature Vector generator/classifier for FishEye images for CATAGLYPHIS
 
@@ -34,7 +70,7 @@ from time import gmtime, strftime
 # theano.config.compute_test_value = 'warn' # Use 'warn' to activate this feature
 
 class DeepFishNet150:
-    
+
     '''
         this class represents a convolutional neural network with 3 convolutional layers
         and 2 fully connected layers connected with a final softmax layer.
@@ -47,7 +83,7 @@ class DeepFishNet150:
             Initializes variables and the weights associated with the network
         '''
         assert(mode != None)
-        
+
         self.mode = mode
         self.srng = RandomStreams()
         self.imgSize = imgSize
@@ -90,7 +126,7 @@ class DeepFishNet150:
             returns labels in one hot form
             [1, 0], [0, 1], [0, 1], .....
         '''
-        
+
         nTrainLabel = []
         # nTestLabel = []
         self.uniqueClasses = np.unique(self.labelMatTrain)
@@ -102,12 +138,12 @@ class DeepFishNet150:
             #print self.labelMatTrain[i][0], dLabel[self.labelMatTrain[i][0]]
             nTrainLabel.append(dLabel[self.labelMatTrain[i][0]])
         nTrainLabel = np.array(nTrainLabel)
-        
+
         self.labelMatTrain = nTrainLabel
 
         return
 
-    
+
     def floatX(self, X):
         '''
             float casting your input
@@ -125,7 +161,7 @@ class DeepFishNet150:
             # 1 apply non-linear activation function of the given input.
         '''
         return 1.0 / (1.0 + T.exp(-X))
-    
+
     def rectify(self, X):
         '''
             # 1 apply non-linear activation function of the given input.
@@ -133,7 +169,7 @@ class DeepFishNet150:
         '''
         return T.maximum(X, 0.)
 
-    
+
     def softmax(self, X):
         '''
             # get your final softmax classifier so that it returns probabilities
@@ -152,7 +188,7 @@ class DeepFishNet150:
             X /= retain_prob
         return X
 
-    
+
     def RMSprop(self, costC, paramsC, lr=0.02, rho=0.9, epsilon=1e-6):
         '''
             # your cost minimizing function.
@@ -173,11 +209,11 @@ class DeepFishNet150:
             updates.append((p, p - lr * g))
         return updates
 
-    
+
 
     def model(self, X, w1, w2, w3, w4, w5, w_output, p_drop_conv = 0, p_drop_hidden = 0):
         '''
-            # your main model 
+            # your main model
             3 convolutional layers
             2 fully connected layers
             1 SoftMax layer
@@ -192,9 +228,9 @@ class DeepFishNet150:
             l1 = max_pool_2d(l1a, (2, 2), st=None, padding=(0, 0), mode='max')
         # convOut1 = conv2d(X, w1)
         convOut1 = l1a
-        
+
         # second convolutional layer
-        
+
         if(self.mode == "Train"):
             l2a = self.rectify(conv2d(l1, w2))
             l2 = max_pool_2d(l2a, (2, 2), st=None, padding=(0, 0), mode='max')
@@ -214,7 +250,7 @@ class DeepFishNet150:
 
         # # flatten the output
         l3 = T.flatten(l3, outdim=2)
-        
+
         # 1st fully connected layer
         if(self.mode == "Train"):
             l4 = self.rectify(T.dot(l3, w4))
@@ -231,7 +267,7 @@ class DeepFishNet150:
 
         # connected the above output to softmax layer
         pyx = self.softmax(T.dot(l5, w_output))
-        
+
         return l1, l2, l3, l4, l5, pyx, convOut1
 
     def getL1Norm(self, params, scaleForm=0.0001):
@@ -264,7 +300,7 @@ class DeepFishNet150:
         for eachParam in params:
             tsum += abs(eachParam ** 2).sum()
         return tsum*scaleForm
-    
+
     def initializeModel(self):
         '''
             define your deep learning model
@@ -291,7 +327,7 @@ class DeepFishNet150:
         # flatten the inputs and pass to fully connected layer
         w5 = self.init_weights((1000, 500), weightType = 'Xavier')
 
-                
+
         # flatten the inputs and pass to fully connected layer
         w_output = self.init_weights((500, 2), weightType = 'Xavier')
 
@@ -303,7 +339,7 @@ class DeepFishNet150:
             self.dropout_params['fc'] = 0.2
         print 'initializing with dropout_params: ', self.dropout_params['conv'], self.dropout_params['fc']
         noise_l1, noise_l2, noise_l3, noise_l4, noise_l5, noise_py_x, convOut1 = self.model(X, w1, w2, w3, w4, w5, w_output, p_drop_conv = self.dropout_params['conv'], p_drop_hidden = self.dropout_params['fc'])
-     
+
         # get your label from the predicted probabilties
         y_x = T.argmax(noise_py_x, axis=1)
         # y_x = noise_py_x >= 0.5
@@ -386,7 +422,7 @@ class DeepFishNet150:
                 data = caffe.io.datum_to_array(datum)
                 dataList.append(data)
                 labelList.append(label)
-                
+
                 if(len(dataList)==self.mini_batch_size and len(labelList) == self.mini_batch_size):
 
                     self.dataMatTrain = np.array(dataList)
@@ -412,10 +448,10 @@ class DeepFishNet150:
                     pass
                     iterId += 1
                     dataList = []
-                    labelList = []                
+                    labelList = []
             avg_cost = sum(costList)/float(len(costList))
             self.saveThisModel('c'+str(self.crossvalidid)+"_"+str(each_epoch)+'_'+str(avg_cost)+'_TempModel_DeepLearningNode_'+str(self.imgSize)+'.npz')
-        
+
     def saveThisModel(self, fileName = None):
         '''
             get the variables from the classifier model
@@ -436,7 +472,7 @@ class DeepFishNet150:
         self.fileName = fileName
         # self.moveToCaffeDir()
         pass
-    
+
     def loadThisModel(self, modelToLoad):
         '''
             take the path of the classifier
@@ -457,7 +493,7 @@ class DeepFishNet150:
             self.params[eachParam].set_value(allParams[eachParam])
         print 'loaded the saved convnet classifier params'
         pass
-    
+
     def writeFirstLayerToDisk(self, imgArray):
         '''
             take image
@@ -480,7 +516,7 @@ class DeepFishNet150:
         if(meanSubtracted == False):
             imgArray = self.getMeanNormalizedData(imgArray, 'Test')
         return self.predict(imgArray)
-    
+
     def predictThisImageWithProbability(self, imgArray = None, meanSubtracted = True):
         '''
             1 take image
@@ -490,7 +526,7 @@ class DeepFishNet150:
         if(meanSubtracted == False):
             imgArray = self.getMeanNormalizedData(imgArray, 'Test')
         return self.predictProb(imgArray)
-    
+
     def getMeanNormalizedData(self, data, mode):
         '''
             # 1 take image

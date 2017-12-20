@@ -1,7 +1,42 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include "HSM_Heartbeat_Monitor_class.h"
 
 //constructor
-HSM_Heartbeat_Monitor_class::HSM_Heartbeat_Monitor_class(std::string node_name, int node_Hz) 
+HSM_Heartbeat_Monitor_class::HSM_Heartbeat_Monitor_class(std::string node_name, int node_Hz)
 {
 	//std::cout << "HSM_Heartbeat_Monitor constructor start" << std::endl;
 	//std::cout << "HB node = " << node_name << std::endl;
@@ -12,26 +47,26 @@ HSM_Heartbeat_Monitor_class::HSM_Heartbeat_Monitor_class(std::string node_name, 
 	hb_node_Hz = node_Hz;
 	hb_node_died = false;
 	hb_timeout_period = ros::Duration(1000/(node_Hz)); // timeout = 10X node execution period
-		
+
 	ros::NodeHandle nh;
 	//Publisher for node restart signal
 	pub_action = nh.advertise<hsm::HSM_Action>("HSM_Act/node_restart",1000);
 	msg_out.command = node_name;
-	
+
 	//Subscribe to heartbeat detection
-	sub_heartbeats = nh.subscribe<hsm::HSM_Detection>("HSM_Det/"+hb_node_name+"/HB",1,&HSM_Heartbeat_Monitor_class::detectionCallback_heartbeat, this); 
-	
+	sub_heartbeats = nh.subscribe<hsm::HSM_Detection>("HSM_Det/"+hb_node_name+"/HB",1,&HSM_Heartbeat_Monitor_class::detectionCallback_heartbeat, this);
+
 	//heartbeat timers initiated with a start up timeout
-	heartbeat_timer = nh.createTimer(ros::Duration(NODE_STARTUP_TIMEOUT), 
-							&HSM_Heartbeat_Monitor_class::heartbeatTimerCallback,this,true); 
+	heartbeat_timer = nh.createTimer(ros::Duration(NODE_STARTUP_TIMEOUT),
+							&HSM_Heartbeat_Monitor_class::heartbeatTimerCallback,this,true);
 	heartbeat_timer.stop();
-	
+
 	//monitor state machine initialization
 	monitor_state = Init_Monitor;
 	recovering_substate = Commanding;
 
 	//Recovering mode timer
-	recovery_timer = nh.createTimer(ros::Duration(10),&HSM_Heartbeat_Monitor_class::recoveringTimerCallback,this,true); 
+	recovery_timer = nh.createTimer(ros::Duration(10),&HSM_Heartbeat_Monitor_class::recoveringTimerCallback,this,true);
 	recovery_timer.stop();
 
 	//std::cout << "" << std::endl;
@@ -52,10 +87,10 @@ void HSM_Heartbeat_Monitor_class::service_monitor()
 			//std::cout << "Init_Monitor" << std::endl;
 			usleep(30000); // Sleep .03 second during startup
 			//start all heartbeat timers
-			heartbeat_timer.start();		
+			heartbeat_timer.start();
 			monitor_state = Monitoring;
 			break;
-		
+
 		case Monitoring:
 			// Debug outputs
 			//std::cout << "" << std::endl;
@@ -105,16 +140,16 @@ void HSM_Heartbeat_Monitor_class::detectionCallback_heartbeat(const hsm::HSM_Det
 	heartbeat_data.detector_node = msg_in->detector_node;
 	heartbeat_data.message_type = msg_in->message_type;
 	heartbeat_data.count = msg_in->count;
-	
+
 	//need to feed the corresponding heartbeat timer
 	//int i = nodeLookup(heartbeat_data.detector_node);
 	heartbeat_timer.stop();  //~~~may not need to stop or setPeriod to restart
 	heartbeat_timer.setPeriod(hb_timeout_period);
 	heartbeat_timer.start();
-	
+
 	//~~~decide whether to add transition from bad to recovered here or startup tracking
 	if(recovering_substate==Waiting) {monitor_state = Monitoring;} //avoid catching a late heartbeat just as commanding node restart
-	
+
 }
 
 //need to duplicate per max number of nodes

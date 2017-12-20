@@ -1,6 +1,41 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 /**
  * nb1_to_i7_packet.cpp
- * Implementation of methods for the WVU-NSRR Packet Structured Serial #1 Class 
+ * Implementation of methods for the WVU-NSRR Packet Structured Serial #1 Class
  * for stuffing topic msg and debug print
  */
 #include "nb1_to_i7_serial_packet.h"
@@ -51,7 +86,7 @@ void NB1_To_I7_Serial::unpackMsg()
 	msg.rate_p_mean        	= pkt.rate_p_mean*0.02/65536.0;
 	msg.rate_q_mean        	= pkt.rate_q_mean*0.02/65536.0;
 	msg.rate_r_mean        	= pkt.rate_r_mean*0.02/65536.0;
-    
+
     msg.num_imus        = pkt.imu_status;
 
     msg.imu_1_good			= (pkt.imu_status & 0x01) == 0x01; //IMU 1 health
@@ -61,7 +96,7 @@ void NB1_To_I7_Serial::unpackMsg()
     msg.pause_switch		= pkt.pause_switch;
     msg.main_loop_counter	= pkt.main_loop_counter;
     msg.i7_clock            = ros::Time::now().toSec();
-    
+
     //msg.pot1                = (pkt.potValues[0] >> 3) / 8;
     //msg.pot2                = (pkt.potValues[1] >> 3) / 8;
     //msg.pot3                = (pkt.potValues[2] >> 3) / 8;
@@ -70,7 +105,7 @@ void NB1_To_I7_Serial::unpackMsg()
     //msg.pot6                = (pkt.potValues[5] >> 3) / 8;
     //msg.pot7                = (pkt.potValues[6] >> 3) / 8;
     //msg.pot8                = (pkt.potValues[7] >> 3) / 8;
-    
+
     /*msg.xda                 = pkt.xda;
     msg.yda                 = pkt.yda;
     msg.zda                 = pkt.zda;

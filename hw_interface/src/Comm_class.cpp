@@ -1,16 +1,51 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include "Comm_class.h"
 
 Comm::Comm()
 {
 	ROS_INFO(" - - - Comm constructor start");
-	if(ros::param::get("node_type", node_type)==false) 
+	if(ros::param::get("node_type", node_type)==false)
 	{
-		ROS_ERROR("Comm node_type parameter not specified properly"); 
+		ROS_ERROR("Comm node_type parameter not specified properly");
 		node_type = "i7_nb1_sender";
 	}
-	if(ros::param::get("write_rate", write_rate)==false) 
+	if(ros::param::get("write_rate", write_rate)==false)
 	{
-		ROS_WARN("Comm write_rate parameter not specified properly, set to 50 Hz by default"); 
+		ROS_WARN("Comm write_rate parameter not specified properly, set to 50 Hz by default");
 		write_rate = 50;
 //		write_rate = 1;   //~~~real slow for testing
 	}
@@ -28,7 +63,7 @@ Comm::Comm()
 		ROS_INFO(" - - - - new Serial_Port");
         pub = nh.advertise<messages::nb1_to_i7_serial_msg>("hw_interface/nb1inserial/nb1inserial",1);
         ROS_INFO(" - - - - advertise<hw_interface::nb1_to_i7_msg>(hw_interface/nb1inserial/nb1inserial,1)");
-		packet_out_ptr->subscribeMsg();		
+		packet_out_ptr->subscribeMsg();
 		ROS_INFO(" - - - - packet_out_ptr->subscribeMsg()");
         publish_enabled = true;
 		//Serial_act_ptr = new Serial_HSM_Act(&publish_enabled);
@@ -40,7 +75,7 @@ Comm::Comm()
 		ROS_INFO(" - - - - new I7_To_NB1(pktwrite)");
 		port_ptr = new UDP_Sender_Port;
 		ROS_INFO(" - - - - new UDP_Sender_Port");
-		packet_out_ptr->subscribeMsg();		
+		packet_out_ptr->subscribeMsg();
 		ROS_INFO(" - - - - packet_out_ptr->subscribeMsg()");
 	}
 	else if(node_type=="nb1_i7_udp_receiver")
@@ -91,7 +126,7 @@ Comm::Comm()
 		ROS_INFO(" - - - - new Serial_Port");
 		pub = nh.advertise<comm::pkt_4_msg>("nb2_in_data",1);
 		ROS_INFO(" - - - - advertise<comm::pkt_4_msg>(nb2_in_data,1)");
-		packet_out_ptr->subscribeMsg();		
+		packet_out_ptr->subscribeMsg();
 		ROS_INFO(" - - - - packet_out_ptr->subscribeMsg()");
 		publish_enabled = true;
 		Serial_act_ptr = new Serial_HSM_Act(&publish_enabled);
@@ -122,7 +157,7 @@ Comm::Comm()
 
 void Comm::run()
 {
-	//	double current_time = ros::Time::now().toSec(); 
+	//	double current_time = ros::Time::now().toSec();
 	//	static double previous_time = current_time;
 	//	double delta_time;
 	ROS_INFO(" - - - - - in Comm::run()");
@@ -133,7 +168,7 @@ void Comm::run()
 		{
 			ROS_INFO(" - - - - - port_read() is true");
 			packet_in_ptr->unpackMsg();
-			if(publish_enabled) {ROS_INFO("*_*_*_*_ publish enabled"); packet_in_ptr->publishMsg(&pub);}  
+			if(publish_enabled) {ROS_INFO("*_*_*_*_ publish enabled"); packet_in_ptr->publishMsg(&pub);}
 		}
 	}
 	if (writer) // Only execute writing if node is a writer ~~~ and its time to write

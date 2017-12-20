@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 
 // find correct cylinders
 arma::mat xs1;
@@ -113,7 +148,7 @@ if (cylinder_found)
 		{
 			x = xs1(0,jj);
 			y = ys1(0,jj);
-			FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1))-r; 
+			FX(jj,0) = sqrt((x-ax1)*(x-ax1)+(y-ay2)*(y-ay1))-r;
 			J(jj,0) = (ax1-x)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
 			J(jj,1) = (ay1-y)/sqrt((ax1-x)*(ax1-x)+(ay1-y)*(ay1-y));
 		}
@@ -121,7 +156,7 @@ if (cylinder_found)
 		{
 			x = xs2(0,jj-n1);
 			y = ys2(0,jj-n1);
-			FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r; 
+			FX(jj,0) = sqrt((x-ax2)*(x-ax2)+(y-ay2)*(y-ay2))-r;
 			J(jj,2) = (ax2-x)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
 			J(jj,3) = (ay2-y)/sqrt((ax2-x)*(ax2-x)+(ay2-y)*(ay2-y));
 		}
@@ -151,8 +186,8 @@ if (cylinder_found)
 	v2_x = X(0,0)-X(2,0);
 	v2_y = X(1,0)-X(3,0);
 
-	v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-	v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+	v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean);
+	v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y);
 	v1_x = x_mean/v1_mag;
 	v1_y = y_mean/v1_mag;
 	v2_x = v2_x/v2_mag;
@@ -162,7 +197,7 @@ if (cylinder_found)
 	bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
 	double x_est_k = d*cos(bearing);
 	double y_est_k = d*sin(bearing);
-	double b_h_diff_k = atan2(-v1_y,-v1_x); 
+	double b_h_diff_k = atan2(-v1_y,-v1_x);
 	double heading_est_k = -(b_h_diff-bearing);*/
 
 
@@ -173,8 +208,8 @@ if (cylinder_found)
 
 	v2_x = cx1-cx2;
 	v2_y = cy1-cy2;
-	v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean); 
-	v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y); 
+	v1_mag = sqrt(x_mean*x_mean+y_mean*y_mean);
+	v2_mag = sqrt(v2_x*v2_x+v2_y*v2_y);
 	v1_x = x_mean/v1_mag;
 	v1_y = y_mean/v1_mag;
 	v2_x = v2_x/v2_mag;
@@ -184,7 +219,7 @@ if (cylinder_found)
 	bearing = acos(v_dot)-3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651/2;
 	double x_est = d*cos(bearing);
 	double y_est = d*sin(bearing);
-	double b_h_diff = atan2(-v1_y,-v1_x); 
+	double b_h_diff = atan2(-v1_y,-v1_x);
 	double heading_est = -(b_h_diff-bearing);
 
 	ROS_INFO("\nHOMING UPDATE!");
@@ -232,10 +267,10 @@ if(stopSavingDataToFile==false && _homing_found==true && (diff1+diff2<0.3 || exp
 			outputFile << cylinders[i].axis_direction(1,0) << ",";
 			outputFile << cylinders[i].axis_direction(2,0) << ",";
 			outputFile << cylinders[i].raius_estimate(0,0);
-			outputFile << std::endl; 	
+			outputFile << std::endl;
 		}
 	}
-	stopSavingDataToFile=true; 
+	stopSavingDataToFile=true;
 }
 else
 {

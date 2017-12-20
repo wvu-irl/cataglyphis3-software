@@ -1,6 +1,41 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 /**
  * Serial_Port_class.cpp
- * Implements serial port_open (via constructor), port_close (via destructor), port_read, and port_write methods 
+ * Implements serial port_open (via constructor), port_close (via destructor), port_read, and port_write methods
  */
 #include "Serial_Port_class.h"
 #include <errno.h>
@@ -22,7 +57,7 @@ Serial_Port::Serial_Port(port_mode_t port_mode_input)
 	else {ROS_ERROR("SERIAL PORT port_mode not specified");}
 	if (fd <0) {perror(MODEMDEVICE.c_str()); ROS_ERROR("SERIAL PORT file descriptor open error"); }  //~~~provide message to HSM
 
-	tcgetattr(fd,&oldtio); // save current port settings 
+	tcgetattr(fd,&oldtio); // save current port settings
 
 	if(BAUDRATE==115200) baud_rate = B115200;
 	else if(BAUDRATE==57600) baud_rate = B57600;
@@ -34,16 +69,16 @@ Serial_Port::Serial_Port(port_mode_t port_mode_input)
 	newtio.c_iflag = IGNPAR;
 	newtio.c_oflag = 0;
 
-	// set input mode (non-canonical, no echo,...) 
+	// set input mode (non-canonical, no echo,...)
 	if(port_mode==_fixed_length_packet) newtio.c_lflag = 0;
 	else if(port_mode==_roboteq) newtio.c_lflag = ICANON;
 	else newtio.c_lflag = 0;
- 
+
 	newtio.c_cc[VTIME]    = 1;   //Blocking read, timeout in ds !!!!!!// Nonblocking read - no time out
 	newtio.c_cc[VMIN] = rbuf_size; // Nonblocking read - return whether or not a character is read
 /*
-	newtio.c_cc[VTIME]    = 2;   // inter-character timer ~~~ is this sufficient for full packet read modes? 
-	newtio.c_cc[VMIN]     = 1;   // blocking read until 1 char is received 
+	newtio.c_cc[VTIME]    = 2;   // inter-character timer ~~~ is this sufficient for full packet read modes?
+	newtio.c_cc[VMIN]     = 1;   // blocking read until 1 char is received
 */
 
 	tcflush(fd, TCIFLUSH);
@@ -65,7 +100,7 @@ Serial_Port::Serial_Port()
 	else {ROS_ERROR("SERIAL PORT port_mode not specified"); exit(-1);}
 	if (fd <0) {perror(MODEMDEVICE.c_str()); exit(-1); }  //~~~exit is probably not good here; provide message to HSM first
 
-	tcgetattr(fd,&oldtio); // save current port settings 
+	tcgetattr(fd,&oldtio); // save current port settings
 
 	if(BAUDRATE==115200) baud_rate = B115200;
 	else if(BAUDRATE==57600) baud_rate = B57600;
@@ -77,21 +112,21 @@ Serial_Port::Serial_Port()
 	newtio.c_iflag = IGNPAR;
 	newtio.c_oflag = 0;
 
-	// set input mode (non-canonical, no echo,...) 
+	// set input mode (non-canonical, no echo,...)
 	if(port_mode==_fixed_length_packet) newtio.c_lflag = 0;
 	else if(port_mode==_roboteq) newtio.c_lflag = ICANON;
 	else newtio.c_lflag = 0;
- 
-	newtio.c_cc[VTIME]    = 1;   //Blocking read, timeout in ds !!!!!!// Nonblocking read - no time out 
+
+	newtio.c_cc[VTIME]    = 1;   //Blocking read, timeout in ds !!!!!!// Nonblocking read - no time out
 	newtio.c_cc[VMIN] = 0; // Nonblocking read - return whether or not a character is read
 /*
-	newtio.c_cc[VTIME]    = 2;   // inter-character timer ~~~ is this sufficient for full packet read modes? 
-	newtio.c_cc[VMIN]     = 1;   // blocking read until 1 char is received 
+	newtio.c_cc[VTIME]    = 2;   // inter-character timer ~~~ is this sufficient for full packet read modes?
+	newtio.c_cc[VMIN]     = 1;   // blocking read until 1 char is received
 */
 
 	tcflush(fd, TCIFLUSH);
 	tcsetattr(fd,TCSANOW,&newtio);
-}  
+}
 
 bool Serial_Port::port_read()
 {
@@ -114,7 +149,7 @@ bool Serial_Port::port_read()
 							case init_s:
 								newtio.c_cc[VMIN] = 0;
 								tcsetattr(fd,TCSANOW,&newtio);
-								read_buffer[0] = 'A';  
+								read_buffer[0] = 'A';
 								read_buffer[1] = 'z';
 								//read_buffer[2] = 's';
 								//read_buffer[3] = '2';
@@ -129,7 +164,7 @@ bool Serial_Port::port_read()
 								if(res>0)
 								{
 									if(one_buff[0]==H1_def) single_char_step = find_H2;
-								}						
+								}
 								else single_char_step = find_H1;
 								read_mode = single_char;
 								printf("FIND_H1\n");
@@ -161,14 +196,14 @@ bool Serial_Port::port_read()
 									single_char_step = init_s;
 									read_mode = full_packet;
 									read_buffer[index]=0;	//terminate string so we can printf
-															//~~~could be an overflow unless actual buffer is 	oversized 
+															//~~~could be an overflow unless actual buffer is 	oversized
 									if(checksum_type==_and) checksum_value = computeChecksum(read_buffer, rbuf_size);
 									else if(checksum_type==_not) checksum_value = computeChecksumNot(read_buffer, rbuf_size);
 									ROS_INFO("calculated checksum_value = %X. packet checksum = %X",checksum_value,(read_buffer[rbuf_size-1] & 0xff));
-									if(checksum_value!=(read_buffer[rbuf_size-1] & 0xff)) {packet_read = false; 
+									if(checksum_value!=(read_buffer[rbuf_size-1] & 0xff)) {packet_read = false;
 									/*det.HSM_notify("BAD PACKET");*/
 									}
-									else {packet_read = true; 
+									else {packet_read = true;
 									/*det.HSM_good();*/
 									}
 									printf("SINGLE CHAR MODE COMPLETE\n");
@@ -176,11 +211,11 @@ bool Serial_Port::port_read()
 								}
 								res = read(fd,one_buff,1);
 								printf("READ_BODY\n");
-								if(res>0) 
+								if(res>0)
 								{
-									read_buffer[index] = one_buff[0]; 
-									index++; 
-									single_char_step = read_body; 
+									read_buffer[index] = one_buff[0];
+									index++;
+									single_char_step = read_body;
 									read_mode = single_char;
 								}
 								break;
@@ -260,7 +295,7 @@ bool Serial_Port::port_read()
 				//usleep(read_delay_usec);
 				break;
 		}
-				
+
 	}
 	return packet_read;
 }
@@ -282,7 +317,7 @@ bool Serial_Port::simple_read(int read_length)
 
 bool Serial_Port::read_timeout()
 {
-	long delta_usec;	
+	long delta_usec;
 	gettimeofday(&current_time, NULL);
 	delta_usec = (current_time.tv_sec - start_time.tv_sec)*1000000 + current_time.tv_usec - start_time.tv_usec;
     return (delta_usec >= timeout_usec);
@@ -292,16 +327,16 @@ bool Serial_Port::read_timeout()
 bool Serial_Port::port_write()
 {
 	/**
-	 * Write data to the port - 
+	 * Write data to the port -
 	 */
 	//ROS_INFO(" - - - - - - in Serial_Port::port_write()");
 	//hexprint
-	printf(" - - - - - - - write_buffer: "); 
+	printf(" - - - - - - - write_buffer: ");
 	for(int i=0;i<wbuf_size;i++)
 	{
 		printf("%2.2hhX|",write_buffer[i]);
 	}
-	printf("\n"); 
+	printf("\n");
 	//--hexprint
 	//ROS_INFO("wbuf_size = %d",wbuf_size);
 	res = write(fd, write_buffer, wbuf_size);   /* write the number of characters in the  */
@@ -328,4 +363,3 @@ Serial_Port::~Serial_Port()
 	 */
 	close(fd);
 }
-

@@ -1,3 +1,40 @@
+'''
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+'''
+
 import os
 from os.path import expanduser
 import traceback
@@ -28,7 +65,7 @@ import cPickle
 from time import gmtime, strftime
 import cv2
 
-def matrifyMyData(labelMatTrain):    
+def matrifyMyData(labelMatTrain):
     uniqueClasses = np.unique(labelMatTrain)
     nClasses = 2
     # print "nClasses ",nClasses, uniqueClasses
@@ -79,10 +116,10 @@ if __name__ == "__main__":
     imgSize = int(sys.argv[1])
 
     modelList = glob.glob(curDirName+"/*.npz")
-    
-    
+
+
     # testFile = '/home/ganymede/Datasets/spherical imageset1/raw_images/'+str(imgSize)+' resize/data_lmdb_'+str(imgSize)+'/'
-    
+
     dropout_params = {}
     dropout_params['conv'] = 0.5
     dropout_params['fc'] = 0.5
@@ -96,10 +133,10 @@ if __name__ == "__main__":
         print crossvalidid
         print testFile
         print os.path.exists(testFile)
-      
-    
+
+
         mymodel = DeepLearningNode(loadData = False, imgSize = imgSize, crossvalidid = crossvalidid, dropout_params = dropout_params, mode='Test', modelToLoad = modelToLoad)
-        
+
         mini_batch_size = 128
 
         lmdb_env = lmdb.open(testFile)
@@ -111,7 +148,7 @@ if __name__ == "__main__":
         totalImgs = 0
         correct = 0
         for key, value in lmdb_cursor:
-            
+
             datum.ParseFromString(value)
             label = datum.label
             data = caffe.io.datum_to_array(datum)
@@ -129,9 +166,9 @@ if __name__ == "__main__":
                 # print dataMatTrain.shape, labelMatTrain.shape
                 trX, trY = dataMatTrain, labelMatTrain
                 trX = mymodel.getMeanNormalizedData(trX, 'TEST')
-                
+
                 vals = mymodel.predictProb(trX)
-                
+
                 pred = np.argmax(vals, axis=1)
                 orig = np.argmax(trY, axis=1)
                 correct += np.sum(pred==orig)

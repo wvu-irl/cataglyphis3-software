@@ -1,3 +1,38 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+*
+* Copyright (c) 2016, WVU Interactive Robotics Laboratory
+*                       https://web.statler.wvu.edu/~irl/
+* All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <ros/ros.h>
 #include <messages/ActuatorOut.h>
 #include <messages/ExecInfo.h>
@@ -22,32 +57,32 @@ int main(int argc, char **argv)
 	ROS_INFO("Keyboard_Node - ros::init complete");
 	ros::NodeHandle nh;
 	ROS_INFO("Keyboard_Node - node handle created");
-	
+
 	ros::Rate loopRate(50); //set loop rate to 50Hz
-	
+
 	ros::Publisher actuator_pub = nh.advertise<messages::ActuatorOut>("control/actuatorout/all",1);
 /*
 	ros::Publisher keys_pub = nh.advertise<robot_control::Keys_Pressed>("control/keys_pressed",1);
     ros::Publisher servo_cam_pub = nh.advertise<messages::Servo_command>("camera_pan_servo_command",1);*/
     ros::Publisher exec_info_pub = nh.advertise<messages::ExecInfo>("control/exec/info",1);
-	int ch; 
+	int ch;
 	#define initTimeouts 25
 	int numTimeOuts = initTimeouts;
-	
+
 	int right[3] = {0}; //index 0 is the front wheel, 1 is middle, 2 is rear
 	int left[3] = {0};
-	int speed = 1000;	
-	
+	int speed = 1000;
+
 	int grabberSlidePos = fully_open;
 	int grabberDropPos  = fully_raised;
-	
+
 	float servoIncrement = 45.0;
 	float servoAngleCmd = 180.0;
 
 	const float middleWheelReduction_ = 0.65;
 	const float reverseMiddleGain_ = 0.8;
 	const float cornerBoostGain_ = 1.2;
-	
+
 	bool done = false;
 	bool killAll = false;
 
@@ -62,10 +97,10 @@ int main(int argc, char **argv)
 	        ch = getch();			/* If raw() hadn't been called
 					                 * we have to press enter before it
 					                 * gets to the program 		*/
-					 
+
 	        switch(ch)
-		    {	
-		    
+		    {
+
 		    //drive control
 		        case KEY_UP:
     		    //printw("The pressed key is up\n");
@@ -83,7 +118,7 @@ int main(int argc, char **argv)
                     exec_msg.turnFlag = true;
 			        clear();printw("RIGHT ROTATE");
                     right[0] = -speed/2*cornerBoostGain_; right[1] = -speed * middleWheelReduction_ * reverseMiddleGain_ / 2.0; right[2] = -speed/2;
-    		        left[0] = speed/2; left[1] = speed * middleWheelReduction_ / 2.0; left[2] = speed/2*cornerBoostGain_;		    
+    		        left[0] = speed/2; left[1] = speed * middleWheelReduction_ / 2.0; left[2] = speed/2*cornerBoostGain_;
 				    break;
 			    case KEY_LEFT:
 			    //printw("The pressed key is left\n");
@@ -103,7 +138,7 @@ int main(int argc, char **argv)
                     right[0] = -speed; right[1] = -speed; right[2] = -speed;
     		        left[0] = -speed; left[1] = -speed; left[2] = -speed;
 				    break;
-				    
+
 			//grabber control
 				case 119: //w grabber down
 					numTimeOuts = 0;
@@ -132,9 +167,9 @@ int main(int argc, char **argv)
                     exec_msg.turnFlag = false;
 					clear();printw("Grabber Slides Closed");
 					grabberSlidePos = fully_closed;
-					break;	
-			
-			//camera control	
+					break;
+
+			//camera control
 				case 111: //o (not zero) increase servo angle
     				numTimeOuts = 0;
                     exec_msg.stopFlag = true;
@@ -166,7 +201,7 @@ int main(int argc, char **argv)
 				    clear();printw("Picture Time!");
 				    //keys_msg.spacebar = true;
 				    break;
-				    
+
 		    //stop flag
 		        case 120: //x toggle stop flag
 		            numTimeOuts = 0;
@@ -176,7 +211,7 @@ int main(int argc, char **argv)
                     //exec_msg.stop_flag = exec_msg.stop_flag == 0 ? 1 : 0;
 				    //printw("Stop Flag %s", exec_msg.stop_flag ? "ON" : "OFF");
 				    break;
-				    
+
             //capture common exit keys
 				case 113: //if Q, close everything ROS
 				    killAll = true;
@@ -187,7 +222,7 @@ int main(int argc, char **argv)
     		        //keys_msg.spacebar = false;
    				    done = true;
    				    break;
-   				    
+
    			//timeout
 				case -1: //timeout
 				    numTimeOuts++;
@@ -208,12 +243,12 @@ int main(int argc, char **argv)
 				        printw("Key 'e' opens grabber slides, Key 'd' closes grabber slides\n\n");
 				        printw("Key 'q' will close all rosnodes and end keyboard control\n");
 				        printw("'Control + c' will close just keyboard control\n");
-				    } 
+				    }
     		        right[0] = 0; right[1] = 0; right[2] = 0;
     		        left[0] = 0; left[1] = 0; left[2] = 0;
     		        //keys_msg.spacebar = false;
 				    break;
-				    
+
 		    //unknown key press
 				default: //print
 				    numTimeOuts = 0;
@@ -225,7 +260,7 @@ int main(int argc, char **argv)
     	//	        keys_msg.spacebar = false;
     		        break;
 		    }
-            
+
             //drive speed control
             if(ch >= 49 && ch <= 57)
             {
@@ -236,7 +271,7 @@ int main(int argc, char **argv)
             {
                 speed = 1000;
             }
-		    
+
 			actuator_msg.fl_speed_cmd = left[0];
 			actuator_msg.fr_speed_cmd = right[0];
 			actuator_msg.ml_speed_cmd = left[1];
@@ -245,24 +280,24 @@ int main(int argc, char **argv)
 			actuator_msg.br_speed_cmd = right[2];
 	        actuator_msg.slide_pos_cmd = grabberSlidePos;
 	        actuator_msg.drop_pos_cmd = grabberDropPos;
-	        
+
 	        //servo_msg.camera_pan_angle_cmd = servoAngleCmd;
-	        
+
 	        actuator_pub.publish(actuator_msg);
             //keys_pub.publish(keys_msg);
             //servo_cam_pub.publish(servo_msg);
             exec_info_pub.publish(exec_msg);
-	        
+
 		    ros::spinOnce();
 		    loopRate.sleep();
-		
+
 		}
-					 
-					
+
+
 	refresh();			/* Print it on to the real screen */
     getch();			/* Wait for user input */
 	endwin();			/* End curses mode		  */
-	
+
 	if(killAll)
 	{
     //first, kill all nodes using 'rosnode kill -a' , this does not kill the master
@@ -270,6 +305,6 @@ int main(int argc, char **argv)
     //third, send SIGTERM signal to PID of roscore. ps -c roscore -o pid= returns the PID of roscore
 	    system("rosnode kill -a && sleep 5 && kill -2 $( ps -C roslaunch -o pid= ) && sleep 2 && kill -2 $( ps -C roscore -o pid= )");
 	}
-	
-    return 0;	
+
+    return 0;
 }
